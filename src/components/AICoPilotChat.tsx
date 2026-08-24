@@ -59,7 +59,25 @@ function cleanSpeechDuplicates(raw: string): string {
   let text = raw.replace(/\s+/g, ' ').trim();
   if (!text) return '';
 
-  // 1. Remove exact duplicate adjacent sentences / clauses
+  // 1. Detect and resolve progressive accumulation echoes (Android mobile speech recognition buffer bug)
+  const words = text.split(' ').filter(Boolean);
+  if (words.length >= 6) {
+    const prefix = words.slice(0, 3).join(' ').toLowerCase();
+    const indices: number[] = [];
+    for (let i = 0; i <= words.length - 3; i++) {
+      if (words.slice(i, i + 3).join(' ').toLowerCase() === prefix) {
+        indices.push(i);
+      }
+    }
+    if (indices.length > 1) {
+      const lastIndex = indices[indices.length - 1];
+      if (words.length - lastIndex >= 4) {
+        text = words.slice(lastIndex).join(' ');
+      }
+    }
+  }
+
+  // 2. Remove exact duplicate adjacent sentences / clauses
   const sentences = text.split(/(?<=[.?!])\s+/);
   if (sentences.length > 1) {
     const deduped: string[] = [];
@@ -71,30 +89,86 @@ function cleanSpeechDuplicates(raw: string): string {
     text = deduped.join(' ');
   }
 
-  // 2. Remove repeating multi-word phrases (common mobile speech recognition buffer repetition bug)
-  let words = text.split(' ').filter(Boolean);
-  if (words.length > 3) {
+  // 3. Remove repeating multi-word phrases
+  let w = text.split(' ').filter(Boolean);
+  if (w.length > 3) {
     let modified = true;
     let passes = 0;
-    while (modified && passes < 3) {
+    while (modified && passes < 4) {
       modified = false;
       passes++;
-      for (let len = Math.min(Math.floor(words.length / 2), 15); len >= 2; len--) {
-        for (let i = 0; i <= words.length - 2 * len; i++) {
-          const chunk1 = words.slice(i, i + len).join(' ').toLowerCase();
-          const chunk2 = words.slice(i + len, i + 2 * len).join(' ').toLowerCase();
+      for (let len = Math.min(Math.floor(w.length / 2), 20); len >= 2; len--) {
+        for (let i = 0; i <= w.length - 2 * len; i++) {
+          const chunk1 = w.slice(i, i + len).join(' ').toLowerCase();
+          const chunk2 = w.slice(i + len, i + 2 * len).join(' ').toLowerCase();
           if (chunk1 === chunk2 && chunk1.length > 2) {
-            words.splice(i + len, len);
+            w.splice(i + len, len);
             modified = true;
             i--;
           }
         }
       }
     }
-    text = words.join(' ');
+    text = w.join(' ');
   }
 
+  // 4. Remove single repeating adjacent words (e.g. "okay okay okay" -> "okay")
+  const singleWords = text.split(' ').filter(Boolean);
+  const dedupedSingle: string[] = [];
+  for (let i = 0; i < singleWords.length; i++) {
+    if (i === 0 || singleWords[i].toLowerCase() !== singleWords[i - 1].toLowerCase()) {
+      dedupedSingle.push(singleWords[i]);
+    }
+  }
+  text = dedupedSingle.join(' ');
+
   return text.trim();
+}
+
+function parseSpeechRecognitionResults(results: any): string {
+  if (!results || results.length === 0) return '';
+  
+  // If only 1 result, return its transcript
+  if (results.length === 1) {
+    return cleanSpeechDuplicates(results[0][0]?.transcript || '');
+  }
+
+  // Check if mobile Android speech engine emitted cumulative/progressive results where each result starts with result[0]
+  const firstPrefix = results[0][0]?.transcript?.trim().toLowerCase().slice(0, 12) || '';
+  let isCumulative = false;
+  if (firstPrefix.length >= 3) {
+    let matchCount = 0;
+    for (let i = 1; i < results.length; i++) {
+      const t = results[i][0]?.transcript?.trim().toLowerCase() || '';
+      if (t.startsWith(firstPrefix)) {
+        matchCount++;
+      }
+    }
+    if (matchCount >= Math.floor(results.length / 2)) {
+      isCumulative = true;
+    }
+  }
+
+  if (isCumulative) {
+    // In Android cumulative mode, the last result entry is the complete cumulative transcription!
+    const last = results[results.length - 1][0]?.transcript || '';
+    return cleanSpeechDuplicates(last);
+  }
+
+  // Desktop / standard disjoint chunks: concatenate distinct pieces
+  let finalTranscript = '';
+  let interimTranscript = '';
+  for (let i = 0; i < results.length; ++i) {
+    const item = results[i];
+    if (item.isFinal) {
+      finalTranscript += (item[0]?.transcript || '') + ' ';
+    } else {
+      interimTranscript += (item[0]?.transcript || '') + ' ';
+    }
+  }
+
+  const combined = (finalTranscript + ' ' + interimTranscript).trim();
+  return cleanSpeechDuplicates(combined);
 }
 
 function AILogoIcon({ className = "w-5 h-5" }: { className?: string }) {
@@ -743,19 +817,7 @@ export default function AICoPilotChat({
           recog.onresult = (event: any) => {
             if (isAgentSpeakingRef.current) return;
 
-            let finalTranscript = '';
-            let interimTranscript = '';
-            for (let i = 0; i < event.results.length; ++i) {
-              const res = event.results[i];
-              if (res.isFinal) {
-                finalTranscript += res[0].transcript + ' ';
-              } else {
-                interimTranscript += res[0].transcript + ' ';
-              }
-            }
-
-            let fullText = (finalTranscript + ' ' + interimTranscript).trim();
-            fullText = cleanSpeechDuplicates(fullText);
+            const fullText = parseSpeechRecognitionResults(event.results);
             if (!fullText) return;
 
             currentAccumulatedSpeechRef.current = fullText;
@@ -876,19 +938,7 @@ export default function AICoPilotChat({
           };
 
           recog.onresult = (event: any) => {
-            let finalTranscript = '';
-            let interimTranscript = '';
-            for (let i = 0; i < event.results.length; ++i) {
-              const res = event.results[i];
-              if (res.isFinal) {
-                finalTranscript += res[0].transcript + ' ';
-              } else {
-                interimTranscript += res[0].transcript + ' ';
-              }
-            }
-
-            let transcript = (finalTranscript + ' ' + interimTranscript).trim();
-            transcript = cleanSpeechDuplicates(transcript);
+            const transcript = parseSpeechRecognitionResults(event.results);
             if (transcript) {
               setInputMessage(transcript);
             }
