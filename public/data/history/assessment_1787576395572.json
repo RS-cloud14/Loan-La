@@ -1,0 +1,228 @@
+{
+  "updatedAt": "2026-08-24T12:59:55.571Z",
+  "timestamp": 1787576395571,
+  "inputData": {
+    "name": "Chong Wei Meng",
+    "platform": "Shopee Merchant Store (Micro-SME)",
+    "averageMonthlyNetIncome": 5800,
+    "monthlyIncomes": [
+      7200,
+      4100,
+      6100
+    ],
+    "activeDaysPerMonth": 22,
+    "cashFlowFrequency": "irregular",
+    "endingBalance": 210,
+    "averageMonthlyExpenses": 5400,
+    "forensicCheck": {
+      "is_tampered": false,
+      "tamper_reasons": [],
+      "exif_software_detected": "None (Original PDF Structure)",
+      "ai_generation_detected": false,
+      "ai_generation_reasons": []
+    },
+    "behavioralRisk": {
+      "red_flags": [
+        "Predatory Payday Loan repayments detected",
+        "Frequent Online Gambling narratives"
+      ],
+      "green_flags": [
+        "Regular Supplier payments"
+      ],
+      "risk_score": 78
+    },
+    "reconciliation": {
+      "is_reconciled": true,
+      "matched_payout_count": 3,
+      "mismatched_payout_count": 0,
+      "reconciliation_notes": [
+        "Reconciliation: MATCHED. Shopee Seller Center payout logs match CIMB deposits exactly. Merchant payout cycles mapped correctly."
+      ]
+    },
+    "fileChecklist": [
+      {
+        "fileName": "Shopee_Merchant_Center_Statement_July.pdf",
+        "fileSize": "1.8 MB",
+        "status": "verified",
+        "documentType": "platform_dashboard"
+      },
+      {
+        "fileName": "Shopee_Merchant_Center_Statement_June.pdf",
+        "fileSize": "1.7 MB",
+        "status": "verified",
+        "documentType": "platform_dashboard"
+      },
+      {
+        "fileName": "Shopee_Merchant_Center_Statement_May.pdf",
+        "fileSize": "1.9 MB",
+        "status": "verified",
+        "documentType": "platform_dashboard"
+      },
+      {
+        "fileName": "CIMB_Business_Current_Account_July.pdf",
+        "fileSize": "4.1 MB",
+        "status": "verified",
+        "documentType": "bank_statement"
+      },
+      {
+        "fileName": "CIMB_Business_Current_Account_June.pdf",
+        "fileSize": "3.9 MB",
+        "status": "verified",
+        "documentType": "bank_statement"
+      },
+      {
+        "fileName": "SSM_Company_Profile_Certificate.pdf",
+        "fileSize": "1.2 MB",
+        "status": "verified",
+        "documentType": "tax_epf"
+      }
+    ],
+    "identityData": {
+      "icNumber": "880521-14-5123",
+      "fullName": "Chong Wei Meng",
+      "dob": "1988-05-21",
+      "gender": "Male",
+      "address": "23A, Jalan Kuchai Maju 8, Kuchai Entrepreneurs Park, 58200 Kuala Lumpur",
+      "isVerified": true
+    },
+    "transactions": [
+      {
+        "date": "2026-07-12",
+        "description": "Shopee Order Disbursement",
+        "amount": 2500,
+        "type": "INFLOW",
+        "category": "Income"
+      },
+      {
+        "date": "2026-07-11",
+        "description": "SkyCasino Online MYR Dep",
+        "amount": -800,
+        "type": "OUTFLOW",
+        "category": "Leisure"
+      },
+      {
+        "date": "2026-07-09",
+        "description": "QuickFund Payday Repayment",
+        "amount": -650,
+        "type": "OUTFLOW",
+        "category": "Debt"
+      },
+      {
+        "date": "2026-07-05",
+        "description": "Supplier Invoice - Electronics Wholesale",
+        "amount": -1800,
+        "type": "OUTFLOW",
+        "category": "Supplier"
+      },
+      {
+        "date": "2026-07-02",
+        "description": "CashNow Loan Repayment",
+        "amount": -500,
+        "type": "OUTFLOW",
+        "category": "Debt"
+      },
+      {
+        "date": "2026-06-25",
+        "description": "Shopee Order Disbursement",
+        "amount": 1800,
+        "type": "INFLOW",
+        "category": "Income"
+      },
+      {
+        "date": "2026-06-20",
+        "description": "GDEX Shipping Charges",
+        "amount": -320,
+        "type": "OUTFLOW",
+        "category": "Logistics"
+      },
+      {
+        "date": "2026-06-15",
+        "description": "Shopee Order Disbursement",
+        "amount": 1800,
+        "type": "INFLOW",
+        "category": "Income"
+      },
+      {
+        "date": "2026-06-10",
+        "description": "BetMYR Online Sportsbook",
+        "amount": -400,
+        "type": "OUTFLOW",
+        "category": "Leisure"
+      }
+    ],
+    "targetLoanPurpose": "personal_cash",
+    "targetLoanAmount": 5000,
+    "tenureYears": 1,
+    "downpaymentAmount": 500
+  },
+  "report": {
+    "score": 465,
+    "grade": "D",
+    "status": "Declined",
+    "dsr": 37.704918032786885,
+    "volatilityIndex": 0.18032786885245902,
+    "incomeConcentrationHhi": 1,
+    "runwayMonths": 0.09395973154362416,
+    "explanations": [
+      {
+        "factor": "Net Income Volume",
+        "change": 120,
+        "reason": "Average monthly income is RM 3050.00 (Middle income bracket).",
+        "type": "positive"
+      },
+      {
+        "factor": "Cash Flow Stability",
+        "change": 110,
+        "reason": "Income volatility is low-to-moderate (18.0%). Normal gig-worker pattern.",
+        "type": "positive"
+      },
+      {
+        "factor": "Debt Service Ratio (DSR)",
+        "change": 60,
+        "reason": "Debt Service Ratio is moderate at 37.7%. Moderate financial commitments.",
+        "type": "neutral"
+      },
+      {
+        "factor": "Downpayment Margin",
+        "change": -50,
+        "reason": "High risk: Downpayment margin is only 9.1% (Below 10% target). Higher default risk.",
+        "type": "negative"
+      },
+      {
+        "factor": "Income Diversification",
+        "change": 15,
+        "reason": "Income concentrated on a single digital platform. Vulnarable to gig policy changes.",
+        "type": "neutral"
+      },
+      {
+        "factor": "Liquidity Reserves",
+        "change": -30,
+        "reason": "Critical liquidity: Reserves cover less than 15 days of expenses. Low working capital.",
+        "type": "negative"
+      },
+      {
+        "factor": "AML & Behavioral Red Flags",
+        "change": -80,
+        "reason": "Deduction for critical markers: Predatory Payday Loan repayments detected, Frequent Online Gambling narratives.",
+        "type": "negative"
+      },
+      {
+        "factor": "Positive Payment Indicators",
+        "change": 20,
+        "reason": "Credit for responsible trends: Regular Supplier payments.",
+        "type": "positive"
+      }
+    ],
+    "complianceDeclaration": {
+      "ftfcCompliant": true,
+      "rmitAudited": true,
+      "amlScanned": true,
+      "crmStatus": "review"
+    },
+    "monthlySurplus": 815,
+    "estimatedInstallment": 458,
+    "postLoanBuffer": 357,
+    "affordabilityStatus": "Strong"
+  },
+  "hash": "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"
+}

@@ -1,0 +1,128 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  
+  --primary: #1e3a8a; /* Deep Navy */
+  --primary-hover: #172554;
+  --accent: #2563eb; /* Cobalt Blue */
+  --accent-hover: #1d4ed8;
+  
+  --font-sans: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  /* Premium subtle geometric blueprint background grid */
+  background-image: 
+    radial-gradient(rgba(37, 99, 235, 0.04) 1.5px, transparent 1.5px),
+    radial-gradient(rgba(30, 58, 138, 0.02) 1.5px, transparent 1.5px);
+  background-size: 24px 24px;
+  background-position: 0 0, 12px 12px;
+  background-attachment: fixed;
+  overflow-x: hidden;
+  font-size: 14.5px; /* Larger base font size as requested */
+  line-height: 1.6;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Premium Card (Hover translation removed as requested) */
+.premium-card {
+  background: #ffffff;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 16px;
+  box-shadow: 
+    0 1px 2px rgba(15, 23, 42, 0.02),
+    0 8px 30px rgba(15, 23, 42, 0.025);
+  transition: all 0.2s ease-in-out;
+}
+
+.premium-card:hover {
+  border-color: rgba(37, 99, 235, 0.35);
+  box-shadow: 
+    0 10px 40px rgba(37, 99, 235, 0.035),
+    0 1px 3px rgba(37, 99, 235, 0.015);
+  /* Translate animation completely removed */
+}
+
+/* Slick Flat Banking Buttons */
+.btn-primary {
+  background: var(--primary);
+  color: #ffffff;
+  font-weight: 600;
+  border-radius: 10px;
+  border: 1px solid #172554;
+  box-shadow: 0 4px 12px rgba(30, 58, 138, 0.15);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-primary:hover {
+  background: #172554;
+  box-shadow: 0 6px 16px rgba(30, 58, 138, 0.22);
+}
+
+.btn-secondary {
+  background: #ffffff;
+  color: #1e3a8a;
+  font-weight: 600;
+  border-radius: 10px;
+  border: 1.5px solid #cbd5e1;
+  transition: all 0.2s ease-in-out;
+}
+.btn-secondary:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #1d4ed8;
+}
+
+/* custom input style */
+.bank-input {
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+  background: #ffffff;
+  font-size: 14px;
+}
+.bank-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Timeline link connectors */
+.timeline-dot::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  bottom: -24px;
+  width: 2px;
+  background: repeating-linear-gradient(to bottom, #cbd5e1, #cbd5e1 4px, transparent 4px, transparent 8px);
+  transform: translateX(-50%);
+}
+.timeline-dot-last::after {
+  display: none;
+}

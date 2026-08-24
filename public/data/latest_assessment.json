@@ -1,0 +1,140 @@
+{
+  "updatedAt": "2026-08-24T13:24:14.782Z",
+  "timestamp": 1787577854782,
+  "hash": "d3b07384d113edec49eaa6238ad5ff00",
+  "inputData": {
+    "name": "Siti Aminah Binti Ahmad",
+    "platform": "Freelance Graphic Designer",
+    "averageMonthlyNetIncome": 4500,
+    "monthlyIncomes": [
+      4200,
+      4800,
+      4500
+    ],
+    "activeDaysPerMonth": 20,
+    "cashFlowFrequency": "monthly",
+    "endingBalance": 8200,
+    "averageMonthlyExpenses": 3100,
+    "forensicCheck": {
+      "is_tampered": true,
+      "tamper_reasons": [
+        "Logical Forensic Mismatch: Fiverr dashboard earnings (RM 8,200) do not match CIMB statement deposit credits (only RM 4,200).",
+        "Visual edit artifacts detected around the net payout columns."
+      ],
+      "exif_software_detected": "Adobe Photoshop CS6 (Windows)",
+      "ai_generation_detected": true,
+      "ai_generation_reasons": [
+        "AI text rendering artifacts found in Fiverr header label textures",
+        "Nonsensical distorted characters in transaction sequence number"
+      ]
+    },
+    "behavioralRisk": {
+      "red_flags": [
+        "Financial Document Alteration Detected"
+      ],
+      "green_flags": [],
+      "risk_score": 95
+    },
+    "reconciliation": {
+      "is_reconciled": false,
+      "matched_payout_count": 1,
+      "mismatched_payout_count": 2,
+      "reconciliation_notes": [
+        "Reconciliation: MISMATCH. Fiverr payout date 2026-06-25 (RM 2,700) is absent in CIMB deposits record.",
+        "Audit Flag: Attempted modification to artificially inflate creditworthiness profile."
+      ]
+    },
+    "fileChecklist": [
+      {
+        "fileName": "Fiverr_FND_Earnings_Dashboard_Altered.png",
+        "fileSize": "950 KB",
+        "status": "flagged",
+        "documentType": "platform_dashboard"
+      },
+      {
+        "fileName": "CIMB_Statement_July_2026.pdf",
+        "fileSize": "2.1 MB",
+        "status": "verified",
+        "documentType": "bank_statement"
+      },
+      {
+        "fileName": "CIMB_Statement_June_2026.pdf",
+        "fileSize": "2.0 MB",
+        "status": "verified",
+        "documentType": "bank_statement"
+      }
+    ],
+    "identityData": {
+      "icNumber": "960315-08-6234",
+      "fullName": "Siti Aminah Binti Ahmad",
+      "dob": "1996-03-15",
+      "gender": "Female",
+      "address": "Unit B-12-05, Residensi Kerinchi, Jalan Pantai Dalam, 59200 Kuala Lumpur",
+      "isVerified": true
+    },
+    "transactions": [
+      {
+        "date": "2026-07-05",
+        "description": "Fiverr Client Payout",
+        "amount": 1500,
+        "type": "INFLOW",
+        "category": "Income"
+      },
+      {
+        "date": "2026-07-03",
+        "description": "TM Unifi Broadband internet",
+        "amount": -159,
+        "type": "OUTFLOW",
+        "category": "Utility"
+      },
+      {
+        "date": "2026-07-02",
+        "description": "Adobe Creative Cloud Subscription",
+        "amount": -240,
+        "type": "OUTFLOW",
+        "category": "Software"
+      },
+      {
+        "date": "2026-06-25",
+        "description": "Upwork Global Freelance Inflow",
+        "amount": 2700,
+        "type": "INFLOW",
+        "category": "Income"
+      },
+      {
+        "date": "2026-06-20",
+        "description": "Coway Water Filter Subscription",
+        "amount": -95,
+        "type": "OUTFLOW",
+        "category": "Utility"
+      }
+    ]
+  },
+  "report": {
+    "score": 300,
+    "grade": "FRAUD_ALERT",
+    "status": "Fraud Alert",
+    "dsr": 100,
+    "volatilityIndex": 1,
+    "incomeConcentrationHhi": 1,
+    "runwayMonths": 0,
+    "explanations": [
+      {
+        "factor": "Forensic Integrity Check",
+        "change": -550,
+        "reason": "Immediate failure: Visual tampering, AI-generation, or metadata modifications detected (Logical Forensic Mismatch: Fiverr dashboard earnings (RM 8,200) do not match CIMB statement deposit credits (only RM 4,200)., Visual edit artifacts detected around the net payout columns., AI text rendering artifacts found in Fiverr header label textures, Nonsensical distorted characters in transaction sequence number, EXIF Software: Adobe Photoshop CS6 (Windows)).",
+        "type": "negative"
+      }
+    ],
+    "complianceDeclaration": {
+      "ftfcCompliant": true,
+      "rmitAudited": true,
+      "amlScanned": true,
+      "crmStatus": "fail"
+    },
+    "monthlySurplus": 0,
+    "estimatedInstallment": 0,
+    "postLoanBuffer": 0,
+    "affordabilityStatus": "Deficit"
+  }
+}

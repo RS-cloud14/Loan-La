@@ -1,0 +1,982 @@
+{
+  "updatedAt": "2026-08-24T11:57:42.978Z",
+  "timestamp": 1787572662978,
+  "inputData": {
+    "name": "YANG GUANG LIANG",
+    "platform": "Foodpanda Rider (Gig Worker)",
+    "averageMonthlyNetIncome": 5000,
+    "monthlyIncomes": [
+      5000,
+      5000,
+      5000
+    ],
+    "activeDaysPerMonth": 20,
+    "cashFlowFrequency": "weekly",
+    "endingBalance": 4995.95,
+    "averageMonthlyExpenses": 2100,
+    "identityData": {
+      "icNumber": "000721-14-6795",
+      "fullName": "YANG GUANG LIANG",
+      "address": "A-3-8 TIARA FABER CONDOMINIUM JALAN DESA UTAMA 58100 TAMAN DESA W.P. KUALA LUMPUR",
+      "citizenship": "WARGANEGARA",
+      "gender": "Male",
+      "dob": "2000-07-21",
+      "stateOfOrigin": "W.P. Kuala Lumpur",
+      "isVerified": true
+    },
+    "epfAnalysis": {
+      "hasEpf": true,
+      "statementYear": "2026",
+      "statementDate": "14/08/2026",
+      "memberName": "YANG GUANG LIANG",
+      "address": "A-3-8 TIARA FABER CONDOMINIUM JALAN DESA UTAMA 58100 TAMAN DESA W.P. KUALA LUMPUR",
+      "epfNumber": "20129714",
+      "icNumber": "000721-14-6795",
+      "employerNumber": "000000000",
+      "totalSavings": 7300,
+      "totalBalance": 7300,
+      "account1Balance": 5475,
+      "account2Balance": 1095,
+      "account3Balance": 730,
+      "accounts": [
+        {
+          "accountType": "Akaun Persaraan (Akaun 1)",
+          "openingBalance": 3600,
+          "inflow": 1875,
+          "outflow": 0,
+          "dividend": 0,
+          "total": 5475
+        },
+        {
+          "accountType": "Akaun Sejahtera (Akaun 2)",
+          "openingBalance": 720,
+          "inflow": 375,
+          "outflow": 0,
+          "dividend": 0,
+          "total": 1095
+        },
+        {
+          "accountType": "Akaun Fleksibel (Akaun 3)",
+          "openingBalance": 480,
+          "inflow": 250,
+          "outflow": 0,
+          "dividend": 0,
+          "total": 730
+        }
+      ],
+      "contributions": [
+        {
+          "month": "Jan-26",
+          "transaction": "Bayaran Caruman i-Simpan",
+          "date": "28/01/2026",
+          "employerAmount": 0,
+          "memberAmount": 200,
+          "totalAmount": 200
+        },
+        {
+          "month": "Feb-26",
+          "transaction": "Bayaran Caruman i-Simpan",
+          "date": "27/02/2026",
+          "employerAmount": 0,
+          "memberAmount": 400,
+          "totalAmount": 400
+        },
+        {
+          "month": "Apr-26",
+          "transaction": "Bayaran Caruman i-Simpan",
+          "date": "30/04/2026",
+          "employerAmount": 0,
+          "memberAmount": 500,
+          "totalAmount": 500
+        },
+        {
+          "month": "May-26",
+          "transaction": "Bayaran Caruman i-Simpan",
+          "date": "29/05/2026",
+          "employerAmount": 0,
+          "memberAmount": 500,
+          "totalAmount": 500
+        },
+        {
+          "month": "Jun-26",
+          "transaction": "Bayaran Caruman i-Simpan",
+          "date": "28/06/2026",
+          "employerAmount": 0,
+          "memberAmount": 400,
+          "totalAmount": 400
+        },
+        {
+          "month": "Jul-26",
+          "transaction": "Bayaran Caruman i-Simpan",
+          "date": "29/07/2026",
+          "employerAmount": 0,
+          "memberAmount": 500,
+          "totalAmount": 500
+        }
+      ],
+      "monthlyContribution": 500,
+      "employeeContribution": 500,
+      "employerContribution": 0,
+      "totalContributionsCurrentYear": 2500,
+      "inferredMonthlySalary": 4545.45,
+      "continuousContributionMonths": 6,
+      "employerName": "i-Simpan (KWSP Voluntary Deposit)",
+      "schemeName": "i-Simpan",
+      "stabilityRating": "HIGH",
+      "notes": "Consistent monthly voluntary EPF caruman reflecting solid financial discipline."
+    },
+    "paySlipData": {
+      "employerName": "N/A",
+      "basicSalary": 0,
+      "allowances": 0,
+      "epfDeduction": 0,
+      "socsoDeduction": 0,
+      "eisDeduction": 0,
+      "pcbDeduction": 0,
+      "netPay": 0,
+      "monthYear": "N/A"
+    },
+    "forensicCheck": {
+      "is_tampered": false,
+      "tamper_reasons": [],
+      "exif_software_detected": "N/A",
+      "ai_generation_detected": false,
+      "ai_generation_reasons": []
+    },
+    "behavioralRisk": {
+      "red_flags": [],
+      "green_flags": [
+        "Utilities: MAXIS",
+        "Savings/Investments: EPF"
+      ],
+      "risk_score": 10
+    },
+    "reconciliation": {
+      "is_reconciled": true,
+      "reconciliation_notes": [
+        "Foodpanda earnings for Week 17 (RM 1572.25) on 26 Apr 2026 matched bank deposit on 26 Apr 2026.",
+        "Foodpanda earnings for Week 16 (RM 1515.50) on 19 Apr 2026 matched bank deposit on 19 Apr 2026.",
+        "Foodpanda earnings for Week 15 (RM 1534.00) on 12 Apr 2026 matched bank deposit on 12 Apr 2026.",
+        "Foodpanda earnings for Week 14 (RM 1515.00) on 05 Apr 2026 matched bank deposit on 05 Apr 2026.",
+        "Foodpanda earnings for Week 13 (RM 926.50) on 29 Mar 2026 matched bank deposit on 29 Mar 2026.",
+        "Foodpanda earnings for Week 12 (RM 916.00) on 22 Mar 2026 matched bank deposit on 22 Mar 2026.",
+        "Foodpanda earnings for Week 11 (RM 920.50) on 15 Mar 2026 matched bank deposit on 15 Mar 2026.",
+        "Foodpanda earnings for Week 10 (RM 954.50) on 08 Mar 2026 matched bank deposit on 08 Mar 2026.",
+        "Foodpanda earnings for Week 9 (RM 1077.32) on 01 Mar 2026 matched bank deposit on 01 Mar 2026.",
+        "Foodpanda earnings for Week 8 (RM 1381.50) on 22 Feb 2026 matched bank deposit on 22 Feb 2026.",
+        "Foodpanda earnings for Week 7 (RM 1530.00) on 15 Feb 2026 matched bank deposit on 15 Feb 2026.",
+        "Foodpanda earnings for Week 6 (RM 1555.32) on 08 Feb 2026 matched bank deposit on 08 Feb 2026."
+      ],
+      "matched_payout_count": 12,
+      "mismatched_payout_count": 0
+    },
+    "transactions": [
+      {
+        "date": "2026-02-02",
+        "description": "I-PAYMENT FPXPAY HONG LEONG CONNECT EFD 01 94225276 FD0702120540688756",
+        "amount": 1500,
+        "type": "OUTFLOW",
+        "category": "Transfer"
+      },
+      {
+        "date": "2026-02-03",
+        "description": "I-PAYMENT MAXIS POSTPAID BIL-MAXIS-0806-08 Daily expences",
+        "amount": 50,
+        "type": "OUTFLOW",
+        "category": "Utility"
+      },
+      {
+        "date": "2026-02-05",
+        "description": "I-PAYMENT TNG EWALLET TOP-UP VIA FPX EWT-TNG-0811-02 Daily expences",
+        "amount": 1000,
+        "type": "OUTFLOW",
+        "category": "Transfer"
+      },
+      {
+        "date": "2026-02-08",
+        "description": "CREDIT FOODPANDA EARNINGS (WEEK 6) FP-EARN-0826-01",
+        "amount": 1555.32,
+        "type": "INFLOW",
+        "category": "Income"
+      },
+      {
+        "date": "2026-02-10",
+        "description": "ATM CASH WITHDRAWAL - CIMB KLCC CSH-ATM-0725-17",
+        "amount": 200,
+        "type": "OUTFLOW",
+        "category": "Other"
+      },
+      {
+        "date": "2026-02-11",
+        "description": "I-PAYMENT ECONSAVE HYPERMARKET SHAH ALAM GRC-ECO-0810-03",
+        "amount": 132.6,
+        "type": "OUTFLOW",
+        "category": "Food"
+      },
+      {
+        "date": "2026-02-15",
+        "description": "CREDIT FOODPANDA EARNINGS (WEEK 7) FP-EARN-0826-01",
+        "amount": 1530,
+        "type": "INFLOW",
+        "category": "Income"
+      },
+      {
+        "date": "2026-02-18",
+        "description": "I-PAYMENT TNG EWALLET TOP-UP VIA FPX EWT-TNG-0811-02 Daily expences",
+        "amount": 500,
+        "type": "OUTFLOW",
+        "category": "Transfer"
+      },
+      {
+        "date": "2026-02-22",
+        "description": "CREDIT FOODPANDA EARNINGS (WEEK 8) FP-EARN-0826-01",
+        "amount": 1381.5,
+        "type": "INFLOW",
+        "category": "Income"
+      },
+      {
+        "date": "2026-02-27",
+        "description": "DUITNOW TO ACCOUNT 535809940 LOW MING CUN Parents Alowance",
+        "amount": 1000,
+        "type": "OUTFLOW",
+        "category": "Transfer"
+      },
+      {
+        "date": "2026-02-27",
+        "description": "I-PAYMENT EPF KIOSK VOLUNTARY CONTRIBUTION EPFVC-2026-08-001 For Feb",
+        "amount": 400,
+        "type": "OUTFLOW",
+        "category": "Savings"
+      },
+      {
+        "date": "2026-02-28",
+        "description": "CREDIT PROFIT/HIBAH",
+        "amount": 0.78,
+        "type": "INFLOW",
+        "category": "Other"
+      },
+      {
+        "date": "2026-03-01",
+        "description": "CREDIT FOODPANDA EARNINGS (WEEK 9) FP-EARN-0826-01",
+        "amount": 1077.32,
+        "type": "INFLOW",
+        "category": "Income"
+      },
+      {
+        "date": "2026-03-03",
+        "description": "I-PAYMENT MAXIS POSTPAID BIL-MAXIS-0606-06",
+        "amount": 50,
+        "type": "OUTFLOW",
+        "category": "Utility"
+      },
+      {
+        "date": "2026-03-05",
+        "description": "I-PAYMENT TNG EWALLET TOP-UP VIA FPX EWT-TNG-0831-02 Daily expences",
+        "amount": 1200,
+        "type": "OUTFLOW",
+        "category": "Transfer"
+      },
+      {
+        "date": "2026-03-08",
+        "description": "CREDIT FOODPANDA EARNINGS (WEEK 10) FP-EARN-0826-01",
+        "amount": 954.5,
+        "type": "INFLOW",
+        "category": "Income"
+      },
+      {
+        "date": "2026-03-11",
+        "description": "I-PAYMENT ECONSAVE HYPERMARKET SHAH ALAM GRC-ECO-0810-03",
+        "amount": 245.9,
+        "type": "OUTFLOW",
+        "category": "Food"
+      },
+      {
+        "date": "2026-03-15",
+        "description": "CREDIT FOODPANDA EARNINGS (WEEK 11) FP-EARN-0826-01",
+        "amount": 920.5,
+        "type": "INFLOW",
+        "category": "Income"
+      },
+      {
+        "date": "2026-03-16",
+        "description": "ATM CASH WITHDRAWAL - CIMB KLCC CSH-ATM-0725-17",
+        "amount": 300,
+        "type": "OUTFLOW",
+        "category": "Other"
+      },
+      {
+        "date": "2026-03-17",
+        "description": "I-PAYMENT TNG EWALLET TOP-UP VIA FPX EWT-TNG-0811-02 Daily expences",
+        "amount": 1100,
+        "type": "OUTFLOW",
+        "category": "Transfer"
+      },
+      {
+        "date": "2026-03-22",
+        "description": "CREDIT FOODPANDA EARNINGS (WEEK 12) FP-EARN-0826-01",
+        "amount": 916,
+        "type": "INFLOW",
+        "category": "Income"
+      },
+      {
+        "date": "2026-03-27",
+        "description": "DUITNOW TO ACCOUNT 535809940 LOW MING CUN Parents Alowance",
+        "amount": 1200,
+        "type": "OUTFLOW",
+        "category": "Transfer"
+      },
+      {
+        "date": "2026-03-29",
+        "description": "CREDIT FOODPANDA EARNINGS (WEEK 13) FP-EARN-0826-01",
+        "amount": 926.5,
+        "type": "INFLOW",
+        "category": "Income"
+      },
+      {
+        "date": "2026-03-31",
+        "description": "CREDIT PROFIT/HIBAH",
+        "amount": 0.92,
+        "type": "INFLOW",
+        "category": "Other"
+      },
+      {
+        "date": "2026-04-03",
+        "description": "I-PAYMENT MAXIS POSTPAID BIL-MAXIS-0606-06",
+        "amount": 50,
+        "type": "OUTFLOW",
+        "category": "Utility"
+      },
+      {
+        "date": "2026-04-04",
+        "description": "I-PAYMENT TNG EWALLET TOP-UP VIA FPX EWT-TNG-0831-02 Daily expences",
+        "amount": 1150,
+        "type": "OUTFLOW",
+        "category": "Transfer"
+      },
+      {
+        "date": "2026-04-05",
+        "description": "CREDIT FOODPANDA EARNINGS (WEEK 14) FP-EARN-0826-01",
+        "amount": 1515,
+        "type": "INFLOW",
+        "category": "Income"
+      },
+      {
+        "date": "2026-04-12",
+        "description": "I-PAYMENT FPXPAY HONG LEONG CONNECT EFD 01 94225276 FD0702120540688756",
+        "amount": 1200,
+        "type": "OUTFLOW",
+        "category": "Transfer"
+      },
+      {
+        "date": "2026-04-12",
+        "description": "CREDIT FOODPANDA EARNINGS (WEEK 15) FP-EARN-0412-03",
+        "amount": 1534,
+        "type": "INFLOW",
+        "category": "Income"
+      },
+      {
+        "date": "2026-04-12",
+        "description": "I-PAYMENT ECONSAVE HYPERMARKET SHAH ALAM GRC-ECO-0810-03",
+        "amount": 226.8,
+        "type": "OUTFLOW",
+        "category": "Food"
+      },
+      {
+        "date": "2026-04-18",
+        "description": "I-PAYMENT TNG EWALLET TOP-UP VIA FPX EWT-TNG-0811-02 Daily expences",
+        "amount": 950,
+        "type": "OUTFLOW",
+        "category": "Transfer"
+      },
+      {
+        "date": "2026-04-19",
+        "description": "CREDIT FOODPANDA EARNINGS (WEEK 16) FP-EARN-0419-03",
+        "amount": 1515.5,
+        "type": "INFLOW",
+        "category": "Income"
+      },
+      {
+        "date": "2026-04-21",
+        "description": "DUITNOW TO ACCOUNT 535809940 LOW MING CUN Parents Alowance",
+        "amount": 1000,
+        "type": "OUTFLOW",
+        "category": "Transfer"
+      },
+      {
+        "date": "2026-04-26",
+        "description": "CREDIT FOODPANDA EARNINGS (WEEK 17) FP-EARN-0426-03",
+        "amount": 1572.25,
+        "type": "INFLOW",
+        "category": "Income"
+      },
+      {
+        "date": "2026-04-30",
+        "description": "I-PAYMENT EPF KIOSK VOLUNTARY CONTRIBUTION EPFVC-2026-04-021 For April",
+        "amount": 500,
+        "type": "OUTFLOW",
+        "category": "Savings"
+      },
+      {
+        "date": "2026-04-30",
+        "description": "CREDIT PROFIT/HIBAH",
+        "amount": 1,
+        "type": "INFLOW",
+        "category": "Other"
+      }
+    ],
+    "gigSlipFiles": [
+      {
+        "weekNum": "6",
+        "periodStr": "2 FEB 2026- 8 FEB 2026 ( WEEK 6)",
+        "dateStr": "8-Feb-26",
+        "normalHrs": 64.98,
+        "wkndHrs": 25.98,
+        "normalOrders": 141,
+        "lndOrders": 39,
+        "cancelCount": 3,
+        "cancelAmt": 7.5,
+        "bonusAmt": 180,
+        "grossPay": 1375.32,
+        "netPay": 1555.32
+      },
+      {
+        "weekNum": "10",
+        "periodStr": "2 MAR 2026- 8 MAR 2026 ( WEEK 10)",
+        "dateStr": "8-Mar-26",
+        "normalHrs": 44.5,
+        "wkndHrs": 12,
+        "normalOrders": 102,
+        "lndOrders": 22,
+        "cancelCount": 1,
+        "cancelAmt": 2.5,
+        "bonusAmt": 50,
+        "grossPay": 904.5,
+        "netPay": 954.5
+      },
+      {
+        "weekNum": "7",
+        "periodStr": "9 FEB 2026- 15 FEB 2026 ( WEEK 7)",
+        "dateStr": "15-Feb-26",
+        "normalHrs": 65,
+        "wkndHrs": 23,
+        "normalOrders": 141,
+        "lndOrders": 35,
+        "cancelCount": 2,
+        "cancelAmt": 5,
+        "bonusAmt": 200,
+        "grossPay": 1330,
+        "netPay": 1530
+      },
+      {
+        "weekNum": "11",
+        "periodStr": "9 MAR 2026- 15 MAR 2026 ( WEEK 11)",
+        "dateStr": "15-Mar-26",
+        "normalHrs": 42,
+        "wkndHrs": 10.5,
+        "normalOrders": 101,
+        "lndOrders": 20,
+        "cancelCount": 2,
+        "cancelAmt": 5,
+        "bonusAmt": 50,
+        "grossPay": 870.5,
+        "netPay": 920.5
+      },
+      {
+        "weekNum": "8",
+        "periodStr": "16 FEB 2026- 22 FEB 2026 ( WEEK 8)",
+        "dateStr": "22-Feb-26",
+        "normalHrs": 50.5,
+        "wkndHrs": 23,
+        "normalOrders": 141,
+        "lndOrders": 36,
+        "cancelCount": 3,
+        "cancelAmt": 7.5,
+        "bonusAmt": 100,
+        "grossPay": 1281.5,
+        "netPay": 1381.5
+      },
+      {
+        "weekNum": "9",
+        "periodStr": "23 FEB 2026- 1 MAR 2026 ( WEEK 9)",
+        "dateStr": "1-Mar-26",
+        "normalHrs": 45.58,
+        "wkndHrs": 10,
+        "normalOrders": 100,
+        "lndOrders": 20,
+        "cancelCount": 2,
+        "cancelAmt": 5,
+        "bonusAmt": 200,
+        "grossPay": 877.32,
+        "netPay": 1077.32
+      },
+      {
+        "weekNum": "17",
+        "periodStr": "20 APR 2026- 26 APR 2026 ( WEEK 17)",
+        "dateStr": "26-Apr-26",
+        "normalHrs": 64,
+        "wkndHrs": 20.25,
+        "normalOrders": 146,
+        "lndOrders": 40,
+        "cancelCount": 2,
+        "cancelAmt": 5,
+        "bonusAmt": 200,
+        "grossPay": 1372.25,
+        "netPay": 1572.25
+      },
+      {
+        "weekNum": "12",
+        "periodStr": "16 MAR 2026- 22 MAR 2026 ( WEEK 12)",
+        "dateStr": "22-Mar-26",
+        "normalHrs": 44,
+        "wkndHrs": 11,
+        "normalOrders": 105,
+        "lndOrders": 15,
+        "cancelCount": 2,
+        "cancelAmt": 5,
+        "bonusAmt": 50,
+        "grossPay": 866,
+        "netPay": 916
+      },
+      {
+        "weekNum": "13",
+        "periodStr": "23 MAR 2026- 29 MAR 2026 ( WEEK 13)",
+        "dateStr": "29-Mar-26",
+        "normalHrs": 43,
+        "wkndHrs": 12,
+        "normalOrders": 105,
+        "lndOrders": 16,
+        "cancelCount": 3,
+        "cancelAmt": 7.5,
+        "bonusAmt": 50,
+        "grossPay": 876.5,
+        "netPay": 926.5
+      },
+      {
+        "weekNum": "16",
+        "periodStr": "13 APR 2026- 19 APR 2026 ( WEEK 16)",
+        "dateStr": "19-Apr-26",
+        "normalHrs": 65,
+        "wkndHrs": 22,
+        "normalOrders": 145,
+        "lndOrders": 34,
+        "cancelCount": 1,
+        "cancelAmt": 2.5,
+        "bonusAmt": 180,
+        "grossPay": 1335.5,
+        "netPay": 1515.5
+      },
+      {
+        "weekNum": "14",
+        "periodStr": "30 MAR 2026- 5 APR 2026 ( WEEK 14)",
+        "dateStr": "5-Apr-26",
+        "normalHrs": 62.5,
+        "wkndHrs": 21,
+        "normalOrders": 142,
+        "lndOrders": 35,
+        "cancelCount": 2,
+        "cancelAmt": 5,
+        "bonusAmt": 200,
+        "grossPay": 1315,
+        "netPay": 1515
+      },
+      {
+        "weekNum": "15",
+        "periodStr": "6 APR 2026- 12 APR 2026 ( WEEK 15)",
+        "dateStr": "12-Apr-26",
+        "normalHrs": 63,
+        "wkndHrs": 20.5,
+        "normalOrders": 144,
+        "lndOrders": 36,
+        "cancelCount": 3,
+        "cancelAmt": 7.5,
+        "bonusAmt": 200,
+        "grossPay": 1334,
+        "netPay": 1534
+      }
+    ],
+    "bankStatementFiles": [
+      {
+        "month": "2026-04",
+        "startBal": 4584.83,
+        "endBal": 4995.95,
+        "totalInflows": 4622.75,
+        "totalOutflows": 4211.63
+      },
+      {
+        "month": "2026-02",
+        "startBal": 2700,
+        "endBal": 3885,
+        "totalInflows": 4467.6,
+        "totalOutflows": 3282.6
+      },
+      {
+        "month": "2026-03",
+        "startBal": 3885,
+        "endBal": 4584.83,
+        "totalInflows": 3869.42,
+        "totalOutflows": 3169.59
+      }
+    ],
+    "fileChecklist": [
+      {
+        "fileName": "Bank Statement_Apr.pdf",
+        "fileSize": "0.24 MB",
+        "status": "verified",
+        "documentType": "bank_statement",
+        "bankStatementData": {
+          "month": "2026-04",
+          "startBal": 4584.83,
+          "endBal": 4995.95,
+          "totalInflows": 4622.75,
+          "totalOutflows": 4211.63
+        }
+      },
+      {
+        "fileName": "Bank Statement_Feb.pdf",
+        "fileSize": "0.24 MB",
+        "status": "verified",
+        "documentType": "bank_statement",
+        "bankStatementData": {
+          "month": "2026-02",
+          "startBal": 2700,
+          "endBal": 3885,
+          "totalInflows": 4467.6,
+          "totalOutflows": 3282.6
+        }
+      },
+      {
+        "fileName": "Bank Statement_Mar.pdf",
+        "fileSize": "0.24 MB",
+        "status": "verified",
+        "documentType": "bank_statement",
+        "bankStatementData": {
+          "month": "2026-03",
+          "startBal": 3885,
+          "endBal": 4584.83,
+          "totalInflows": 3869.42,
+          "totalOutflows": 3169.59
+        }
+      },
+      {
+        "fileName": "FoodPanda Statement W6.pdf",
+        "fileSize": "0.22 MB",
+        "status": "verified",
+        "documentType": "platform_dashboard",
+        "gigSlipData": {
+          "weekNum": "6",
+          "periodStr": "2 FEB 2026- 8 FEB 2026 ( WEEK 6)",
+          "dateStr": "8-Feb-26",
+          "normalHrs": 64.98,
+          "wkndHrs": 25.98,
+          "normalOrders": 141,
+          "lndOrders": 39,
+          "cancelCount": 3,
+          "cancelAmt": 7.5,
+          "bonusAmt": 180,
+          "grossPay": 1375.32,
+          "netPay": 1555.32
+        }
+      },
+      {
+        "fileName": "FoodPanda Statement W10.pdf",
+        "fileSize": "0.22 MB",
+        "status": "verified",
+        "documentType": "platform_dashboard",
+        "gigSlipData": {
+          "weekNum": "10",
+          "periodStr": "2 MAR 2026- 8 MAR 2026 ( WEEK 10)",
+          "dateStr": "8-Mar-26",
+          "normalHrs": 44.5,
+          "wkndHrs": 12,
+          "normalOrders": 102,
+          "lndOrders": 22,
+          "cancelCount": 1,
+          "cancelAmt": 2.5,
+          "bonusAmt": 50,
+          "grossPay": 904.5,
+          "netPay": 954.5
+        }
+      },
+      {
+        "fileName": "FoodPanda Statement W7.pdf",
+        "fileSize": "0.22 MB",
+        "status": "verified",
+        "documentType": "platform_dashboard",
+        "gigSlipData": {
+          "weekNum": "7",
+          "periodStr": "9 FEB 2026- 15 FEB 2026 ( WEEK 7)",
+          "dateStr": "15-Feb-26",
+          "normalHrs": 65,
+          "wkndHrs": 23,
+          "normalOrders": 141,
+          "lndOrders": 35,
+          "cancelCount": 2,
+          "cancelAmt": 5,
+          "bonusAmt": 200,
+          "grossPay": 1330,
+          "netPay": 1530
+        }
+      },
+      {
+        "fileName": "FoodPanda Statement W11.pdf",
+        "fileSize": "0.22 MB",
+        "status": "verified",
+        "documentType": "platform_dashboard",
+        "gigSlipData": {
+          "weekNum": "11",
+          "periodStr": "9 MAR 2026- 15 MAR 2026 ( WEEK 11)",
+          "dateStr": "15-Mar-26",
+          "normalHrs": 42,
+          "wkndHrs": 10.5,
+          "normalOrders": 101,
+          "lndOrders": 20,
+          "cancelCount": 2,
+          "cancelAmt": 5,
+          "bonusAmt": 50,
+          "grossPay": 870.5,
+          "netPay": 920.5
+        }
+      },
+      {
+        "fileName": "FoodPanda Statement W8.pdf",
+        "fileSize": "0.22 MB",
+        "status": "verified",
+        "documentType": "platform_dashboard",
+        "gigSlipData": {
+          "weekNum": "8",
+          "periodStr": "16 FEB 2026- 22 FEB 2026 ( WEEK 8)",
+          "dateStr": "22-Feb-26",
+          "normalHrs": 50.5,
+          "wkndHrs": 23,
+          "normalOrders": 141,
+          "lndOrders": 36,
+          "cancelCount": 3,
+          "cancelAmt": 7.5,
+          "bonusAmt": 100,
+          "grossPay": 1281.5,
+          "netPay": 1381.5
+        }
+      },
+      {
+        "fileName": "FoodPanda Statement W9.pdf",
+        "fileSize": "0.22 MB",
+        "status": "verified",
+        "documentType": "platform_dashboard",
+        "gigSlipData": {
+          "weekNum": "9",
+          "periodStr": "23 FEB 2026- 1 MAR 2026 ( WEEK 9)",
+          "dateStr": "1-Mar-26",
+          "normalHrs": 45.58,
+          "wkndHrs": 10,
+          "normalOrders": 100,
+          "lndOrders": 20,
+          "cancelCount": 2,
+          "cancelAmt": 5,
+          "bonusAmt": 200,
+          "grossPay": 877.32,
+          "netPay": 1077.32
+        }
+      },
+      {
+        "fileName": "FoodPanda Statement W17.pdf",
+        "fileSize": "0.22 MB",
+        "status": "verified",
+        "documentType": "platform_dashboard",
+        "gigSlipData": {
+          "weekNum": "17",
+          "periodStr": "20 APR 2026- 26 APR 2026 ( WEEK 17)",
+          "dateStr": "26-Apr-26",
+          "normalHrs": 64,
+          "wkndHrs": 20.25,
+          "normalOrders": 146,
+          "lndOrders": 40,
+          "cancelCount": 2,
+          "cancelAmt": 5,
+          "bonusAmt": 200,
+          "grossPay": 1372.25,
+          "netPay": 1572.25
+        }
+      },
+      {
+        "fileName": "FoodPanda Statement W12.pdf",
+        "fileSize": "0.22 MB",
+        "status": "verified",
+        "documentType": "platform_dashboard",
+        "gigSlipData": {
+          "weekNum": "12",
+          "periodStr": "16 MAR 2026- 22 MAR 2026 ( WEEK 12)",
+          "dateStr": "22-Mar-26",
+          "normalHrs": 44,
+          "wkndHrs": 11,
+          "normalOrders": 105,
+          "lndOrders": 15,
+          "cancelCount": 2,
+          "cancelAmt": 5,
+          "bonusAmt": 50,
+          "grossPay": 866,
+          "netPay": 916
+        }
+      },
+      {
+        "fileName": "FoodPanda Statement W13.pdf",
+        "fileSize": "0.22 MB",
+        "status": "verified",
+        "documentType": "platform_dashboard",
+        "gigSlipData": {
+          "weekNum": "13",
+          "periodStr": "23 MAR 2026- 29 MAR 2026 ( WEEK 13)",
+          "dateStr": "29-Mar-26",
+          "normalHrs": 43,
+          "wkndHrs": 12,
+          "normalOrders": 105,
+          "lndOrders": 16,
+          "cancelCount": 3,
+          "cancelAmt": 7.5,
+          "bonusAmt": 50,
+          "grossPay": 876.5,
+          "netPay": 926.5
+        }
+      },
+      {
+        "fileName": "FoodPanda Statement W16.pdf",
+        "fileSize": "0.22 MB",
+        "status": "verified",
+        "documentType": "platform_dashboard",
+        "gigSlipData": {
+          "weekNum": "16",
+          "periodStr": "13 APR 2026- 19 APR 2026 ( WEEK 16)",
+          "dateStr": "19-Apr-26",
+          "normalHrs": 65,
+          "wkndHrs": 22,
+          "normalOrders": 145,
+          "lndOrders": 34,
+          "cancelCount": 1,
+          "cancelAmt": 2.5,
+          "bonusAmt": 180,
+          "grossPay": 1335.5,
+          "netPay": 1515.5
+        }
+      },
+      {
+        "fileName": "FoodPanda Statement W14.pdf",
+        "fileSize": "0.22 MB",
+        "status": "verified",
+        "documentType": "platform_dashboard",
+        "gigSlipData": {
+          "weekNum": "14",
+          "periodStr": "30 MAR 2026- 5 APR 2026 ( WEEK 14)",
+          "dateStr": "5-Apr-26",
+          "normalHrs": 62.5,
+          "wkndHrs": 21,
+          "normalOrders": 142,
+          "lndOrders": 35,
+          "cancelCount": 2,
+          "cancelAmt": 5,
+          "bonusAmt": 200,
+          "grossPay": 1315,
+          "netPay": 1515
+        }
+      },
+      {
+        "fileName": "FoodPanda Statement W15.pdf",
+        "fileSize": "0.22 MB",
+        "status": "verified",
+        "documentType": "platform_dashboard",
+        "gigSlipData": {
+          "weekNum": "15",
+          "periodStr": "6 APR 2026- 12 APR 2026 ( WEEK 15)",
+          "dateStr": "12-Apr-26",
+          "normalHrs": 63,
+          "wkndHrs": 20.5,
+          "normalOrders": 144,
+          "lndOrders": 36,
+          "cancelCount": 3,
+          "cancelAmt": 7.5,
+          "bonusAmt": 200,
+          "grossPay": 1334,
+          "netPay": 1534
+        }
+      },
+      {
+        "fileName": "IC contoh VER 01.png",
+        "fileSize": "0.02 MB",
+        "status": "verified",
+        "documentType": "mykad_id"
+      },
+      {
+        "fileName": "EPF.pdf",
+        "fileSize": "0.43 MB",
+        "status": "verified",
+        "documentType": "tax_epf"
+      }
+    ],
+    "targetLoanPurpose": "personal_cash",
+    "targetLoanAmount": 5000,
+    "tenureYears": 1,
+    "downpaymentAmount": 500
+  },
+  "report": {
+    "score": 710,
+    "grade": "A",
+    "status": "Approved",
+    "dsr": 0,
+    "volatilityIndex": 0.07518420572307928,
+    "incomeConcentrationHhi": 0.9996494369350639,
+    "runwayMonths": 1.9222799882604504,
+    "explanations": [
+      {
+        "factor": "Net Income Volume",
+        "change": 120,
+        "reason": "Average monthly income is RM 4319.92 (Middle income bracket).",
+        "type": "positive"
+      },
+      {
+        "factor": "Cash Flow Stability",
+        "change": 150,
+        "reason": "Income volatility index is extremely low (7.5%). Excellent predictability.",
+        "type": "positive"
+      },
+      {
+        "factor": "Debt Service Ratio (DSR)",
+        "change": 100,
+        "reason": "No active debt obligations detected in transaction narratives. Excellent capacity.",
+        "type": "positive"
+      },
+      {
+        "factor": "Downpayment Margin",
+        "change": -50,
+        "reason": "High risk: Downpayment margin is only 9.1% (Below 10% target). Higher default risk.",
+        "type": "negative"
+      },
+      {
+        "factor": "Income Diversification",
+        "change": 15,
+        "reason": "Income concentrated on a single digital platform. Vulnarable to gig policy changes.",
+        "type": "neutral"
+      },
+      {
+        "factor": "Liquidity Reserves",
+        "change": 35,
+        "reason": "Liquid reserves cover 1.9 months of expenses. Standard buffer.",
+        "type": "positive"
+      },
+      {
+        "factor": "Positive Payment Indicators",
+        "change": 40,
+        "reason": "Credit for responsible trends: Utilities: MAXIS, Savings/Investments: EPF.",
+        "type": "positive"
+      }
+    ],
+    "complianceDeclaration": {
+      "ftfcCompliant": true,
+      "rmitAudited": true,
+      "amlScanned": true,
+      "crmStatus": "pass"
+    },
+    "monthlySurplus": 1934.8233333333333,
+    "estimatedInstallment": 458,
+    "postLoanBuffer": 1476.8233333333333,
+    "affordabilityStatus": "Strong"
+  },
+  "hash": "661e6600ecd3371b59a091a0a08e2d4e24217164044f0b4d8784b1be7d2b97ee"
+}
