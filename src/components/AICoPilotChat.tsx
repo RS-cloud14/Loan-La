@@ -54,6 +54,49 @@ interface AICoPilotChatProps {
   onStartAssessmentWithFile: (fileData: { fileName: string; fileType: string; fileSize: string; fileBase64: string; category: 'bank_statement' | 'platform_dashboard' | 'tax_epf' | 'mykad_id' | 'pay_slip' }) => void;
 }
 
+function cleanSpeechDuplicates(raw: string): string {
+  if (!raw) return '';
+  let text = raw.replace(/\s+/g, ' ').trim();
+  if (!text) return '';
+
+  // 1. Remove exact duplicate adjacent sentences / clauses
+  const sentences = text.split(/(?<=[.?!])\s+/);
+  if (sentences.length > 1) {
+    const deduped: string[] = [];
+    for (let i = 0; i < sentences.length; i++) {
+      if (i === 0 || sentences[i].toLowerCase() !== sentences[i - 1].toLowerCase()) {
+        deduped.push(sentences[i]);
+      }
+    }
+    text = deduped.join(' ');
+  }
+
+  // 2. Remove repeating multi-word phrases (common mobile speech recognition buffer repetition bug)
+  let words = text.split(' ').filter(Boolean);
+  if (words.length > 3) {
+    let modified = true;
+    let passes = 0;
+    while (modified && passes < 3) {
+      modified = false;
+      passes++;
+      for (let len = Math.min(Math.floor(words.length / 2), 15); len >= 2; len--) {
+        for (let i = 0; i <= words.length - 2 * len; i++) {
+          const chunk1 = words.slice(i, i + len).join(' ').toLowerCase();
+          const chunk2 = words.slice(i + len, i + 2 * len).join(' ').toLowerCase();
+          if (chunk1 === chunk2 && chunk1.length > 2) {
+            words.splice(i + len, len);
+            modified = true;
+            i--;
+          }
+        }
+      }
+    }
+    text = words.join(' ');
+  }
+
+  return text.trim();
+}
+
 function AILogoIcon({ className = "w-5 h-5" }: { className?: string }) {
   return (
     <svg 
@@ -700,11 +743,21 @@ export default function AICoPilotChat({
           recog.onresult = (event: any) => {
             if (isAgentSpeakingRef.current) return;
 
-            let fullText = '';
+            let finalTranscript = '';
+            let interimTranscript = '';
             for (let i = 0; i < event.results.length; ++i) {
-              fullText += event.results[i][0].transcript + ' ';
+              const res = event.results[i];
+              if (res.isFinal) {
+                finalTranscript += res[0].transcript + ' ';
+              } else {
+                interimTranscript += res[0].transcript + ' ';
+              }
             }
-            fullText = fullText.trim();
+
+            let fullText = (finalTranscript + ' ' + interimTranscript).trim();
+            fullText = cleanSpeechDuplicates(fullText);
+            if (!fullText) return;
+
             currentAccumulatedSpeechRef.current = fullText;
             setLiveTranscript(fullText);
 
@@ -714,7 +767,7 @@ export default function AICoPilotChat({
             if (wordCount >= 2) {
               silenceTimerRef.current = setTimeout(() => {
                 if (currentAccumulatedSpeechRef.current && isCallActiveRef.current && !isAgentSpeakingRef.current) {
-                  const speechToSubmit = currentAccumulatedSpeechRef.current;
+                  const speechToSubmit = cleanSpeechDuplicates(currentAccumulatedSpeechRef.current);
                   currentAccumulatedSpeechRef.current = '';
                   try { recog.stop(); } catch(e){}
                   processQuery(speechToSubmit, true);
@@ -749,7 +802,7 @@ export default function AICoPilotChat({
   // Submit speech immediately
   const handleCommitCurrentSpeech = () => {
     if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-    const speech = currentAccumulatedSpeechRef.current || liveTranscript;
+    const speech = cleanSpeechDuplicates(currentAccumulatedSpeechRef.current || liveTranscript);
     if (speech && speech.trim()) {
       currentAccumulatedSpeechRef.current = '';
       if (callRecognitionRef.current) {
@@ -823,11 +876,19 @@ export default function AICoPilotChat({
           };
 
           recog.onresult = (event: any) => {
-            let transcript = '';
+            let finalTranscript = '';
+            let interimTranscript = '';
             for (let i = 0; i < event.results.length; ++i) {
-              transcript += event.results[i][0].transcript + ' ';
+              const res = event.results[i];
+              if (res.isFinal) {
+                finalTranscript += res[0].transcript + ' ';
+              } else {
+                interimTranscript += res[0].transcript + ' ';
+              }
             }
-            transcript = transcript.trim();
+
+            let transcript = (finalTranscript + ' ' + interimTranscript).trim();
+            transcript = cleanSpeechDuplicates(transcript);
             if (transcript) {
               setInputMessage(transcript);
             }
@@ -861,7 +922,7 @@ export default function AICoPilotChat({
   };
 
   const handleSendMessage = (customPrompt?: string) => {
-    const text = customPrompt || inputMessage;
+    const text = cleanSpeechDuplicates(customPrompt || inputMessage);
     if (text.toLowerCase().includes('panggilan') || text.toLowerCase().includes('voice call')) {
       handleStartCall();
       return;
