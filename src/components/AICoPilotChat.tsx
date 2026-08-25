@@ -371,8 +371,12 @@ export default function AICoPilotChat({
   const hasInitializedRef = useRef(false);
   const isCallActiveRef = useRef(isCallActive);
   isCallActiveRef.current = isCallActive;
+  const isMutedRef = useRef(isMuted);
+  isMutedRef.current = isMuted;
   const isAgentSpeakingRef = useRef(false);
+  const isRecognitionRunningRef = useRef(false);
   const currentAccumulatedSpeechRef = useRef('');
+  const lastSpeechActivityTimestampRef = useRef<number>(0);
   const cachedVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
 
   // Consistent High-Clarity US Female Voice / Malaysian Voice Lock
@@ -793,73 +797,131 @@ export default function AICoPilotChat({
     }
   };
 
-  // Continuous speech recognition
-  const startCallListening = () => {
-    if (!isCallActiveRef.current || isMuted || isAgentSpeakingRef.current) return;
+  // Continuous, robust speech recognition for Live Voice Call
+  const startCallListening = useCallback(() => {
+    if (!isCallActiveRef.current || isMutedRef.current || isAgentSpeakingRef.current) return;
+    
     setCallStatus('listening');
-    setLiveTranscript('');
-    currentAccumulatedSpeechRef.current = '';
-
     if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
 
-    if (typeof window !== 'undefined') {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (SpeechRecognition) {
-        try {
-          if (callRecognitionRef.current) {
-            try { callRecognitionRef.current.stop(); } catch(e){}
-          }
-          const recog = new SpeechRecognition();
-          recog.continuous = true;
-          recog.interimResults = true;
-          recog.lang = isMalay ? 'ms-MY' : 'en-US';
+    if (typeof window === 'undefined') return;
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
 
-          recog.onresult = (event: any) => {
-            if (isAgentSpeakingRef.current) return;
+    // Safely stop previous instance before creating a clean fresh one
+    if (callRecognitionRef.current) {
+      try {
+        callRecognitionRef.current.onresult = null;
+        callRecognitionRef.current.onend = null;
+        callRecognitionRef.current.onerror = null;
+        callRecognitionRef.current.stop();
+      } catch(e){}
+      callRecognitionRef.current = null;
+    }
 
-            const fullText = parseSpeechRecognitionResults(event.results);
-            if (!fullText) return;
+    try {
+      const recog = new SpeechRecognition();
+      recog.continuous = true;
+      recog.interimResults = true;
+      recog.maxAlternatives = 1;
+      recog.lang = isMalay ? 'ms-MY' : 'en-US';
 
-            currentAccumulatedSpeechRef.current = fullText;
-            setLiveTranscript(fullText);
+      recog.onstart = () => {
+        isRecognitionRunningRef.current = true;
+        setCallStatus('listening');
+      };
 
-            if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-            
-            const wordCount = fullText.split(/\s+/).filter(Boolean).length;
-            if (wordCount >= 2) {
-              silenceTimerRef.current = setTimeout(() => {
-                if (currentAccumulatedSpeechRef.current && isCallActiveRef.current && !isAgentSpeakingRef.current) {
-                  const speechToSubmit = cleanSpeechDuplicates(currentAccumulatedSpeechRef.current);
-                  currentAccumulatedSpeechRef.current = '';
-                  try { recog.stop(); } catch(e){}
-                  processQuery(speechToSubmit, true);
-                }
-              }, 4000);
+      recog.onresult = (event: any) => {
+        if (isAgentSpeakingRef.current) return;
+
+        const fullText = parseSpeechRecognitionResults(event.results);
+        if (!fullText) return;
+
+        lastSpeechActivityTimestampRef.current = Date.now();
+        currentAccumulatedSpeechRef.current = fullText;
+        setLiveTranscript(fullText);
+
+        if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+        
+        const words = fullText.split(/\s+/).filter(Boolean);
+        if (words.length >= 2) {
+          // Check if speech ends with connecting or trailing words where user is likely pausing to formulate numbers
+          const lastWord = words[words.length - 1].toLowerCase().replace(/[^a-z0-9%]/g, '');
+          const trailingKeywords = [
+            'and', 'in', 'at', 'about', 'for', 'with', 'rate', 'interest', 'loan', 'years', 'year', 'to', 'of', 'would', 'be',
+            'dan', 'dalam', 'selama', 'tahun', 'kadar', 'faedah', 'pinjaman', 'sebanyak', 'pada', 'untuk', 'dengan'
+          ];
+          const hasTrailingConnective = trailingKeywords.includes(lastWord);
+
+          // Patient Adaptive Silence Timer: 6000ms if trailing connective word or thinking, otherwise 4500ms
+          const adaptiveSilenceDelay = hasTrailingConnective ? 6000 : 4500;
+
+          silenceTimerRef.current = setTimeout(() => {
+            if (currentAccumulatedSpeechRef.current && isCallActiveRef.current && !isAgentSpeakingRef.current) {
+              const speechToSubmit = cleanSpeechDuplicates(currentAccumulatedSpeechRef.current);
+              currentAccumulatedSpeechRef.current = '';
+              try { recog.stop(); } catch(e){}
+              processQuery(speechToSubmit, true);
             }
-          };
+          }, adaptiveSilenceDelay);
+        }
+      };
 
-          recog.onerror = (e: any) => {
-            console.warn("Call recog notice:", e.error);
-          };
+      recog.onerror = (e: any) => {
+        console.warn("Call speech recog notice:", e.error);
+        if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+          isRecognitionRunningRef.current = false;
+        }
+      };
 
-          recog.onend = () => {
-            if (isCallActiveRef.current && callStatus === 'listening' && !isMuted && !isAgentSpeakingRef.current) {
-              setTimeout(() => {
-                if (isCallActiveRef.current && callStatus === 'listening' && !isMuted && !isAgentSpeakingRef.current) {
-                  try { recog.start(); } catch(e){}
-                }
-              }, 300);
+      recog.onend = () => {
+        isRecognitionRunningRef.current = false;
+        // Graceful auto-restart if call is still active and agent is not speaking
+        if (isCallActiveRef.current && !isMutedRef.current && !isAgentSpeakingRef.current) {
+          setTimeout(() => {
+            if (isCallActiveRef.current && !isMutedRef.current && !isAgentSpeakingRef.current && !isRecognitionRunningRef.current) {
+              startCallListening();
             }
-          };
+          }, 300);
+        }
+      };
 
-          callRecognitionRef.current = recog;
-          recog.start();
-        } catch (e) {
-          console.warn("Call recog init error:", e);
+      callRecognitionRef.current = recog;
+      recog.start();
+    } catch (e) {
+      console.warn("Call recog start error:", e);
+      isRecognitionRunningRef.current = false;
+    }
+  }, [isMalay]);
+
+  // Tab Visibility & Focus Auto-Healer: Re-engage microphone when switching back to tab
+  useEffect(() => {
+    const handleReviveOnFocus = () => {
+      if (document.visibilityState === 'visible' && isCallActiveRef.current && !isAgentSpeakingRef.current && !isMutedRef.current) {
+        if (!isRecognitionRunningRef.current) {
+          startCallListening();
         }
       }
-    }
-  };
+    };
+
+    document.addEventListener('visibilitychange', handleReviveOnFocus);
+    window.addEventListener('focus', handleReviveOnFocus);
+
+    // Keep-alive Heartbeat Watchdog every 2.5 seconds
+    const heartbeatInterval = setInterval(() => {
+      if (isCallActiveRef.current && !isAgentSpeakingRef.current && !isMutedRef.current) {
+        if (!isRecognitionRunningRef.current) {
+          startCallListening();
+        }
+      }
+    }, 2500);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleReviveOnFocus);
+      window.removeEventListener('focus', handleReviveOnFocus);
+      clearInterval(heartbeatInterval);
+    };
+  }, [startCallListening]);
 
   // Submit speech immediately
   const handleCommitCurrentSpeech = () => {
@@ -902,8 +964,15 @@ export default function AICoPilotChat({
     stopSpeaking();
     if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
     if (callRecognitionRef.current) {
-      try { callRecognitionRef.current.stop(); } catch(e){}
+      try { 
+        callRecognitionRef.current.onresult = null;
+        callRecognitionRef.current.onend = null;
+        callRecognitionRef.current.onerror = null;
+        callRecognitionRef.current.stop(); 
+      } catch(e){}
+      callRecognitionRef.current = null;
     }
+    isRecognitionRunningRef.current = false;
     setIsCallActive(false);
     setCallStatus('listening');
     setLiveTranscript('');
@@ -1200,21 +1269,31 @@ export default function AICoPilotChat({
                 {/* Live Visual Stream & HUD Card Container */}
                 <div className="w-full flex-1 max-h-[220px] overflow-y-auto flex flex-col gap-2 my-1 z-10 custom-scrollbar pr-0.5">
                   {/* Live transcript while user is speaking */}
-                  {liveTranscript && (
-                    <div className="p-2.5 bg-slate-900/90 border border-blue-500/30 rounded-xl flex items-center justify-between gap-2 shadow-md animate-fade-in">
-                      <div className="flex items-center gap-1.5 truncate">
-                        <Mic className="w-3.5 h-3.5 text-blue-400 shrink-0 animate-pulse" />
-                        <p className="text-xs text-slate-200 font-medium italic truncate">
+                  {liveTranscript ? (
+                    <div className="p-3 bg-slate-900/95 border border-blue-500/40 rounded-2xl flex items-center justify-between gap-2.5 shadow-lg animate-fade-in ring-1 ring-blue-500/20">
+                      <div className="flex items-center gap-2 min-w-0 flex-1">
+                        <Mic className="w-4 h-4 text-cyan-400 shrink-0 animate-pulse" />
+                        <p className="text-xs text-white font-medium italic truncate">
                           &quot;{liveTranscript}&quot;
                         </p>
                       </div>
                       <button
                         type="button"
                         onClick={handleCommitCurrentSpeech}
-                        className="px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold rounded-lg shrink-0 cursor-pointer shadow-xs active:scale-95"
+                        className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold rounded-xl shrink-0 cursor-pointer shadow-md active:scale-95 flex items-center gap-1"
+                        title={isMalay ? "Hantar Sekarang" : "Send Now"}
                       >
-                        {isMalay ? 'Hantar' : 'Send'}
+                        <span>{isMalay ? 'Selesai' : 'Send'}</span>
+                        <ArrowRight className="w-3 h-3 text-blue-200" />
                       </button>
+                    </div>
+                  ) : callStatus === 'listening' && (
+                    <div className="px-3 py-2 bg-slate-900/40 border border-slate-800/80 rounded-xl text-center">
+                      <span className="text-[10px] text-slate-400">
+                        {isMalay 
+                          ? "Sebut keperluan anda (cth: 'Saya nak pinjam 5000, 5 tahun, 4% faedah')" 
+                          : "Speak naturally (e.g., 'I want a loan of RM 5,000 for 5 years at 4%')"}
+                      </span>
                     </div>
                   )}
 
