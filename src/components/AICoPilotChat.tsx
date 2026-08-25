@@ -378,6 +378,8 @@ export default function AICoPilotChat({
   const currentAccumulatedSpeechRef = useRef('');
   const persistedTurnSpeechRef = useRef('');
   const lastSpeechActivityTimestampRef = useRef<number>(0);
+  const isUserScrollingSubtitlesRef = useRef(false);
+  const userScrollResumeTimerRef = useRef<any>(null);
   const cachedVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
 
   // Consistent High-Clarity US Female Voice / Malaysian Voice Lock
@@ -499,14 +501,16 @@ export default function AICoPilotChat({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // Auto-scroll Call Subtitle Box smoothly as the AI speaks
+  // Auto-scroll Call Subtitle Box smoothly as the AI speaks (Resumes after 4s if user manually scrolls)
   useEffect(() => {
     if (isCallActive && callStatus === 'speaking' && callSubtitleScrollRef.current) {
-      const el = callSubtitleScrollRef.current;
-      const totalLen = Math.max(1, (lastAgentReply || '').length);
-      const ratio = Math.min(1, spokenCharIndex / totalLen);
-      const targetTop = (el.scrollHeight - el.clientHeight) * ratio;
-      el.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
+      if (!isUserScrollingSubtitlesRef.current) {
+        const el = callSubtitleScrollRef.current;
+        const totalLen = Math.max(1, (lastAgentReply || '').length);
+        const ratio = Math.min(1, spokenCharIndex / totalLen);
+        const targetTop = (el.scrollHeight - el.clientHeight) * ratio;
+        el.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
+      }
     }
   }, [spokenCharIndex, isCallActive, callStatus, lastAgentReply]);
 
@@ -832,14 +836,24 @@ export default function AICoPilotChat({
         setCallStatus('listening');
       };
 
-      recog.onsoundstart = () => {
-        // User made a sound (breathing, murmuring, speaking) -> hold the silence timer
+      const scheduleAutoSubmit = (delayMs: number = 3500) => {
         if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+        silenceTimerRef.current = setTimeout(() => {
+          const speechToSubmit = cleanSpeechDuplicates(currentAccumulatedSpeechRef.current || persistedTurnSpeechRef.current);
+          if (speechToSubmit && isCallActiveRef.current && !isAgentSpeakingRef.current) {
+            currentAccumulatedSpeechRef.current = '';
+            persistedTurnSpeechRef.current = '';
+            try { recog.stop(); } catch(e){}
+            processQuery(speechToSubmit, true);
+          }
+        }, delayMs);
       };
 
-      recog.onspeechstart = () => {
-        // User began speaking -> reset silence timer
-        if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+      recog.onspeechend = () => {
+        // User stopped vocalizing -> start the 3.5s countdown to auto-submit
+        if (currentAccumulatedSpeechRef.current || persistedTurnSpeechRef.current) {
+          scheduleAutoSubmit(3500);
+        }
       };
 
       recog.onresult = (event: any) => {
@@ -863,8 +877,6 @@ export default function AICoPilotChat({
         currentAccumulatedSpeechRef.current = fullText;
         setLiveTranscript(fullText);
 
-        if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-        
         const words = fullText.split(/\s+/).filter(Boolean);
         if (words.length >= 1) {
           const lastWord = words[words.length - 1].toLowerCase().replace(/[^a-z0-9%]/g, '');
@@ -881,16 +893,7 @@ export default function AICoPilotChat({
 
           // Standard silence timer: 3.5s (3500ms) if finished; 5.5s (5500ms) if thinking/hesitating with "ur", "ah", etc.
           const waitTimeout = isThinkingOrConnecting ? 5500 : 3500;
-
-          silenceTimerRef.current = setTimeout(() => {
-            if (currentAccumulatedSpeechRef.current && isCallActiveRef.current && !isAgentSpeakingRef.current) {
-              const speechToSubmit = cleanSpeechDuplicates(currentAccumulatedSpeechRef.current);
-              currentAccumulatedSpeechRef.current = '';
-              persistedTurnSpeechRef.current = '';
-              try { recog.stop(); } catch(e){}
-              processQuery(speechToSubmit, true);
-            }
-          }, waitTimeout);
+          scheduleAutoSubmit(waitTimeout);
         }
       };
 
@@ -906,6 +909,10 @@ export default function AICoPilotChat({
         // Save current speech so user pausing doesn't wipe previous words when new utterance begins
         if (currentAccumulatedSpeechRef.current) {
           persistedTurnSpeechRef.current = currentAccumulatedSpeechRef.current;
+          // Ensure auto-submit is scheduled if user is quiet
+          if (!silenceTimerRef.current && isCallActiveRef.current && !isAgentSpeakingRef.current) {
+            scheduleAutoSubmit(3000);
+          }
         }
         // Graceful auto-restart if call is still active and agent is not speaking
         if (isCallActiveRef.current && !isMutedRef.current && !isAgentSpeakingRef.current) {
@@ -1413,6 +1420,13 @@ export default function AICoPilotChat({
                       </div>
                       <div 
                         ref={callSubtitleScrollRef}
+                        onScroll={() => {
+                          isUserScrollingSubtitlesRef.current = true;
+                          if (userScrollResumeTimerRef.current) clearTimeout(userScrollResumeTimerRef.current);
+                          userScrollResumeTimerRef.current = setTimeout(() => {
+                            isUserScrollingSubtitlesRef.current = false;
+                          }, 4000);
+                        }}
                         className="flex-1 text-xs text-slate-100 leading-relaxed max-h-[140px] overflow-y-auto pr-1 custom-scrollbar scroll-smooth"
                       >
                         <FormattedMessage 
