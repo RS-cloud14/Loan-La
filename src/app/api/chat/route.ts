@@ -240,9 +240,14 @@ function parseSpokenAmount(text: string): number | undefined {
 function parseSpokenTenure(text: string): number | undefined {
   const clean = text.toLowerCase();
   
+  // Exclude age expressions ("10 years old", "5yo") and time-ago expressions ("5 years ago", "tahun lepas")
+  const sanitized = clean
+    .replace(/\b\d+\s*(?:years?\s*old|yo|yr\s*old)\b/gi, ' ')
+    .replace(/\b\d+\s*(?:years?\s*ago|tahun\s*lepas|months?\s*ago|bulan\s*lepas)\b/gi, ' ');
+
   // 1. Numeric tenures: e.g. "5 years", "5 tahun", "5 thn", "5 yr", "5 yrs", "60 months", "60 bulan", "for 5 years", "selama 5 tahun"
-  const tenureMatch = clean.match(/(\d+(?:\.\d+)?)\s*(year|years|yr|yrs|tahun|thn|month|months|mth|mths|bulan|bln)\b/i) ||
-                      clean.match(/(?:selama|dalam|tempoh|for|in|tenure\s*(?:of)?)\s*(\d+(?:\.\d+)?)\s*(year|years|yr|yrs|tahun|thn|month|months|mth|mths|bulan|bln)?/i);
+  const tenureMatch = sanitized.match(/(\d+(?:\.\d+)?)\s*(year|years|yr|yrs|tahun|thn|month|months|mth|mths|bulan|bln)\b/i) ||
+                      sanitized.match(/(?:selama|dalam|tempoh|for|in|tenure\s*(?:of)?)\s*(\d+(?:\.\d+)?)\s*(year|years|yr|yrs|tahun|thn|month|months|mth|mths|bulan|bln)?/i);
   if (tenureMatch) {
     const val = parseFloat(tenureMatch[1]);
     const unit = (tenureMatch[2] || '').toLowerCase();
@@ -260,7 +265,7 @@ function parseSpokenTenure(text: string): number | undefined {
   };
 
   for (const [w, yrs] of Object.entries(wordTenure)) {
-    if (clean.includes(w + ' year') || clean.includes(w + ' yr') || clean.includes(w + ' tahun') || clean.includes(w + ' thn') || clean.includes('selama ' + w) || clean.includes('for ' + w + ' years')) {
+    if (sanitized.includes(w + ' year') || sanitized.includes(w + ' yr') || sanitized.includes(w + ' tahun') || sanitized.includes(w + ' thn') || sanitized.includes('selama ' + w) || sanitized.includes('for ' + w + ' years')) {
       return yrs;
     }
   }
@@ -358,11 +363,47 @@ export async function POST(request: NextRequest) {
     const dynamicMaxMonthly = isUserLoggedIn ? (userContext.maxSafeMonthlyPay || (dynamicIncome ? Math.round(dynamicIncome * 0.35) : 1750)) : 0;
 
     // 1. Language Switching
-    if (lastMsgLower.includes('language') || lastMsgLower.includes('bahasa') || lastMsgLower.includes('tukar bahasa') || lastMsgLower.includes('switch to malay') || lastMsgLower.includes('switch to english') || lastMsgLower.includes('cakap melayu') || lastMsgLower.includes('speak english')) {
-      const targetLang = (lastMsgLower.includes('malay') || lastMsgLower.includes('melayu') || lastMsgLower.includes('bm') || lastMsgLower.includes('cakap melayu')) ? 'bm' : 'en';
+    const isChangeToMalay = (
+      lastMsgLower.includes('change to malay') ||
+      lastMsgLower.includes('switch to malay') ||
+      lastMsgLower.includes('speak in malay') ||
+      lastMsgLower.includes('speak malay') ||
+      lastMsgLower.includes('in malay') ||
+      lastMsgLower.includes('cakap melayu') ||
+      lastMsgLower.includes('tukar bahasa') ||
+      lastMsgLower.includes('tukar ke melayu') ||
+      lastMsgLower.includes('bahasa melayu') ||
+      lastMsgLower.includes('malay please') ||
+      lastMsgLower.includes('change to bm') ||
+      lastMsgLower.includes('switch to bm') ||
+      lastMsgLower.includes('guna bahasa melayu') ||
+      lastMsgLower.includes('dalam bahasa melayu') ||
+      (lastMsgLower.includes('change') && lastMsgLower.includes('malay')) ||
+      (lastMsgLower.includes('switch') && lastMsgLower.includes('malay')) ||
+      (lastMsgLower.includes('tukar') && (lastMsgLower.includes('bahasa') || lastMsgLower.includes('melayu')))
+    );
+
+    const isChangeToEnglish = (
+      lastMsgLower.includes('change to english') ||
+      lastMsgLower.includes('switch to english') ||
+      lastMsgLower.includes('speak in english') ||
+      lastMsgLower.includes('speak english') ||
+      lastMsgLower.includes('in english') ||
+      lastMsgLower.includes('cakap english') ||
+      lastMsgLower.includes('english please') ||
+      lastMsgLower.includes('change to en') ||
+      lastMsgLower.includes('switch to en') ||
+      lastMsgLower.includes('dalam bahasa inggeris') ||
+      (lastMsgLower.includes('change') && lastMsgLower.includes('english')) ||
+      (lastMsgLower.includes('switch') && lastMsgLower.includes('english')) ||
+      (lastMsgLower.includes('tukar') && lastMsgLower.includes('english'))
+    );
+
+    if (isChangeToMalay || isChangeToEnglish || (lastMsgLower.includes('language') && (lastMsgLower.includes('change') || lastMsgLower.includes('switch') || lastMsgLower.includes('tukar')))) {
+      const targetLang = isChangeToMalay ? 'bm' : (isChangeToEnglish ? 'en' : (lastMsgLower.includes('malay') || lastMsgLower.includes('melayu') || lastMsgLower.includes('bm') ? 'bm' : 'en'));
       const reply = targetLang === 'bm'
-        ? "Bahasa ditukar kepada Bahasa Melayu."
-        : "Language switched to English.";
+        ? "Bahasa ditukar kepada Bahasa Melayu. Bagaimana saya boleh bantu anda hari ini?"
+        : "Language switched to English. How can I help you today?";
       return NextResponse.json({
         success: true,
         reply,
@@ -370,6 +411,47 @@ export async function POST(request: NextRequest) {
         suggestions: targetLang === 'bm' 
           ? ["Kalkulator", "Keperluan Pinjaman", "Direktori Bank"]
           : ["Calculator", "Loan Need Setup", "Bank Directory"]
+      });
+    }
+
+    // 1B. Educational Intent: Explain DSR & Credit Score (e.g. "what is DSR", "explain credit score", "like 10 years old", "apa itu DSR")
+    const isDsrOrScoreEducationalQuery = (
+      (lastMsgLower.includes('dsr') || lastMsgLower.includes('debt service') || lastMsgLower.includes('nisbah khidmat') || lastMsgLower.includes('credit score') || lastMsgLower.includes('skor kredit')) &&
+      (lastMsgLower.includes('what is') || lastMsgLower.includes('what are') || lastMsgLower.includes('apa itu') || lastMsgLower.includes('maksud') || lastMsgLower.includes('explain') || lastMsgLower.includes('terangkan') || lastMsgLower.includes('like 10 years old') || lastMsgLower.includes('like 5 years old') || lastMsgLower.includes('macam mana') || lastMsgLower.includes('how does') || lastMsgLower.includes('tell me about'))
+    );
+
+    if (isDsrOrScoreEducationalQuery) {
+      const reply = isMalay
+        ? `🧸 **Maksud DSR & Skor Kredit (Penerangan Mudah & Jelas):**\n\n🎯 **1. Skor Kredit (Gred Laporan Kewangan Anda):**\n• Bayangkan Skor Kredit (cth: 700 / 1000) seperti markah peperiksaan sekolah! Gred A memberitahu bank bahawa anda peminjam yang berdisiplin dan sentiasa menguruskan wang dengan baik.\n• Skor yang tinggi memudahkan anda mendapat kelulusan pinjaman dengan kadar faedah yang lebih murah.\n\n💰 **2. DSR - Nisbah Khidmat Hutang (Peraturan Wang Saku):**\n• Contohnya, jika anda menjana RM 1,000 sebulan dan membayar ansuran hutang RM 300 sebulan, DSR anda ialah 30%.\n• Bank Negara Malaysia (BNM) menetapkan had DSR selamat maksimum **35%** untuk pembiayaan peribadi supaya anda sentiasa mempunyai baki wang secukupnya untuk makanan, sewa, dan simpanan kecemasan!\n\n✨ Loan - La menilai penyata bank anda untuk mengira DSR selamat ini secara automatik tanpa menjejaskan rekod CCRIS anda.`
+        : `🧸 **What DSR & Credit Score Mean (Simple Everyday Terms!):**\n\n🎯 **1. Credit Score (Your Financial Report Card):**\n• Think of your Credit Score (e.g. 700 / 1000) like a school exam grade! A high score (Grade A) tells banks: *"This borrower manages cashflow responsibly and always repays on time!"*\n• When your score is high, banks approve loans faster with lower interest rates.\n\n💰 **2. DSR - Debt Service Ratio (Your Pocket Money Rule):**\n• Imagine you earn RM 1,000 every month. If you pay RM 300 for commitments, your DSR is 30%.\n• Bank Negara Malaysia guidelines recommend keeping your DSR below **35%** so you always have plenty of buffer for living expenses, food, and savings without financial strain!\n\n✨ At Loan - La, we analyze your bank cashflow to automatically calculate your safe borrowing capacity and match you with licensed lenders.`;
+
+      return NextResponse.json({
+        success: true,
+        reply,
+        suggestions: isMalay 
+          ? ["Kalkulator Ansuran", "Keperluan Pinjaman", "Direktori Bank"]
+          : ["Loan Calculator", "Set Loan Purpose", "Bank Directory"]
+      });
+    }
+
+    // 1C. Beginner Guide: First-time applicant / Step 1 guide
+    const isBeginnerFirstStepQuery = (
+      (lastMsgLower.includes('first time') || lastMsgLower.includes('pertama kali') || lastMsgLower.includes('baru nak') || lastMsgLower.includes('macam mana nak mula') || lastMsgLower.includes('how to start') || lastMsgLower.includes('how to apply')) &&
+      (lastMsgLower.includes('step') || lastMsgLower.includes('langkah') || lastMsgLower.includes('buat') || lastMsgLower.includes('mohon') || lastMsgLower.includes('apply') || lastMsgLower.includes('loan') || lastMsgLower.includes('pinjaman'))
+    );
+
+    if (isBeginnerFirstStepQuery) {
+      const reply = isMalay
+        ? `👋 **Panduan Langkah Pertama Permohonan Pinjaman di Loan - La:**\n\n1. **Langkah 1: Tetapkan Keperluan Pinjaman (Loan Need)**\n• Masukkan jumlah pinjaman yang anda perlukan (cth: RM 5,000) dan tempoh bayaran balik (1–5 tahun).\n\n2. **Langkah 2: Muat Naik Penyata Bank / Slip Pendapatan Gig (Upload Statement)**\n• Muat naik penyata bank 3–6 bulan (Maybank, CIMB, Touch 'n Go, Shopee, Grab dsb.) dalam format PDF.\n\n3. **Langkah 3: Semak Pasport Kredit & Padanan Bank**\n• AI kami akan menilai aliran tunai anda untuk menjana skor kredit dan memadankan anda terus dengan bank digital berlesen (GXBank, Boost Bank, AEON Credit).\n\nBolehkah saya bantu anda membuka Langkah 1 sekarang?`
+        : `👋 **First-Time Loan Applicant Quick Guide on Loan - La:**\n\n1. **Step 1: Set Your Loan Need & Purpose**\n• Choose your target loan amount (e.g. RM 5,000) and repayment tenure (1–5 years).\n\n2. **Step 2: Upload Bank Statements / Gig Inflow (Upload Statement)**\n• Upload 3–6 months of bank or e-wallet statements (Maybank, CIMB, Shopee, Grab, TNG, etc.) in PDF.\n\n3. **Step 3: Get Your Credit Passport & Matched Banks**\n• Our AI engine analyzes your cashflow to generate your verified credit score and matches you with licensed digital lenders (GXBank, Boost Bank, AEON Credit).\n\nShall I open Step 1 for you right now?`;
+
+      return NextResponse.json({
+        success: true,
+        reply,
+        action: { type: 'NAVIGATE_LOAN_NEED' },
+        suggestions: isMalay 
+          ? ["Mula Langkah 1", "Kalkulator Ansuran", "Direktori Bank"]
+          : ["Start Step 1", "Loan Calculator", "Bank Directory"]
       });
     }
 

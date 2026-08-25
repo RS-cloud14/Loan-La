@@ -124,10 +124,17 @@ function cleanSpeechDuplicates(raw: string): string {
 
   // 5. Malaysian Manglish & Bahasa Rojak Phonetic Normalization
   text = text
+    .replace(/\b(?:i\s*bought|i\s*boat|i\s*board|i\s*bot)\s*(?:personal\s*loan|loan|pinjaman)\b/gi, 'nak buat personal loan')
+    .replace(/\b(?:upper\s*step|a\s*part\s*step|up\s*step)\b/gi, 'apa step')
+    .replace(/\b(?:step|langkah)\s*(?:tumble|part\s*timer|tamba|tamana|per\s*tamam)\b/gi, '$1 pertama')
+    .replace(/\b(?:so\s*you\s*bought|so\s*you\s*boat|sir\s*you\s*bought|so\s*your\s*part)\b/gi, 'saya patut buat')
     .replace(/\bnak\s*(?:play|supply|ape|plei)\b/gi, 'nak apply')
     .replace(/\b(?:mau|mohon|buat)\s*(?:lon|luen)\b/gi, 'nak apply loan')
     .replace(/\b(?:interes|interset|inte\s*rest)\s*rate\b/gi, 'interest rate')
-    .replace(/\b(?:kalkulat|kalkulate)\b/gi, 'calculate');
+    .replace(/\b(?:kalkulat|kalkulate)\b/gi, 'calculate')
+    .replace(/\b(?:the\s*sr|d\s*s\s*r|ds\s*are|d\s*s\s*are)\b/gi, 'DSR')
+    .replace(/\b(?:c\s*cris|see\s*cris|c\s*crisp|sekris)\b/gi, 'CCRIS')
+    .replace(/\b(?:c\s*tos|see\s*tos|c\s*toss)\b/gi, 'CTOS');
 
   return text.trim();
 }
