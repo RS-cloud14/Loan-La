@@ -256,14 +256,16 @@ function parseSpokenAmount(text: string): number | undefined {
 function parseSpokenTenure(text: string): number | undefined {
   const clean = text.toLowerCase();
   
-  // Exclude age expressions ("10 years old", "5yo") and time-ago expressions ("5 years ago", "tahun lepas")
+  // Exclude age expressions ("10 years old", "5yo"), time-ago expressions ("5 years ago", "tahun lepas"), and arithmetic equations ("2+3+7", "2 + 3")
   const sanitized = clean
     .replace(/\b\d+\s*(?:years?\s*old|yo|yr\s*old)\b/gi, ' ')
-    .replace(/\b\d+\s*(?:years?\s*ago|tahun\s*lepas|months?\s*ago|bulan\s*lepas)\b/gi, ' ');
+    .replace(/\b\d+\s*(?:years?\s*ago|tahun\s*lepas|months?\s*ago|bulan\s*lepas)\b/gi, ' ')
+    .replace(/\b\d+(?:\.\d+)?\s*[\+\-\*\/]\s*\d+(?:\.\d+)?(?:\s*[\+\-\*\/]\s*\d+(?:\.\d+)?)*\b/g, ' ');
 
-  // 1. Numeric tenures: e.g. "5 years", "5 tahun", "5 thn", "5 yr", "5 yrs", "60 months", "60 bulan", "for 5 years", "selama 5 tahun"
+  // 1. Numeric tenures: e.g. "5 years", "5 tahun", "5 thn", "5 yr", "5 yrs", "60 months", "60 bulan", "for 5 years", "selama 5 tahun", "tenure of 5", "tempoh 5"
   const tenureMatch = sanitized.match(/(\d+(?:\.\d+)?)\s*(year|years|yr|yrs|tahun|thn|month|months|mth|mths|bulan|bln)\b/i) ||
-                      sanitized.match(/(?:selama|dalam|tempoh|for|in|tenure\s*(?:of)?)\s*(\d+(?:\.\d+)?)\s*(year|years|yr|yrs|tahun|thn|month|months|mth|mths|bulan|bln)?/i);
+                      sanitized.match(/(?:selama|dalam|tempoh|for|in|tenure\s*(?:of)?)\s*(\d+(?:\.\d+)?)\s*(year|years|yr|yrs|tahun|thn|month|months|mth|mths|bulan|bln)\b/i) ||
+                      sanitized.match(/(?:tenure\s*(?:of)?|tempoh\s*(?:pinjaman)?)\s*(\d+(?:\.\d+)?)\b/i);
   if (tenureMatch) {
     const val = parseFloat(tenureMatch[1]);
     const unit = (tenureMatch[2] || '').toLowerCase();
@@ -281,7 +283,7 @@ function parseSpokenTenure(text: string): number | undefined {
   };
 
   for (const [w, yrs] of Object.entries(wordTenure)) {
-    if (sanitized.includes(w + ' year') || sanitized.includes(w + ' yr') || sanitized.includes(w + ' tahun') || sanitized.includes(w + ' thn') || sanitized.includes('selama ' + w) || sanitized.includes('for ' + w + ' years')) {
+    if (sanitized.includes(w + ' year') || sanitized.includes(w + ' yr') || sanitized.includes(w + ' tahun') || sanitized.includes(w + ' thn') || sanitized.includes('selama ' + w + ' tahun') || sanitized.includes('for ' + w + ' years')) {
       return yrs;
     }
   }
@@ -505,6 +507,36 @@ export async function POST(request: NextRequest) {
           ? ["Kalkulator Ansuran", "Keperluan Pinjaman", "Direktori Bank"]
           : ["Loan Calculator", "Set Loan Purpose", "Bank Directory"]
       });
+    }
+
+    // 1C2. Simple Arithmetic Math Handler (e.g. "what is the result for 2+3+7", "kira 2+3+7", "2+3+7 equal to")
+    const mathMatch = lastMsgLower.match(/(?:result\s*(?:for|of)?|kira|calculate|what\s*is|berapa|result)?\s*(\d+(?:\.\d+)?\s*(?:[\+\-\*\/]\s*\d+(?:\.\d+)?)+)/i);
+    const isPureMathQuery = mathMatch && !lastMsgLower.includes('rm') && !lastMsgLower.includes('ringgit') && !lastMsgLower.includes('interest') && !lastMsgLower.includes('rate') && !lastMsgLower.includes('tenure') && !lastMsgLower.includes('ansuran') && !lastMsgLower.includes('bulan');
+
+    if (isPureMathQuery && mathMatch[1]) {
+      const expr = mathMatch[1].trim();
+      let mathResult: number | null = null;
+      try {
+        // Safe arithmetic evaluator
+        // eslint-disable-next-line no-new-func
+        mathResult = Function(`'use strict'; return (${expr.replace(/[^0-9\+\-\*\/\.]/g, '')})`)();
+      } catch (e) {
+        mathResult = null;
+      }
+
+      if (mathResult !== null && !isNaN(mathResult)) {
+        const reply = isMalay
+          ? `Hasil kiraan matematik bagi **${expr}** ialah **${mathResult}**.\n\n💡 *Nota: Untuk pengiraan ansuran pinjaman peribadi atau perniagaan, anda boleh memasukkan jumlah pembiayaan (cth: RM 10,000), tempoh (cth: 3 tahun), dan kadar faedah (cth: 5.5%).*`
+          : `The result of **${expr}** is **${mathResult}**.\n\n💡 *Note: For loan repayment calculations, please specify your financing amount (e.g. RM 10,000), tenure (e.g. 3 years), and interest rate (e.g. 5.5%).*`;
+
+        return NextResponse.json({
+          success: true,
+          reply,
+          suggestions: isMalay 
+            ? ["Kalkulator Ansuran", "Keperluan Pinjaman", "Direktori Bank"]
+            : ["Loan Calculator", "Set Loan Purpose", "Bank Directory"]
+        });
+      }
     }
 
     // Multi-turn context inspection
