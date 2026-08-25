@@ -79,121 +79,152 @@ function normalizeSpokenMalayDecimals(text: string): string {
   return res;
 }
 
-// Advanced Spoken Words to Number Converter
-function parseWordsToNumber(text: string): number | undefined {
-  const clean = text.toLowerCase()
-    .replace(/thousands/g, 'thousand')
-    .replace(/hundreds/g, 'hundred')
-    .replace(/puluh-puluh/g, 'puluh')
-    .replace(/ratus-ratus/g, 'ratus')
-    .replace(/ribu-ribu/g, 'ribu');
-
-  const numberWords: Record<string, number> = {
-    zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9,
-    ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15, sixteen: 16,
-    seventeen: 17, eighteen: 18, nineteen: 19, twenty: 20, thirty: 30, forty: 40, fifty: 50,
-    sixty: 60, seventy: 70, eighty: 80, ninety: 90,
-    satu: 1, se: 1, dua: 2, tiga: 3, empat: 4, lima: 5, enam: 6, tujuh: 7, lapan: 8, sembilan: 9,
-    sepuluh: 10, sebelas: 11, belas: 10, seratus: 100, seribu: 1000,
-    'dua puluh': 20, 'tiga puluh': 30, 'empat puluh': 40, 'lima puluh': 50,
-    'enam puluh': 60, 'tujuh puluh': 70, 'lapan puluh': 80, 'sembilan puluh': 90
-  };
-
-  const tokens = clean.split(/[\s-]+/);
-  let total = 0;
-  let current = 0;
-  let foundAny = false;
-
-  for (let i = 0; i < tokens.length; i++) {
-    const t = tokens[i];
-    if (t === 'and') continue;
-
-    if (t === 'thousand' || t === 'ribu' || t === 'k') {
-      if (current === 0) current = 1;
-      total += current * 1000;
-      current = 0;
-      foundAny = true;
-    } else if (t === 'hundred' || t === 'ratus') {
-      if (current === 0) current = 1;
-      current = current * 100;
-      foundAny = true;
-    } else if (t === 'puluh') {
-      if (current > 0 && current < 10) {
-        current = current * 10;
-      } else {
-        current = 10;
-      }
-      foundAny = true;
-    } else if (t === 'belas') {
-      if (current > 0 && current < 10) {
-        current = 10 + current;
-      } else {
-        current = 10;
-      }
-      foundAny = true;
-    } else if (numberWords[t] !== undefined) {
-      current += numberWords[t];
-      foundAny = true;
-    } else if (foundAny) {
-      break;
-    }
-  }
-
-  const result = total + current;
-  if (foundAny && result >= 500 && result <= 1000000) {
-    return result;
-  }
-  return undefined;
-}
-
-// Robust Spoken Amount Parser
+// Advanced Spoken Malay & English Amount Parser (Supports compound spoken numbers like "10,000 500 and 27")
 function parseSpokenAmount(text: string): number | undefined {
-  const clean = text.toLowerCase();
-  
-  // 1. Currency prefix or suffix: RM / Ringgit / MYR (e.g. "RM 57,000", "57,000 ringgit", "57,000 ringgit malaysia", "57k myr")
-  const currencyMatch = clean.match(/(?:rm|myr)\s*(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)\s*(k|ribu|thousand)?/i) ||
-                        clean.match(/(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)\s*(k|ribu|thousand)?\s*(?:ringgit(?:\s*malaysia)?|myr|rm)/i);
-  if (currencyMatch && currencyMatch[1]) {
-    let val = parseFloat(currencyMatch[1].replace(/,/g, ''));
-    const unit = currencyMatch[2]?.toLowerCase();
-    if (unit === 'k' || unit === 'ribu' || unit === 'thousand' || (val < 100 && (clean.includes('k') || clean.includes('ribu') || clean.includes('thousand')))) {
-      val *= 1000;
+  let clean = text.toLowerCase();
+
+  // Strip commas from numbers like 10,000 -> 10000
+  clean = clean.replace(/(\d+),(\d{3})/g, '$1$2');
+
+  // Replace common Malay words using word boundaries
+  clean = clean
+    .replace(/\bsepuluh\s*ribu\b/gi, '10000')
+    .replace(/\bsembilan\s*ribu\b/gi, '9000')
+    .replace(/\blapan\s*ribu\b/gi, '8000')
+    .replace(/\btujuh\s*ribu\b/gi, '7000')
+    .replace(/\benam\s*ribu\b/gi, '6000')
+    .replace(/\blima\s*ribu\b/gi, '5000')
+    .replace(/\bempat\s*ribu\b/gi, '4000')
+    .replace(/\btiga\s*ribu\b/gi, '3000')
+    .replace(/\bdua\s*ribu\b/gi, '2000')
+    .replace(/\bseribu\b/gi, '1000')
+    .replace(/\bsatu\s*ribu\b/gi, '1000')
+    .replace(/\b(\d+)\s*ribu\b/gi, (match, n) => `${parseInt(n, 10) * 1000}`)
+    .replace(/\bribu\b/gi, '1000')
+    .replace(/\bsembilan\s*ratus\b/gi, '900')
+    .replace(/\blapan\s*ratus\b/gi, '800')
+    .replace(/\btujuh\s*ratus\b/gi, '700')
+    .replace(/\benam\s*ratus\b/gi, '600')
+    .replace(/\blima\s*ratus\b/gi, '500')
+    .replace(/\bempat\s*ratus\b/gi, '400')
+    .replace(/\btiga\s*ratus\b/gi, '300')
+    .replace(/\bdua\s*ratus\b/gi, '200')
+    .replace(/\bseratus\b/gi, '100')
+    .replace(/\bsatu\s*ratus\b/gi, '100')
+    .replace(/\b(\d+)\s*ratus\b/gi, (match, n) => `${parseInt(n, 10) * 100}`)
+    .replace(/\bratus\b/gi, '100')
+    .replace(/\bsembilan\s*puluh\b/gi, '90')
+    .replace(/\blapan\s*puluh\b/gi, '80')
+    .replace(/\btujuh\s*puluh\b/gi, '70')
+    .replace(/\benam\s*puluh\b/gi, '60')
+    .replace(/\blima\s*puluh\b/gi, '50')
+    .replace(/\bempat\s*puluh\b/gi, '40')
+    .replace(/\btiga\s*puluh\b/gi, '30')
+    .replace(/\bdua\s*puluh\b/gi, '20')
+    .replace(/\bsepuluh\b/gi, '10')
+    .replace(/\bsebelas\b/gi, '11')
+    .replace(/\bdua\s*belas\b/gi, '12')
+    .replace(/\btiga\s*belas\b/gi, '13')
+    .replace(/\bempat\s*belas\b/gi, '14')
+    .replace(/\blima\s*belas\b/gi, '15')
+    .replace(/\benam\s*belas\b/gi, '16')
+    .replace(/\btujuh\s*belas\b/gi, '17')
+    .replace(/\blapan\s*belas\b/gi, '18')
+    .replace(/\bsembilan\s*belas\b/gi, '19')
+    .replace(/\bsembilan\b/gi, '9')
+    .replace(/\blapan\b/gi, '8')
+    .replace(/\btujuh\b/gi, '7')
+    .replace(/\benam\b/gi, '6')
+    .replace(/\blima\b/gi, '5')
+    .replace(/\bempat\b/gi, '4')
+    .replace(/\btiga\b/gi, '3')
+    .replace(/\bdua\b/gi, '2')
+    .replace(/\bsatu\b/gi, '1');
+
+  // Replace English words using word boundaries
+  clean = clean
+    .replace(/\bten\s*thousand\b/gi, '10000')
+    .replace(/\bnine\s*thousand\b/gi, '9000')
+    .replace(/\beight\s*thousand\b/gi, '8000')
+    .replace(/\bseven\s*thousand\b/gi, '7000')
+    .replace(/\bsix\s*thousand\b/gi, '6000')
+    .replace(/\bfive\s*thousand\b/gi, '5000')
+    .replace(/\bfour\s*thousand\b/gi, '4000')
+    .replace(/\bthree\s*thousand\b/gi, '3000')
+    .replace(/\btwo\s*thousand\b/gi, '2000')
+    .replace(/\bone\s*thousand\b/gi, '1000')
+    .replace(/\b(\d+)\s*thousand\b/gi, (match, n) => `${parseInt(n, 10) * 1000}`)
+    .replace(/\bthousand\b/gi, '1000')
+    .replace(/\bnine\s*hundred\b/gi, '900')
+    .replace(/\beight\s*hundred\b/gi, '800')
+    .replace(/\bseven\s*hundred\b/gi, '700')
+    .replace(/\bsix\s*hundred\b/gi, '600')
+    .replace(/\bfive\s*hundred\b/gi, '500')
+    .replace(/\bfour\s*hundred\b/gi, '400')
+    .replace(/\bthree\s*hundred\b/gi, '300')
+    .replace(/\btwo\s*hundred\b/gi, '200')
+    .replace(/\bone\s*hundred\b/gi, '100')
+    .replace(/\b(\d+)\s*hundred\b/gi, (match, n) => `${parseInt(n, 10) * 100}`)
+    .replace(/\bhundred\b/gi, '100')
+    .replace(/\bninety\b/gi, '90')
+    .replace(/\beighty\b/gi, '80')
+    .replace(/\bseventy\b/gi, '70')
+    .replace(/\bsixty\b/gi, '60')
+    .replace(/\bfifty\b/gi, '50')
+    .replace(/\bforty\b/gi, '40')
+    .replace(/\bthirty\b/gi, '30')
+    .replace(/\btwenty\b/gi, '20')
+    .replace(/\bnineteen\b/gi, '19')
+    .replace(/\beighteen\b/gi, '18')
+    .replace(/\bseventeen\b/gi, '17')
+    .replace(/\bsixteen\b/gi, '16')
+    .replace(/\bfifteen\b/gi, '15')
+    .replace(/\bfourteen\b/gi, '14')
+    .replace(/\bthirteen\b/gi, '13')
+    .replace(/\btwelve\b/gi, '12')
+    .replace(/\beleven\b/gi, '11')
+    .replace(/\bten\b/gi, '10')
+    .replace(/\bnine\b/gi, '9')
+    .replace(/\beight\b/gi, '8')
+    .replace(/\bseven\b/gi, '7')
+    .replace(/\bsix\b/gi, '6')
+    .replace(/\bfive\b/gi, '5')
+    .replace(/\bfour\b/gi, '4')
+    .replace(/\bthree\b/gi, '3')
+    .replace(/\btwo\b/gi, '2')
+    .replace(/\bone\b/gi, '1');
+
+  // Match compound numeric sequences like:
+  // "10000 500 and 27", "10000 500 20 7", "4000 700 24", "10000 and 500"
+  const sequenceMatch = clean.match(/(\d{3,7})\s*(?:and\s*|\+\s*)?(\d{1,3})?\s*(?:and\s*|\+\s*)?(\d{1,2})?\s*(?:and\s*|\+\s*)?(\d{1,2})?/i);
+  if (sequenceMatch) {
+    const p1 = parseFloat(sequenceMatch[1]);
+    const p2 = sequenceMatch[2] ? parseFloat(sequenceMatch[2]) : 0;
+    const p3 = sequenceMatch[3] ? parseFloat(sequenceMatch[3]) : 0;
+    const p4 = sequenceMatch[4] ? parseFloat(sequenceMatch[4]) : 0;
+
+    let sum = p1;
+    if (p1 >= 1000 && p1 % 1000 === 0 && p2 > 0 && p2 < 1000) {
+      sum = p1 + p2 + p3 + p4;
+    } else if (p1 >= 1000 && p3 > 0 && p3 < 100 && p1 % 100 === 0) {
+      sum = p1 + p3 + p4;
+    } else if (p1 >= 1000 && p2 > 0 && p2 < 100 && p1 % 100 === 0) {
+      sum = p1 + p2 + p4;
     }
-    if (val >= 500 && val <= 5000000) return val;
-  }
 
-  // 2. Action verbs + Amount (e.g. "apply 57,000", "apply for 57000", "pinjam 57,000", "borrow 57,000", "need 57,000", "loan of 57,000")
-  const actionMatch = clean.match(/(?:apply(?:ing)?(?:\s*for)?|pinjam(?:\s*sebanyak)?|borrow|need|want|mohon|buat\s*pinjaman|loan\s*of|amount\s*of)\s*(?:rm|myr)?\s*(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)\s*(k|ribu|thousand)?/i);
-  if (actionMatch && actionMatch[1]) {
-    let val = parseFloat(actionMatch[1].replace(/,/g, ''));
-    const unit = actionMatch[2]?.toLowerCase();
-    if (unit === 'k' || unit === 'ribu' || unit === 'thousand' || (val < 100 && (clean.includes('k') || clean.includes('ribu') || clean.includes('thousand')))) {
-      val *= 1000;
+    if (sum >= 500 && sum <= 5000000 && !(sum >= 2020 && sum <= 2035)) {
+      return sum;
     }
-    if (val >= 500 && val <= 5000000) return val;
   }
 
-  // 3. Formatted numbers with commas (e.g. "57,000", "150,000", "7,500")
-  const commaNumberMatch = clean.match(/\b(\d{1,3}(?:,\d{3})+)\b/);
-  if (commaNumberMatch && commaNumberMatch[1]) {
-    const val = parseFloat(commaNumberMatch[1].replace(/,/g, ''));
-    if (val >= 500 && val <= 5000000) return val;
-  }
-
-  // 4. Word numbers (e.g. "seven thousand five hundred", "fifty seven thousand", "tujuh ribu lima ratus")
-  const wordAmount = parseWordsToNumber(clean);
-  if (wordAmount && wordAmount >= 500 && wordAmount <= 5000000) {
-    return wordAmount;
-  }
-
-  // 5. Match numeric amounts with 'k', 'ribu', 'thousand' (e.g. "57k", "57 k", "57 ribu")
+  // Standalone numbers with explicit k/ribu/thousand suffix (e.g. 50k, 50 ribu)
   const kMatch = clean.match(/(\d+(?:\.\d+)?)\s*(k|ribu|thousand)\b/i);
-  if (kMatch && kMatch[1]) {
+  if (kMatch) {
     const val = parseFloat(kMatch[1]) * 1000;
     if (val >= 500 && val <= 5000000) return val;
   }
 
-  // 6. Standalone 4-7 digit numeric amounts (e.g. 57000, 7500), avoiding 4-digit years (2020-2035)
+  // Standalone 4-7 digit numeric amounts (e.g. 57000, 7500), avoiding 4-digit calendar years
   const numberMatches = clean.matchAll(/\b(\d{4,7})\b/g);
   for (const m of numberMatches) {
     const val = parseInt(m[1], 10);
