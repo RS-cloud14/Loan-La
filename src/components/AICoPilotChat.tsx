@@ -7,7 +7,7 @@ import {
   UploadCloud, Compass, ChevronDown, Landmark, ExternalLink,
   Mic, MicOff, Calculator, Layers, Clock, Target, Settings,
   Phone, PhoneOff, PhoneCall, Radio, Activity, User, Check,
-  Languages, FileBarChart, Globe, Bot, Trash2
+  Languages, FileBarChart, Globe, Bot, Trash2, Pause, Square
 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { UserProfileData } from './UserSettingsModal';
@@ -375,6 +375,7 @@ export default function AICoPilotChat({
   isMutedRef.current = isMuted;
   const isAgentSpeakingRef = useRef(false);
   const isRecognitionRunningRef = useRef(false);
+  const isProcessingRef = useRef(false);
   const currentAccumulatedSpeechRef = useRef('');
   const persistedTurnSpeechRef = useRef('');
   const lastSpeechActivityTimestampRef = useRef<number>(0);
@@ -600,6 +601,17 @@ export default function AICoPilotChat({
     }
   };
 
+  // Instant Interrupt: stop AI voice and immediately open mic for next question
+  const handleInterruptAndSpeak = () => {
+    stopSpeaking();
+    isAgentSpeakingRef.current = false;
+    setCallStatus('listening');
+    setLiveTranscript('');
+    currentAccumulatedSpeechRef.current = '';
+    persistedTurnSpeechRef.current = '';
+    startCallListening();
+  };
+
   // Execute Agentic Action & Auto-Close Window when navigating!
   const executeAgentAction = (action: { type: string; payload?: any }, shouldCloseChat = true) => {
     if (action.type === 'CHANGE_LANGUAGE') {
@@ -655,8 +667,13 @@ export default function AICoPilotChat({
       return;
     }
 
-    if (isFromVoiceCall) {
+    if (isFromVoiceCall || isCallActiveRef.current) {
       setCallStatus('thinking');
+      isProcessingRef.current = true;
+      if (callRecognitionRef.current) {
+        try { callRecognitionRef.current.stop(); } catch(e){}
+      }
+      isRecognitionRunningRef.current = false;
     }
 
     const lower = textToSend.toLowerCase();
@@ -802,12 +819,13 @@ export default function AICoPilotChat({
       }
     } finally {
       setIsSending(false);
+      isProcessingRef.current = false;
     }
   };
 
   // Continuous, robust speech recognition for Live Voice Call
   const startCallListening = useCallback(() => {
-    if (!isCallActiveRef.current || isMutedRef.current || isAgentSpeakingRef.current) return;
+    if (!isCallActiveRef.current || isMutedRef.current || isAgentSpeakingRef.current || isProcessingRef.current) return;
     
     setCallStatus('listening');
 
@@ -917,9 +935,9 @@ export default function AICoPilotChat({
           }
         }
         // Graceful auto-restart if call is still active and agent is not speaking
-        if (isCallActiveRef.current && !isMutedRef.current && !isAgentSpeakingRef.current) {
+        if (isCallActiveRef.current && !isMutedRef.current && !isAgentSpeakingRef.current && !isProcessingRef.current) {
           setTimeout(() => {
-            if (isCallActiveRef.current && !isMutedRef.current && !isAgentSpeakingRef.current && !isRecognitionRunningRef.current) {
+            if (isCallActiveRef.current && !isMutedRef.current && !isAgentSpeakingRef.current && !isRecognitionRunningRef.current && !isProcessingRef.current) {
               startCallListening();
             }
           }, 250);
@@ -937,7 +955,7 @@ export default function AICoPilotChat({
   // Tab Visibility & Focus Auto-Healer: Re-engage microphone when switching back to tab
   useEffect(() => {
     const handleReviveOnFocus = () => {
-      if (document.visibilityState === 'visible' && isCallActiveRef.current && !isAgentSpeakingRef.current && !isMutedRef.current) {
+      if (document.visibilityState === 'visible' && isCallActiveRef.current && !isAgentSpeakingRef.current && !isMutedRef.current && !isProcessingRef.current) {
         if (!isRecognitionRunningRef.current) {
           startCallListening();
         }
@@ -949,7 +967,7 @@ export default function AICoPilotChat({
 
     // Keep-alive Heartbeat Watchdog every 2.5 seconds
     const heartbeatInterval = setInterval(() => {
-      if (isCallActiveRef.current && !isAgentSpeakingRef.current && !isMutedRef.current) {
+      if (isCallActiveRef.current && !isAgentSpeakingRef.current && !isMutedRef.current && !isProcessingRef.current) {
         if (!isRecognitionRunningRef.current) {
           startCallListening();
         }
@@ -1272,21 +1290,22 @@ export default function AICoPilotChat({
                     <button
                       type="button"
                       onClick={() => {
-                        if (callStatus === 'speaking') stopSpeaking();
+                        if (callStatus === 'speaking') handleInterruptAndSpeak();
                         else if (liveTranscript) handleCommitCurrentSpeech();
                       }}
                       className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 cursor-pointer ${
                         callStatus === 'speaking' 
-                          ? 'bg-blue-600 scale-105 shadow-blue-500/30 ring-4 ring-blue-500/20' 
+                          ? 'bg-blue-600 hover:bg-blue-500 scale-105 shadow-blue-500/30 ring-4 ring-blue-500/20' 
                           : callStatus === 'thinking'
-                          ? 'bg-slate-700 animate-spin shadow-slate-500/30'
+                          ? 'bg-blue-800 animate-pulse shadow-cyan-500/30 ring-4 ring-cyan-500/30'
                           : 'bg-blue-600 hover:bg-blue-500 shadow-blue-500/30 ring-4 ring-blue-500/20'
                       }`}
+                      title={callStatus === 'speaking' ? (isMalay ? "Sentuh untuk Sampuk & Cakap" : "Tap to Interrupt & Speak") : undefined}
                     >
                       {callStatus === 'speaking' ? (
                         <Activity className="w-7 h-7 text-white animate-pulse" />
                       ) : callStatus === 'thinking' ? (
-                        <RefreshCw className="w-6 h-6 text-white animate-spin" />
+                        <Sparkles className="w-7 h-7 text-cyan-300 animate-spin" />
                       ) : (
                         <Mic className="w-7 h-7 text-white" />
                       )}
@@ -1304,13 +1323,42 @@ export default function AICoPilotChat({
 
                   <span className="text-[11px] font-semibold text-slate-300 tracking-wide">
                     {callStatus === 'speaking' && (isMalay ? "Ejen Sedang Menjawab..." : "AI Speaking...")}
-                    {callStatus === 'thinking' && (isMalay ? "Memproses..." : "Processing...")}
+                    {callStatus === 'thinking' && (isMalay ? "AI Sedang Memproses & Mengira..." : "AI Processing & Calculating...")}
                     {callStatus === 'listening' && (isMalay ? "Mendengar suara anda..." : "Listening...")}
                   </span>
+
+                  {/* Interrupt & Speak Button while AI is speaking */}
+                  {callStatus === 'speaking' && (
+                    <button
+                      type="button"
+                      onClick={handleInterruptAndSpeak}
+                      className="px-3.5 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 rounded-full text-[11px] font-bold flex items-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer animate-fade-in"
+                    >
+                      <Pause className="w-3.5 h-3.5 text-amber-400" />
+                      <span>{isMalay ? "Sampuk & Tanya Seterusnya ↵" : "Interrupt & Ask Next Question ↵"}</span>
+                    </button>
+                  )}
                 </div>
 
                 {/* Live Visual Stream & HUD Card Container */}
                 <div className="w-full flex-1 max-h-[220px] overflow-y-auto flex flex-col gap-2 my-1 z-10 custom-scrollbar pr-0.5">
+                  {/* Glowing Live AI Processing Demo Card while waiting for response */}
+                  {callStatus === 'thinking' && (
+                    <div className="p-3.5 bg-blue-950/80 border border-cyan-500/40 rounded-2xl flex items-center gap-3 shadow-xl animate-pulse">
+                      <div className="w-8 h-8 rounded-xl bg-cyan-600/30 border border-cyan-400/40 flex items-center justify-center shrink-0">
+                        <Sparkles className="w-4.5 h-4.5 text-cyan-300 animate-spin" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-xs font-bold text-cyan-200 block">
+                          {isMalay ? "AI Sedang Menganalisis & Mengira..." : "AI Analyzing & Calculating..."}
+                        </span>
+                        <span className="text-[10px] text-slate-300 block truncate">
+                          {isMalay ? "Menilai kelayakan pembiayaan & pengiraan anda..." : "Assessing loan eligibility & calculation..."}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Live transcript while user is speaking */}
                   {liveTranscript ? (
                     <div className="p-3 bg-slate-900/95 border border-blue-500/40 rounded-2xl flex items-center justify-between gap-2.5 shadow-lg animate-fade-in ring-1 ring-blue-500/20">
