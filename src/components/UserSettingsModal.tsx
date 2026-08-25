@@ -196,8 +196,8 @@ export default function UserSettingsModal({
             >
               <Landmark className="w-3.5 h-3.5 shrink-0" />
               <span className="truncate">
-                {language === 'bm' ? '2. Bank Payout' : '2. Banking'}
-                <span className="hidden md:inline">{language === 'bm' ? '' : ' & Payout'}</span>
+                {language === 'bm' ? '2. Bank' : '2. Banking'}
+                <span className="hidden md:inline">{language === 'bm' ? ' & Bayaran' : ' & Payout'}</span>
               </span>
             </button>
 

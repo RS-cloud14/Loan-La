@@ -382,21 +382,30 @@ export default function AICoPilotChat({
   const isUserScrollingSubtitlesRef = useRef(false);
   const userScrollResumeTimerRef = useRef<any>(null);
   const cachedVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
+  const isMalayRef = useRef(isMalay);
+  isMalayRef.current = isMalay;
 
-  // Consistent High-Clarity US Female Voice / Malaysian Voice Lock
+  // Consistent High-Clarity Voice Selection: Malay (ms-MY/id-ID) vs US English
   const getConsistentVoice = useCallback((langMalay: boolean) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
     const voices = window.speechSynthesis.getVoices();
     if (!voices || voices.length === 0) return null;
 
     if (langMalay) {
-      const msVoice = voices.find(v => (v.lang.startsWith('ms') || v.lang.startsWith('id')) && (v.name.toLowerCase().includes('female') || v.name.toLowerCase().includes('siti') || v.name.toLowerCase().includes('yasmin')));
+      // 1. Highest priority: Native Malay voice
+      const msVoice = voices.find(v => (v.lang.toLowerCase().startsWith('ms') || v.lang.toLowerCase().includes('my')) && (v.name.toLowerCase().includes('female') || v.name.toLowerCase().includes('siti') || v.name.toLowerCase().includes('yasmin') || v.name.toLowerCase().includes('malay')));
       if (msVoice) return msVoice;
-      const anyMs = voices.find(v => v.lang.startsWith('ms') || v.lang.startsWith('id'));
+      const anyMs = voices.find(v => v.lang.toLowerCase().startsWith('ms'));
       if (anyMs) return anyMs;
+
+      // 2. High priority fallback: Indonesian voice (very natural & clear for Malay speech)
+      const idVoice = voices.find(v => (v.lang.toLowerCase().startsWith('id') || v.lang.toLowerCase().includes('id')) && (v.name.toLowerCase().includes('female') || v.name.toLowerCase().includes('gadis') || v.name.toLowerCase().includes('damayanti') || v.name.toLowerCase().includes('indonesia')));
+      if (idVoice) return idVoice;
+      const anyId = voices.find(v => v.lang.toLowerCase().startsWith('id'));
+      if (anyId) return anyId;
     }
 
-    // High clarity Natural US voices (Strictly exclude Indian accents)
+    // High clarity Natural US English voices
     const preferredVoices = ['microsoft aria', 'microsoft jenny', 'google us english', 'samantha', 'victoria', 'zira', 'karen'];
     for (const pref of preferredVoices) {
       const found = voices.find(v => v.name.toLowerCase().includes(pref) && !v.lang.toLowerCase().includes('en-in') && !v.name.toLowerCase().includes('india'));
@@ -404,7 +413,7 @@ export default function AICoPilotChat({
     }
 
     const anyUS = voices.find(v => (v.lang.toLowerCase() === 'en-us' || v.lang.toLowerCase() === 'en_us') && !v.name.toLowerCase().includes('india'));
-    return anyUS || voices[0] || null;
+    return anyUS || voices.find(v => v.lang.startsWith('en')) || voices[0] || null;
   }, []);
 
   // Initialize and persist chat history
@@ -617,6 +626,7 @@ export default function AICoPilotChat({
     if (action.type === 'CHANGE_LANGUAGE') {
       const target = action.payload?.language || (isMalay ? 'en' : 'bm');
       setLanguage(target);
+      isMalayRef.current = target === 'bm';
       if (typeof onChangeLanguage === 'function') onChangeLanguage(target);
       return;
     }
@@ -951,6 +961,29 @@ export default function AICoPilotChat({
       isRecognitionRunningRef.current = false;
     }
   }, [isMalay]);
+
+  // Synchronize Speech Recognition language dynamically whenever language changes
+  useEffect(() => {
+    isMalayRef.current = isMalay;
+    if (isCallActiveRef.current && !isAgentSpeakingRef.current && !isProcessingRef.current) {
+      if (callRecognitionRef.current) {
+        try {
+          callRecognitionRef.current.onresult = null;
+          callRecognitionRef.current.onend = null;
+          callRecognitionRef.current.onerror = null;
+          callRecognitionRef.current.stop();
+        } catch (e) {}
+        callRecognitionRef.current = null;
+        isRecognitionRunningRef.current = false;
+      }
+      const timer = setTimeout(() => {
+        if (isCallActiveRef.current && !isAgentSpeakingRef.current && !isProcessingRef.current) {
+          startCallListening();
+        }
+      }, 150);
+      return () => clearTimeout(timer);
+    }
+  }, [isMalay, startCallListening]);
 
   // Tab Visibility & Focus Auto-Healer: Re-engage microphone when switching back to tab
   useEffect(() => {
