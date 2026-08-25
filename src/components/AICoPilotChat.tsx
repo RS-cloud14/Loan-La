@@ -7,10 +7,12 @@ import {
   UploadCloud, Compass, ChevronDown, Landmark, ExternalLink,
   Mic, MicOff, Calculator, Layers, Clock, Target, Settings,
   Phone, PhoneOff, PhoneCall, Radio, Activity, User, Check,
-  Languages, FileBarChart, Globe, Bot, Trash2, Pause, Square
+  Languages, FileBarChart, Globe, Bot, Trash2, Pause, Square,
+  Headphones, ShieldCheck
 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { UserProfileData } from './UserSettingsModal';
+import { saveSupportTicket, SupportTicket } from '@/lib/supportTickets';
 
 export interface ChatMessage {
   id: string;
@@ -19,7 +21,7 @@ export interface ChatMessage {
   timestamp: string;
   suggestions?: string[];
   action?: {
-    type: 'NAVIGATE_LOAN_NEED' | 'NAVIGATE_UPLOAD' | 'SET_CALCULATOR' | 'NAVIGATE_CALCULATOR' | 'NAVIGATE_DIRECTORY' | 'NAVIGATE_TRACKER' | 'NAVIGATE_SETTINGS' | 'NAVIGATE_REPORT' | 'DOWNLOAD_REPORT' | 'CHANGE_LANGUAGE' | 'START_ASSESSMENT';
+    type: 'NAVIGATE_LOAN_NEED' | 'NAVIGATE_UPLOAD' | 'SET_CALCULATOR' | 'NAVIGATE_CALCULATOR' | 'NAVIGATE_DIRECTORY' | 'NAVIGATE_TRACKER' | 'NAVIGATE_SETTINGS' | 'NAVIGATE_REPORT' | 'DOWNLOAD_REPORT' | 'CHANGE_LANGUAGE' | 'START_ASSESSMENT' | 'PROMPT_CREATE_TICKET' | 'DISPATCH_TICKET' | 'NAVIGATE_SUPPORT';
     payload?: any;
   };
   attachedFile?: {
@@ -50,6 +52,7 @@ interface AICoPilotChatProps {
   onNavigateToDirectory: () => void;
   onNavigateToTracker: () => void;
   onOpenSettings: () => void;
+  onOpenSupportModal?: (initialTicketId?: string) => void;
   onChangeLanguage?: (lang: 'en' | 'bm') => void;
   onStartAssessmentWithFile: (fileData: { fileName: string; fileType: string; fileSize: string; fileBase64: string; category: 'bank_statement' | 'platform_dashboard' | 'tax_epf' | 'mykad_id' | 'pay_slip' }) => void;
 }
@@ -352,6 +355,7 @@ export default function AICoPilotChat({
   onNavigateToDirectory,
   onNavigateToTracker,
   onOpenSettings,
+  onOpenSupportModal,
   onChangeLanguage,
   onStartAssessmentWithFile
 }: AICoPilotChatProps) {
@@ -678,6 +682,13 @@ export default function AICoPilotChat({
       if (typeof onNavigateToDirectory === 'function') onNavigateToDirectory();
     } else if (action.type === 'NAVIGATE_SETTINGS') {
       if (typeof onOpenSettings === 'function') onOpenSettings();
+    } else if (action.type === 'NAVIGATE_SUPPORT') {
+      if (typeof onOpenSupportModal === 'function') onOpenSupportModal(action.payload?.id);
+    } else if (action.type === 'DISPATCH_TICKET' && action.payload) {
+      saveSupportTicket(action.payload);
+      if (typeof onOpenSupportModal === 'function') {
+        onOpenSupportModal(action.payload.id);
+      }
     }
   };
 
@@ -1697,6 +1708,89 @@ export default function AICoPilotChat({
                                 <div className="flex items-center gap-1.5">
                                   <Settings className="w-3.5 h-3.5 text-blue-300" />
                                   <span>{isMalay ? 'Tetapan Profil' : 'Open Profile Settings'}</span>
+                                </div>
+                                <ArrowRight className="w-3.5 h-3.5 text-blue-300" />
+                              </button>
+                            )}
+                            {msg.action.type === 'PROMPT_CREATE_TICKET' && (
+                              <div className="p-3 bg-blue-50 border border-blue-200 rounded-xl flex flex-col gap-2 shadow-2xs mt-1">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[10px] font-bold text-blue-800 uppercase tracking-wider">
+                                    {isMalay ? 'Pratonton Tiket Sokongan' : 'Support Ticket Draft'}
+                                  </span>
+                                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 font-bold">
+                                    {msg.action.payload?.priority?.toUpperCase() || 'NORMAL'}
+                                  </span>
+                                </div>
+                                <div className="text-xs font-bold text-slate-900">
+                                  {msg.action.payload?.subject || (isMalay ? 'Bantuan Khidmat Pelanggan' : 'Customer Support Request')}
+                                </div>
+                                <div className="text-[11px] text-slate-600">
+                                  {isMalay ? `Jaminan SLA: ${msg.action.payload?.slaMinutes || 30} minit melalui WhatsApp/Emel` : `SLA: ${msg.action.payload?.slaMinutes || 30} mins via WhatsApp/Email`}
+                                </div>
+                                <div className="flex items-center gap-2 pt-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const ticketId = `TKT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+                                      executeAgentAction({
+                                        type: 'DISPATCH_TICKET',
+                                        payload: {
+                                          ...msg.action!.payload,
+                                          id: ticketId
+                                        }
+                                      }, false);
+                                    }}
+                                    className="flex-1 py-2 px-3 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-lg shadow-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
+                                  >
+                                    <Headphones className="w-3.5 h-3.5" />
+                                    <span>{isMalay ? 'Sah & Hantar Tiket 🚀' : 'Confirm & Dispatch 🚀'}</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => executeAgentAction({ type: 'NAVIGATE_SUPPORT' })}
+                                    className="py-2 px-2.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                                  >
+                                    {isMalay ? 'Pusat Bantuan' : 'Support Center'}
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                            {msg.action.type === 'DISPATCH_TICKET' && (
+                              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex flex-col gap-2 shadow-2xs mt-1">
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-1.5">
+                                    <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                                    <span className="text-xs font-bold text-emerald-900">
+                                      {isMalay ? 'Tiket Didaftarkan' : 'Ticket Dispatched'}
+                                    </span>
+                                  </div>
+                                  <span className="text-xs font-mono font-bold text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded-md">
+                                    {msg.action.payload?.id || 'TKT-2026-LIVE'}
+                                  </span>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => executeAgentAction({ type: 'NAVIGATE_SUPPORT', payload: { id: msg.action!.payload?.id } })}
+                                  className="w-full py-2 px-3 bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-bold rounded-lg shadow-xs transition-all flex items-center justify-between cursor-pointer active:scale-98"
+                                >
+                                  <div className="flex items-center gap-1.5">
+                                    <FileText className="w-3.5 h-3.5 text-emerald-200" />
+                                    <span>{isMalay ? 'Jejak Status Tiket Ini 🔍' : 'Track This Ticket 🔍'}</span>
+                                  </div>
+                                  <ArrowRight className="w-3.5 h-3.5 text-emerald-200" />
+                                </button>
+                              </div>
+                            )}
+                            {msg.action.type === 'NAVIGATE_SUPPORT' && (
+                              <button
+                                type="button"
+                                onClick={() => executeAgentAction(msg.action!)}
+                                className="w-full py-2 px-3 bg-blue-950 hover:bg-blue-900 text-white text-xs font-bold rounded-lg shadow-xs transition-all flex items-center justify-between cursor-pointer active:scale-98"
+                              >
+                                <div className="flex items-center gap-1.5">
+                                  <Headphones className="w-3.5 h-3.5 text-blue-300" />
+                                  <span>{isMalay ? 'Buka Pusat Khidmat Pelanggan' : 'Open Support Center'}</span>
                                 </div>
                                 <ArrowRight className="w-3.5 h-3.5 text-blue-300" />
                               </button>

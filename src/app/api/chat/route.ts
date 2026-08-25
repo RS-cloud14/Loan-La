@@ -461,6 +461,146 @@ export async function POST(request: NextRequest) {
     const lastUserPreviousMessage = previousMessages.filter(m => m.role === 'user').slice(-1)[0]?.content || '';
     const prevContext = (lastAssistantMessage + ' ' + lastUserPreviousMessage).toLowerCase();
 
+    // 1D. Post-Service Process & AI Customer Support Ticket Routing
+    const isConfirmingTicketDispatch = (
+      (prevContext.includes('tiket') || prevContext.includes('ticket') || prevContext.includes('support') || prevContext.includes('pegawai') || prevContext.includes('khidmat pelanggan')) &&
+      (lastMsgLower.includes('yes') || lastMsgLower.includes('ya') || lastMsgLower.includes('sah') || lastMsgLower.includes('confirm') || lastMsgLower.includes('hantar') || lastMsgLower.includes('proceed') || lastMsgLower.includes('assign') || lastMsgLower.includes('tolong') || lastMsgLower.includes('ok') || lastMsgLower.includes('okay'))
+    );
+
+    const isDirectSupportQuery = (
+      lastMsgLower.includes('customer service') ||
+      lastMsgLower.includes('customer support') ||
+      lastMsgLower.includes('khidmat pelanggan') ||
+      lastMsgLower.includes('bantuan pelanggan') ||
+      lastMsgLower.includes('support team') ||
+      lastMsgLower.includes('support ticket') ||
+      lastMsgLower.includes('tiket sokongan') ||
+      lastMsgLower.includes('tiket perkhidmatan') ||
+      lastMsgLower.includes('human agent') ||
+      lastMsgLower.includes('hubungi pegawai') ||
+      lastMsgLower.includes('open ticket') ||
+      lastMsgLower.includes('buka tiket') ||
+      lastMsgLower.includes('hubungi cs') ||
+      lastMsgLower.includes('contact support')
+    );
+
+    const isProblemReportQuery = (
+      lastMsgLower.includes('problem') ||
+      lastMsgLower.includes('masalah') ||
+      lastMsgLower.includes('error') ||
+      lastMsgLower.includes('ralat') ||
+      lastMsgLower.includes('gagal') ||
+      lastMsgLower.includes('failed') ||
+      lastMsgLower.includes('cannot upload') ||
+      lastMsgLower.includes('tak boleh upload') ||
+      lastMsgLower.includes('refund') ||
+      lastMsgLower.includes('aduan') ||
+      lastMsgLower.includes('complaint') ||
+      lastMsgLower.includes('stuck') ||
+      lastMsgLower.includes('sangkut') ||
+      lastMsgLower.includes('kenapa loan saya') ||
+      lastMsgLower.includes('duit belum masuk') ||
+      lastMsgLower.includes('belum dapat') ||
+      lastMsgLower.includes('tak dapat pass') ||
+      lastMsgLower.includes('wrong score') ||
+      lastMsgLower.includes('skor salah')
+    );
+
+    if (isConfirmingTicketDispatch || isDirectSupportQuery || isProblemReportQuery) {
+      let category: 'statement_upload' | 'payment_pass' | 'underwriting_score' | 'disbursement_lender' | 'general_support' = 'general_support';
+      let priority: 'urgent' | 'high' | 'normal' = 'normal';
+      let subjectEn = 'Customer Care Support Request';
+      let subjectBm = 'Permintaan Bantuan Khidmat Pelanggan';
+
+      if (lastMsgLower.includes('upload') || lastMsgLower.includes('penyata') || lastMsgLower.includes('statement') || lastMsgLower.includes('pdf') || lastMsgLower.includes('dokumen')) {
+        category = 'statement_upload';
+        priority = 'high';
+        subjectEn = 'Bank Statement & Document Upload Support';
+        subjectBm = 'Bantuan Muat Naik Penyata Bank & Dokumen';
+      } else if (lastMsgLower.includes('pay') || lastMsgLower.includes('bayar') || lastMsgLower.includes('pass') || lastMsgLower.includes('rm9.90') || lastMsgLower.includes('rm19.90') || lastMsgLower.includes('refund') || lastMsgLower.includes('resit')) {
+        category = 'payment_pass';
+        priority = 'urgent';
+        subjectEn = 'Payment & Credit Passport Pass Issue';
+        subjectBm = 'Isu Pembayaran & Pas Laporan Pasport';
+      } else if (lastMsgLower.includes('score') || lastMsgLower.includes('skor') || lastMsgLower.includes('gred') || lastMsgLower.includes('grade') || lastMsgLower.includes('dsr') || lastMsgLower.includes('income') || lastMsgLower.includes('pendapatan')) {
+        category = 'underwriting_score';
+        priority = 'normal';
+        subjectEn = 'Credit Score & DSR Underwriting Inquiry';
+        subjectBm = 'Pertanyaan Pengunderaitan Skor Kredit & DSR';
+      } else if (lastMsgLower.includes('status') || lastMsgLower.includes('lender') || lastMsgLower.includes('bank') || lastMsgLower.includes('delay') || lastMsgLower.includes('lambat') || lastMsgLower.includes('payout') || lastMsgLower.includes('disbursement')) {
+        category = 'disbursement_lender';
+        priority = 'high';
+        subjectEn = 'Loan Application Status & Bank Disbursement';
+        subjectBm = 'Status Permohonan Pinjaman & Pengeluaran Bank';
+      }
+
+      const ticketId = `TKT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+      const slaMins = priority === 'urgent' ? 15 : (priority === 'high' ? 30 : 60);
+
+      if (isConfirmingTicketDispatch) {
+        const reply = isMalay
+          ? `🎫 **Tiket Perkhidmatan Rasmi Berjaya Didaftarkan!**\n\n• **No. Rujukan Tiket:** \`${ticketId}\`\n• **Kategori:** ${subjectBm}\n• **Keutamaan:** ${priority.toUpperCase()}\n• **Jaminan Masa Respon:** ${slaMins} Minit\n\nPegawai sokongan kami telah dimaklumkan dan akan menghubungi anda melalui WhatsApp/Emel dalam masa ${slaMins} minit. Anda boleh menjejak status tiket ini pada bila-bila masa.`
+          : `🎫 **Official Support Service Ticket Dispatched!**\n\n• **Ticket Reference ID:** \`${ticketId}\`\n• **Category:** ${subjectEn}\n• **Priority:** ${priority.toUpperCase()}\n• **SLA Response Guarantee:** ${slaMins} Minutes\n\nOur human support officer has been assigned and will contact you via WhatsApp/Email within ${slaMins} minutes. You can track this ticket anytime.`;
+
+        return NextResponse.json({
+          success: true,
+          reply,
+          action: {
+            type: 'DISPATCH_TICKET',
+            payload: {
+              id: ticketId,
+              category,
+              subject: isMalay ? subjectBm : subjectEn,
+              description: lastUserMessage,
+              priority,
+              slaMinutes: slaMins,
+              userContact: {
+                name: dynamicName,
+                phone: userContext.name || '+60 12-482 9182',
+                email: 'user@example.com'
+              },
+              agentDiagnostic: isMalay 
+                ? `Isu dianalisis secara automatik oleh AI: ${subjectBm} (Keutamaan ${priority.toUpperCase()}).`
+                : `Issue analyzed by AI: ${subjectEn} (Priority ${priority.toUpperCase()}).`
+            }
+          },
+          suggestions: isMalay 
+            ? ["Lihat Tiket Saya", "Kalkulator Ansuran", "Direktori Bank"]
+            : ["View My Tickets", "Loan Calculator", "Bank Directory"]
+        });
+      } else {
+        const reply = isMalay
+          ? `🔍 **Analisis Isu & Cadangan Pembukaan Tiket Khidmat Pelanggan:**\n\nSaya telah menganalisis pertanyaan anda:\n• **Kategori:** ${subjectBm}\n• **Tahap Keutamaan:** ${priority.toUpperCase()} (Jaminan respon ${slaMins} minit)\n• **Ringkasan Masalah:** "${lastUserMessage.slice(0, 100)}${lastUserMessage.length > 100 ? '...' : ''}"\n\nAdakah anda mahu saya hantar tiket perkhidmatan ini terus kepada Pegawai Khidmat Pelanggan kami sekarang?`
+          : `🔍 **AI Request Analysis & Support Ticket Preview:**\n\nI have analyzed your inquiry:\n• **Category:** ${subjectEn}\n• **Priority Level:** ${priority.toUpperCase()} (${slaMins} min response SLA)\n• **Issue Summary:** "${lastUserMessage.slice(0, 100)}${lastUserMessage.length > 100 ? '...' : ''}"\n\nWould you like me to dispatch an official service ticket to our Customer Care Team for you now?`;
+
+        return NextResponse.json({
+          success: true,
+          reply,
+          action: {
+            type: 'PROMPT_CREATE_TICKET',
+            payload: {
+              category,
+              subject: isMalay ? subjectBm : subjectEn,
+              description: lastUserMessage,
+              priority,
+              slaMinutes: slaMins,
+              userContact: {
+                name: dynamicName,
+                phone: userContext.name || '+60 12-482 9182',
+                email: 'user@example.com'
+              },
+              agentDiagnostic: isMalay 
+                ? `Pra-diagnostik AI: Pengguna melaporkan isu ${subjectBm}.`
+                : `AI Pre-diagnostic: User reported ${subjectEn}.`
+            }
+          },
+          suggestions: isMalay 
+            ? ["Sahkan & Hantar Tiket", "Buka Pusat Bantuan", "Direktori Bank"]
+            : ["Confirm & Dispatch Ticket", "Open Support Center", "Bank Directory"]
+        });
+      }
+    }
+
     const isPrevStatementContext = prevContext.includes('statement') || 
                                    prevContext.includes('penyata') || 
                                    prevContext.includes('download') || 

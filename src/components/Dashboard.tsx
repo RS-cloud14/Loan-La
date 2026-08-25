@@ -24,6 +24,7 @@ import UserSettingsModal, { UserProfileData } from './UserSettingsModal';
 import BankLogo from './BankLogo';
 import AICoPilotChat from './AICoPilotChat';
 import CreditPassportPaywallModal from './CreditPassportPaywallModal';
+import SupportTicketsModal from './SupportTicketsModal';
 import { useLanguage, Language } from '@/context/LanguageContext';
 
 export interface GigSlipData {
@@ -303,6 +304,8 @@ export default function Dashboard() {
   const [categorySuitabilityModal, setCategorySuitabilityModal] = useState<any | null>(null);
   const [isPassportUnlocked, setIsPassportUnlocked] = useState<boolean>(false);
   const [showPaywallModal, setShowPaywallModal] = useState<boolean>(false);
+  const [isSupportModalOpen, setIsSupportModalOpen] = useState<boolean>(false);
+  const [initialSupportTicketId, setInitialSupportTicketId] = useState<string | null>(null);
   const [activeAssessmentTask, setActiveAssessmentTask] = useState<ActiveAssessmentTask | null>(null);
 
   // B2C Upload States
@@ -5421,6 +5424,10 @@ export default function Dashboard() {
         onOpenSettings={() => {
           setSettingsModalOpen(true);
         }}
+        onOpenSupportModal={(ticketId) => {
+          setInitialSupportTicketId(ticketId || null);
+          setIsSupportModalOpen(true);
+        }}
         onStartAssessmentWithFile={(newFile) => {
           const hadFiles = uploadedFiles.length > 0;
           setUploadedFiles(prev => [...prev, newFile]);
@@ -6492,6 +6499,17 @@ export default function Dashboard() {
         preliminaryScore={b2cResult?.report?.score || 710}
         preliminaryGrade={b2cResult?.report?.grade || 'A'}
         isMalay={language === 'bm'}
+      />
+
+      {/* Customer Support & Service Tickets Modal */}
+      <SupportTicketsModal
+        isOpen={isSupportModalOpen}
+        onClose={() => {
+          setIsSupportModalOpen(false);
+          setInitialSupportTicketId(null);
+        }}
+        userSession={userSession}
+        initialTicketId={initialSupportTicketId}
       />
 
     </div>
