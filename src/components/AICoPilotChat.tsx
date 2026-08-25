@@ -122,6 +122,13 @@ function cleanSpeechDuplicates(raw: string): string {
   }
   text = dedupedSingle.join(' ');
 
+  // 5. Malaysian Manglish & Bahasa Rojak Phonetic Normalization
+  text = text
+    .replace(/\bnak\s*(?:play|supply|ape|plei)\b/gi, 'nak apply')
+    .replace(/\b(?:mau|mohon|buat)\s*(?:lon|luen)\b/gi, 'nak apply loan')
+    .replace(/\b(?:interes|interset|inte\s*rest)\s*rate\b/gi, 'interest rate')
+    .replace(/\b(?:kalkulat|kalkulate)\b/gi, 'calculate');
+
   return text.trim();
 }
 

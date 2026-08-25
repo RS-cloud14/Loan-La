@@ -236,18 +236,22 @@ function parseSpokenAmount(text: string): number | undefined {
   return undefined;
 }
 
-// Robust Spoken Tenure Parser
+// Robust Spoken Tenure Parser (Supports English, Malay & Manglish)
 function parseSpokenTenure(text: string): number | undefined {
   const clean = text.toLowerCase();
   
-  const tenureMatch = clean.match(/(\d+(?:\.\d+)?)\s*(year|years|yr|yrs|tahun|thn|month|months|mth|mths|bulan|bln)/i);
+  // 1. Numeric tenures: e.g. "5 years", "5 tahun", "5 thn", "5 yr", "5 yrs", "60 months", "60 bulan", "for 5 years", "selama 5 tahun"
+  const tenureMatch = clean.match(/(\d+(?:\.\d+)?)\s*(year|years|yr|yrs|tahun|thn|month|months|mth|mths|bulan|bln)\b/i) ||
+                      clean.match(/(?:selama|dalam|tempoh|for|in|tenure\s*(?:of)?)\s*(\d+(?:\.\d+)?)\s*(year|years|yr|yrs|tahun|thn|month|months|mth|mths|bulan|bln)?/i);
   if (tenureMatch) {
     const val = parseFloat(tenureMatch[1]);
-    const unit = tenureMatch[2].toLowerCase();
+    const unit = (tenureMatch[2] || '').toLowerCase();
     if (unit.startsWith('m') || unit.startsWith('b')) {
       return Math.max(0.5, Math.round((val / 12) * 10) / 10);
     }
-    return Math.min(10, Math.max(0.5, val));
+    if (val >= 0.5 && val <= 35) {
+      return Math.min(10, Math.max(0.5, val));
+    }
   }
 
   const wordTenure: Record<string, number> = {
@@ -256,7 +260,7 @@ function parseSpokenTenure(text: string): number | undefined {
   };
 
   for (const [w, yrs] of Object.entries(wordTenure)) {
-    if (clean.includes(w + ' year') || clean.includes(w + ' yr') || clean.includes(w + ' tahun') || clean.includes(w + ' thn')) {
+    if (clean.includes(w + ' year') || clean.includes(w + ' yr') || clean.includes(w + ' tahun') || clean.includes(w + ' thn') || clean.includes('selama ' + w) || clean.includes('for ' + w + ' years')) {
       return yrs;
     }
   }
@@ -264,26 +268,26 @@ function parseSpokenTenure(text: string): number | undefined {
   return undefined;
 }
 
-// Robust Spoken Interest Rate Parser
+// Robust Spoken Interest Rate Parser (Supports English, Malay & Manglish)
 function parseSpokenRate(text: string): number | undefined {
   const normalized = normalizeSpokenMalayDecimals(text.toLowerCase());
   
-  // 1. Suffix pattern (e.g. "5.64% rate", "5.64 percent", "5.64 peratus", "5.64 p.a.")
-  const suffixMatch = normalized.match(/(\d{1,2}(?:\.\d{1,4})?)\s*(?:%|percent|peratus)\s*(?:rate|interest|kadar|faedah|p\.a\.|pa|setahun)?/i) ||
-                      normalized.match(/(\d{1,2}(?:\.\d{1,4})?)\s*(?:interest\s*rate|interest|kadar\s*faedah|kadar|faedah|rate|p\.a\.|pa|setahun)/i);
+  // 1. Suffix pattern (e.g. "5.64% rate", "5.64 percent", "5.64 peratus", "5.64 p.a.", "4.23 faedah", "4.23 bunga", "4.23 interest")
+  const suffixMatch = normalized.match(/(\d{1,2}(?:\.\d{1,4})?)\s*(?:%|percent|peratus)\s*(?:rate|interest|kadar|faedah|bunga|p\.a\.|pa|setahun)?/i) ||
+                      normalized.match(/(\d{1,2}(?:\.\d{1,4})?)\s*(?:interest\s*rate|interest|kadar\s*faedah|kadar|faedah|bunga|rate|p\.a\.|pa|setahun)/i);
   if (suffixMatch && suffixMatch[1]) {
     const rateVal = parseFloat(suffixMatch[1]);
     if (rateValInRange(rateVal)) return rateVal;
   }
 
-  // 2. Prefix pattern (e.g. "interest rate I think is 5.64", "kadar faedah adalah 5.64", "rate of 5.64")
-  const prefixMatch = normalized.match(/(?:interest\s*rate|interest|kadar\s*faedah|kadar|faedah|rate)\s*(?:[a-z\s]{0,25}?)\s*(\d{1,2}(?:\.\d{1,4})?)/i);
+  // 2. Prefix pattern (e.g. "interest rate I think is 5.64", "kadar faedah adalah 5.64", "rate of 5.64", "bunga 4.23", "rate 4.23")
+  const prefixMatch = normalized.match(/(?:interest\s*rate|interest|kadar\s*faedah|kadar|faedah|bunga|rate)\s*(?:[a-z\s]{0,25}?)\s*(\d{1,2}(?:\.\d{1,4})?)/i);
   if (prefixMatch && prefixMatch[1]) {
     const rateVal = parseFloat(prefixMatch[1]);
     if (rateValInRange(rateVal)) return rateVal;
   }
 
-  // 3. Standalone decimal in the sentence (e.g. "5.64", "7.69", "4.65")
+  // 3. Standalone decimal in the sentence (e.g. "5.64", "7.69", "4.23", "4.65")
   const decimalMatch = normalized.match(/\b(\d{1,2}\.\d{1,4})\b/);
   if (decimalMatch && decimalMatch[1]) {
     const val = parseFloat(decimalMatch[1]);
@@ -296,7 +300,7 @@ function parseSpokenRate(text: string): number | undefined {
     'satu': 1, 'dua': 2, 'tiga': 3, 'empat': 4, 'lima': 5, 'enam': 6, 'tujuh': 7, 'lapan': 8, 'sembilan': 9, 'sepuluh': 10
   };
   for (const [w, val] of Object.entries(wordRates)) {
-    if (normalized.includes(w + ' percent') || normalized.includes(w + ' peratus') || normalized.includes(w + ' %') || normalized.includes('rate of ' + w) || normalized.includes('kadar ' + w) || normalized.includes('kadar faedah ' + w) || normalized.includes(w + ' interest rate')) {
+    if (normalized.includes(w + ' percent') || normalized.includes(w + ' peratus') || normalized.includes(w + ' %') || normalized.includes('rate of ' + w) || normalized.includes('kadar ' + w) || normalized.includes('kadar faedah ' + w) || normalized.includes(w + ' interest rate') || normalized.includes('bunga ' + w)) {
       return val;
     }
   }
