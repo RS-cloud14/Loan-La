@@ -509,33 +509,56 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 1C2. Simple Arithmetic Math Handler (e.g. "what is the result for 2+3+7", "kira 2+3+7", "2+3+7 equal to")
-    const mathMatch = lastMsgLower.match(/(?:result\s*(?:for|of)?|kira|calculate|what\s*is|berapa|result)?\s*(\d+(?:\.\d+)?\s*(?:[\+\-\*\/]\s*\d+(?:\.\d+)?)+)/i);
-    const isPureMathQuery = mathMatch && !lastMsgLower.includes('rm') && !lastMsgLower.includes('ringgit') && !lastMsgLower.includes('interest') && !lastMsgLower.includes('rate') && !lastMsgLower.includes('tenure') && !lastMsgLower.includes('ansuran') && !lastMsgLower.includes('bulan');
+    // 1C2. Robust Spoken & Written Arithmetic Math Handler (e.g. "1 + 2 + 3 + 4 and minus 5", "what is 2+3+7", "kira 50 tambah 20")
+    const isPureMathQuery = !lastMsgLower.includes('rm') && 
+                            !lastMsgLower.includes('ringgit') && 
+                            !lastMsgLower.includes('interest') && 
+                            !lastMsgLower.includes('rate') && 
+                            !lastMsgLower.includes('tenure') && 
+                            !lastMsgLower.includes('ansuran') && 
+                            !lastMsgLower.includes('installment') && 
+                            !lastMsgLower.includes('bulan');
 
-    if (isPureMathQuery && mathMatch[1]) {
-      const expr = mathMatch[1].trim();
-      let mathResult: number | null = null;
-      try {
-        // Safe arithmetic evaluator
-        // eslint-disable-next-line no-new-func
-        mathResult = Function(`'use strict'; return (${expr.replace(/[^0-9\+\-\*\/\.]/g, '')})`)();
-      } catch (e) {
-        mathResult = null;
-      }
+    if (isPureMathQuery) {
+      // Normalize spoken math words to operators
+      const normalizedMath = lastMsgLower
+        .replace(/\bplus\b|\btambah\b/gi, ' + ')
+        .replace(/\band minus\b|\bminus\b|\btolak\b|\bless\b/gi, ' - ')
+        .replace(/\btimes\b|\bmultiplied by\b|\bmultiply by\b|\bdarab\b/gi, ' * ')
+        .replace(/\bdivided by\b|\bdivide by\b|\bbahagi\b/gi, ' / ')
+        .replace(/\bequal to\b|\bequals\b|\bsama dengan\b/gi, ' ');
 
-      if (mathResult !== null && !isNaN(mathResult)) {
-        const reply = isMalay
-          ? `Hasil kiraan matematik bagi **${expr}** ialah **${mathResult}**.\n\n💡 *Nota: Untuk pengiraan ansuran pinjaman peribadi atau perniagaan, anda boleh memasukkan jumlah pembiayaan (cth: RM 10,000), tempoh (cth: 3 tahun), dan kadar faedah (cth: 5.5%).*`
-          : `The result of **${expr}** is **${mathResult}**.\n\n💡 *Note: For loan repayment calculations, please specify your financing amount (e.g. RM 10,000), tenure (e.g. 3 years), and interest rate (e.g. 5.5%).*`;
+      const mathMatch = normalizedMath.match(/(\d+(?:\.\d+)?(?:\s*[\+\-\*\/]\s*\d+(?:\.\d+)?)+)/);
 
-        return NextResponse.json({
-          success: true,
-          reply,
-          suggestions: isMalay 
-            ? ["Kalkulator Ansuran", "Keperluan Pinjaman", "Direktori Bank"]
-            : ["Loan Calculator", "Set Loan Purpose", "Bank Directory"]
-        });
+      if (mathMatch && mathMatch[1]) {
+        const rawExpr = mathMatch[1].trim();
+        const sanitizedExpr = rawExpr.replace(/[^0-9\+\-\*\/\.\s]/g, '').trim();
+
+        let mathResult: number | null = null;
+        try {
+          // Safe arithmetic evaluator
+          // eslint-disable-next-line no-new-func
+          const res = Function(`'use strict'; return (${sanitizedExpr})`)();
+          if (typeof res === 'number' && !isNaN(res) && isFinite(res)) {
+            mathResult = Math.round(res * 10000) / 10000;
+          }
+        } catch (e) {
+          mathResult = null;
+        }
+
+        if (mathResult !== null) {
+          const reply = isMalay
+            ? `Hasil kiraan matematik bagi **${sanitizedExpr}** ialah **${mathResult}**.\n\n💡 *Nota: Untuk pengiraan ansuran pinjaman peribadi atau perniagaan, anda boleh memasukkan jumlah pembiayaan (cth: RM 10,000), tempoh (cth: 3 tahun), dan kadar faedah (cth: 5.5%).*`
+            : `The result of **${sanitizedExpr}** is **${mathResult}**.\n\n💡 *Note: For loan repayment calculations, please specify your financing amount (e.g. RM 10,000), tenure (e.g. 3 years), and interest rate (e.g. 5.5%).*`;
+
+          return NextResponse.json({
+            success: true,
+            reply,
+            suggestions: isMalay 
+              ? ["Kalkulator Ansuran", "Keperluan Pinjaman", "Direktori Bank"]
+              : ["Loan Calculator", "Set Loan Purpose", "Bank Directory"]
+          });
+        }
       }
     }
 
