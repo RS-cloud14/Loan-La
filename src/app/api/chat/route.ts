@@ -471,6 +471,42 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // 1C. Out-of-Domain Guardrail (Programming code, Python, JavaScript, non-financial tasks, hacking, essays, recipes, chords)
+    const isOutOfDomainQuery = (
+      lastMsgLower.includes('python') ||
+      lastMsgLower.includes('javascript') ||
+      lastMsgLower.includes('typescript') ||
+      lastMsgLower.includes('java ') ||
+      lastMsgLower.includes('c++') ||
+      lastMsgLower.includes('html') ||
+      lastMsgLower.includes('css ') ||
+      lastMsgLower.includes('write code') ||
+      lastMsgLower.includes('write a script') ||
+      lastMsgLower.includes('coding') ||
+      lastMsgLower.includes('program chords') ||
+      lastMsgLower.includes('chords for') ||
+      lastMsgLower.includes('programming') ||
+      lastMsgLower.includes('debug this') ||
+      lastMsgLower.includes('recipe') ||
+      lastMsgLower.includes('write an essay') ||
+      lastMsgLower.includes('tulis kod') ||
+      lastMsgLower.includes('atur cara')
+    );
+
+    if (isOutOfDomainQuery) {
+      const reply = isMalay
+        ? "Maaf, saya ialah AI Pembantu Kewangan & Pinjaman khas untuk platform Loan - La. Skop bantuan saya adalah terhad kepada pengunderaitan aliran tunai, pengiraan ansuran pinjaman, semakan DSR, analisis penyata bank, dan panduan pinjaman perbankan di Malaysia. Saya tidak dapat menjana kod pengaturcaraan seperti Python atau tugasan bukan kewangan.\n\nBolehkah saya bantu anda membuat kiraan ansuran pinjaman, menyemak Pasport Kredit, atau melihat padanan bank digital hari ini?"
+        : "I am Loan - La's dedicated AI Loan & Financial Underwriting Assistant. My expertise is strictly focused on cashflow underwriting, loan installment calculations, DSR assessments, bank statement analysis, and Malaysian lending solutions. I cannot write programming code (such as Python) or handle non-financial queries.\n\nHow can I assist you with your loan calculations, Credit Passport assessment, or matched digital banks today?";
+
+      return NextResponse.json({
+        success: true,
+        reply,
+        suggestions: isMalay 
+          ? ["Kalkulator Ansuran", "Keperluan Pinjaman", "Direktori Bank"]
+          : ["Loan Calculator", "Set Loan Purpose", "Bank Directory"]
+      });
+    }
+
     // Multi-turn context inspection
     const previousMessages = messages.slice(0, -1);
     const lastAssistantMessage = previousMessages.filter(m => m.role === 'assistant').slice(-1)[0]?.content || '';
@@ -1343,6 +1379,12 @@ Actions:
 - If user asks to download, export, or save the credit passport report / PDF, append [ACTION:DOWNLOAD_REPORT].
 - If the user is asking questions, comparing, or seeking advice, DO NOT force an action token; instead, provide the full thorough answer directly.
 
+STRICT DOMAIN SCOPE & CONVERSATIONAL GUARDRAIL:
+- You are strictly and exclusively Loan - La's AI Loan & Financial Underwriting Assistant for Malaysian gig workers, freelancers, and MSMEs.
+- NEVER write programming code (such as Python, JavaScript, Java, C++, HTML, etc.), debug scripts, write essays, or perform unrelated non-financial tasks.
+- If the user asks for programming code or off-topic queries, politely decline and steer them back to Loan - La's loan underwriting, DSR calculations, and bank matching.
+- NEVER output meta announcements, robotic preamble, or language disclaimers to the user (e.g. NEVER start your answer with 'Please note that the user interface language is currently set to...'). Respond directly, naturally, and warmly.
+
 Guidelines:
 - Provide clear, direct, articulate, and truly helpful answers with numbered steps or bullet points.
 - DO NOT use markdown heading hashes (like '###' or '##').
@@ -1374,6 +1416,14 @@ Guidelines:
 
       if (aiResponse) {
         let cleanReply = aiResponse.trim();
+        // Strip any accidental meta language preamble
+        cleanReply = cleanReply
+          .replace(/^Please note that the user interface language is[^\n]*\n+/i, '')
+          .replace(/^Sila ambil perhatian bahawa bahasa antara muka[^\n]*\n+/i, '')
+          .replace(/^As per our guidelines,[^\n]*\n+/i, '')
+          .replace(/^According to guidelines,[^\n]*\n+/i, '')
+          .trim();
+
         let extractedAction: any = undefined;
 
         const actionMatch = cleanReply.match(/\[ACTION:(SET_CALCULATOR|NAVIGATE_TRACKER|NAVIGATE_LOAN_NEED|NAVIGATE_DIRECTORY|NAVIGATE_SETTINGS|NAVIGATE_REPORT|DOWNLOAD_REPORT):?([^\]]*)\]/);
