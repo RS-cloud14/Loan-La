@@ -498,7 +498,28 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 1E. Post-Service Process & AI Customer Support Ticket Routing
+    // 1E. Informational Guide on How to Contact Customer Support
+    const isSupportInfoGuideQuery = (
+      (lastMsgLower.includes('how to') || lastMsgLower.includes('how can i') || lastMsgLower.includes('how do i') || lastMsgLower.includes('where is') || lastMsgLower.includes('where can i') || lastMsgLower.includes('macam mana') || lastMsgLower.includes('bagaimana') || lastMsgLower.includes('cara') || lastMsgLower.includes('dimana')) &&
+      (lastMsgLower.includes('customer support') || lastMsgLower.includes('customer service') || lastMsgLower.includes('khidmat pelanggan') || lastMsgLower.includes('bantuan pelanggan') || lastMsgLower.includes('contact support') || lastMsgLower.includes('get support'))
+    );
+
+    if (isSupportInfoGuideQuery) {
+      const reply = isMalay
+        ? `🎧 **Saluran Bantuan & Khidmat Pelanggan Loan - La:**\n\nAnda boleh mendapatkan bantuan melalui saluran rasmi berikut:\n\n1. 🤖 **AI CoPilot 24/7 (Sedia Membantu Di Sini):**\n• Anda boleh terus bercakap atau menaip soalan tentang pengunderaitan, semakan DSR, muat naik penyata, atau kiraan ansuran.\n\n2. 🎫 **Tiket Sokongan Rasmi (SLA Respon 15–30 Minit):**\n• Jika anda mengalami masalah teknikal, pembayaran pass, atau kelewatan status, beritahu saya masalah anda dan saya akan daftarkan Tiket Sokongan terus kepada pegawai kami.\n\n3. 📱 **Talian WhatsApp & Emel Sokongan:**\n• Emel: \`support@loan-la.my\`\n• WhatsApp Bantuan: \`+60 12-482 9182\` (Isnin – Jumaat, 9:00 AM – 6:00 PM)\n\nMembuka Pusat Khidmat Pelanggan untuk anda menyemak atau membuat tiket bantuan.`
+        : `🎧 **Loan - La Customer Support Channels:**\n\nYou can access support through our official channels:\n\n1. 🤖 **AI CoPilot 24/7 (Right Here):**\n• Speak or type any questions regarding cashflow underwriting, DSR limits, bank statement uploads, or loan calculations.\n\n2. 🎫 **Official Support Tickets (15–30 Mins Response SLA):**\n• If you encounter any technical issue, payment delay, or statement error, tell me the problem and I will assign a verified Service Ticket to our human support team.\n\n3. 📱 **Direct WhatsApp & Email Support:**\n• Email: \`support@loan-la.my\`\n• WhatsApp Support Hotline: \`+60 12-482 9182\` (Mon – Fri, 9:00 AM – 6:00 PM)\n\nOpening the Support Center for you to track or submit your service inquiries.`;
+
+      return NextResponse.json({
+        success: true,
+        reply,
+        action: { type: 'NAVIGATE_SUPPORT' },
+        suggestions: isMalay 
+          ? ["Buka Pusat Bantuan", "Kalkulator Ansuran", "Direktori Bank"]
+          : ["Open Support Center", "Loan Calculator", "Bank Directory"]
+      });
+    }
+
+    // 1F. Post-Service Process & AI Customer Support Ticket Routing
     const isConfirmingTicketDispatch = (
       (prevContext.includes('tiket') || prevContext.includes('ticket') || prevContext.includes('support') || prevContext.includes('pegawai') || prevContext.includes('khidmat pelanggan')) &&
       (lastMsgLower.includes('yes') || lastMsgLower.includes('ya') || lastMsgLower.includes('sah') || lastMsgLower.includes('confirm') || lastMsgLower.includes('hantar') || lastMsgLower.includes('proceed') || lastMsgLower.includes('assign') || lastMsgLower.includes('tolong') || lastMsgLower.includes('ok') || lastMsgLower.includes('okay'))
