@@ -508,8 +508,10 @@ export default function AICoPilotChat({
         const el = callSubtitleScrollRef.current;
         const totalLen = Math.max(1, (lastAgentReply || '').length);
         const ratio = Math.min(1, spokenCharIndex / totalLen);
-        const targetTop = (el.scrollHeight - el.clientHeight) * ratio;
-        el.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
+        const maxScroll = el.scrollHeight - el.clientHeight;
+        if (maxScroll > 0) {
+          el.scrollTop = maxScroll * ratio;
+        }
       }
     }
   }, [spokenCharIndex, isCallActive, callStatus, lastAgentReply]);
@@ -522,6 +524,7 @@ export default function AICoPilotChat({
     }
 
     isAgentSpeakingRef.current = true;
+    isUserScrollingSubtitlesRef.current = false;
     if (callRecognitionRef.current) {
       try { callRecognitionRef.current.stop(); } catch(e){}
     }
@@ -807,7 +810,6 @@ export default function AICoPilotChat({
     if (!isCallActiveRef.current || isMutedRef.current || isAgentSpeakingRef.current) return;
     
     setCallStatus('listening');
-    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
 
     if (typeof window === 'undefined') return;
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -1420,14 +1422,28 @@ export default function AICoPilotChat({
                       </div>
                       <div 
                         ref={callSubtitleScrollRef}
-                        onScroll={() => {
+                        onWheel={() => {
                           isUserScrollingSubtitlesRef.current = true;
                           if (userScrollResumeTimerRef.current) clearTimeout(userScrollResumeTimerRef.current);
                           userScrollResumeTimerRef.current = setTimeout(() => {
                             isUserScrollingSubtitlesRef.current = false;
                           }, 4000);
                         }}
-                        className="flex-1 text-xs text-slate-100 leading-relaxed max-h-[140px] overflow-y-auto pr-1 custom-scrollbar scroll-smooth"
+                        onTouchMove={() => {
+                          isUserScrollingSubtitlesRef.current = true;
+                          if (userScrollResumeTimerRef.current) clearTimeout(userScrollResumeTimerRef.current);
+                          userScrollResumeTimerRef.current = setTimeout(() => {
+                            isUserScrollingSubtitlesRef.current = false;
+                          }, 4000);
+                        }}
+                        onPointerDown={() => {
+                          isUserScrollingSubtitlesRef.current = true;
+                          if (userScrollResumeTimerRef.current) clearTimeout(userScrollResumeTimerRef.current);
+                          userScrollResumeTimerRef.current = setTimeout(() => {
+                            isUserScrollingSubtitlesRef.current = false;
+                          }, 4000);
+                        }}
+                        className="flex-1 text-xs text-slate-100 leading-relaxed max-h-[140px] overflow-y-auto pr-1 custom-scrollbar"
                       >
                         <FormattedMessage 
                           text={lastAgentReply || (isMalay ? "Bagaimana saya boleh bantu anda?" : "How can I help you?")} 
