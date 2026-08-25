@@ -646,8 +646,38 @@ export async function POST(request: NextRequest) {
 
     // 1F. Post-Service Process & AI Customer Support Ticket Routing
     const isConfirmingTicketDispatch = (
-      (prevContext.includes('tiket') || prevContext.includes('ticket') || prevContext.includes('support') || prevContext.includes('pegawai') || prevContext.includes('khidmat pelanggan')) &&
-      (lastMsgLower.includes('yes') || lastMsgLower.includes('ya') || lastMsgLower.includes('sah') || lastMsgLower.includes('confirm') || lastMsgLower.includes('hantar') || lastMsgLower.includes('proceed') || lastMsgLower.includes('assign') || lastMsgLower.includes('tolong') || lastMsgLower.includes('ok') || lastMsgLower.includes('okay'))
+      (prevContext.includes('tiket') || 
+       prevContext.includes('ticket') || 
+       prevContext.includes('support') || 
+       prevContext.includes('pegawai') || 
+       prevContext.includes('dispatch') || 
+       prevContext.includes('customer care') || 
+       prevContext.includes('khidmat pelanggan') ||
+       prevContext.includes('cadangan') ||
+       prevContext.includes('preview') ||
+       prevContext.includes('analysis') ||
+       prevContext.includes('analisis') ||
+       prevContext.includes('hantar tiket') ||
+       prevContext.includes('dispatch an official')) &&
+      (lastMsgLower === 'yes' || 
+       lastMsgLower === 'ya' || 
+       lastMsgLower === 'yep' || 
+       lastMsgLower === 'yeah' || 
+       lastMsgLower === 'yup' || 
+       lastMsgLower === 'sah' || 
+       lastMsgLower === 'ok' || 
+       lastMsgLower === 'okay' || 
+       lastMsgLower === 'sure' || 
+       lastMsgLower === 'please' || 
+       lastMsgLower.startsWith('yes') || 
+       lastMsgLower.startsWith('ya ') || 
+       lastMsgLower.includes('confirm') || 
+       lastMsgLower.includes('hantar') || 
+       lastMsgLower.includes('proceed') || 
+       lastMsgLower.includes('assign') || 
+       lastMsgLower.includes('tolong') || 
+       lastMsgLower.includes('create ticket') || 
+       lastMsgLower.includes('buka tiket'))
     );
 
     const isDirectSupportQuery = (
@@ -690,27 +720,29 @@ export async function POST(request: NextRequest) {
     );
 
     if (isConfirmingTicketDispatch || isDirectSupportQuery || isProblemReportQuery) {
+      const contextForAnalysis = (isConfirmingTicketDispatch ? (lastUserPreviousMessage + ' ' + lastAssistantMessage) : lastUserMessage).toLowerCase();
+
       let category: 'statement_upload' | 'payment_pass' | 'underwriting_score' | 'disbursement_lender' | 'general_support' = 'general_support';
       let priority: 'urgent' | 'high' | 'normal' = 'normal';
       let subjectEn = 'Customer Care Support Request';
       let subjectBm = 'Permintaan Bantuan Khidmat Pelanggan';
 
-      if (lastMsgLower.includes('upload') || lastMsgLower.includes('penyata') || lastMsgLower.includes('statement') || lastMsgLower.includes('pdf') || lastMsgLower.includes('dokumen')) {
+      if (contextForAnalysis.includes('upload') || contextForAnalysis.includes('penyata') || contextForAnalysis.includes('statement') || contextForAnalysis.includes('pdf') || contextForAnalysis.includes('dokumen') || contextForAnalysis.includes('file')) {
         category = 'statement_upload';
         priority = 'high';
         subjectEn = 'Bank Statement & Document Upload Support';
         subjectBm = 'Bantuan Muat Naik Penyata Bank & Dokumen';
-      } else if (lastMsgLower.includes('pay') || lastMsgLower.includes('bayar') || lastMsgLower.includes('pass') || lastMsgLower.includes('rm9.90') || lastMsgLower.includes('rm19.90') || lastMsgLower.includes('refund') || lastMsgLower.includes('resit')) {
+      } else if (contextForAnalysis.includes('pay') || contextForAnalysis.includes('bayar') || contextForAnalysis.includes('pass') || contextForAnalysis.includes('rm9.90') || contextForAnalysis.includes('rm19.90') || contextForAnalysis.includes('20 ringgit') || contextForAnalysis.includes('30 day') || contextForAnalysis.includes('30 hari') || contextForAnalysis.includes('buy') || contextForAnalysis.includes('beli') || contextForAnalysis.includes('refund') || contextForAnalysis.includes('resit')) {
         category = 'payment_pass';
         priority = 'urgent';
         subjectEn = 'Payment & Credit Passport Pass Issue';
         subjectBm = 'Isu Pembayaran & Pas Laporan Pasport';
-      } else if (lastMsgLower.includes('score') || lastMsgLower.includes('skor') || lastMsgLower.includes('gred') || lastMsgLower.includes('grade') || lastMsgLower.includes('dsr') || lastMsgLower.includes('income') || lastMsgLower.includes('pendapatan')) {
+      } else if (contextForAnalysis.includes('score') || contextForAnalysis.includes('skor') || contextForAnalysis.includes('gred') || contextForAnalysis.includes('grade') || contextForAnalysis.includes('dsr') || contextForAnalysis.includes('income') || contextForAnalysis.includes('pendapatan')) {
         category = 'underwriting_score';
         priority = 'normal';
         subjectEn = 'Credit Score & DSR Underwriting Inquiry';
         subjectBm = 'Pertanyaan Pengunderaitan Skor Kredit & DSR';
-      } else if (lastMsgLower.includes('status') || lastMsgLower.includes('lender') || lastMsgLower.includes('bank') || lastMsgLower.includes('delay') || lastMsgLower.includes('lambat') || lastMsgLower.includes('payout') || lastMsgLower.includes('disbursement')) {
+      } else if (contextForAnalysis.includes('status') || contextForAnalysis.includes('lender') || contextForAnalysis.includes('bank') || contextForAnalysis.includes('delay') || contextForAnalysis.includes('lambat') || contextForAnalysis.includes('payout') || contextForAnalysis.includes('disbursement')) {
         category = 'disbursement_lender';
         priority = 'high';
         subjectEn = 'Loan Application Status & Bank Disbursement';
@@ -719,6 +751,7 @@ export async function POST(request: NextRequest) {
 
       const ticketId = `TKT-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
       const slaMins = priority === 'urgent' ? 15 : (priority === 'high' ? 30 : 60);
+      const finalDescription = (isConfirmingTicketDispatch && lastUserPreviousMessage && lastUserPreviousMessage.length > 5) ? lastUserPreviousMessage : lastUserMessage;
 
       if (isConfirmingTicketDispatch) {
         const reply = isMalay
@@ -734,7 +767,7 @@ export async function POST(request: NextRequest) {
               id: ticketId,
               category,
               subject: isMalay ? subjectBm : subjectEn,
-              description: lastUserMessage,
+              description: finalDescription,
               priority,
               slaMinutes: slaMins,
               userContact: {
@@ -753,8 +786,8 @@ export async function POST(request: NextRequest) {
         });
       } else {
         const reply = isMalay
-          ? `🔍 **Analisis Isu & Cadangan Pembukaan Tiket Khidmat Pelanggan:**\n\nSaya telah menganalisis pertanyaan anda:\n• **Kategori:** ${subjectBm}\n• **Tahap Keutamaan:** ${priority.toUpperCase()} (Jaminan respon ${slaMins} minit)\n• **Ringkasan Masalah:** "${lastUserMessage.slice(0, 100)}${lastUserMessage.length > 100 ? '...' : ''}"\n\nAdakah anda mahu saya hantar tiket perkhidmatan ini terus kepada Pegawai Khidmat Pelanggan kami sekarang?`
-          : `🔍 **AI Request Analysis & Support Ticket Preview:**\n\nI have analyzed your inquiry:\n• **Category:** ${subjectEn}\n• **Priority Level:** ${priority.toUpperCase()} (${slaMins} min response SLA)\n• **Issue Summary:** "${lastUserMessage.slice(0, 100)}${lastUserMessage.length > 100 ? '...' : ''}"\n\nWould you like me to dispatch an official service ticket to our Customer Care Team for you now?`;
+          ? `🔍 **Analisis Isu & Cadangan Pembukaan Tiket Khidmat Pelanggan:**\n\nSaya telah menganalisis pertanyaan anda:\n• **Kategori:** ${subjectBm}\n• **Tahap Keutamaan:** ${priority.toUpperCase()} (Jaminan respon ${slaMins} minit)\n• **Ringkasan Masalah:** "${finalDescription.slice(0, 100)}${finalDescription.length > 100 ? '...' : ''}"\n\nAdakah anda mahu saya hantar tiket perkhidmatan ini terus kepada Pegawai Khidmat Pelanggan kami sekarang?`
+          : `🔍 **AI Request Analysis & Support Ticket Preview:**\n\nI have analyzed your inquiry:\n• **Category:** ${subjectEn}\n• **Priority Level:** ${priority.toUpperCase()} (${slaMins} min response SLA)\n• **Issue Summary:** "${finalDescription.slice(0, 100)}${finalDescription.length > 100 ? '...' : ''}"\n\nWould you like me to dispatch an official service ticket to our Customer Care Team for you now?`;
 
         return NextResponse.json({
           success: true,
@@ -764,7 +797,7 @@ export async function POST(request: NextRequest) {
             payload: {
               category,
               subject: isMalay ? subjectBm : subjectEn,
-              description: lastUserMessage,
+              description: finalDescription,
               priority,
               slaMinutes: slaMins,
               userContact: {
