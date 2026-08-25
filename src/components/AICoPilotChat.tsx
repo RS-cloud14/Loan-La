@@ -376,6 +376,7 @@ export default function AICoPilotChat({
   const isAgentSpeakingRef = useRef(false);
   const isRecognitionRunningRef = useRef(false);
   const currentAccumulatedSpeechRef = useRef('');
+  const persistedTurnSpeechRef = useRef('');
   const lastSpeechActivityTimestampRef = useRef<number>(0);
   const cachedVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
 
@@ -834,9 +835,20 @@ export default function AICoPilotChat({
       recog.onresult = (event: any) => {
         if (isAgentSpeakingRef.current) return;
 
-        const fullText = parseSpeechRecognitionResults(event.results);
-        if (!fullText) return;
+        const currentSegment = parseSpeechRecognitionResults(event.results);
+        if (!currentSegment) return;
 
+        // Merge with previously persisted speech from earlier in this user turn so pausing doesn't wipe previous words
+        let fullText = currentSegment;
+        if (persistedTurnSpeechRef.current) {
+          const prevLower = persistedTurnSpeechRef.current.toLowerCase();
+          const currLower = currentSegment.toLowerCase();
+          if (!currLower.startsWith(prevLower.slice(0, Math.min(prevLower.length, 12)))) {
+            fullText = `${persistedTurnSpeechRef.current} ${currentSegment}`;
+          }
+        }
+
+        fullText = cleanSpeechDuplicates(fullText);
         lastSpeechActivityTimestampRef.current = Date.now();
         currentAccumulatedSpeechRef.current = fullText;
         setLiveTranscript(fullText);
@@ -844,26 +856,17 @@ export default function AICoPilotChat({
         if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
         
         const words = fullText.split(/\s+/).filter(Boolean);
-        if (words.length >= 2) {
-          // Check if speech ends with connecting or trailing words where user is likely pausing to formulate numbers
-          const lastWord = words[words.length - 1].toLowerCase().replace(/[^a-z0-9%]/g, '');
-          const trailingKeywords = [
-            'and', 'in', 'at', 'about', 'for', 'with', 'rate', 'interest', 'loan', 'years', 'year', 'to', 'of', 'would', 'be',
-            'dan', 'dalam', 'selama', 'tahun', 'kadar', 'faedah', 'pinjaman', 'sebanyak', 'pada', 'untuk', 'dengan'
-          ];
-          const hasTrailingConnective = trailingKeywords.includes(lastWord);
-
-          // Patient Adaptive Silence Timer: 6000ms if trailing connective word or thinking, otherwise 4500ms
-          const adaptiveSilenceDelay = hasTrailingConnective ? 6000 : 4500;
-
+        if (words.length >= 1) {
+          // Exactly 3.5s silence timer as requested
           silenceTimerRef.current = setTimeout(() => {
             if (currentAccumulatedSpeechRef.current && isCallActiveRef.current && !isAgentSpeakingRef.current) {
               const speechToSubmit = cleanSpeechDuplicates(currentAccumulatedSpeechRef.current);
               currentAccumulatedSpeechRef.current = '';
+              persistedTurnSpeechRef.current = '';
               try { recog.stop(); } catch(e){}
               processQuery(speechToSubmit, true);
             }
-          }, adaptiveSilenceDelay);
+          }, 3500);
         }
       };
 
@@ -876,13 +879,17 @@ export default function AICoPilotChat({
 
       recog.onend = () => {
         isRecognitionRunningRef.current = false;
+        // Save current speech so user pausing doesn't wipe previous words when new utterance begins
+        if (currentAccumulatedSpeechRef.current) {
+          persistedTurnSpeechRef.current = currentAccumulatedSpeechRef.current;
+        }
         // Graceful auto-restart if call is still active and agent is not speaking
         if (isCallActiveRef.current && !isMutedRef.current && !isAgentSpeakingRef.current) {
           setTimeout(() => {
             if (isCallActiveRef.current && !isMutedRef.current && !isAgentSpeakingRef.current && !isRecognitionRunningRef.current) {
               startCallListening();
             }
-          }, 300);
+          }, 250);
         }
       };
 
@@ -929,6 +936,7 @@ export default function AICoPilotChat({
     const speech = cleanSpeechDuplicates(currentAccumulatedSpeechRef.current || liveTranscript);
     if (speech && speech.trim()) {
       currentAccumulatedSpeechRef.current = '';
+      persistedTurnSpeechRef.current = '';
       if (callRecognitionRef.current) {
         try { callRecognitionRef.current.stop(); } catch(e){}
       }
@@ -943,6 +951,7 @@ export default function AICoPilotChat({
     setCallStatus('speaking');
     setLiveTranscript('');
     currentAccumulatedSpeechRef.current = '';
+    persistedTurnSpeechRef.current = '';
     setLastCallAction(null);
     setLastUserSpeech('');
 
@@ -977,6 +986,7 @@ export default function AICoPilotChat({
     setCallStatus('listening');
     setLiveTranscript('');
     currentAccumulatedSpeechRef.current = '';
+    persistedTurnSpeechRef.current = '';
     setLastCallAction(null);
     setLastUserSpeech('');
   };
