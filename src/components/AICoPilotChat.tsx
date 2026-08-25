@@ -719,6 +719,9 @@ export default function AICoPilotChat({
     if (!isReportInquiry && lower.includes('check') && (lower.includes('application') || lower.includes('status'))) {
       executeAgentAction({ type: 'NAVIGATE_TRACKER' }, true);
       return;
+    } else if (lower.includes('support center') || lower.includes('pusat bantuan') || lower.includes('pusat sokongan') || lower.includes('my tickets') || lower.includes('tiket saya') || lower.includes('open support')) {
+      executeAgentAction({ type: 'NAVIGATE_SUPPORT' }, true);
+      return;
     } else if (lower.includes('setting') || lower.includes('tetapan') || lower.includes('profile')) {
       executeAgentAction({ type: 'NAVIGATE_SETTINGS' }, true);
       return;
@@ -1810,6 +1813,8 @@ export default function AICoPilotChat({
                                 const lower = sug.toLowerCase();
                                 if (lower.includes('status') || lower.includes('permohonan') || lower.includes('tracker')) {
                                   executeAgentAction({ type: 'NAVIGATE_TRACKER' });
+                                } else if (lower.includes('tiket') || lower.includes('support') || lower.includes('bantuan') || lower.includes('pusat')) {
+                                  executeAgentAction({ type: 'NAVIGATE_SUPPORT' });
                                 } else if (lower.includes('keperluan') || lower.includes('purpose')) {
                                   executeAgentAction({ type: 'NAVIGATE_LOAN_NEED' });
                                 } else if (lower.includes('direktori') || lower.includes('directory') || lower.includes('bank')) {

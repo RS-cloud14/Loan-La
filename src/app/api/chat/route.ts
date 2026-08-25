@@ -461,7 +461,44 @@ export async function POST(request: NextRequest) {
     const lastUserPreviousMessage = previousMessages.filter(m => m.role === 'user').slice(-1)[0]?.content || '';
     const prevContext = (lastAssistantMessage + ' ' + lastUserPreviousMessage).toLowerCase();
 
-    // 1D. Post-Service Process & AI Customer Support Ticket Routing
+    // 1D. Direct Navigation to Customer Support Center Modal
+    const isDirectNavigateSupportCenter = (
+      lastMsgLower === 'open support center' ||
+      lastMsgLower === 'support center' ||
+      lastMsgLower === 'pusat bantuan' ||
+      lastMsgLower === 'buka pusat bantuan' ||
+      lastMsgLower === 'pusat sokongan' ||
+      lastMsgLower === 'buka pusat sokongan' ||
+      lastMsgLower.includes('open support center') ||
+      lastMsgLower.includes('buka pusat bantuan') ||
+      lastMsgLower.includes('buka pusat sokongan') ||
+      lastMsgLower.includes('view support center') ||
+      lastMsgLower.includes('view my ticket') ||
+      lastMsgLower.includes('view my tickets') ||
+      lastMsgLower.includes('lihat tiket saya') ||
+      lastMsgLower.includes('semak tiket saya') ||
+      lastMsgLower.includes('my tickets') ||
+      lastMsgLower.includes('tiket saya') ||
+      lastMsgLower.includes('help center') ||
+      lastMsgLower.includes('pusat khidmat pelanggan')
+    );
+
+    if (isDirectNavigateSupportCenter) {
+      const reply = isMalay
+        ? "Membuka Pusat Khidmat Pelanggan & Tiket Sokongan untuk anda. Anda boleh menyemak status tiket sedia ada atau membuka permohonan bantuan baru."
+        : "Opening the Customer Support & Service Tickets Center for you. You can review your active tickets or submit a new inquiry.";
+
+      return NextResponse.json({
+        success: true,
+        reply,
+        action: { type: 'NAVIGATE_SUPPORT' },
+        suggestions: isMalay 
+          ? ["Kalkulator Ansuran", "Keperluan Pinjaman", "Direktori Bank"]
+          : ["Loan Calculator", "Set Loan Purpose", "Bank Directory"]
+      });
+    }
+
+    // 1E. Post-Service Process & AI Customer Support Ticket Routing
     const isConfirmingTicketDispatch = (
       (prevContext.includes('tiket') || prevContext.includes('ticket') || prevContext.includes('support') || prevContext.includes('pegawai') || prevContext.includes('khidmat pelanggan')) &&
       (lastMsgLower.includes('yes') || lastMsgLower.includes('ya') || lastMsgLower.includes('sah') || lastMsgLower.includes('confirm') || lastMsgLower.includes('hantar') || lastMsgLower.includes('proceed') || lastMsgLower.includes('assign') || lastMsgLower.includes('tolong') || lastMsgLower.includes('ok') || lastMsgLower.includes('okay'))
