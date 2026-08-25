@@ -8,6 +8,8 @@ interface UserContextPayload {
   isLoggedIn?: boolean;
   name?: string;
   platform?: string;
+  phone?: string;
+  email?: string;
   assessedInflow?: number;
   latestScore?: number;
   latestGrade?: string;
@@ -17,6 +19,20 @@ interface UserContextPayload {
   maxSafeMonthlyPay?: number;
   targetLoanAmount?: number;
   targetLoanPurpose?: string;
+  activeTickets?: Array<{
+    id: string;
+    category: string;
+    categoryLabel: string;
+    categoryLabelBm?: string;
+    subject: string;
+    description: string;
+    priority: string;
+    status: string;
+    createdAt: string;
+    slaMinutes: number;
+    agentDiagnostic?: string;
+    resolutionNote?: string;
+  }>;
 }
 
 // Read latest assessment from stored JSON file on disk
@@ -498,7 +514,48 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 1E. Informational Guide on How to Contact Customer Support
+    // 1E. Support Ticket Status & Case Resolution Inquiry (e.g. "when will the team resolve the issue for my case", "status tiket saya", "how long to resolve")
+    const isTicketStatusOrResolutionQuery = (
+      (lastMsgLower.includes('when') || lastMsgLower.includes('bila') || lastMsgLower.includes('berapa lama') || lastMsgLower.includes('how long') || lastMsgLower.includes('status') || lastMsgLower.includes('check') || lastMsgLower.includes('semak') || lastMsgLower.includes('update')) &&
+      (lastMsgLower.includes('resolve') || lastMsgLower.includes('resolution') || lastMsgLower.includes('case') || lastMsgLower.includes('isu') || lastMsgLower.includes('masalah') || lastMsgLower.includes('ticket') || lastMsgLower.includes('tiket'))
+    );
+
+    if (isTicketStatusOrResolutionQuery) {
+      const activeTickets = userContext?.activeTickets || [];
+      if (activeTickets.length > 0) {
+        const topTicket = activeTickets[0];
+        const statusLabelEn = topTicket.status === 'resolved' ? 'Resolved ✅' : (topTicket.status === 'under_review' ? 'Under Review by Human Officer ⏳' : 'Open / In Queue 📬');
+        const statusLabelBm = topTicket.status === 'resolved' ? 'Telah Selesai ✅' : (topTicket.status === 'under_review' ? 'Sedang Disemak oleh Pegawai ⏳' : 'Diterima & Dalam Giliran 📬');
+
+        const reply = isMalay
+          ? `📋 **Status Kes & Tiket Perkhidmatan Anda (${topTicket.id}):**\n\n• **No. Rujukan Tiket:** \`${topTicket.id}\`\n• **Tajuk Isu:** ${topTicket.subject}\n• **Kategori:** ${topTicket.categoryLabelBm || topTicket.categoryLabel}\n• **Tahap Keutamaan:** ${topTicket.priority.toUpperCase()}\n• **Status Semasa:** **${statusLabelBm}**\n• **Jaminan Masa Tindakan:** ${topTicket.slaMinutes} Minit\n• **Tarikh Dihantar:** ${new Date(topTicket.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}, ${new Date(topTicket.createdAt).toLocaleDateString([], { day: 'numeric', month: 'short' })}\n\n${topTicket.agentDiagnostic ? `💡 *Analisis AI:* ${topTicket.agentDiagnostic}\n\n` : ''}Pegawai sokongan kami sedang mengendalikan kes ini dan akan menghubungi anda melalui WhatsApp atau Emel dalam tempoh SLA yang ditetapkan.`
+          : `📋 **Service Case & Ticket Status (${topTicket.id}):**\n\n• **Ticket Reference ID:** \`${topTicket.id}\`\n• **Issue Subject:** ${topTicket.subject}\n• **Category:** ${topTicket.categoryLabel}\n• **Priority Level:** ${topTicket.priority.toUpperCase()}\n• **Current Status:** **${statusLabelEn}**\n• **SLA Response Commitment:** ${topTicket.slaMinutes} Minutes\n• **Submitted At:** ${new Date(topTicket.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}, ${new Date(topTicket.createdAt).toLocaleDateString([], { day: 'numeric', month: 'short' })}\n\n${topTicket.agentDiagnostic ? `💡 *AI Diagnostic:* ${topTicket.agentDiagnostic}\n\n` : ''}Our customer care officer is actively handling your case and will update you via WhatsApp or Email within the SLA timeframe.`;
+
+        return NextResponse.json({
+          success: true,
+          reply,
+          action: { type: 'NAVIGATE_SUPPORT', payload: { id: topTicket.id } },
+          suggestions: isMalay 
+            ? ["Pusat Bantuan", "Kalkulator Ansuran", "Direktori Bank"]
+            : ["Support Center", "Loan Calculator", "Bank Directory"]
+        });
+      } else {
+        const reply = isMalay
+          ? `🔍 **Tiada Tiket Sokongan Aktif Dijumpai:**\n\nSaya telah menyemak rekod anda dan mendapati anda belum mempunyai tiket sokongan yang didaftarkan.\n\nJika anda sedang mengalami sebarang isu (seperti kegagalan muat naik dokumen, masalah pembayaran pasport, atau kelewatan status pinjaman), sila terangkan masalah anda di sini atau buka Pusat Bantuan untuk mendaftarkan tiket baru (dengan jaminan respon 15–30 minit).`
+          : `🔍 **No Active Support Tickets Found:**\n\nI checked your profile and you currently do not have any open support tickets registered yet.\n\nIf you are experiencing an issue (such as document upload errors, passport pass payment, or application delays), please describe the problem here or open the Support Center to dispatch a new ticket (with our 15–30 min SLA guarantee).`;
+
+        return NextResponse.json({
+          success: true,
+          reply,
+          action: { type: 'NAVIGATE_SUPPORT' },
+          suggestions: isMalay 
+            ? ["Buka Pusat Bantuan", "Laporkan Masalah", "Direktori Bank"]
+            : ["Open Support Center", "Report an Issue", "Bank Directory"]
+        });
+      }
+    }
+
+    // 1F. Informational Guide on How to Contact Customer Support
     const isSupportInfoGuideQuery = (
       (lastMsgLower.includes('how to') || lastMsgLower.includes('how can i') || lastMsgLower.includes('how do i') || lastMsgLower.includes('where is') || lastMsgLower.includes('where can i') || lastMsgLower.includes('macam mana') || lastMsgLower.includes('bagaimana') || lastMsgLower.includes('cara') || lastMsgLower.includes('dimana')) &&
       (lastMsgLower.includes('customer support') || lastMsgLower.includes('customer service') || lastMsgLower.includes('khidmat pelanggan') || lastMsgLower.includes('bantuan pelanggan') || lastMsgLower.includes('contact support') || lastMsgLower.includes('get support'))
@@ -1236,6 +1293,10 @@ ${isUserLoggedIn ? `
 - CRITICAL PRIVACY RULE: DO NOT reveal, invent, or discuss personal credit scores, personal DSR, or private income for unauthenticated guests.
 - If the guest asks about their personal credit report or score, politely explain that they must log in or complete a credit assessment first to generate their personalized Credit Passport.
 `}
+
+User Support Tickets & Active Service Inquiries:
+${userContext?.activeTickets && userContext.activeTickets.length > 0 ? userContext.activeTickets.map((t: any) => `- Ticket [${t.id}] | Category: ${t.categoryLabel} | Subject: "${t.subject}" | Priority: ${t.priority.toUpperCase()} | Status: ${t.status} | SLA Response Guarantee: ${t.slaMinutes} mins | Submitted: ${t.createdAt}`).join('\n') : '- No active support tickets submitted yet.'}
+
 
 Licensed Digital Banks & Lenders Knowledge Base (Malaysia):
 1. GXBank (GX Bank Berhad - Grab + Singtel + Kuok Group consortium):

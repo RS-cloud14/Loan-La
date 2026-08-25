@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { UserProfileData } from './UserSettingsModal';
-import { saveSupportTicket, SupportTicket } from '@/lib/supportTickets';
+import { saveSupportTicket, getSupportTickets, SupportTicket } from '@/lib/supportTickets';
 
 export interface ChatMessage {
   id: string;
@@ -746,10 +746,13 @@ export default function AICoPilotChat({
     setIsSending(true);
 
     const isLoggedIn = Boolean(userSession && (userSession.profileId || userSession.email || userSession.name));
+    const liveTickets = typeof window !== 'undefined' ? getSupportTickets() : [];
     const userContext = {
       isLoggedIn,
       name: isLoggedIn ? (userSession?.name || 'Tham Ren Sheng') : 'Guest',
       platform: isLoggedIn ? (userSession?.platformName || userSession?.workCategory || 'Gig / MSME') : 'Guest',
+      phone: userSession?.phone,
+      email: userSession?.email,
       assessedInflow: isLoggedIn ? (assessedInflow || userSession?.estimatedMonthlyIncome || 5000) : 0,
       latestScore: isLoggedIn ? (latestScore || 710) : 0,
       latestGrade: isLoggedIn ? (latestGrade || 'A') : 'N/A',
@@ -758,7 +761,8 @@ export default function AICoPilotChat({
       maxSafeLoan: isLoggedIn ? (maxSafeLoan || 53550) : 0,
       maxSafeMonthlyPay: isLoggedIn ? (maxSafeMonthlyPay || 1750) : 0,
       targetLoanAmount: targetLoanAmount,
-      targetLoanPurpose: targetLoanPurpose
+      targetLoanPurpose: targetLoanPurpose,
+      activeTickets: liveTickets
     };
 
     try {
