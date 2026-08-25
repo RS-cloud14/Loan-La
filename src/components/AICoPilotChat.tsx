@@ -832,6 +832,16 @@ export default function AICoPilotChat({
         setCallStatus('listening');
       };
 
+      recog.onsoundstart = () => {
+        // User made a sound (breathing, murmuring, speaking) -> hold the silence timer
+        if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+      };
+
+      recog.onspeechstart = () => {
+        // User began speaking -> reset silence timer
+        if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+      };
+
       recog.onresult = (event: any) => {
         if (isAgentSpeakingRef.current) return;
 
@@ -857,7 +867,21 @@ export default function AICoPilotChat({
         
         const words = fullText.split(/\s+/).filter(Boolean);
         if (words.length >= 1) {
-          // Exactly 3.5s silence timer as requested
+          const lastWord = words[words.length - 1].toLowerCase().replace(/[^a-z0-9%]/g, '');
+
+          // Thinking / Filler sounds & trailing conjunctions where user is contemplating or formulating
+          const thinkingSounds = [
+            'ur', 'uh', 'um', 'ah', 'er', 'erm', 'hmm', 'err', 'arr', 'ha', 'aaa', 'eee', 'emm', 'uhh', 'umm', 'ahh', 'em', 'aa', 'ee'
+          ];
+          const trailingConnectives = [
+            'and', 'dan', 'then', 'kemudian', 'so', 'jadi', 'like', 'macam', 'about', 'dalam', 'around', 'kira-kira', 'for', 'untuk', 'rate', 'kadar', 'interest', 'faedah', 'in', 'at', 'with', 'dengan', 'to', 'ke', 'year', 'years', 'tahun'
+          ];
+
+          const isThinkingOrConnecting = thinkingSounds.includes(lastWord) || trailingConnectives.includes(lastWord);
+
+          // Standard silence timer: 3.5s (3500ms) if finished; 5.5s (5500ms) if thinking/hesitating with "ur", "ah", etc.
+          const waitTimeout = isThinkingOrConnecting ? 5500 : 3500;
+
           silenceTimerRef.current = setTimeout(() => {
             if (currentAccumulatedSpeechRef.current && isCallActiveRef.current && !isAgentSpeakingRef.current) {
               const speechToSubmit = cleanSpeechDuplicates(currentAccumulatedSpeechRef.current);
@@ -866,7 +890,7 @@ export default function AICoPilotChat({
               try { recog.stop(); } catch(e){}
               processQuery(speechToSubmit, true);
             }
-          }, 3500);
+          }, waitTimeout);
         }
       };
 
