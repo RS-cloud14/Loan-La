@@ -595,8 +595,24 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 4B. Pricing, Fees & Business Model Intent
-    const isPricingIntent = (
+    // 4B. Pricing, Packages, Plan Benefits & Comparison Intent
+    const isPlanOrPackageQuery = (
+      lastMsgLower.includes('single report') ||
+      lastMsgLower.includes('pro pass') ||
+      lastMsgLower.includes('pro-mandi') ||
+      lastMsgLower.includes('pro mandi') ||
+      lastMsgLower.includes('monthly pass') ||
+      lastMsgLower.includes('30-day') ||
+      lastMsgLower.includes('30 day') ||
+      lastMsgLower.includes('30 hari') ||
+      lastMsgLower.includes('pakej') ||
+      lastMsgLower.includes('package') ||
+      lastMsgLower.includes('packages') ||
+      ((lastMsgLower.includes('benefit') || lastMsgLower.includes('different') || lastMsgLower.includes('difference') || lastMsgLower.includes('beza') || lastMsgLower.includes('kelebihan') || lastMsgLower.includes('faedah')) &&
+       (lastMsgLower.includes('pass') || lastMsgLower.includes('buy') || lastMsgLower.includes('beli') || lastMsgLower.includes('report') || lastMsgLower.includes('pro') || lastMsgLower.includes('single') || lastMsgLower.includes('pelan') || lastMsgLower.includes('plan')))
+    );
+
+    const isPricingIntent = isPlanOrPackageQuery || (
       lastMsgLower.includes('price') ||
       lastMsgLower.includes('pricing') ||
       lastMsgLower.includes('cost') ||
@@ -616,8 +632,8 @@ export async function POST(request: NextRequest) {
 
     if (isPricingIntent) {
       const reply = isMalay
-        ? `💎 Model Harga & Pelan Pasport Kredit Loan - La:\n\n1. 🆓 Pratonton Percuma (Free Tier):\n• Percuma untuk muat naik dokumen pertama, semakan skor awal & senarai padanan bank.\n\n2. 📄 Pas 1 Laporan Rasmi (RM 9.90 - Sekali Bayar):\n• Penyata penuh 12-bulan disatukan\n• Sijil Pasport Kredit PDF rasmi dengan Kod Pengesahan QR\n• Penghantaran permohonan 1-klik ke 11 bank berlesen\n\n3. ⚡ Pas Pro 1 Bulan (RM 19.90 / bulan - 30 Hari Akses):\n• Penilaian tanpa had selama 30 hari\n• Penjejak permohonan masa nyata dengan penyegerakan status bank\n• Laluan pantas pengunderaitan bank keutamaan\n\nSemua transaksi disokong oleh DuitNow QR, FPX Online Banking, TNG eWallet, GrabPay, dan Kad Kredit/Debit.`
-        : `💎 Loan - La Pricing & Business Model Plans:\n\n1. 🆓 Free Preview Tier:\n• Free initial Document 1 analysis, preliminary score dial, and matched lenders preview.\n\n2. 📄 Single Report Pass (RM 9.90 - One-Time):\n• Full multi-month consolidated cashflow & DSR\n• Official Certified Credit Passport PDF with QR Verification\n• 1-Click Direct Application Submissions to 11 matched banks\n\n3. ⚡ Pro Monthly Pass (RM 19.90 / month - 30-Day Access):\n• Unlimited statement re-assessments for 30 days\n• Live Application Tracker with real-time bank status sync\n• Priority bank underwriting routing\n\nSupported payment methods include DuitNow QR, FPX Online Banking (Maybank2u, CIMB, etc.), TNG eWallet, GrabPay, and Credit/Debit Cards.`;
+        ? `💎 **Perbandingan & Kelebihan Pelan Pasport Kredit Loan - La:**\n\n📄 **1. Pas Laporan Tunggal (RM 9.90 · Sekali Bayar) — Paling Popular:**\n• **Sesuai untuk:** Peminjam yang ingin laporan beraudit lengkap untuk 1 permohonan pinjaman segera.\n• **Kelebihan Utama:**\n  1. **3 Bank Berpadanan & Mohon Terus:** Ketahui nama institusi sebenar (GXBank, Boost Bank, AEON Credit, dsb.), kadar faedah terendah & pautan mohon terus.\n  2. **PDF Pendapatan Beraudit Rasmi:** Penyata disatukan 12-bulan dengan Kod Pengesahan QR yang diterima bank tanpa perlukan slip gaji tradisional.\n  3. **Kira Had Selamat & Lindungi CCRIS:** Mengetahui had maksimum pinjaman anda terlebih dahulu untuk elakkan rekod penolakan bank selama 6 bulan.\n\n⚡ **2. Pas Pro 30 Hari (RM 19.90 · 30 Hari Akses) — Nilai Terbaik:**\n• **Sesuai untuk:** Peminjam yang ingin memohon ke beberapa bank berbeza atau merancang strategi kewangan untuk had pembiayaan lebih tinggi.\n• **Kelebihan Tambahan Berbanding Pelan Tunggal:**\n  1. **Audit & Muat Naik Tanpa Had (30 Hari):** Muat naik penyata bank atau slip e-hailing baru bila-bila masa untuk mengira semula skor & had pinjaman.\n  2. **Akses Penuh Seluruh Direktori Bank & Koperasi:** Akses tanpa had ke semua bank digital, syarikat kredit & pembiaya P2P berlesen.\n  3. **Penyegerakan Status Permohonan Langsung:** Penjejakan status permohonan masa nyata dengan jawatankuasa kredit bank untuk pengunderaitan keutamaan.\n  4. **Kaunseling AI Berterusan:** Bimbingan penstrukturan DSR dan strategi pembiayaan peribadi selama 30 hari.\n\n💳 *Disokong oleh DuitNow QR, FPX Online Banking, Touch 'n Go eWallet, dan Kad Kredit/Debit.*`
+        : `💎 **Comparison & Benefits of Loan - La Access Plans:**\n\n📄 **1. Single Report Pass (RM 9.90 · One-Time Fee) — Best Seller:**\n• **Best for:** Borrowers who need a verified underwriting report for an immediate loan application.\n• **Key Benefits:**\n  1. **Top 3 Matched Lenders & Direct Apply:** Reveals exact bank identities (GXBank, Boost Bank, AEON Credit, etc.), tailored lowest interest rates & direct application links.\n  2. **Bank-Accepted Consolidated Income PDF:** Official 12-month verified income synthesis with cryptographic QR hash verification accepted without payslips.\n  3. **Pre-Qualified DSR & CCRIS Protection:** Pre-calculates your safe borrowing limit to prevent costly 6-month bank rejection lockout marks.\n\n⚡ **2. Pro 30-Day Pass (RM 19.90 · 30-Day Access) — Best Value:**\n• **Best for:** Borrowers shopping across multiple lenders, adjusting income documents, or looking to maximize borrowing limits.\n• **Extra Advantages Over Single Report:**\n  1. **Unlimited Statement Re-Audits (30 Days):** Upload new bank statements or gig payslips anytime over 30 days to recalculate and boost your credit score.\n  2. **Full Institutional Directory Access:** Unrestricted access to all partner digital banks, licensed credit cooperatives & P2P lenders.\n  3. **Live Bank Application Status Sync:** Real-time application tracking with bank credit committees for priority underwriting.\n  4. **Dedicated 30-Day AI Financing CoPilot:** Continuous debt service ratio restructuring advice and custom loan strategies.\n\n💳 *Supported Payment Channels:* DuitNow QR, FPX Online Banking, Touch 'n Go eWallet, and Credit/Debit Cards.`;
 
       return NextResponse.json({
         success: true,
@@ -629,18 +645,21 @@ export async function POST(request: NextRequest) {
     }
 
     // 5. Detailed Report Explanation & Underwriting Insights (Dynamic JSON sourced)
-    if (
-      lastMsgLower.includes('report') || 
-      lastMsgLower.includes('laporan') || 
-      lastMsgLower.includes('score') || 
-      lastMsgLower.includes('skor') || 
-      lastMsgLower.includes('explain') || 
-      lastMsgLower.includes('terangkan') || 
-      lastMsgLower.includes('what that does it mean') ||
-      lastMsgLower.includes('what does it mean') ||
-      lastMsgLower.includes('maksud laporan') ||
-      lastMsgLower.includes('terangkan laporan')
-    ) {
+    const isPersonalReportQuery = (
+      lastMsgLower.includes('my report') ||
+      lastMsgLower.includes('my score') ||
+      lastMsgLower.includes('my grade') ||
+      lastMsgLower.includes('explain my report') ||
+      lastMsgLower.includes('explain my score') ||
+      lastMsgLower.includes('laporan saya') ||
+      lastMsgLower.includes('skor saya') ||
+      lastMsgLower.includes('terangkan laporan saya') ||
+      lastMsgLower.includes('terangkan skor') ||
+      lastMsgLower.includes('what does my score mean') ||
+      lastMsgLower.includes('what does my report mean')
+    );
+
+    if (isPersonalReportQuery) {
       if (!isUserLoggedIn) {
         const reply = isMalay
           ? "Anda sedang melayari sebagai Tetamu. Untuk melindungi privasi anda, data Skor Kredit, Gred, DSR, dan had pinjaman peribadi hanya dipaparkan selepas anda log masuk atau melengkapkan penilaian kredit penyata bank."
@@ -919,11 +938,22 @@ Licensed Digital Banks & Lenders Knowledge Base (Malaysia):
    - Key Benefits: Government-subsidized micro-financing schemes with very low interest rates, longer tenures.
    - Drawback: Longer manual processing time compared to instant digital banks.
 
-Pricing & Monetization Model Knowledge:
-1. Free Preview Tier: Free initial document analysis, preliminary score dial, and matched lenders preview.
-2. Single Report Pass: RM 9.90 (One-time payment) - unlocks full multi-document consolidation, official bank-ready PDF with QR verification, and 1-click bank application submissions.
-3. Pro Monthly Pass: RM 19.90 / month (30-day access) - unlimited statement re-assessments, live tracker sync, priority underwriting routing.
+Pricing, Packages & Plan Benefits Knowledge Base:
+1. Free Preview Tier: Free initial document 1 analysis, preliminary score dial, and matched lenders preview.
+2. Single Report Pass (RM 9.90 - One-time payment · Best Seller):
+   - Unlocks full multi-month consolidated cashflow synthesis & verified DSR.
+   - Reveals top 3 matched lenders with exact bank identities, lowest personalized rates, and 1-click direct application links.
+   - Generates official Bank-Accepted Income PDF with cryptographic QR code verification (accepted without payslips).
+   - Pre-qualified DSR & CCRIS safety calculation to prevent 6-month bank lockout marks.
+3. Pro 30-Day Pass (RM 19.90 / month - 30-day access · Best Value):
+   - Unlimited statement re-audits & new document uploads for 30 days to recalculate and boost credit score & loan limits.
+   - Full institutional directory access to all partner digital banks, licensed credit cooperatives, and P2P lenders.
+   - Live Application Tracker with real-time bank status sync & priority underwriting queue routing.
+   - Dedicated 30-day AI Financing CoPilot with continuous debt restructuring counseling.
 Supported Payment Methods: DuitNow QR, FPX Online Banking, TNG eWallet, GrabPay, Visa/Mastercard.
+
+When the user asks about packages, pricing, or the difference/benefits between Single Report Pass vs Pro Pass:
+- Clearly explain the benefits of Single Report Pass (RM 9.90) for immediate single application vs Pro Pass (RM 19.90) for unlimited audits, full bank directory, live bank sync, and 30-day AI optimization.
 
 When the user asks for bank comparisons, differences, benefits, required documents, or recommendations:
 - Break down the comparison clearly:
