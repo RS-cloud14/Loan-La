@@ -529,9 +529,9 @@ Execute ALL of the following compliance audits strictly:
    - grossPay: TOTAL GROSS PAY figure from the slip as decimal
    - netPay: TOTAL NET PAY figure from the slip as decimal
 
-   Return this as a "gigSlipFiles" array in the JSON, one entry per gig slip submitted.
+   Return this as a "gigSlipFiles" array in the JSON. You MUST extract and return an entry for EVERY SINGLE submitted gig slip file without skipping any file.
 
-   For bank statements, also return a "bankStatementFiles" array with one entry per bank statement:
+   For bank statements, also return a "bankStatementFiles" array with one entry for each bank statement:
    [
      { "fileName": "string", "month": "2026-03", "startBal": 1000.00, "endBal": 2500.00, "totalInflows": 6500.00, "totalOutflows": 5000.00 }
    ]
