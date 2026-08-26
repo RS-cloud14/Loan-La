@@ -704,45 +704,22 @@ export async function POST(request: NextRequest) {
     );
 
     const isDirectSupportQuery = (
-      lastMsgLower.includes('customer service') ||
-      lastMsgLower.includes('customer support') ||
-      lastMsgLower.includes('khidmat pelanggan') ||
-      lastMsgLower.includes('bantuan pelanggan') ||
-      lastMsgLower.includes('support team') ||
-      lastMsgLower.includes('support ticket') ||
-      lastMsgLower.includes('tiket sokongan') ||
-      lastMsgLower.includes('tiket perkhidmatan') ||
-      lastMsgLower.includes('human agent') ||
-      lastMsgLower.includes('hubungi pegawai') ||
-      lastMsgLower.includes('open ticket') ||
       lastMsgLower.includes('buka tiket') ||
-      lastMsgLower.includes('hubungi cs') ||
-      lastMsgLower.includes('contact support')
+      lastMsgLower.includes('open ticket') ||
+      lastMsgLower.includes('open a ticket') ||
+      lastMsgLower.includes('create a ticket') ||
+      lastMsgLower.includes('hantar tiket') ||
+      lastMsgLower.includes('submit a ticket') ||
+      lastMsgLower.includes('hubungi pegawai') ||
+      lastMsgLower.includes('talk to human') ||
+      lastMsgLower.includes('talk to agent') ||
+      lastMsgLower.includes('contact support') ||
+      lastMsgLower.includes('hubungi sokongan') ||
+      lastMsgLower.includes('hubungi khidmat pelanggan') ||
+      (lastMsgLower.includes('support team') && (lastMsgLower.includes('contact') || lastMsgLower.includes('reach') || lastMsgLower.includes('call')))
     );
 
-    const isProblemReportQuery = (
-      lastMsgLower.includes('problem') ||
-      lastMsgLower.includes('masalah') ||
-      lastMsgLower.includes('error') ||
-      lastMsgLower.includes('ralat') ||
-      lastMsgLower.includes('gagal') ||
-      lastMsgLower.includes('failed') ||
-      lastMsgLower.includes('cannot upload') ||
-      lastMsgLower.includes('tak boleh upload') ||
-      lastMsgLower.includes('refund') ||
-      lastMsgLower.includes('aduan') ||
-      lastMsgLower.includes('complaint') ||
-      lastMsgLower.includes('stuck') ||
-      lastMsgLower.includes('sangkut') ||
-      lastMsgLower.includes('kenapa loan saya') ||
-      lastMsgLower.includes('duit belum masuk') ||
-      lastMsgLower.includes('belum dapat') ||
-      lastMsgLower.includes('tak dapat pass') ||
-      lastMsgLower.includes('wrong score') ||
-      lastMsgLower.includes('skor salah')
-    );
-
-    if (isConfirmingTicketDispatch || isDirectSupportQuery || isProblemReportQuery) {
+    if (isConfirmingTicketDispatch || isDirectSupportQuery) {
       const contextForAnalysis = (isConfirmingTicketDispatch ? (lastUserPreviousMessage + ' ' + lastAssistantMessage) : lastUserMessage).toLowerCase();
 
       let category: 'statement_upload' | 'payment_pass' | 'underwriting_score' | 'disbursement_lender' | 'general_support' = 'general_support';
@@ -1460,6 +1437,12 @@ When the user asks for bank comparisons, differences, benefits, required documen
   1. GXBank: Pros/Benefits + Required Documents.
   2. Boost Bank / Boost Credit: Pros/Benefits + Required Documents.
   3. Tailored Recommendation: Give a clear, reasoned recommendation based on their active profile (${dynamicPlatform}, RM ${dynamicIncome.toLocaleString()}/mo). E.g., if they drive Grab / do gig delivery, GXBank offers the fastest automated approval with driver earnings; if they do online business/merchant sales, Boost Credit provides higher capital limits.
+
+When the user asks what to do if their report has a problem, inaccuracy, or error:
+- Provide clear, actionable steps:
+  1. Review Extracted Ledger: Check the "Multi-Month Audited Ledger" and "Document Dossier" tabs to inspect the extracted transaction rows and opening/ending balances.
+  2. Re-Assessment with Complete Documents: If certain months or pages were missing or blurry, explain that they can upload complete 3–6 month statements, MyKad, or SSM certificates and re-run the assessment.
+  3. Dispute / Senior Underwriter Review: Explain that if a genuine discrepancy persists, they can click "Customer Support" in the top bar or say "Open a ticket" to connect with a senior underwriter for manual review.
 
 Actions:
 - If user explicitly wants to calculate or change loan parameters (e.g. RM 60,000, 7 years, 5.39%), confirm and append [ACTION:SET_CALCULATOR:{"loanAmount":60000,"tenureYears":7,"interestRate":5.39}].
