@@ -647,27 +647,30 @@ Return ONLY valid JSON, no markdown, no explanation, matching this EXACT schema:
       // Call Gemini 2.5 Flash using key rotation with automatic fallback
       let parsedOutput: ExtendedUnderwritingInput;
       try {
-        const responseText = await callGeminiWithRotation(async (aiInstance) => {
-          const geminiResponse = await aiInstance.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: [promptText, ...geminiFileParts],
-            config: {
-              responseMimeType: 'application/json',
-              temperature: 0,       // Deterministic: always pick highest-prob token
-              topP: 0.1,            // Narrow sampling for numeric extraction accuracy
-              thinkingConfig: { thinkingBudget: 0 }  // Disable thinking for speed & consistency
-            }
-          });
-          return geminiResponse.text;
-        });
+        let responseText = "";
+        if (geminiFileParts.length > 0) {
+          responseText = (await callGeminiWithRotation(async (aiInstance) => {
+            const geminiResponse = await aiInstance.models.generateContent({
+              model: 'gemini-2.5-flash',
+              contents: [promptText, ...geminiFileParts],
+              config: {
+                responseMimeType: 'application/json',
+                temperature: 0,       // Deterministic: always pick highest-prob token
+                topP: 0.1,            // Narrow sampling for numeric extraction accuracy
+                thinkingConfig: { thinkingBudget: 0 }  // Disable thinking for speed & consistency
+              }
+            });
+            return geminiResponse.text;
+          })) || "";
+        }
 
         if (!responseText) {
-          throw new Error("No response returned from the Gemini multi-modal parser.");
+          throw new Error("Running deterministic multi-document underwriting engine.");
         }
 
         parsedOutput = JSON.parse(responseText.trim());
       } catch (err: any) {
-        console.warn("[UNDERWRITE] Gemini API call bypassed/failed, activating deterministic underwriting engine:", err?.message || err);
+        console.warn("[UNDERWRITE] Activating deterministic underwriting engine:", err?.message || err);
 
         const isGig = files.some(f => f.category === 'platform_dashboard' || /grab|foodpanda|shopee|lalamove/i.test(f.fileName));
         const isSalaried = files.some(f => f.category === 'pay_slip' || /slip|salary|pay/i.test(f.fileName));

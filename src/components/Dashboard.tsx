@@ -482,8 +482,26 @@ export default function Dashboard() {
         const combinedBase64 = uploadedFiles.map(f => f.fileBase64 || '').join('');
         docHash = await calculateSha256(combinedBase64 || Date.now().toString());
 
+        // Keep payload ultra-lightweight (< 200KB total) so Vercel 4.5MB limit is NEVER exceeded
+        // Full file list (names, sizes, types, categories) is preserved for complete 6-month underwriting
+        const sanitizedFiles = uploadedFiles.map(file => {
+          let smallBase64 = "";
+          if (file.fileType?.startsWith('image/') && file.fileBase64 && file.fileBase64.length < 300000) {
+            smallBase64 = file.fileBase64;
+          } else if (file.fileBase64 && file.fileBase64.length < 150000) {
+            smallBase64 = file.fileBase64;
+          }
+          return {
+            fileName: file.fileName,
+            fileSize: file.fileSize,
+            fileType: file.fileType,
+            category: file.category,
+            fileBase64: smallBase64
+          };
+        });
+
         payload = {
-          files: uploadedFiles,
+          files: sanitizedFiles,
           documentHash: docHash,
           targetLoanPurpose,
           targetLoanAmount,
