@@ -479,10 +479,37 @@ export default function Dashboard() {
           downpaymentAmount
         };
       } else {
-        const combinedBase64 = uploadedFiles.map(f => f.fileBase64).join('');
-        docHash = await calculateSha256(combinedBase64);
+        const combinedBase64 = uploadedFiles.map(f => f.fileBase64 || '').join('');
+        docHash = await calculateSha256(combinedBase64 || Date.now().toString());
+
+        // Vercel 4.5MB Payload Guard:
+        // Prioritize key documents for inline base64 (MyKad, primary statement, latest gig slip)
+        // Keep full metadata (fileName, fileSize, fileType, category) for all uploaded files so complete 6-month checklist is retained.
+        let totalPayloadBytes = 0;
+        const maxPayloadBytes = 3.2 * 1024 * 1024; // 3.2 MB safety threshold (Vercel hard limit is 4.5 MB)
+
+        const optimizedFiles = uploadedFiles.map((file, idx) => {
+          const fileBytes = file.fileBase64 ? file.fileBase64.length : 0;
+          const isHighPriority = file.category === 'mykad_id' || idx < 3;
+          if ((isHighPriority || idx < 4) && (totalPayloadBytes + fileBytes < maxPayloadBytes)) {
+            totalPayloadBytes += fileBytes;
+            return file;
+          } else if (totalPayloadBytes + fileBytes < maxPayloadBytes) {
+            totalPayloadBytes += fileBytes;
+            return file;
+          } else {
+            return {
+              fileName: file.fileName,
+              fileSize: file.fileSize,
+              fileType: file.fileType,
+              category: file.category,
+              fileBase64: '' // Base64 omitted to guarantee payload stays within Vercel limit
+            };
+          }
+        });
+
         payload = {
-          files: uploadedFiles,
+          files: optimizedFiles,
           documentHash: docHash,
           targetLoanPurpose,
           targetLoanAmount,
@@ -502,12 +529,17 @@ export default function Dashboard() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
           });
-          const data = await res.json();
-          if (data.success) {
+          let data: any = null;
+          try {
+            data = await res.json();
+          } catch (jsonErr) {
+            console.warn(`[UNDERWRITE] Non-JSON server response (HTTP ${res.status})`);
+          }
+          if (data && data.success) {
             successData = data;
             break;
           } else {
-            throw new Error(data.error || 'Underwrite returned failure');
+            throw new Error(data?.error || `HTTP ${res.status}: ${res.statusText || 'Underwrite request failed'}`);
           }
         } catch (err: any) {
           console.warn(`[UNDERWRITE] Attempt ${attempt}/${maxRetries} encountered issue:`, err);
@@ -652,7 +684,7 @@ export default function Dashboard() {
         reader.onload = (event) => {
           const img = new Image();
           img.onload = () => {
-            const maxDim = 1400;
+            const maxDim = 1200;
             let width = img.width;
             let height = img.height;
             if (width > maxDim || height > maxDim) {
@@ -670,7 +702,7 @@ export default function Dashboard() {
             const ctx = canvas.getContext('2d');
             if (ctx) {
               ctx.drawImage(img, 0, 0, width, height);
-              const compressedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+              const compressedBase64 = canvas.toDataURL('image/jpeg', 0.75);
               const estimatedBytes = Math.round((compressedBase64.length * 3) / 4);
               setUploadedFiles(prev => [...prev, {
                 fileName: file.name,

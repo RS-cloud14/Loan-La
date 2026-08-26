@@ -311,17 +311,18 @@ export async function POST(request: NextRequest) {
         }, { status: 500 });
       }
 
-      // Convert all files to Gemini SDK inlineData payloads
+      // Convert valid files to Gemini SDK inlineData payloads
       // TOKEN-SAVER OPTIMIZATION:
-      // When in preview mode (before payment), send ONLY the primary document (Document 1) to Gemini AI
+      // When in preview mode (before payment), send top 1-2 primary documents to Gemini AI
       const isPreview = Boolean(body.isPreview || !body.isUnlocked);
-      const filesForAi = isPreview ? files.slice(0, 1) : files;
+      const filesWithBase64 = files.filter(f => f.fileBase64 && f.fileBase64.length > 50);
+      const filesForAi = isPreview ? filesWithBase64.slice(0, 2) : filesWithBase64.slice(0, 5);
 
       const geminiFileParts = filesForAi.map(file => {
-        const base64DataOnly = file.fileBase64.replace(/^data:.*?;base64,/, "");
+        const base64DataOnly = (file.fileBase64 || "").replace(/^data:.*?;base64,/, "");
         return {
           inlineData: {
-            mimeType: file.fileType,
+            mimeType: file.fileType || 'application/pdf',
             data: base64DataOnly
           }
         };
