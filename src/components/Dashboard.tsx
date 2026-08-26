@@ -783,7 +783,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-between px-4 sm:px-8 pt-4 sm:pt-6 pb-24 md:pb-6 max-w-7xl mx-auto">
+    <div className="min-h-screen flex flex-col px-4 sm:px-8 pt-4 sm:pt-6 pb-12 md:pb-8 max-w-7xl mx-auto gap-6 sm:gap-8">
       
       {/* Top Main Navigation Header (Desktop Web View + Clean Mobile App Top Bar) */}
       <header className="flex justify-between items-center pb-4 sm:pb-6 border-b border-slate-200/80 gap-2 sm:gap-3">
@@ -3057,23 +3057,16 @@ export default function Dashboard() {
                           
                           <button
                             onClick={() => {
-                              if (viewingArchivedReport) return;
+                              const scrollToBox = (elementId: string) => {
+                                const el = document.getElementById(elementId);
+                                if (el) {
+                                  el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                } else {
+                                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                                }
+                              };
 
-                              // 1. Declarations check (all 4 required)
-                              if (!preUploadDeclNoDefault || !preUploadDeclAuthentic || !preUploadDeclConsent || !preUploadDeclPdpa) {
-                                setDeclarationError(true);
-                                setUploadValidationError(
-                                  language === 'bm'
-                                    ? 'Sila baca perakuan prasyarat dan tandakan keempat-empat kotak pengesahan di Bahagian 3.'
-                                    : 'Please read the prerequisite declarations and check all 4 confirmation boxes in Section 3.'
-                                );
-                                const el = document.getElementById('mandatory-declarations-box');
-                                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                return;
-                              }
-                              setDeclarationError(false);
-
-                              // 2. Bank Statements (min 3 PDFs)
+                              // 1. Bank Statements (min 3 PDFs - Top Section)
                               const bankStatements = uploadedFiles.filter(f => f.category === 'bank_statement');
                               if (bankStatements.length < 3) {
                                 setUploadValidationError(
@@ -3081,12 +3074,11 @@ export default function Dashboard() {
                                     ? `Sila muat naik sekurang-kurangnya 3 bulan penyata bank (semasa: ${bankStatements.length}/3 fail PDF).`
                                     : `Please upload at least 3 months of bank statements (current: ${bankStatements.length}/3 PDF files).`
                                 );
-                                const el = document.getElementById('box-bank-statements');
-                                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                scrollToBox('box-bank-statements');
                                 return;
                               }
 
-                              // 3. Income Proof: Min 12 weekly gig slips OR Min 3 monthly pay slips based on selected type
+                              // 2. Income Proof: Min 12 weekly gig slips OR Min 3 monthly pay slips based on selected type
                               const gigSlips = uploadedFiles.filter(f => f.category === 'platform_dashboard');
                               const paySlips = uploadedFiles.filter(f => f.category === 'pay_slip');
 
@@ -3096,8 +3088,7 @@ export default function Dashboard() {
                                     ? `Sila muat naik sekurang-kurangnya 12 minggu slip pendapatan gig (semasa: ${gigSlips.length}/12 slip).`
                                     : `Please upload at least 12 weekly gig platform slips (current: ${gigSlips.length}/12 slips).`
                                 );
-                                const el = document.getElementById('box-income-proof');
-                                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                scrollToBox('box-income-proof');
                                 return;
                               }
 
@@ -3107,8 +3098,7 @@ export default function Dashboard() {
                                     ? `Sila muat naik sekurang-kurangnya 3 bulan slip gaji tetap (semasa: ${paySlips.length}/3 bulan).`
                                     : `Please upload at least 3 months of salaried pay slips (current: ${paySlips.length}/3 months).`
                                 );
-                                const el = document.getElementById('box-income-proof');
-                                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                scrollToBox('box-income-proof');
                                 return;
                               }
 
@@ -3118,12 +3108,11 @@ export default function Dashboard() {
                                     ? `Sila lengkapkan sekurang-kurangnya SATU bukti pendapatan: 12 minggu slip gig (semasa: ${gigSlips.length}/12) ATAU 3 bulan slip gaji (semasa: ${paySlips.length}/3).`
                                     : `Please complete at least ONE proof of income: 12 weekly gig slips (current: ${gigSlips.length}/12) OR 3 monthly pay slips (current: ${paySlips.length}/3).`
                                 );
-                                const el = document.getElementById('box-income-proof');
-                                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                scrollToBox('box-income-proof');
                                 return;
                               }
 
-                              // 4. MyKad (e-KYC)
+                              // 3. MyKad (e-KYC)
                               const mykadFiles = uploadedFiles.filter(f => f.category === 'mykad_id');
                               if (mykadFiles.length === 0) {
                                 setUploadValidationError(
@@ -3131,10 +3120,22 @@ export default function Dashboard() {
                                     ? 'Sila muat naik salinan MyKad / Kad Pengenalan anda untuk pengesahan e-KYC.'
                                     : 'Please upload your MyKad / National IC for mandatory e-KYC verification.'
                                 );
-                                const el = document.getElementById('box-mykad');
-                                if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                scrollToBox('box-mykad');
                                 return;
                               }
+
+                              // 4. Declarations check (all 4 required)
+                              if (!preUploadDeclNoDefault || !preUploadDeclAuthentic || !preUploadDeclConsent || !preUploadDeclPdpa) {
+                                setDeclarationError(true);
+                                setUploadValidationError(
+                                  language === 'bm'
+                                    ? 'Sila baca perakuan prasyarat dan tandakan keempat-empat kotak pengesahan di Bahagian 3.'
+                                    : 'Please read the prerequisite declarations and check all 4 confirmation boxes in Section 3.'
+                                );
+                                scrollToBox('mandatory-declarations-box');
+                                return;
+                              }
+                              setDeclarationError(false);
 
                               setUploadValidationError(null);
                               runUnderwritingPipeline('real');
@@ -6362,7 +6363,7 @@ export default function Dashboard() {
       />
 
       {/* Footer with Discreet Institutional Demo Link */}
-      <footer className="w-full mt-20 pt-8 pb-10 border-t border-slate-200 text-xs text-slate-500 flex flex-col md:flex-row justify-between items-center gap-4 bg-white/40 p-6 rounded-3xl">
+      <footer className="w-full mt-6 pt-6 pb-8 border-t border-slate-200 text-xs text-slate-500 flex flex-col md:flex-row justify-between items-center gap-4 bg-white/40 p-6 rounded-3xl">
         <div className="flex flex-col gap-1 text-center md:text-left">
           <span className="font-bold text-slate-700">© 2026 Loan - La · Smart Loan Matcher</span>
           <span className="text-[11px] text-slate-400">Check eligibility before applying</span>
