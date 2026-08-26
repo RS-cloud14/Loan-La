@@ -26,6 +26,7 @@ import AICoPilotChat from './AICoPilotChat';
 import CreditPassportPaywallModal from './CreditPassportPaywallModal';
 import SupportTicketsModal from './SupportTicketsModal';
 import { useLanguage, Language } from '@/context/LanguageContext';
+import { extractTextFromPdfBase64 } from '@/lib/pdfExtractor';
 
 export interface GigSlipData {
   weekNum: string;
@@ -314,6 +315,7 @@ export default function Dashboard() {
     fileType: string;
     fileSize: string;
     fileBase64: string;
+    fileText?: string;
     category: 'bank_statement' | 'platform_dashboard' | 'tax_epf' | 'mykad_id' | 'pay_slip' | 'business_proposal' | 'ssm_license' | 'premise_photos';
   }[]>([]);
 
@@ -496,7 +498,8 @@ export default function Dashboard() {
             fileSize: file.fileSize,
             fileType: file.fileType,
             category: file.category,
-            fileBase64: smallBase64
+            fileBase64: smallBase64,
+            fileText: file.fileText || ''
           };
         });
 
@@ -717,15 +720,26 @@ export default function Dashboard() {
         };
         reader.readAsDataURL(file);
       } else {
-        // Direct read for PDF or other document types
+        // Direct read for PDF or other document types with instant text extraction
         const reader = new FileReader();
-        reader.onload = () => {
+        reader.onload = async () => {
           if (typeof reader.result === 'string') {
+            let extractedText = '';
+            if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+              try {
+                extractedText = await extractTextFromPdfBase64(reader.result);
+              } catch (pdfErr) {
+                console.warn('[DASHBOARD] PDF text extraction note:', pdfErr);
+              }
+            }
+
+            const resultStr = typeof reader.result === 'string' ? reader.result : '';
             setUploadedFiles(prev => [...prev, {
               fileName: file.name,
-              fileType: file.type,
+              fileType: file.type || 'application/pdf',
               fileSize: ((file.size || 0) / 1024 / 1024).toFixed(2) + " MB",
-              fileBase64: reader.result as string,
+              fileBase64: file.size < 200000 ? resultStr : '',
+              fileText: extractedText,
               category: category
             }]);
           }
