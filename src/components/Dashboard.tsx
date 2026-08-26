@@ -393,6 +393,11 @@ export default function Dashboard() {
     fetchMockData();
   }, []);
 
+  // Automatically scroll window to top whenever step or page transitions occur
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [activeStep, currentPage, perspective]);
+
   // Compute a SHA-256 helper for real uploads
   const calculateSha256 = async (base64Str: string): Promise<string> => {
     try {
@@ -905,10 +910,11 @@ export default function Dashboard() {
                   setPerspective('B2C');
                   setCurrentPage('app');
                   setActiveStep(1);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
                 }}
                 className="hidden sm:flex px-3.5 sm:px-4 py-2 bg-blue-950 hover:bg-blue-900 text-white text-xs font-black rounded-xl shadow-md transition-all items-center gap-1.5 active:scale-95 whitespace-nowrap cursor-pointer"
               >
-                <span>{language === 'bm' ? 'Semak Kelayakan →' : 'Check Readiness →'}</span>
+                <span>{language === 'bm' ? 'Mohon Pinjaman Baharu +' : 'New Loan Application +'}</span>
               </button>
 
               {/* Clean User Profile Dropdown */}
@@ -943,11 +949,12 @@ export default function Dashboard() {
                           setUserDropdownOpen(false);
                           setCurrentPage('app');
                           setActiveStep(1);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
                         }}
                         className="sm:hidden w-full px-3 py-2 text-left text-xs font-bold text-blue-950 hover:bg-blue-50 rounded-xl transition-all flex items-center gap-2 cursor-pointer"
                       >
                         <ArrowRight className="w-3.5 h-3.5 text-blue-900" />
-                        <span>{language === 'bm' ? 'Semak Kelayakan' : 'Check Readiness'}</span>
+                        <span>{language === 'bm' ? 'Mohon Pinjaman Baharu' : 'New Loan Application'}</span>
                       </button>
 
                       <button
@@ -6298,7 +6305,7 @@ export default function Dashboard() {
                   }}
                   className="flex-1 py-3 bg-blue-950 hover:bg-blue-900 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
                 >
-                  <span>{language === 'bm' ? 'Teruskan Semakan Kelayakan →' : 'Continue to Check Readiness →'}</span>
+                  <span>{language === 'bm' ? 'Mula Permohonan Pinjaman →' : 'Start Loan Application →'}</span>
                 </button>
               </div>
 
