@@ -499,6 +499,240 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
       requiredDocs: language === 'bm' ? ['Penyata Bank Syarikat 6 Bulan', 'Laporan Jualan Kedai E-Dagang', 'Pendaftaran SSM'] : ['6-Month Bank Statements', 'Marketplace Store Sales CSV Export', 'SSM Certificate']
     },
     {
+      id: 'alliance_mikro',
+      name: 'Alliance Digital SME Micro Financing',
+      shortName: 'Alliance SME',
+      institution: 'Alliance Bank Malaysia Berhad',
+      category: 'traditional_bank',
+      categoryLabel: language === 'bm' ? 'Bank Perdagangan' : 'Commercial Bank',
+      regulator: 'Bank Negara Malaysia (BNM)',
+      rank: 12,
+      rankLabel: language === 'bm' ? '#12 Kelulusan Digital 24 Jam' : '#12 24-Hour Digital Approval',
+      rate: '6.50% – 12.0% p.a.',
+      rateNumeric: 6.5,
+      minIncome: language === 'bm' ? 'Jualan Tahunan ≥ RM 50,000' : 'Annual Sales ≥ RM 50,000',
+      minIncomeNumeric: 4000,
+      turnaround: language === 'bm' ? '24 Jam (Digital)' : '24 Hours (Digital)',
+      turnaroundHours: 24,
+      maxLoan: 'RM 200,000',
+      maxLoanNumeric: 200000,
+      tenure: language === 'bm' ? '12 – 60 Bulan' : '12 – 60 Months',
+      tenureMonths: 60,
+      shariah: true,
+      isFast: true,
+      isLowIncome: false,
+      isBusiness: true,
+      highlightBadge: language === 'bm' ? 'Permohonan Digital Tanpa Kertas' : '100% Paperless Digital',
+      description: language === 'bm'
+        ? 'Pembiayaan digital PKS tanpa cagaran daripada Alliance Bank. Menilai penyata bank digital dengan kelulusan pantas seawal 24 jam untuk usahawan mikro dan peruncit.'
+        : 'Collateral-free digital SME micro-financing from Alliance Bank. Evaluates digital bank statements with fast conditional approval in 24 hours for micro-traders and retailers.',
+      features: language === 'bm' ? [
+        'Permohonan digital 100% tanpa perlu ke cawangan fizikal',
+        'Kelulusan bersyarat sepantas 24 jam',
+        'Tiada cagaran atau cagaran aset tetap'
+      ] : [
+        '100% paperless digital onboarding without branch visits',
+        'Fast conditional approval within 24 hours',
+        'Zero fixed asset collateral required'
+      ],
+      requiredDocs: language === 'bm' ? ['Penyata Bank Syarikat 6 Bulan (PDF)', 'Pendaftaran SSM', 'MyKad Pengarah / Pemilik'] : ['6-Month Company Bank Statements (PDF)', 'SSM Business Registration', 'Director / Owner MyKad']
+    },
+    {
+      id: 'ambank_mikro',
+      name: 'AmBank BizClub Micro SME (CGC BizMula-i)',
+      shortName: 'AmBank BizClub',
+      institution: 'AmBank (M) Berhad / AmBank Islamic',
+      category: 'traditional_bank',
+      categoryLabel: language === 'bm' ? 'Bank Perdagangan' : 'Commercial Bank',
+      regulator: 'Bank Negara Malaysia (BNM)',
+      rank: 13,
+      rankLabel: language === 'bm' ? '#13 Sokongan Jaminan CGC BizMula' : '#13 CGC BizMula Guarantee Backed',
+      rate: '5.50% – 9.00% p.a.',
+      rateNumeric: 5.5,
+      minIncome: language === 'bm' ? 'Operasi Perniagaan ≥ 6 Bulan' : 'Business in Operation ≥ 6 Months',
+      minIncomeNumeric: 0,
+      turnaround: language === 'bm' ? '3 – 5 Hari Bekerja' : '3 – 5 Working Days',
+      turnaroundHours: 72,
+      maxLoan: 'RM 300,000',
+      maxLoanNumeric: 300000,
+      tenure: language === 'bm' ? '12 – 84 Bulan' : '12 – 84 Months',
+      tenureMonths: 84,
+      shariah: true,
+      isFast: false,
+      isLowIncome: false,
+      isBusiness: true,
+      highlightBadge: language === 'bm' ? 'Mesra PKS Awal Operasi (≥6 Bulan)' : 'Early-Stage Friendly (≥6 Mos)',
+      description: language === 'bm'
+        ? 'Pembiayaan AmBank BizClub dengan jaminan Credit Guarantee Corporation (CGC BizMula-i). Sesuai untuk perniagaan yang baru beroperasi 6 bulan ke atas untuk pembelian stok dan modal kerja.'
+        : 'AmBank BizClub micro-financing backed by Credit Guarantee Corporation (CGC BizMula-i). Designed for businesses in operation for at least 6 months to fund stock inventory and cash flow.',
+      features: language === 'bm' ? [
+        'Terbuka kepada perniagaan yang baru beroperasi 6 bulan',
+        'Jaminan sehingga 70% daripada Credit Guarantee Corporation (CGC)',
+        'Pakej konvensional dan patuh Syariah tersedia'
+      ] : [
+        'Open to businesses operating for just 6 months',
+        'Up to 70% guarantee coverage by CGC Malaysia',
+        'Both conventional & Shariah-compliant facilities available'
+      ],
+      requiredDocs: language === 'bm' ? ['Penyata Bank Syarikat 6 Bulan', 'Pendaftaran SSM', 'MyKad & Gambar Premis'] : ['6-Month Bank Statements', 'SSM Certificate', 'MyKad & Premise Photos']
+    },
+    {
+      id: 'public_bank_mikro',
+      name: 'Public Bank PB Micro Financing (SPM)',
+      shortName: 'Public Bank Mikro',
+      institution: 'Public Bank Berhad',
+      category: 'traditional_bank',
+      categoryLabel: language === 'bm' ? 'Bank Perdagangan' : 'Commercial Bank',
+      regulator: 'Bank Negara Malaysia (BNM)',
+      rank: 14,
+      rankLabel: language === 'bm' ? '#14 Bank Runcit Paling Teguh' : '#14 Strongest Retail Banking Track Record',
+      rate: '9.0% – 12.0% p.a. (tetap)',
+      rateNumeric: 9.0,
+      minIncome: language === 'bm' ? 'Operasi Perniagaan ≥ 2 Tahun' : 'Business in Operation ≥ 2 Years',
+      minIncomeNumeric: 0,
+      turnaround: language === 'bm' ? '3 – 5 Hari Bekerja' : '3 – 5 Working Days',
+      turnaroundHours: 72,
+      maxLoan: 'RM 50,000',
+      maxLoanNumeric: 50000,
+      tenure: language === 'bm' ? '12 – 60 Bulan' : '12 – 60 Months',
+      tenureMonths: 60,
+      shariah: false,
+      isFast: false,
+      isLowIncome: false,
+      isBusiness: true,
+      highlightBadge: language === 'bm' ? 'Peserta Skim SPM BNM' : 'BNM SPM Scheme Participant',
+      description: language === 'bm'
+        ? 'Skim Pembiayaan Mikro rasmi Public Bank di bawah inisiatif Bank Negara Malaysia. Direka khas untuk peniaga pasar, peruncit komuniti, dan penjaja berlesen tanpa memerlukan cagaran hartanah.'
+        : 'Official Public Bank Micro Financing under Bank Negara Malaysia SPM framework. Tailored for market stall operators, community retailers, and licensed hawkers without property collateral.',
+      features: language === 'bm' ? [
+        'Tiada cagaran hartanah atau penjamin pihak ketiga',
+        'Kadar bayaran ansuran bulanan yang tetap dan jelas',
+        'Rangkaian cawangan Public Bank yang meluas di seluruh negara'
+      ] : [
+        'Zero property collateral or third-party guarantor required',
+        'Fixed and transparent monthly repayment installments',
+        'Extensive nationwide Public Bank branch support network'
+      ],
+      requiredDocs: language === 'bm' ? ['Penyata Bank 6 Bulan', 'Lesen Perniagaan / PBT / SSM', 'MyKad Pemohon'] : ['6-Month Bank Statements', 'Business License / Local Council Permit / SSM', 'Applicant MyKad']
+    },
+    {
+      id: 'sme_bank_mikro',
+      name: 'SME Bank Skim Pembiayaan Usahawan Mikro (SPUM)',
+      shortName: 'SME Bank SPUM',
+      institution: 'Small Medium Enterprise Development Bank Malaysia Berhad',
+      category: 'government_fund',
+      categoryLabel: language === 'bm' ? 'Bank Pembangunan Kerajaan' : 'Gov Development Bank',
+      regulator: 'KUSKOP / Bank Negara Malaysia',
+      rank: 15,
+      rankLabel: language === 'bm' ? '#15 Dana Pembangunan Usahawan KUSKOP' : '#15 KUSKOP Entrepreneur Development Fund',
+      rate: '4.0% – 5.0% p.a. (Kadar Subsidi)',
+      rateNumeric: 4.0,
+      minIncome: language === 'bm' ? 'Usahawan Mikro / Belia / Graduan' : 'Micro-Entrepreneurs / Youth / Graduates',
+      minIncomeNumeric: 0,
+      turnaround: language === 'bm' ? '5 – 10 Hari Bekerja' : '5 – 10 Working Days',
+      turnaroundHours: 120,
+      maxLoan: 'RM 50,000',
+      maxLoanNumeric: 50000,
+      tenure: language === 'bm' ? '12 – 60 Bulan' : '12 – 60 Months',
+      tenureMonths: 60,
+      shariah: true,
+      isFast: false,
+      isLowIncome: true,
+      isBusiness: true,
+      highlightBadge: language === 'bm' ? 'Kadar Subsidi Kerajaan (4%)' : 'Subsidized Gov Rate (4%)',
+      description: language === 'bm'
+        ? 'Skim Pembiayaan Usahawan Mikro (SPUM) oleh SME Bank untuk membiayai pembelian mesin, peralatan, dan modal pusingan usahawan mikro Bumiputera dan belia berpendapatan rendah.'
+        : 'Skim Pembiayaan Usahawan Mikro (SPUM) by SME Bank to finance machinery purchase, equipment, and working capital for micro-entrepreneurs, youth, and low-income business starters.',
+      features: language === 'bm' ? [
+        'Kadar keuntungan bersubsidi serendah 4.0% setahun',
+        'Khidmat bimbingan usahawan melalui CEDAR SME Bank',
+        'Tempoh moratorium bayaran pokok pada peringkat permulaan'
+      ] : [
+        'Subsidized profit rate as low as 4.0% per annum',
+        'Free entrepreneur mentorship through CEDAR SME Bank',
+        'Principal moratorium grace period during initial months'
+      ],
+      requiredDocs: language === 'bm' ? ['Penyata Bank 3–6 Bulan', 'Pendaftaran SSM', 'Rancangan Perniagaan / Kertas Kerja Ringkas', 'MyKad'] : ['3–6 Months Bank Statements', 'SSM Registration', 'Brief Business Plan / Proposal', 'MyKad']
+    },
+    {
+      id: 'mara_spim',
+      name: 'MARA Skim Pembiayaan Mudah Jaya (SPiM / SPiKE)',
+      shortName: 'MARA SPiM',
+      institution: 'Majlis Amanah Rakyat (MARA)',
+      category: 'government_fund',
+      categoryLabel: language === 'bm' ? 'Agensi Kerajaan / Bumiputera' : 'Government Agency / Bumiputera',
+      regulator: 'Kementerian Kemajuan Desa dan Wilayah (KKDW)',
+      rank: 16,
+      rankLabel: language === 'bm' ? '#16 Dana Penuh Bumiputera & Kontrak' : '#16 Bumiputera & Contract Gig Fund',
+      rate: '4.0% p.a. (Kadar Keuntungan Tetap)',
+      rateNumeric: 4.0,
+      minIncome: language === 'bm' ? 'Warganegara Bumiputera ≥ 18 Tahun' : 'Bumiputera Citizen ≥ 18 Years',
+      minIncomeNumeric: 0,
+      turnaround: language === 'bm' ? '7 – 14 Hari Bekerja' : '7 – 14 Working Days',
+      turnaroundHours: 168,
+      maxLoan: 'RM 100,000',
+      maxLoanNumeric: 100000,
+      tenure: language === 'bm' ? '12 – 84 Bulan' : '12 – 84 Months',
+      tenureMonths: 84,
+      shariah: true,
+      isFast: false,
+      isLowIncome: true,
+      isBusiness: true,
+      highlightBadge: language === 'bm' ? 'Kadar MARA 4% · Tempoh Sehingga 7 Tahun' : 'MARA 4% Rate · Up to 7-Year Tenure',
+      description: language === 'bm'
+        ? 'Skim pembiayaan perniagaan mikro & kecil MARA untuk usahawan Bumiputera dalam sektor peruncitan, perkhidmatan, dan pembekalan kontrak (SPiKE) dengan tempoh bayaran balik fleksibel.'
+        : 'MARA micro and small business financing scheme for Bumiputera entrepreneurs in retail, services, and contract supply (SPiKE) with flexible repayment tenures up to 7 years.',
+      features: language === 'bm' ? [
+        'Kadar keuntungan tetap 4% setahun tanpa caj tersembunyi',
+        'Tempoh bayaran balik panjang sehingga 7 tahun (84 bulan)',
+        'Sokongan pembiayaan kontrak & pesanan bekalan ekspres (SPiKE)'
+      ] : [
+        'Fixed 4% profit rate with zero hidden processing charges',
+        'Long repayment tenure up to 7 years (84 months)',
+        'Express contract supply & invoice financing support (SPiKE)'
+      ],
+      requiredDocs: language === 'bm' ? ['Penyata Bank 6 Bulan', 'Pendaftaran SSM / Lesen PBT', 'Rancangan Perniagaan / Kertas Kerja Ringkas', 'MyKad Pemohon'] : ['6-Month Bank Statements', 'SSM Certificate / Local Council Permit', 'Business Proposal / Plan Summary', 'Applicant MyKad']
+    },
+    {
+      id: 'fundingsocieties',
+      name: 'Funding Societies Micro Financing',
+      shortName: 'Funding Societies',
+      institution: 'Modalku Ventures Sdn Bhd',
+      category: 'p2p',
+      categoryLabel: language === 'bm' ? 'P2P / Pendanaan Awam' : 'P2P Crowdfunding',
+      regulator: 'Securities Commission Malaysia (SC)',
+      rank: 17,
+      rankLabel: language === 'bm' ? '#17 Had Pinjaman Modal Tertinggi' : '#17 Highest Business Loan Cap',
+      rate: '10.0% – 18.0% p.a.',
+      rateNumeric: 10.0,
+      minIncome: 'RM 3,000 / mo jualan',
+      minIncomeNumeric: 3000,
+      turnaround: language === 'bm' ? '24 – 48 Jam' : '24 – 48 Hours',
+      turnaroundHours: 36,
+      maxLoan: 'RM 200,000',
+      maxLoanNumeric: 200000,
+      tenure: language === 'bm' ? '1 – 12 Bulan' : '1 – 12 Months',
+      tenureMonths: 12,
+      shariah: true,
+      isFast: false,
+      isLowIncome: false,
+      isBusiness: true,
+      highlightBadge: language === 'bm' ? 'Terbaik Untuk Peniaga Shopee' : 'Best for E-Commerce',
+      description: language === 'bm'
+        ? 'Platform pendanaan P2P digital terbesar di Asia Tenggara untuk peniaga Shopee, Lazada, TikTok Shop, dan kontraktor freelance.'
+        : 'Southeast Asia largest SME digital P2P financing platform. Fast working capital for Shopee, Lazada, and TikTok Shop sellers with invoice financing options.',
+      features: language === 'bm' ? [
+        'Tiada cagaran fizikal diperlukan',
+        'Kelulusan berdasarkan jumlah jualan kedai digital',
+        'Pengeluaran modal pantas dalam 48 jam'
+      ] : [
+        'Zero hard asset collateral required',
+        'Evaluated on e-commerce seller GMV and turnover',
+        'Fast fund disbursement within 48 hours'
+      ],
+      requiredDocs: language === 'bm' ? ['Penyata Bank Syarikat 6 Bulan', 'Laporan Jualan Kedai E-Dagang', 'Pendaftaran SSM'] : ['6-Month Bank Statements', 'Marketplace Store Sales CSV Export', 'SSM Certificate']
+    },
+    {
       id: 'capbay',
       name: 'CapBay Supply Chain Financing',
       shortName: 'CapBay',
@@ -506,8 +740,8 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
       category: 'p2p',
       categoryLabel: language === 'bm' ? 'P2P & Pembiayaan Invois' : 'P2P & Invoice Financing',
       regulator: 'Securities Commission Malaysia (SC)',
-      rank: 13,
-      rankLabel: language === 'bm' ? '#13 Had Pembiayaan Sehingga RM 500,000' : '#13 Highest Working Capital Limit',
+      rank: 18,
+      rankLabel: language === 'bm' ? '#18 Had Pembiayaan Sehingga RM 500,000' : '#18 Highest Working Capital Limit',
       rate: '6.0% – 14.0% p.a.',
       rateNumeric: 6.0,
       minIncome: 'RM 5,000 / mo jualan',

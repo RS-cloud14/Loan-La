@@ -314,7 +314,7 @@ export default function Dashboard() {
     fileType: string;
     fileSize: string;
     fileBase64: string;
-    category: 'bank_statement' | 'platform_dashboard' | 'tax_epf' | 'mykad_id' | 'pay_slip';
+    category: 'bank_statement' | 'platform_dashboard' | 'tax_epf' | 'mykad_id' | 'pay_slip' | 'business_proposal' | 'ssm_license' | 'premise_photos';
   }[]>([]);
 
   const [previewRedactedFile, setPreviewRedactedFile] = useState<string | null>(null);
@@ -335,7 +335,7 @@ export default function Dashboard() {
   const [selectedB2bApplicant, setSelectedB2bApplicant] = useState<string>('ahmad');
   const [b2bWorkspaceTab, setB2bWorkspaceTab] = useState<'summary' | 'dossier' | 'reconciliation' | 'ledger' | 'forensics'>('summary');
   const [selectedDossierFileIndex, setSelectedDossierFileIndex] = useState<number>(0);
-  const [b2bDocFilter, setB2bDocFilter] = useState<'all' | 'bank_statement' | 'platform_dashboard' | 'tax_epf' | 'mykad_id' | 'pay_slip'>('all');
+  const [b2bDocFilter, setB2bDocFilter] = useState<'all' | 'bank_statement' | 'platform_dashboard' | 'tax_epf' | 'mykad_id' | 'pay_slip' | 'business_proposal' | 'ssm_license' | 'premise_photos'>('all');
   const [inspectingDoc, setInspectingDoc] = useState<{ fileName: string; fileSize: string; status: string; documentType: string } | null>(null);
   const [ledgerMonthFilter, setLedgerMonthFilter] = useState<string>('all');
   const [ledgerSearchQuery, setLedgerSearchQuery] = useState<string>('');
@@ -627,7 +627,7 @@ export default function Dashboard() {
     })();
   };
 
-  const handleMultipleFilesUploadWithCategory = (e: React.ChangeEvent<HTMLInputElement>, category: 'bank_statement' | 'platform_dashboard' | 'tax_epf' | 'mykad_id' | 'pay_slip') => {
+  const handleMultipleFilesUploadWithCategory = (e: React.ChangeEvent<HTMLInputElement>, category: 'bank_statement' | 'platform_dashboard' | 'tax_epf' | 'mykad_id' | 'pay_slip' | 'business_proposal' | 'ssm_license' | 'premise_photos') => {
     if (viewingArchivedReport) return;
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -708,6 +708,9 @@ export default function Dashboard() {
   const hasTaxOrEpf = uploadedFiles.some(f => f.category === 'tax_epf');
   const hasMykad = uploadedFiles.some(f => f.category === 'mykad_id');
   const hasPaySlip = uploadedFiles.some(f => f.category === 'pay_slip');
+  const hasBusinessProposal = uploadedFiles.some(f => f.category === 'business_proposal');
+  const hasSsmLicense = uploadedFiles.some(f => f.category === 'ssm_license');
+  const hasPremisePhotos = uploadedFiles.some(f => f.category === 'premise_photos');
 
   const countUniqueDocCategories = () => {
     let count = 0;
@@ -716,6 +719,9 @@ export default function Dashboard() {
     if (hasTaxOrEpf) count++;
     if (hasMykad) count++;
     if (hasPaySlip) count++;
+    if (hasBusinessProposal) count++;
+    if (hasSsmLicense) count++;
+    if (hasPremisePhotos) count++;
     return count;
   };
 
@@ -2497,6 +2503,208 @@ export default function Dashboard() {
                           )}
                         </div>
 
+                        {/* BUSINESS DOCUMENT UPLOAD SECTION (For Business Loans or Enterprise Applicants) */}
+                        <div className="p-4 rounded-2xl border-2 border-dashed border-blue-200 bg-blue-50/40 mt-1">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Store className="w-4 h-4 text-blue-900" />
+                            <h4 className="text-xs font-black text-blue-950 uppercase tracking-wider">
+                              {language === 'bm' ? 'Dokumen Sokongan Perniagaan & PKS (Disyorkan untuk Pinjaman Perniagaan)' : 'Business & SME Supporting Evidence (Recommended for Business Micro Loans)'}
+                            </h4>
+                          </div>
+
+                          {/* CARD 5: SSM / PBT LICENSE */}
+                          <div 
+                            id="box-ssm"
+                            className="p-3.5 mb-2.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-all"
+                          >
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                              <div className="flex items-start gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-950 flex items-center justify-center shrink-0 mt-0.5">
+                                  <FileCheck2 className="w-4 h-4" />
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <h5 className="text-xs font-bold text-slate-900">
+                                      {language === 'bm' ? '5. Pendaftaran Perniagaan SSM / Lesen PBT' : '5. SSM Business Registration / Local Council Permit'}
+                                    </h5>
+                                    <span className="text-[9px] font-bold text-blue-900 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">
+                                      {language === 'bm' ? 'PKS & PENIAGA' : 'SME & HAWKERS'}
+                                    </span>
+                                  </div>
+                                  <p className="text-[11px] text-slate-500 mt-0.5">
+                                    {language === 'bm' ? 'Sijil Pendaftaran SSM (Borang D / Maklumat Perniagaan) atau Lesen Penjaja / Permit PBT Majlis Tempatan.' : 'SSM Certificate (Form D / Business Profile) or Local Council (PBT) Hawker Permit.'}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                                <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg ${
+                                  uploadedFiles.filter(f => f.category === 'ssm_license').length > 0
+                                    ? 'bg-emerald-100 text-emerald-800 font-bold'
+                                    : 'bg-slate-100 text-slate-500'
+                                }`}>
+                                  {uploadedFiles.filter(f => f.category === 'ssm_license').length > 0
+                                    ? (language === 'bm' ? '✓ Dimuat naik' : '✓ Uploaded')
+                                    : (language === 'bm' ? 'Pilihan' : 'Optional')}
+                                </span>
+                                <label className="py-1.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs rounded-xl cursor-pointer transition-all flex items-center gap-1.5 active:scale-95 border border-slate-300">
+                                  <UploadCloud className="w-3.5 h-3.5 text-blue-900" />
+                                  <span>{language === 'bm' ? '+ Tambah SSM' : '+ Upload SSM'}</span>
+                                  <input type="file" multiple accept="application/pdf,image/*" className="hidden"
+                                    onChange={(e) => handleMultipleFilesUploadWithCategory(e, 'ssm_license')} />
+                                </label>
+                              </div>
+                            </div>
+
+                            {uploadedFiles.filter(f => f.category === 'ssm_license').length > 0 && (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2.5 mt-2 border-t border-slate-100">
+                                {uploadedFiles.map((file, idx) => {
+                                  if (file.category !== 'ssm_license') return null;
+                                  return (
+                                    <div key={idx} className="flex items-center justify-between p-2 bg-slate-50 border border-slate-200/80 rounded-lg text-xs">
+                                      <div className="flex items-center gap-2 truncate pr-2">
+                                        <span className="text-[9px] font-bold uppercase bg-blue-100 text-blue-950 px-1.5 py-0.5 rounded">SSM</span>
+                                        <span className="font-medium text-slate-800 truncate">{file.fileName}</span>
+                                      </div>
+                                      <button onClick={() => removeUploadedFile(idx)} className="p-1 text-slate-400 hover:text-rose-600 rounded cursor-pointer">
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* CARD 6: BUSINESS PROPOSAL / KERTAS KERJA */}
+                          <div 
+                            id="box-proposal"
+                            className="p-3.5 mb-2.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-all"
+                          >
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                              <div className="flex items-start gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-900 flex items-center justify-center shrink-0 mt-0.5">
+                                  <Briefcase className="w-4 h-4" />
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <h5 className="text-xs font-bold text-slate-900">
+                                      {language === 'bm' ? '6. Rancangan Perniagaan / Kertas Kerja Ringkas' : '6. Business Proposal / Use of Funds Plan'}
+                                    </h5>
+                                    <span className="text-[9px] font-bold text-purple-900 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded">
+                                      {language === 'bm' ? 'DIPERLUKAN TEKUN / MARA' : 'TEKUN / MARA / SME BANK'}
+                                    </span>
+                                  </div>
+                                  <p className="text-[11px] text-slate-500 mt-0.5">
+                                    {language === 'bm' ? 'Kertas kerja ringkas, perancangan modal pusingan, atau sebut harga pembekal mesin/stok (PDF / Word / Excel).' : 'Brief business plan, fund utilization forecast, or supplier quotation for machinery/stock (PDF / Word / Excel).' }
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                                <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg ${
+                                  uploadedFiles.filter(f => f.category === 'business_proposal').length > 0
+                                    ? 'bg-emerald-100 text-emerald-800 font-bold'
+                                    : 'bg-slate-100 text-slate-500'
+                                }`}>
+                                  {uploadedFiles.filter(f => f.category === 'business_proposal').length > 0
+                                    ? (language === 'bm' ? '✓ Dimuat naik' : '✓ Uploaded')
+                                    : (language === 'bm' ? 'Pilihan' : 'Optional')}
+                                </span>
+                                <label className="py-1.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs rounded-xl cursor-pointer transition-all flex items-center gap-1.5 active:scale-95 border border-slate-300">
+                                  <UploadCloud className="w-3.5 h-3.5 text-purple-900" />
+                                  <span>{language === 'bm' ? '+ Tambah Kertas Kerja' : '+ Upload Proposal'}</span>
+                                  <input type="file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="hidden"
+                                    onChange={(e) => handleMultipleFilesUploadWithCategory(e, 'business_proposal')} />
+                                </label>
+                              </div>
+                            </div>
+
+                            {uploadedFiles.filter(f => f.category === 'business_proposal').length > 0 && (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2.5 mt-2 border-t border-slate-100">
+                                {uploadedFiles.map((file, idx) => {
+                                  if (file.category !== 'business_proposal') return null;
+                                  return (
+                                    <div key={idx} className="flex items-center justify-between p-2 bg-slate-50 border border-slate-200/80 rounded-lg text-xs">
+                                      <div className="flex items-center gap-2 truncate pr-2">
+                                        <span className="text-[9px] font-bold uppercase bg-purple-100 text-purple-950 px-1.5 py-0.5 rounded">PROPOSAL</span>
+                                        <span className="font-medium text-slate-800 truncate">{file.fileName}</span>
+                                      </div>
+                                      <button onClick={() => removeUploadedFile(idx)} className="p-1 text-slate-400 hover:text-rose-600 rounded cursor-pointer">
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* CARD 7: PREMISE & BUSINESS PHOTOS */}
+                          <div 
+                            id="box-premise"
+                            className="p-3.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-all"
+                          >
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                              <div className="flex items-start gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-900 flex items-center justify-center shrink-0 mt-0.5">
+                                  <Building2 className="w-4 h-4" />
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <h5 className="text-xs font-bold text-slate-900">
+                                      {language === 'bm' ? '7. Gambar Premis / Gerai / Stok Produk' : '7. Premise / Stall / Inventory Photos'}
+                                    </h5>
+                                    <span className="text-[9px] font-bold text-amber-900 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">
+                                      {language === 'bm' ? 'BUKTI OPERASI' : 'OPERATIONS PROOF'}
+                                    </span>
+                                  </div>
+                                  <p className="text-[11px] text-slate-500 mt-0.5">
+                                    {language === 'bm' ? 'Gambar papan tanda kedai, gerai pasar malam, kenderaan niaga, atau stok barang niaga.' : 'Photos of shop signage, night market stall, delivery vehicle, or product inventory.'}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                                <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg ${
+                                  uploadedFiles.filter(f => f.category === 'premise_photos').length > 0
+                                    ? 'bg-emerald-100 text-emerald-800 font-bold'
+                                    : 'bg-slate-100 text-slate-500'
+                                }`}>
+                                  {uploadedFiles.filter(f => f.category === 'premise_photos').length > 0
+                                    ? (language === 'bm' ? '✓ Dimuat naik' : '✓ Uploaded')
+                                    : (language === 'bm' ? 'Pilihan' : 'Optional')}
+                                </span>
+                                <label className="py-1.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs rounded-xl cursor-pointer transition-all flex items-center gap-1.5 active:scale-95 border border-slate-300">
+                                  <UploadCloud className="w-3.5 h-3.5 text-amber-900" />
+                                  <span>{language === 'bm' ? '+ Tambah Foto' : '+ Upload Photos'}</span>
+                                  <input type="file" multiple accept="image/*" className="hidden"
+                                    onChange={(e) => handleMultipleFilesUploadWithCategory(e, 'premise_photos')} />
+                                </label>
+                              </div>
+                            </div>
+
+                            {uploadedFiles.filter(f => f.category === 'premise_photos').length > 0 && (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2.5 mt-2 border-t border-slate-100">
+                                {uploadedFiles.map((file, idx) => {
+                                  if (file.category !== 'premise_photos') return null;
+                                  return (
+                                    <div key={idx} className="flex items-center justify-between p-2 bg-slate-50 border border-slate-200/80 rounded-lg text-xs">
+                                      <div className="flex items-center gap-2 truncate pr-2">
+                                        <span className="text-[9px] font-bold uppercase bg-amber-100 text-amber-950 px-1.5 py-0.5 rounded">FOTO</span>
+                                        <span className="font-medium text-slate-800 truncate">{file.fileName}</span>
+                                      </div>
+                                      <button onClick={() => removeUploadedFile(idx)} className="p-1 text-slate-400 hover:text-rose-600 rounded cursor-pointer">
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
                       </div>
 
                       {/* STEP 2.3: BORROWER CONFIRMATIONS */}
@@ -2747,7 +2955,7 @@ export default function Dashboard() {
                               </span>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-2 pt-1">
                               <div className="p-2 bg-white/90 border border-emerald-200/60 rounded-xl flex items-center gap-2 text-xs">
                                 <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                                 <span className="text-[11px] text-slate-700 font-medium truncate">
@@ -2766,6 +2974,14 @@ export default function Dashboard() {
                                   {uploadedFiles.filter(f => f.category === 'mykad_id').length > 0 ? (language === 'bm' ? 'e-KYC MyKad Sah' : 'MyKad e-KYC Verified') : (language === 'bm' ? 'e-KYC Diperlukan' : 'e-KYC Required')}
                                 </span>
                               </div>
+                              {uploadedFiles.some(f => f.category === 'ssm_license' || f.category === 'business_proposal') && (
+                                <div className="p-2 bg-blue-50/90 border border-blue-200/60 rounded-xl flex items-center gap-2 text-xs">
+                                  <CheckCircle2 className="w-3.5 h-3.5 text-blue-700 shrink-0" />
+                                  <span className="text-[11px] text-blue-900 font-bold truncate">
+                                    {uploadedFiles.filter(f => f.category === 'ssm_license' || f.category === 'business_proposal').length} {language === 'bm' ? 'Dokumen PKS Sah' : 'SME Docs Attached'}
+                                  </span>
+                                </div>
+                              )}
                             </div>
                           </div>
                         )}

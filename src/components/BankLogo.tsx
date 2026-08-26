@@ -44,6 +44,10 @@ export function getBankSlug(bankId?: string, bankName?: string): string {
   if (query.includes('modalku')) return 'modalku';
   if (query.includes('tekun')) return 'tekun';
   if (query.includes('agrobank') || query.includes('agro')) return 'agrobank';
+  if (query.includes('aim') || query.includes('ikhtiar')) return 'aim';
+  if (query.includes('sme bank') || query.includes('sme_bank') || query.includes('spum')) return 'sme_bank';
+  if (query.includes('mara')) return 'mara';
+  if (query.includes('punb')) return 'punb';
   if (query.includes('grab')) return 'grab_finance';
 
   return 'default';
