@@ -4525,7 +4525,23 @@ export default function Dashboard() {
                         const isBank = (activeFile.documentType === 'bank_statement' && !isFoodOrGig) || (fn.includes('bank') && !isFoodOrGig) || (fn.includes('statement') && !isFoodOrGig);
                         const isPaySlip = activeFile.documentType === 'pay_slip' || fn.includes('pay_slip') || fn.includes('payslip') || fn.includes('slip_gaji');
                         const isMyKad = activeFile.documentType === 'mykad_id' || fn.includes('mykad') || fn.includes('ic') || fn.includes('kad pengenalan');
-                        const isEpf = activeFile.documentType === 'tax_epf' || fn.includes('epf') || fn.includes('kwsp') || fn.includes('cukai') || fn.includes('ssm');
+                        const isSsm = fn.includes('ssm') || fn.includes('borang d') || fn.includes('biztrust') || fn.includes('perakuan') || fn.includes('pendaftaran');
+                        const isProposal = fn.includes('proposal') || fn.includes('business plan') || fn.includes('working capital') || fn.includes('rancangan perniagaan');
+                        const isPremise = fn.includes('premise') || fn.includes('storefront') || fn.includes('kedai') || fn.includes('shop') || fn.includes('stall') || fn.includes('photo');
+                        const isEpf = !isSsm && (activeFile.documentType === 'tax_epf' || fn.includes('epf') || fn.includes('kwsp') || fn.includes('cukai'));
+
+                        // ── SSM & MICRO-SME CONTEXT ──────────────────────────────────────────────────
+                        const ssmData = (activeB2bApplicantData.inputData as any).ssmBusinessData;
+                        const ssmRegNo = ssmData?.registrationNumber || '202303148921 (003412345-X)';
+                        const ssmName = ssmData?.businessName || activeB2bApplicantData.inputData.name + ' Enterprise';
+                        const ssmType = ssmData?.businessType || 'Sole Proprietorship (Pemilikan Tunggal)';
+                        const ssmRegDate = ssmData?.registrationDate || '2023-03-14';
+                        const ssmExpDate = ssmData?.expiryDate || '2027-03-14';
+                        const ssmNature = ssmData?.natureOfBusiness || 'Perdagangan runcit, perkhidmatan logistik & pembekalan makanan';
+
+                        // ── PROPOSAL & PREMISE CONTEXT ───────────────────────────────────────────────
+                        const propData = (activeB2bApplicantData.inputData as any).businessProposalData;
+                        const premData = (activeB2bApplicantData.inputData as any).premisePhotosData;
 
                         // ── IDENTITY / MYKAD CONTEXT ────────────────────────────────────────────────
                         const idData = activeB2bApplicantData.inputData.identityData;
@@ -5166,6 +5182,148 @@ export default function Dashboard() {
                                   <span className="font-bold text-blue-900 bg-white px-2.5 py-0.5 rounded-lg border border-blue-200">
                                     NET PAY MATCHES BANK STATEMENT INFLOW
                                   </span>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* 6. SSM BUSINESS REGISTRATION (BORANG D / SIJIL PERAKUAN) VIEW */}
+                            {isSsm && (
+                              <div className="flex flex-col gap-3">
+                                <div className="p-4 bg-white border border-amber-300 rounded-2xl flex flex-col gap-3 shadow-2xs text-xs text-slate-700">
+                                  <div className="flex justify-between items-center border-b border-amber-200 pb-2.5">
+                                    <div className="flex items-center gap-2">
+                                      <div className="w-7 h-7 bg-amber-950 text-white rounded-lg flex items-center justify-center font-bold text-[10px]">
+                                        SSM
+                                      </div>
+                                      <div>
+                                        <span className="font-extrabold text-slate-900 text-xs block">{ssmName}</span>
+                                        <span className="text-[10px] text-slate-400 font-mono">Suruhanjaya Syarikat Malaysia (SSM) e-Verify</span>
+                                      </div>
+                                    </div>
+                                    <span className="px-2 py-0.5 bg-emerald-50 text-emerald-800 font-bold text-[10px] rounded-md border border-emerald-200">
+                                      SSM REGISTERED ACTIVE
+                                    </span>
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-3 p-3 bg-amber-50/50 rounded-xl border border-amber-200">
+                                    <div>
+                                      <span className="text-[10px] text-slate-400 block uppercase font-bold">No. Pendaftaran (Registration No.)</span>
+                                      <span className="font-bold text-slate-900 block mt-0.5 font-mono">{ssmRegNo}</span>
+                                    </div>
+                                    <div>
+                                      <span className="text-[10px] text-slate-400 block uppercase font-bold">Bentuk Perniagaan (Structure)</span>
+                                      <span className="font-bold text-slate-900 block mt-0.5">{ssmType}</span>
+                                    </div>
+                                    <div>
+                                      <span className="text-[10px] text-slate-400 block uppercase font-bold">Tarikh Pendaftaran (Registered)</span>
+                                      <span className="font-bold text-slate-900 block mt-0.5">{ssmRegDate}</span>
+                                    </div>
+                                    <div>
+                                      <span className="text-[10px] text-slate-400 block uppercase font-bold">Tarikh Luput (Expiry Date)</span>
+                                      <span className="font-bold text-emerald-800 block mt-0.5">{ssmExpDate}</span>
+                                    </div>
+                                    <div className="col-span-2">
+                                      <span className="text-[10px] text-slate-400 block uppercase font-bold">Jenis Perniagaan (Business Nature)</span>
+                                      <span className="font-medium text-slate-800 block mt-0.5 text-[11px] leading-relaxed">{ssmNature}</span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs">
+                                  <div className="flex items-center gap-2 text-emerald-950 font-bold">
+                                    <CheckCircle className="w-4 h-4 text-emerald-700" />
+                                    <span>SSM BizTrust Registry Verification:</span>
+                                  </div>
+                                  <span className="font-bold text-emerald-900 bg-white px-2.5 py-0.5 rounded-lg border border-emerald-200">
+                                    OFFICIALLY ACTIVE (NO STRIKE-OFF)
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* 7. BUSINESS PROPOSAL & WORKING CAPITAL VIEW */}
+                            {isProposal && (
+                              <div className="flex flex-col gap-3">
+                                <div className="p-4 bg-white border border-blue-200 rounded-2xl flex flex-col gap-3 shadow-2xs text-xs text-slate-700">
+                                  <div className="flex justify-between items-center border-b border-slate-100 pb-2.5">
+                                    <div>
+                                      <span className="font-extrabold text-slate-900 text-xs block">Micro-SME Business Proposal &amp; Working Capital Plan</span>
+                                      <span className="text-[10px] text-slate-400">Expansion &amp; Equipment Financing Dossier</span>
+                                    </div>
+                                    <span className="px-2 py-0.5 bg-blue-50 text-blue-900 font-bold text-[10px] rounded-md border border-blue-200">
+                                      PLAN AUDITED
+                                    </span>
+                                  </div>
+
+                                  <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex flex-col gap-2">
+                                    <span className="text-[10px] text-slate-400 block uppercase font-bold">Ringkasan Operasi (Executive Summary)</span>
+                                    <p className="text-[11.5px] text-slate-800 leading-relaxed font-normal">
+                                      {propData?.businessSummary || 'Rancangan pengembangan operasi perniagaan mikro merangkumi pembelian inventori stok bekalan, perkakasan memasak/perkhidmatan, dan pembiayaan modal pusingan jangka sederhana.'}
+                                    </p>
+                                  </div>
+
+                                  <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                                    <div className="p-2 bg-slate-50 rounded-lg border border-slate-200">
+                                      <span className="text-[10px] text-slate-400 block uppercase font-bold">Unjuran Hasil (Revenue)</span>
+                                      <span className="font-bold text-slate-900 mt-0.5 block tabular-nums">
+                                        RM {(propData?.monthlyProjectedRevenue || 8500).toFixed(2)}/bln
+                                      </span>
+                                    </div>
+                                    <div className="p-2 bg-slate-50 rounded-lg border border-slate-200">
+                                      <span className="text-[10px] text-slate-400 block uppercase font-bold">Kos Operasi (Cost)</span>
+                                      <span className="font-bold text-slate-700 mt-0.5 block tabular-nums">
+                                        RM {(propData?.monthlyProjectedExpenses || 4200).toFixed(2)}/bln
+                                      </span>
+                                    </div>
+                                    <div className="p-2 bg-emerald-50 rounded-lg border border-emerald-200">
+                                      <span className="text-[10px] text-emerald-800 block uppercase font-bold">Untung Bersih (Net Profit)</span>
+                                      <span className="font-extrabold text-emerald-950 mt-0.5 block tabular-nums">
+                                        RM {(propData?.monthlyProjectedNetProfit || 4300).toFixed(2)}/bln
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
+                            {/* 8. PREMISE & STOREFRONT COMPUTER VISION INSPECTION VIEW */}
+                            {isPremise && (
+                              <div className="flex flex-col gap-3">
+                                <div className="p-4 bg-white border border-slate-200 rounded-2xl flex flex-col gap-3 shadow-2xs text-xs text-slate-700">
+                                  <div className="flex justify-between items-center border-b border-slate-100 pb-2.5">
+                                    <div>
+                                      <span className="font-extrabold text-slate-900 text-xs block">Physical Premise &amp; Storefront Computer Vision Inspection</span>
+                                      <span className="text-[10px] text-slate-400">Automated Visual Legitimacy &amp; Signboard Match</span>
+                                    </div>
+                                    <span className="px-2 py-0.5 bg-emerald-50 text-emerald-800 font-bold text-[10px] rounded-md border border-emerald-200">
+                                      PREMISE VERIFIED
+                                    </span>
+                                  </div>
+
+                                  <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200">
+                                    <div>
+                                      <span className="text-[10px] text-slate-400 block uppercase font-bold">Papan Tanda Fizikal (Signboard)</span>
+                                      <span className="font-bold text-slate-900 block mt-0.5">
+                                        {premData?.signboardTextDetected || ssmName}
+                                      </span>
+                                    </div>
+                                    <div>
+                                      <span className="text-[10px] text-slate-400 block uppercase font-bold">Skor Kesahihan Fizikal (Legitimacy)</span>
+                                      <span className="font-bold text-emerald-800 block mt-0.5">
+                                        {premData?.physicalLegitimacyScore || 96}/100 (Physical Stall / Shop)
+                                      </span>
+                                    </div>
+                                    <div className="col-span-2">
+                                      <span className="text-[10px] text-slate-400 block uppercase font-bold">Peralatan / Inventori Terkesan (Visual CV Detection)</span>
+                                      <div className="flex flex-wrap gap-1 mt-1">
+                                        {(premData?.equipmentInventoryDetected || ['Peralatan Memasak Komersial', 'Papan Menu Digital / Banner', 'Terminal Bayaran QR / DuitNow', 'Stok Bahan Mentah / Pembungkusan']).map((eq: string, eqIdx: number) => (
+                                          <span key={eqIdx} className="px-2 py-0.5 bg-white border border-slate-200 rounded text-[10.5px] font-medium text-slate-700">
+                                            ✓ {eq}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
                             )}

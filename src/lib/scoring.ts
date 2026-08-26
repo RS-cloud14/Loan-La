@@ -100,6 +100,35 @@ export interface UnderwritingInput {
   identityData?: IdentityData;
   epfAnalysis?: EpfAnalysisData;
   paySlipData?: PaySlipData;
+  ssmBusinessData?: {
+    registrationNumber: string;
+    businessName: string;
+    businessType: string;
+    registrationDate: string;
+    expiryDate: string;
+    businessAddress: string;
+    natureOfBusiness: string;
+    status: string;
+    isVerified: boolean;
+  };
+  businessProposalData?: {
+    businessSummary: string;
+    monthlyProjectedRevenue: number;
+    monthlyProjectedExpenses: number;
+    monthlyProjectedNetProfit: number;
+    requestedFinancingAmount: number;
+    proposedTenureMonths: number;
+    useOfFunds: string;
+    estimatedRoiMonths: number;
+  };
+  premisePhotosData?: {
+    hasPhotos: boolean;
+    signboardMatch: boolean;
+    signboardTextDetected: string;
+    equipmentInventoryDetected: string[];
+    physicalLegitimacyScore: number;
+    forensicNotes: string;
+  };
   // Hire Purchase / Asset Pivot inputs
   targetLoanPurpose?: 'car' | 'bike' | 'van' | 'equipment' | 'personal_cash' | 'working_capital' | 'invoice_financing' | 'education' | 'vehicle';
   targetLoanAmount?: number;

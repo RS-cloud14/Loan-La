@@ -531,10 +531,59 @@ Execute ALL of the following compliance audits strictly:
 
    Return this as a "gigSlipFiles" array in the JSON. You MUST extract and return an entry for EVERY SINGLE submitted gig slip file without skipping any file.
 
-   For bank statements, also return a "bankStatementFiles" array with one entry for each bank statement:
-   [
-     { "fileName": "string", "month": "2026-03", "startBal": 1000.00, "endBal": 2500.00, "totalInflows": 6500.00, "totalOutflows": 5000.00 }
-   ]
+14. [MALAYSIAN SSM BUSINESS REGISTRATION (SIJIL PERAKUAN / BORANG D / BIZTRUST) AUDIT - PDF & PHOTO]
+   If an SSM Certificate (PDF or photo) is provided:
+   - Extract Registration Number (e.g. '202303148921 (003412345-X)')
+   - Extract Legal Business Name (Nama Perniagaan) (e.g. 'WARUNG SELERA BONDA ENTERPRISE')
+   - Extract Business Type (Sole Proprietorship / Partnership / Sdn Bhd)
+   - Extract Registration Date & Expiry Date (YYYY-MM-DD)
+   - Extract Registered Business Address
+   - Extract Nature of Business (Jenis Perniagaan)
+   - Set 'ssmBusinessData':
+     {
+       "registrationNumber": "string",
+       "businessName": "string",
+       "businessType": "Sole Proprietorship | Partnership | Sdn Bhd",
+       "registrationDate": "YYYY-MM-DD",
+       "expiryDate": "YYYY-MM-DD",
+       "businessAddress": "string",
+       "natureOfBusiness": "string",
+       "status": "ACTIVE | EXPIRED",
+       "isVerified": true
+     }
+
+15. [MICRO-SME BUSINESS PROPOSAL & WORKING CAPITAL PLAN - PDF & PHOTO]
+   If a Business Proposal / Pitch Deck is provided:
+   - Extract executive summary of business operations
+   - Extract projected monthly revenue, projected monthly expenses, and net profit
+   - Extract requested financing amount, proposed tenure, and specific use of funds
+   - Set 'businessProposalData':
+     {
+       "businessSummary": "string",
+       "monthlyProjectedRevenue": number,
+       "monthlyProjectedExpenses": number,
+       "monthlyProjectedNetProfit": number,
+       "requestedFinancingAmount": number,
+       "proposedTenureMonths": number,
+       "useOfFunds": "string",
+       "estimatedRoiMonths": number
+     }
+
+16. [PREMISE & STOREFRONT COMPUTER VISION INSPECTION - PHOTOS]
+   If premise / shop / stall / inventory photos are provided:
+   - Perform computer vision inspection on the photo:
+     * Check if physical signboard matches the applicant / SSM business name
+     * Detect commercial equipment / inventory (e.g. coffee machines, stoves, POS terminal, stock shelving, delivery vehicles)
+     * Evaluate physical operational legitimacy score (0 to 100)
+   - Set 'premisePhotosData':
+     {
+       "hasPhotos": true,
+       "signboardMatch": boolean,
+       "signboardTextDetected": "string",
+       "equipmentInventoryDetected": ["string"],
+       "physicalLegitimacyScore": number,
+       "forensicNotes": "string"
+     }
 
 Return ONLY valid JSON, no markdown, no explanation, matching this EXACT schema:
 {
@@ -665,7 +714,36 @@ Return ONLY valid JSON, no markdown, no explanation, matching this EXACT schema:
       "totalInflows": number,
       "totalOutflows": number
     }
-  ]
+  ],
+  "ssmBusinessData": {
+    "registrationNumber": "string",
+    "businessName": "string",
+    "businessType": "string",
+    "registrationDate": "string",
+    "expiryDate": "string",
+    "businessAddress": "string",
+    "natureOfBusiness": "string",
+    "status": "string",
+    "isVerified": boolean
+  },
+  "businessProposalData": {
+    "businessSummary": "string",
+    "monthlyProjectedRevenue": number,
+    "monthlyProjectedExpenses": number,
+    "monthlyProjectedNetProfit": number,
+    "requestedFinancingAmount": number,
+    "proposedTenureMonths": number,
+    "useOfFunds": "string",
+    "estimatedRoiMonths": number
+  },
+  "premisePhotosData": {
+    "hasPhotos": boolean,
+    "signboardMatch": boolean,
+    "signboardTextDetected": "string",
+    "equipmentInventoryDetected": ["string"],
+    "physicalLegitimacyScore": number,
+    "forensicNotes": "string"
+  }
 }
       `;
 
