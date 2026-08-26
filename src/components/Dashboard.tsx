@@ -482,34 +482,8 @@ export default function Dashboard() {
         const combinedBase64 = uploadedFiles.map(f => f.fileBase64 || '').join('');
         docHash = await calculateSha256(combinedBase64 || Date.now().toString());
 
-        // Vercel 4.5MB Payload Guard:
-        // Prioritize key documents for inline base64 (MyKad, primary statement, latest gig slip)
-        // Keep full metadata (fileName, fileSize, fileType, category) for all uploaded files so complete 6-month checklist is retained.
-        let totalPayloadBytes = 0;
-        const maxPayloadBytes = 3.2 * 1024 * 1024; // 3.2 MB safety threshold (Vercel hard limit is 4.5 MB)
-
-        const optimizedFiles = uploadedFiles.map((file, idx) => {
-          const fileBytes = file.fileBase64 ? file.fileBase64.length : 0;
-          const isHighPriority = file.category === 'mykad_id' || idx < 3;
-          if ((isHighPriority || idx < 4) && (totalPayloadBytes + fileBytes < maxPayloadBytes)) {
-            totalPayloadBytes += fileBytes;
-            return file;
-          } else if (totalPayloadBytes + fileBytes < maxPayloadBytes) {
-            totalPayloadBytes += fileBytes;
-            return file;
-          } else {
-            return {
-              fileName: file.fileName,
-              fileSize: file.fileSize,
-              fileType: file.fileType,
-              category: file.category,
-              fileBase64: '' // Base64 omitted to guarantee payload stays within Vercel limit
-            };
-          }
-        });
-
         payload = {
-          files: optimizedFiles,
+          files: uploadedFiles,
           documentHash: docHash,
           targetLoanPurpose,
           targetLoanAmount,
