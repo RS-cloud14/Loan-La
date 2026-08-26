@@ -368,8 +368,14 @@ Execute ALL of the following compliance audits strictly:
 
 3. [CASH FLOW FREQUENCY] Determine payout pattern: "weekly" (Grab/Foodpanda/Lalamove), "monthly" (salary), or "irregular" (freelance/Shopee merchants). Count active working days per month.
 
-4. [MULTI-MONTH TRANSACTIONS] Extract all transactions across ALL submitted monthly statements (extract representative key transactions for EVERY month present — e.g. March, April, May, June, July). Ensure each month includes all platform earning credit inflows, utility bills, savings transfers, and debt repayments. Ensure all transactions are chronologically dated (YYYY-MM-DD), with original description, positive amount, type (INFLOW for credits, OUTFLOW for debits), and category.
-   Categories: Income, Debt, Utility, Food, Transport, Savings, Insurance, Supplier, Logistics, Leisure, Transfer, Other
+4. [COMPLETE VERBATIM TRANSACTIONS EXTRACTION]
+   - Scan all statement pages and extract EVERY SINGLE individual transaction row verbatim from the bank statement table.
+   - For every transaction row, extract:
+     * "date": Exact transaction date normalized to YYYY-MM-DD format.
+     * "description": EXACT verbatim narrative from the statement column (e.g. "DUITNOW TRANSFER TO AHMAD", "MAYBANK QR PAYMENT", "PETRONAS AMPANG", "SHOPEE PAYOUT", "MAXIS BILL", "SALARY DEPOSIT"). Do NOT summarize, modify, or invent generic placeholder names.
+     * "amount": Exact numeric monetary value (positive number).
+     * "type": "INFLOW" for deposits/credits, "OUTFLOW" for withdrawals/debits.
+     * "category": Specific category (e.g. "Gig Earnings", "Salary", "Utility", "Food", "Transport", "Shopping", "Transfer", "Debt Repayment", "Other").
 
 5. [VISUAL FORENSICS — RMiT Check] Examine image elements for:
    - Clone stamp artifacts around monetary amounts
