@@ -947,13 +947,13 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
         const selectedLenderObjects = lenders.filter(l => selectedCompareIds.includes(l.id));
 
         return (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-blue-950/80 backdrop-blur-sm p-2 sm:p-4 overflow-y-auto animate-fade-in">
-            <div className="w-full max-w-5xl max-h-[92vh] bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200 flex flex-col my-auto">
+          <div className="fixed inset-0 z-[100] bg-blue-950/80 backdrop-blur-sm p-2 sm:p-4 overflow-y-auto animate-fade-in flex flex-col justify-start sm:justify-center items-center">
+            <div className="w-full max-w-5xl bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200 flex flex-col my-auto max-h-[calc(100vh-1.5rem)] sm:max-h-[90vh]">
               
               {/* 1. Professional Header */}
-              <div className="px-6 py-4 bg-blue-950 text-white flex items-center justify-between border-b border-blue-900 shrink-0">
+              <div className="px-5 py-3.5 bg-blue-950 text-white flex items-center justify-between border-b border-blue-900 shrink-0">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-900 rounded-lg">
+                  <div className="p-1.5 bg-blue-900 rounded-lg">
                     <Building2 className="w-4 h-4 text-blue-200" />
                   </div>
                   <div>
@@ -975,43 +975,49 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
                 </button>
               </div>
 
-              {/* 2. Professional Quick Filter Presets & Bank Multi-Select Bar */}
-              <div className="px-6 py-3 bg-slate-50 border-b border-slate-200 flex flex-col md:flex-row md:items-center justify-between gap-3 shrink-0">
+              {/* 2. Professional Compact Quick Filter & Multi-Select Bar */}
+              <div className="px-5 py-2.5 bg-slate-50 border-b border-slate-200 flex flex-col gap-2 shrink-0">
                 
-                {/* Left: 1-Click Quick Filter Presets */}
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-[11px] font-bold text-slate-500 font-mono uppercase tracking-wider mr-1">
-                    {language === 'bm' ? 'Tapis Cepat:' : 'Quick Filter:'}
-                  </span>
-                  {[
-                    { id: 'rate', label: language === 'bm' ? 'Kadar Terendah' : 'Lowest Rate', bankIds: ['bsn', 'tekun', 'sme_bank_mikro'] },
-                    { id: 'speed', label: language === 'bm' ? 'Kelulusan Pantas' : 'Fastest Speed', bankIds: ['alliance_mikro', 'aeon', 'fundingsocieties'] },
-                    { id: 'shariah', label: language === 'bm' ? 'Patuh Syariah' : 'Shariah Only', bankIds: ['bank_islam_mikro', 'agrobank_mikro', 'bank_rakyat'] },
-                    { id: 'low_income', label: language === 'bm' ? 'Gaji Min. Rendah' : 'Lowest Min. Income', bankIds: ['aim', 'tekun', 'bsn'] },
-                  ].map((preset) => {
-                    const isPresetActive = selectedCompareIds.length === preset.bankIds.length && 
-                      preset.bankIds.every(id => selectedCompareIds.includes(id));
+                {/* Top: 1-Click Quick Filter Presets */}
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[10px] font-bold text-slate-500 font-mono uppercase tracking-wider mr-1">
+                      {language === 'bm' ? 'Tapis Cepat:' : 'Quick Filter:'}
+                    </span>
+                    {[
+                      { id: 'rate', label: language === 'bm' ? 'Kadar Terendah' : 'Lowest Rate', bankIds: ['bsn', 'tekun', 'sme_bank_mikro'] },
+                      { id: 'speed', label: language === 'bm' ? 'Kelulusan Pantas' : 'Fastest Speed', bankIds: ['alliance_mikro', 'aeon', 'fundingsocieties'] },
+                      { id: 'shariah', label: language === 'bm' ? 'Patuh Syariah' : 'Shariah Only', bankIds: ['bank_islam_mikro', 'agrobank_mikro', 'bank_rakyat'] },
+                      { id: 'low_income', label: language === 'bm' ? 'Gaji Min. Rendah' : 'Lowest Min. Income', bankIds: ['aim', 'tekun', 'bsn'] },
+                    ].map((preset) => {
+                      const isPresetActive = selectedCompareIds.length === preset.bankIds.length && 
+                        preset.bankIds.every(id => selectedCompareIds.includes(id));
 
-                    return (
-                      <button
-                        key={preset.id}
-                        onClick={() => setSelectedCompareIds(preset.bankIds)}
-                        className={`px-2.5 py-1 text-xs rounded-lg font-semibold transition-all border cursor-pointer ${
-                          isPresetActive
-                            ? 'bg-blue-900 text-white border-blue-900 font-bold shadow-2xs'
-                            : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
-                        }`}
-                      >
-                        {preset.label}
-                      </button>
-                    );
-                  })}
+                      return (
+                        <button
+                          key={preset.id}
+                          onClick={() => setSelectedCompareIds(preset.bankIds)}
+                          className={`px-2.5 py-1 text-[11px] rounded-lg font-semibold transition-all border cursor-pointer ${
+                            isPresetActive
+                              ? 'bg-blue-900 text-white border-blue-900 font-bold shadow-2xs'
+                              : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
+                          }`}
+                        >
+                          {preset.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <span className="text-[10px] font-bold text-blue-950 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">
+                    {selectedCompareIds.length}/3 {language === 'bm' ? 'Bank Dipilih' : 'Banks Selected'}
+                  </span>
                 </div>
 
-                {/* Right: Manual Bank Multi-Select (Max 3) */}
+                {/* Bottom: Compact Multi-Select Banks */}
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-[11px] font-bold text-slate-500 font-mono uppercase tracking-wider mr-1">
-                    {language === 'bm' ? 'Pilih Bank (Maks. 3):' : 'Select Banks (Max 3):'}
+                  <span className="text-[10px] font-bold text-slate-500 font-mono uppercase tracking-wider mr-1 shrink-0">
+                    {language === 'bm' ? 'Pilih Bank:' : 'Choose Banks:'}
                   </span>
                   {lenders.map((l) => {
                     const isSelected = selectedCompareIds.includes(l.id);
@@ -1031,9 +1037,9 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
                             }
                           }
                         }}
-                        className={`px-2.5 py-1 text-xs rounded-lg font-semibold transition-all border cursor-pointer ${
+                        className={`px-2 py-0.5 text-[11px] rounded-lg font-semibold transition-all border shrink-0 cursor-pointer ${
                           isSelected
-                            ? 'bg-blue-950 text-white border-blue-950 font-bold'
+                            ? 'bg-blue-950 text-white border-blue-950 font-bold shadow-2xs'
                             : 'bg-white hover:bg-slate-100 text-slate-600 border-slate-200'
                         }`}
                       >
