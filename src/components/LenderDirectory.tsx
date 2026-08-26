@@ -800,7 +800,7 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
             { id: 'government_fund', label: language === 'bm' ? '🏛️ Dana & Koperasi Kerajaan' : '🏛️ Gov Funds & Coops', count: lenders.filter(l => l.category === 'government_fund').length },
             { id: 'micro_credit', label: language === 'bm' ? '💳 Kredit Bukan Bank' : '💳 Non-Bank Credit', count: lenders.filter(l => l.category === 'micro_credit').length },
             { id: 'p2p', label: '🤝 P2P Crowdfunding', count: lenders.filter(l => l.category === 'p2p').length },
-            { id: 'shariah', label: language === 'bm' ? '☪️ Patuh Syariah' : '☪️ Islamic (Shariah)', count: lenders.filter(l => l.shariah).length },
+            { id: 'shariah', label: language === 'bm' ? 'Patuh Syariah' : 'Islamic (Shariah)', count: lenders.filter(l => l.shariah).length },
           ].map((cat) => (
             <button
               key={cat.id}
@@ -840,8 +840,8 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
                     {lender.categoryLabel}
                   </span>
                   {lender.shariah ? (
-                    <span className="text-[10px] font-extrabold text-blue-900 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-md">
-                      ☪️ SHARIAH
+                    <span className="text-[10px] font-extrabold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                      SHARIAH
                     </span>
                   ) : (
                     <span className="text-[10px] font-semibold text-slate-500 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-md">
@@ -947,8 +947,8 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
         const selectedLenderObjects = lenders.filter(l => selectedCompareIds.includes(l.id));
 
         return (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-blue-950/80 backdrop-blur-sm p-4 animate-fade-in">
-            <div className="w-full max-w-5xl bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200 flex flex-col">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-blue-950/80 backdrop-blur-sm p-2 sm:p-4 overflow-y-auto animate-fade-in">
+            <div className="w-full max-w-5xl max-h-[92vh] bg-white rounded-2xl shadow-2xl overflow-hidden border border-slate-200 flex flex-col my-auto">
               
               {/* 1. Professional Header */}
               <div className="px-6 py-4 bg-blue-950 text-white flex items-center justify-between border-b border-blue-900 shrink-0">
@@ -1045,9 +1045,9 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
 
               </div>
 
-              {/* 3. Professional Side-by-Side Comparison Grid (Fits in screen, No Scroll) */}
-              <div className="p-6 bg-white overflow-x-auto">
-                <div className={`grid gap-4 ${selectedLenderObjects.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
+              {/* 3. Professional Side-by-Side Comparison Grid (Scrollable Body) */}
+              <div className="p-4 sm:p-6 bg-white overflow-y-auto overflow-x-auto flex-1">
+                <div className={`grid gap-4 ${selectedLenderObjects.length === 2 ? 'grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}>
                   {selectedLenderObjects.map((l, idx) => (
                     <div 
                       key={l.id} 
@@ -1066,7 +1066,7 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
                               ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' 
                               : 'bg-slate-100 text-slate-600'
                           }`}>
-                            {l.shariah ? '☪️ Shariah' : 'Conventional'}
+                            {l.shariah ? 'Shariah' : 'Conventional'}
                           </span>
                         </div>
 
@@ -1087,51 +1087,51 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
                       <div className="flex flex-col gap-2.5 text-xs">
                         
                         {/* Indicative Rate */}
-                        <div className="flex justify-between items-center py-1 border-b border-slate-100">
-                          <span className="text-slate-500 font-medium">
+                        <div className="flex justify-between items-start gap-2 py-1.5 border-b border-slate-100">
+                          <span className="text-slate-500 font-medium shrink-0">
                             {language === 'bm' ? 'Kadar Faedah' : 'Indicative Rate'}
                           </span>
-                          <span className="font-bold text-blue-950">
+                          <span className="font-bold text-blue-950 text-right leading-snug">
                             {l.rate}
                           </span>
                         </div>
 
                         {/* Approval Turnaround */}
-                        <div className="flex justify-between items-center py-1 border-b border-slate-100">
-                          <span className="text-slate-500 font-medium">
+                        <div className="flex justify-between items-start gap-2 py-1.5 border-b border-slate-100">
+                          <span className="text-slate-500 font-medium shrink-0">
                             {language === 'bm' ? 'Tempoh Kelulusan' : 'Approval SLA'}
                           </span>
-                          <span className="font-bold text-blue-900">
+                          <span className="font-bold text-blue-900 text-right">
                             {l.turnaround}
                           </span>
                         </div>
 
                         {/* Min Monthly Income */}
-                        <div className="flex justify-between items-center py-1 border-b border-slate-100">
-                          <span className="text-slate-500 font-medium">
+                        <div className="flex justify-between items-start gap-2 py-1.5 border-b border-slate-100">
+                          <span className="text-slate-500 font-medium shrink-0">
                             {language === 'bm' ? 'Kelayakan Gaji Min.' : 'Min. Monthly Income'}
                           </span>
-                          <span className="font-semibold text-slate-800">
+                          <span className="font-semibold text-slate-800 text-right leading-snug">
                             {l.minIncome}
                           </span>
                         </div>
 
                         {/* Max Sizing */}
-                        <div className="flex justify-between items-center py-1 border-b border-slate-100">
-                          <span className="text-slate-500 font-medium">
+                        <div className="flex justify-between items-start gap-2 py-1.5 border-b border-slate-100">
+                          <span className="text-slate-500 font-medium shrink-0">
                             {language === 'bm' ? 'Had Maksimum' : 'Max Loan Limit'}
                           </span>
-                          <span className="font-semibold text-slate-800">
+                          <span className="font-semibold text-slate-800 text-right">
                             {l.maxLoan}
                           </span>
                         </div>
 
                         {/* Tenure */}
-                        <div className="flex justify-between items-center py-1 border-b border-slate-100">
-                          <span className="text-slate-500 font-medium">
+                        <div className="flex justify-between items-start gap-2 py-1.5 border-b border-slate-100">
+                          <span className="text-slate-500 font-medium shrink-0">
                             {language === 'bm' ? 'Tempoh Bayaran' : 'Tenure Period'}
                           </span>
-                          <span className="font-semibold text-slate-800">
+                          <span className="font-semibold text-slate-800 text-right">
                             {l.tenure}
                           </span>
                         </div>

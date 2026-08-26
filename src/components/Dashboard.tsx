@@ -5447,7 +5447,7 @@ export default function Dashboard() {
                           <div className="flex flex-wrap items-center gap-1.5 mt-0.5">
                             <span className="text-[10px] text-slate-400 font-mono">{match.lender.type}</span>
                             {match.lender.shariah && (
-                              <span className="text-[9px] font-bold px-1.5 py-0.5 bg-green-50 text-green-800 border border-green-200 rounded">☪️ SHARIAH</span>
+                              <span className="text-[9px] font-bold px-1.5 py-0.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded">SHARIAH</span>
                             )}
                             {match.lender.gigFriendly && (
                               <span className="text-[9px] font-bold px-1.5 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded">✓ GIG-FRIENDLY</span>

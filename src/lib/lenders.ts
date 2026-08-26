@@ -384,7 +384,7 @@ export const LENDERS: Lender[] = [
     id: 'al_rajhi',
     name: 'Al Rajhi Bank Malaysia Berhad',
     shortName: 'Al Rajhi',
-    emoji: '☪️',
+    emoji: '🏛️',
     type: 'Islamic Bank',
     regulatedBy: 'Bank Negara Malaysia (BNM) — Islamic Banking',
     shariah: true,
