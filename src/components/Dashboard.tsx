@@ -395,7 +395,15 @@ export default function Dashboard() {
 
   // Automatically scroll window to top whenever step or page transitions occur
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    const timer = setTimeout(() => {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }, 50);
+    return () => clearTimeout(timer);
   }, [activeStep, currentPage, perspective]);
 
   // Compute a SHA-256 helper for real uploads
@@ -1658,6 +1666,9 @@ export default function Dashboard() {
                         onClick={() => {
                           if (s.step === 3 && !b2cResult) return;
                           setActiveStep(s.step);
+                          window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                          document.documentElement.scrollTop = 0;
+                          document.body.scrollTop = 0;
                         }}
                         className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border transition-all ${
                           s.step === 3 && !b2cResult
@@ -1970,7 +1981,12 @@ export default function Dashboard() {
                       {/* THE ONE PRIMARY ACTION BUTTON (HIGH VISIBILITY) */}
                       <div className="pt-2">
                         <button
-                          onClick={() => setActiveStep(2)}
+                          onClick={() => {
+                            setActiveStep(2);
+                            window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                            document.documentElement.scrollTop = 0;
+                            document.body.scrollTop = 0;
+                          }}
                           className="w-full py-4 bg-blue-950 hover:bg-blue-900 text-white font-black text-sm rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer"
                         >
                           <span>{language === 'bm' ? 'Teruskan ke Langkah 2: Muat Naik Dokumen & Perakuan' : 'Continue to Step 2: Document Gateway & Declarations'}</span>
@@ -3049,7 +3065,12 @@ export default function Dashboard() {
                         {/* Action Buttons */}
                         <div className="flex flex-col sm:flex-row items-center gap-3 pt-1">
                           <button
-                            onClick={() => setActiveStep(1)}
+                            onClick={() => {
+                              setActiveStep(1);
+                              window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                              document.documentElement.scrollTop = 0;
+                              document.body.scrollTop = 0;
+                            }}
                             className="w-full sm:w-auto py-3.5 px-5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-2xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer order-2 sm:order-1"
                           >
                             <ArrowLeft className="w-3.5 h-3.5" /> {language === 'bm' ? 'Kembali' : 'Back'}
