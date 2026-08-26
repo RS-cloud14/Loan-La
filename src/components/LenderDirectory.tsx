@@ -458,46 +458,7 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
       requiredDocs: language === 'bm' ? ['Penyata Bank 3 Bulan', 'Bukti Pendapatan Gig / Lesen Memandu', 'MyKad'] : ['3-Month Bank Statements', 'Rider / Driver Profile Screenshot', 'MyKad & Driving License']
     },
 
-    // ─── P2P CROWDFUNDING ────────────────────────────────────────────────────
-    {
-      id: 'fundingsocieties',
-      name: 'Funding Societies Micro Financing',
-      shortName: 'Funding Societies',
-      institution: 'Modalku Ventures Sdn Bhd',
-      category: 'p2p',
-      categoryLabel: language === 'bm' ? 'P2P / Pendanaan Awam' : 'P2P Crowdfunding',
-      regulator: 'Securities Commission Malaysia (SC)',
-      rank: 12,
-      rankLabel: language === 'bm' ? '#12 Had Pinjaman Modal Tertinggi' : '#12 Highest Business Loan Cap',
-      rate: '10.0% – 18.0% p.a.',
-      rateNumeric: 10.0,
-      minIncome: 'RM 3,000 / mo jualan',
-      minIncomeNumeric: 3000,
-      turnaround: language === 'bm' ? '24 – 48 Jam' : '24 – 48 Hours',
-      turnaroundHours: 36,
-      maxLoan: 'RM 200,000',
-      maxLoanNumeric: 200000,
-      tenure: language === 'bm' ? '1 – 12 Bulan' : '1 – 12 Months',
-      tenureMonths: 12,
-      shariah: true,
-      isFast: false,
-      isLowIncome: false,
-      isBusiness: true,
-      highlightBadge: language === 'bm' ? 'Terbaik Untuk Peniaga Shopee' : 'Best for E-Commerce',
-      description: language === 'bm'
-        ? 'Platform pendanaan P2P digital terbesar di Asia Tenggara untuk peniaga Shopee, Lazada, TikTok Shop, dan kontraktor freelance.'
-        : 'Southeast Asia largest SME digital P2P financing platform. Fast working capital for Shopee, Lazada, and TikTok Shop sellers with invoice financing options.',
-      features: language === 'bm' ? [
-        'Tiada cagaran fizikal diperlukan',
-        'Kelulusan berdasarkan jumlah jualan kedai digital',
-        'Pengeluaran modal pantas dalam 48 jam'
-      ] : [
-        'Zero hard asset collateral required',
-        'Evaluated on e-commerce seller GMV and turnover',
-        'Fast fund disbursement within 48 hours'
-      ],
-      requiredDocs: language === 'bm' ? ['Penyata Bank Syarikat 6 Bulan', 'Laporan Jualan Kedai E-Dagang', 'Pendaftaran SSM'] : ['6-Month Bank Statements', 'Marketplace Store Sales CSV Export', 'SSM Certificate']
-    },
+
     {
       id: 'alliance_mikro',
       name: 'Alliance Digital SME Micro Financing',
@@ -1023,10 +984,10 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
                     {language === 'bm' ? 'Tapis Cepat:' : 'Quick Filter:'}
                   </span>
                   {[
-                    { id: 'rate', label: language === 'bm' ? 'Kadar Terendah' : 'Lowest Rate', bankIds: ['bsn', 'tekun', 'bank_rakyat'] },
-                    { id: 'speed', label: language === 'bm' ? 'Kelulusan Pantas' : 'Fastest Speed', bankIds: ['spaylater', 'tng_gopinjam', 'gxbank'] },
-                    { id: 'shariah', label: language === 'bm' ? 'Patuh Syariah' : 'Shariah Only', bankIds: ['aeon_bank', 'boost', 'bank_rakyat'] },
-                    { id: 'low_income', label: language === 'bm' ? 'Gaji Min. Rendah' : 'Lowest Min. Income', bankIds: ['tekun', 'bsn', 'tng_gopinjam'] },
+                    { id: 'rate', label: language === 'bm' ? 'Kadar Terendah' : 'Lowest Rate', bankIds: ['bsn', 'tekun', 'sme_bank_mikro'] },
+                    { id: 'speed', label: language === 'bm' ? 'Kelulusan Pantas' : 'Fastest Speed', bankIds: ['alliance_mikro', 'aeon', 'fundingsocieties'] },
+                    { id: 'shariah', label: language === 'bm' ? 'Patuh Syariah' : 'Shariah Only', bankIds: ['bank_islam_mikro', 'agrobank_mikro', 'bank_rakyat'] },
+                    { id: 'low_income', label: language === 'bm' ? 'Gaji Min. Rendah' : 'Lowest Min. Income', bankIds: ['aim', 'tekun', 'bsn'] },
                   ].map((preset) => {
                     const isPresetActive = selectedCompareIds.length === preset.bankIds.length && 
                       preset.bankIds.every(id => selectedCompareIds.includes(id));
