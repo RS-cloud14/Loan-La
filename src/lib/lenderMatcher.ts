@@ -116,14 +116,21 @@ export function matchLenders(
 
     if (eligible.length === 0) continue;
 
-    // Pick best product match (prefer hire_purchase if applicable, else first)
+    // Pick best product match for targetAsset
     const product =
+      eligible.find(
+        (p) =>
+          targetAsset &&
+          p.compatibleAssets.includes(targetAsset) &&
+          (targetAsset === 'vehicle' ? p.productType === 'hire_purchase' : true),
+      ) ??
       eligible.find(
         (p) =>
           p.productType === 'hire_purchase' &&
           targetAsset &&
-          ['car', 'bike', 'van'].includes(targetAsset),
-      ) ?? eligible[0];
+          ['vehicle', 'car', 'bike', 'van'].includes(targetAsset),
+      ) ??
+      eligible[0];
 
     // ─── Soft scoring ──────────────────────────────────────────────────────
 

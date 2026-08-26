@@ -2503,16 +2503,28 @@ export default function Dashboard() {
                           )}
                         </div>
 
-                        {/* BUSINESS DOCUMENT UPLOAD SECTION (For Business Loans or Enterprise Applicants) */}
+                        {/* PURPOSE-SPECIFIC SUPPORTING DOCUMENT UPLOAD SECTION */}
                         <div className="p-4 rounded-2xl border-2 border-dashed border-blue-200 bg-blue-50/40 mt-1">
                           <div className="flex items-center gap-2 mb-3">
                             <Store className="w-4 h-4 text-blue-900" />
-                            <h4 className="text-xs font-black text-blue-950 uppercase tracking-wider">
-                              {language === 'bm' ? 'Dokumen Sokongan Perniagaan & PKS (Disyorkan untuk Pinjaman Perniagaan)' : 'Business & SME Supporting Evidence (Recommended for Business Micro Loans)'}
-                            </h4>
+                            <div>
+                              <h4 className="text-xs font-black text-blue-950 uppercase tracking-wider">
+                                {targetLoanPurpose === 'working_capital' && (language === 'bm' ? 'Dokumen Sokongan Modal Pusingan Perniagaan (PKS & Penjaja)' : 'Business Working Capital Supporting Evidence (SME & Hawkers)')}
+                                {targetLoanPurpose === 'equipment' && (language === 'bm' ? 'Dokumen Pembiayaan Peralatan & Mesin Komersial' : 'Commercial Equipment & Machinery Supporting Evidence')}
+                                {targetLoanPurpose === 'vehicle' && (language === 'bm' ? 'Dokumen Sewa Beli Kenderaan & Motosikal (Hire Purchase)' : 'Vehicle & Motorcycle Hire Purchase Supporting Evidence')}
+                                {targetLoanPurpose === 'personal_cash' && (language === 'bm' ? 'Dokumen Tambahan Pilihan (Pilihan untuk Tunai Peribadi)' : 'Optional Supporting Evidence (Optional for Personal Cash)')}
+                                {!['working_capital', 'equipment', 'vehicle', 'personal_cash'].includes(targetLoanPurpose) && (language === 'bm' ? 'Dokumen Sokongan Pembiayaan' : 'Supporting Evidence')}
+                              </h4>
+                              <p className="text-[10px] text-slate-500">
+                                {targetLoanPurpose === 'working_capital' && (language === 'bm' ? 'Perniagaan berdaftar SSM / Penjaja PBT layak memohon pinjaman modal sehingga RM 100,000 (Kadar Subsidi 4%).' : 'SSM registered businesses & local council hawkers qualify for up to RM 100,000 subsidized financing.')}
+                                {targetLoanPurpose === 'equipment' && (language === 'bm' ? 'Sertakan sebut harga pembekal mesin/alatan untuk kelulusan pakej pembiayaan aset SME Bank & Agrobank.' : 'Attach supplier quotation for machinery to qualify for SME Bank & Agrobank equipment packages.')}
+                                {targetLoanPurpose === 'vehicle' && (language === 'bm' ? 'Sertakan sebut harga pengedar (dealer quotation) motor atau kereta untuk pembiayaan sewa beli segera.' : 'Attach vehicle dealer sales quotation for instant motorcycle or car hire-purchase approval.')}
+                                {targetLoanPurpose === 'personal_cash' && (language === 'bm' ? 'Untuk permohonan tunai peribadi, dokumen perniagaan di bawah adalah pilihan tambahan.' : 'For personal cash applications, the business documents below are completely optional.')}
+                              </p>
+                            </div>
                           </div>
 
-                          {/* CARD 5: SSM / PBT LICENSE */}
+                          {/* CARD 5: SSM / PBT LICENSE OR DEALER QUOTATION */}
                           <div 
                             id="box-ssm"
                             className="p-3.5 mb-2.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-all"
@@ -2525,14 +2537,24 @@ export default function Dashboard() {
                                 <div>
                                   <div className="flex items-center gap-2 flex-wrap">
                                     <h5 className="text-xs font-bold text-slate-900">
-                                      {language === 'bm' ? '5. Pendaftaran Perniagaan SSM / Lesen PBT' : '5. SSM Business Registration / Local Council Permit'}
+                                      {targetLoanPurpose === 'vehicle' 
+                                        ? (language === 'bm' ? '5. Sebutharga Pengedar Kenderaan (Dealer Sales Quotation)' : '5. Vehicle / Motor Dealer Sales Quotation')
+                                        : (language === 'bm' ? '5. Pendaftaran Perniagaan SSM / Lesen PBT' : '5. SSM Business Registration / Local Council Permit')}
                                     </h5>
-                                    <span className="text-[9px] font-bold text-blue-900 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">
-                                      {language === 'bm' ? 'PKS & PENIAGA' : 'SME & HAWKERS'}
+                                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded ${
+                                      targetLoanPurpose === 'working_capital' || targetLoanPurpose === 'equipment' || targetLoanPurpose === 'vehicle'
+                                        ? 'bg-blue-950 text-white font-black'
+                                        : 'text-slate-600 bg-slate-100'
+                                    }`}>
+                                      {targetLoanPurpose === 'working_capital' || targetLoanPurpose === 'equipment' || targetLoanPurpose === 'vehicle'
+                                        ? (language === 'bm' ? 'WAJIB' : 'MANDATORY')
+                                        : (language === 'bm' ? 'PILIHAN' : 'OPTIONAL')}
                                     </span>
                                   </div>
                                   <p className="text-[11px] text-slate-500 mt-0.5">
-                                    {language === 'bm' ? 'Sijil Pendaftaran SSM (Borang D / Maklumat Perniagaan) atau Lesen Penjaja / Permit PBT Majlis Tempatan.' : 'SSM Certificate (Form D / Business Profile) or Local Council (PBT) Hawker Permit.'}
+                                    {targetLoanPurpose === 'vehicle'
+                                      ? (language === 'bm' ? 'Salinan sebutharga rasmi (sales quotation/order) dari kedai motor atau bilik pameran kereta.' : 'Official sales quotation/order from motorcycle dealer or car showroom.')
+                                      : (language === 'bm' ? 'Sijil Pendaftaran SSM (Borang D / Maklumat Perniagaan) atau Lesen Penjaja / Permit PBT Majlis Tempatan.' : 'SSM Certificate (Form D / Business Profile) or Local Council (PBT) Hawker Permit.')}
                                   </p>
                                 </div>
                               </div>
@@ -2545,11 +2567,13 @@ export default function Dashboard() {
                                 }`}>
                                   {uploadedFiles.filter(f => f.category === 'ssm_license').length > 0
                                     ? (language === 'bm' ? '✓ Dimuat naik' : '✓ Uploaded')
-                                    : (language === 'bm' ? 'Pilihan' : 'Optional')}
+                                    : (targetLoanPurpose === 'working_capital' || targetLoanPurpose === 'equipment' || targetLoanPurpose === 'vehicle'
+                                        ? (language === 'bm' ? 'Diperlukan' : 'Required')
+                                        : (language === 'bm' ? 'Pilihan' : 'Optional'))}
                                 </span>
                                 <label className="py-1.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs rounded-xl cursor-pointer transition-all flex items-center gap-1.5 active:scale-95 border border-slate-300">
                                   <UploadCloud className="w-3.5 h-3.5 text-blue-900" />
-                                  <span>{language === 'bm' ? '+ Tambah SSM' : '+ Upload SSM'}</span>
+                                  <span>{targetLoanPurpose === 'vehicle' ? (language === 'bm' ? '+ Tambah Sebutharga' : '+ Upload Quotation') : (language === 'bm' ? '+ Tambah SSM' : '+ Upload SSM')}</span>
                                   <input type="file" multiple accept="application/pdf,image/*" className="hidden"
                                     onChange={(e) => handleMultipleFilesUploadWithCategory(e, 'ssm_license')} />
                                 </label>
@@ -2563,7 +2587,9 @@ export default function Dashboard() {
                                   return (
                                     <div key={idx} className="flex items-center justify-between p-2 bg-slate-50 border border-slate-200/80 rounded-lg text-xs">
                                       <div className="flex items-center gap-2 truncate pr-2">
-                                        <span className="text-[9px] font-bold uppercase bg-blue-100 text-blue-950 px-1.5 py-0.5 rounded">SSM</span>
+                                        <span className="text-[9px] font-bold uppercase bg-blue-100 text-blue-950 px-1.5 py-0.5 rounded">
+                                          {targetLoanPurpose === 'vehicle' ? 'QUOTATION' : 'SSM'}
+                                        </span>
                                         <span className="font-medium text-slate-800 truncate">{file.fileName}</span>
                                       </div>
                                       <button onClick={() => removeUploadedFile(idx)} className="p-1 text-slate-400 hover:text-rose-600 rounded cursor-pointer">
@@ -2576,7 +2602,7 @@ export default function Dashboard() {
                             )}
                           </div>
 
-                          {/* CARD 6: BUSINESS PROPOSAL / KERTAS KERJA */}
+                          {/* CARD 6: BUSINESS PROPOSAL / EQUIPMENT QUOTATION / DRIVING LICENSE */}
                           <div 
                             id="box-proposal"
                             className="p-3.5 mb-2.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-all"
@@ -2589,14 +2615,27 @@ export default function Dashboard() {
                                 <div>
                                   <div className="flex items-center gap-2 flex-wrap">
                                     <h5 className="text-xs font-bold text-slate-900">
-                                      {language === 'bm' ? '6. Rancangan Perniagaan / Kertas Kerja Ringkas' : '6. Business Proposal / Use of Funds Plan'}
+                                      {targetLoanPurpose === 'vehicle' && (language === 'bm' ? '6. Lesen Memandu (B2 / D / GDL)' : '6. Driving / GDL License')}
+                                      {targetLoanPurpose === 'equipment' && (language === 'bm' ? '6. Sebutharga Pembekal Mesin / Alatan' : '6. Machinery & Equipment Supplier Quotation')}
+                                      {targetLoanPurpose !== 'vehicle' && targetLoanPurpose !== 'equipment' && (language === 'bm' ? '6. Rancangan Perniagaan / Kertas Kerja Ringkas' : '6. Business Proposal / Use of Funds Plan')}
                                     </h5>
-                                    <span className="text-[9px] font-bold text-purple-900 bg-purple-50 border border-purple-200 px-2 py-0.5 rounded">
-                                      {language === 'bm' ? 'DIPERLUKAN TEKUN / MARA' : 'TEKUN / MARA / SME BANK'}
+                                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded ${
+                                      targetLoanPurpose === 'working_capital'
+                                        ? 'bg-purple-100 text-purple-900 border border-purple-200 font-extrabold'
+                                        : targetLoanPurpose === 'equipment' || targetLoanPurpose === 'vehicle'
+                                          ? 'bg-blue-950 text-white font-bold'
+                                          : 'bg-slate-100 text-slate-600'
+                                    }`}>
+                                      {targetLoanPurpose === 'working_capital' && (language === 'bm' ? 'DIPERLUKAN TEKUN / MARA (4% SUBSIDI)' : 'TEKUN / MARA / SME BANK (4%)')}
+                                      {targetLoanPurpose === 'equipment' && (language === 'bm' ? 'WAJIB PEMBEKAL' : 'MANDATORY (EQUIPMENT)')}
+                                      {targetLoanPurpose === 'vehicle' && (language === 'bm' ? 'WAJIB LESEN' : 'MANDATORY (LICENSE)')}
+                                      {targetLoanPurpose === 'personal_cash' && (language === 'bm' ? 'PILIHAN' : 'OPTIONAL')}
                                     </span>
                                   </div>
                                   <p className="text-[11px] text-slate-500 mt-0.5">
-                                    {language === 'bm' ? 'Kertas kerja ringkas, perancangan modal pusingan, atau sebut harga pembekal mesin/stok (PDF / Word / Excel).' : 'Brief business plan, fund utilization forecast, or supplier quotation for machinery/stock (PDF / Word / Excel).' }
+                                    {targetLoanPurpose === 'vehicle' && (language === 'bm' ? 'Salinan lesen memandu sah untuk pengesahan sewa beli kenderaan/motor.' : 'Valid driving license copy for hire purchase verification.')}
+                                    {targetLoanPurpose === 'equipment' && (language === 'bm' ? 'Sebut harga rasmi pembekal bagi jentera, mesin pemprosesan makanan, atau alatan perniagaan.' : 'Official supplier quotation for machinery, commercial kitchen gear, or tools.')}
+                                    {targetLoanPurpose !== 'vehicle' && targetLoanPurpose !== 'equipment' && (language === 'bm' ? 'Kertas kerja ringkas, perancangan modal pusingan, atau sebut harga pembekal (PDF / Word / Excel).' : 'Brief business plan, fund utilization forecast, or supplier quotation (PDF / Word / Excel).')}
                                   </p>
                                 </div>
                               </div>
@@ -2609,12 +2648,14 @@ export default function Dashboard() {
                                 }`}>
                                   {uploadedFiles.filter(f => f.category === 'business_proposal').length > 0
                                     ? (language === 'bm' ? '✓ Dimuat naik' : '✓ Uploaded')
-                                    : (language === 'bm' ? 'Pilihan' : 'Optional')}
+                                    : (targetLoanPurpose === 'equipment' || targetLoanPurpose === 'vehicle'
+                                        ? (language === 'bm' ? 'Diperlukan' : 'Required')
+                                        : (language === 'bm' ? 'Pilihan' : 'Optional'))}
                                 </span>
                                 <label className="py-1.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs rounded-xl cursor-pointer transition-all flex items-center gap-1.5 active:scale-95 border border-slate-300">
                                   <UploadCloud className="w-3.5 h-3.5 text-purple-900" />
-                                  <span>{language === 'bm' ? '+ Tambah Kertas Kerja' : '+ Upload Proposal'}</span>
-                                  <input type="file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="hidden"
+                                  <span>{targetLoanPurpose === 'vehicle' ? (language === 'bm' ? '+ Tambah Lesen' : '+ Upload License') : (language === 'bm' ? '+ Tambah Fail' : '+ Upload File')}</span>
+                                  <input type="file" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" className="hidden"
                                     onChange={(e) => handleMultipleFilesUploadWithCategory(e, 'business_proposal')} />
                                 </label>
                               </div>
@@ -2627,7 +2668,9 @@ export default function Dashboard() {
                                   return (
                                     <div key={idx} className="flex items-center justify-between p-2 bg-slate-50 border border-slate-200/80 rounded-lg text-xs">
                                       <div className="flex items-center gap-2 truncate pr-2">
-                                        <span className="text-[9px] font-bold uppercase bg-purple-100 text-purple-950 px-1.5 py-0.5 rounded">PROPOSAL</span>
+                                        <span className="text-[9px] font-bold uppercase bg-purple-100 text-purple-950 px-1.5 py-0.5 rounded">
+                                          {targetLoanPurpose === 'vehicle' ? 'LICENSE' : targetLoanPurpose === 'equipment' ? 'EQUIPMENT' : 'PROPOSAL'}
+                                        </span>
                                         <span className="font-medium text-slate-800 truncate">{file.fileName}</span>
                                       </div>
                                       <button onClick={() => removeUploadedFile(idx)} className="p-1 text-slate-400 hover:text-rose-600 rounded cursor-pointer">
@@ -2640,7 +2683,7 @@ export default function Dashboard() {
                             )}
                           </div>
 
-                          {/* CARD 7: PREMISE & BUSINESS PHOTOS */}
+                          {/* CARD 7: PREMISE & BUSINESS PHOTOS / PLATFORM PROOF */}
                           <div 
                             id="box-premise"
                             className="p-3.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-all"
@@ -2653,14 +2696,20 @@ export default function Dashboard() {
                                 <div>
                                   <div className="flex items-center gap-2 flex-wrap">
                                     <h5 className="text-xs font-bold text-slate-900">
-                                      {language === 'bm' ? '7. Gambar Premis / Gerai / Stok Produk' : '7. Premise / Stall / Inventory Photos'}
+                                      {targetLoanPurpose === 'vehicle'
+                                        ? (language === 'bm' ? '7. Tangkapan Skrin Profil Rider / Pemandu Platform' : '7. Active Driver / Rider Platform Profile')
+                                        : (language === 'bm' ? '7. Gambar Premis / Gerai / Stok Produk' : '7. Premise / Stall / Inventory Photos')}
                                     </h5>
                                     <span className="text-[9px] font-bold text-amber-900 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded">
-                                      {language === 'bm' ? 'BUKTI OPERASI' : 'OPERATIONS PROOF'}
+                                      {targetLoanPurpose === 'vehicle'
+                                        ? (language === 'bm' ? 'BUKTI RIDER' : 'PLATFORM PROOF')
+                                        : (language === 'bm' ? 'BUKTI OPERASI' : 'OPERATIONS PROOF')}
                                     </span>
                                   </div>
                                   <p className="text-[11px] text-slate-500 mt-0.5">
-                                    {language === 'bm' ? 'Gambar papan tanda kedai, gerai pasar malam, kenderaan niaga, atau stok barang niaga.' : 'Photos of shop signage, night market stall, delivery vehicle, or product inventory.'}
+                                    {targetLoanPurpose === 'vehicle'
+                                      ? (language === 'bm' ? 'Tangkapan skrin profil aktif akaun Grab, Foodpanda, Lalamove, atau ShopeeFood.' : 'Screenshot of active Grab, Foodpanda, Lalamove or ShopeeFood rider profile.')
+                                      : (language === 'bm' ? 'Gambar papan tanda kedai, gerai pasar malam, van/lori penghantaran, atau stok barangan perniagaan.' : 'Photos of shop signage, night market stall, delivery van, or physical product inventory.')}
                                   </p>
                                 </div>
                               </div>
@@ -2676,8 +2725,8 @@ export default function Dashboard() {
                                     : (language === 'bm' ? 'Pilihan' : 'Optional')}
                                 </span>
                                 <label className="py-1.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs rounded-xl cursor-pointer transition-all flex items-center gap-1.5 active:scale-95 border border-slate-300">
-                                  <UploadCloud className="w-3.5 h-3.5 text-amber-900" />
-                                  <span>{language === 'bm' ? '+ Tambah Foto' : '+ Upload Photos'}</span>
+                                  <UploadCloud className="w-3.5 h-3.5 text-amber-800" />
+                                  <span>{language === 'bm' ? '+ Tambah Gambar' : '+ Upload Photos'}</span>
                                   <input type="file" multiple accept="image/*" className="hidden"
                                     onChange={(e) => handleMultipleFilesUploadWithCategory(e, 'premise_photos')} />
                                 </label>
@@ -3478,12 +3527,12 @@ export default function Dashboard() {
                       <div className="p-6 bg-white border border-slate-200 rounded-2xl shadow-sm">
                         {(() => {
                           const lenderPurposeMap: Record<string, string[]> = {
-                            personal_cash: ['GX Bank', 'BSN MicroKredit', 'AEON Credit'],
-                            working_capital: ['Funding Societies', 'CapBay', 'Modalku'],
-                            equipment: ['AEON Credit', 'Hong Leong Finance', 'BSN MicroKredit'],
-                            vehicle: ['AEON Credit', 'Hong Leong Finance', 'AmBank', 'Al Rajhi Bank'],
-                            invoice_financing: ['CapBay', 'Funding Societies', 'Modalku'],
-                            education: ['BSN MicroKredit', 'Bank Rakyat', 'GX Bank'],
+                            working_capital: ['TEKUN Nasional (Skim Niaga)', 'SME Bank (SPUM Scheme)', 'Maybank SME Digital Financing', 'CIMB Micro-Financing', 'MARA (SPiM)', 'Alliance Digital SME', 'Funding Societies'],
+                            vehicle: ['AEON Credit (Vehicle & Motor HP)', 'TEKUN Mobilepreneur', 'Maybank Hire Purchase', 'Bank Muamalat Auto-i', 'Agrobank AgroVehicle'],
+                            personal_cash: ['BSN MicroKredit Madani', 'Bank Rakyat Pembiayaan Mikro-i', 'AEON i-Cash Personal', 'AIM (Amanah Ikhtiar PADURI)'],
+                            equipment: ['SME Bank (SPUM Mesin & Alatan)', 'Agrobank Mesin-i', 'MARA (SPiM Alatan)', 'Affin SMEmerge', 'Maybank SME Financing'],
+                            invoice_financing: ['Funding Societies Invoice Financing', 'CapBay Supply Chain Financing', 'MARA (SPiKE)'],
+                            education: ['Bank Rakyat Pendidikan-i', 'BSN MicroKredit', 'AIM (Amanah Ikhtiar)'],
                           };
                           const purposeLabel: Record<string, string> = {
                             personal_cash: 'Personal Cash', working_capital: 'Working Capital',
@@ -3493,43 +3542,49 @@ export default function Dashboard() {
 
                           const effectiveTenure = b2cResult.inputData.tenureYears || calcTenureYears || 1;
                           const effectiveMonths = effectiveTenure * 12;
-                          const topRate = targetLoanPurpose === 'vehicle' ? 0.055 : targetLoanPurpose === 'working_capital' ? 0.12 : 0.065;
-                          const topRateLabel = targetLoanPurpose === 'vehicle' ? '5.5% flat p.a.' : targetLoanPurpose === 'working_capital' ? '12–18% p.a.' : '6.5% flat p.a.';
+                          const topRate = targetLoanPurpose === 'working_capital' ? 0.04 : targetLoanPurpose === 'vehicle' ? 0.04 : targetLoanPurpose === 'equipment' ? 0.04 : 0.04;
+                          const topRateLabel = targetLoanPurpose === 'working_capital' ? '4.0% flat p.a. (Subsidized)' : targetLoanPurpose === 'vehicle' ? '4.0% – 5.5% flat p.a.' : targetLoanPurpose === 'equipment' ? '4.0% – 5.0% flat p.a.' : '4.0% flat p.a. (BSN Madani)';
                           const topInstallment = Math.round((targetLoanAmount * (1 + topRate * effectiveTenure)) / effectiveMonths);
                           const bsnInstallment = Math.round((targetLoanAmount * (1 + 0.04 * effectiveTenure)) / effectiveMonths);
-                          const aeonInstallment = Math.round((targetLoanAmount * (1 + 0.12 * effectiveTenure)) / effectiveMonths);
+                          const aeonInstallment = Math.round((targetLoanAmount * (1 + 0.065 * effectiveTenure)) / effectiveMonths);
 
                           const mockLenderCards = [
                             {
-                              id: 'best', rankTag: 'Top Lender Match', name: lenderPurposeMap[targetLoanPurpose]?.[0] ?? 'GX Bank', score: 91,
+                              id: 'best', rankTag: 'Top Lender Match', name: lenderPurposeMap[targetLoanPurpose]?.[0] ?? 'TEKUN Nasional', score: 95,
                               rate: topRateLabel,
                               installment: `RM ${topInstallment.toLocaleString()}/mo`,
                               tenure: `${effectiveTenure} ${effectiveTenure === 1 ? 'Year' : 'Years'} (${effectiveMonths} Mo)`,
-                              speed: loanTier === 3 ? (language === 'bm' ? '3–7 hari bekerja (Audit Khas)' : '3–7 business days (Enhanced Review)') : loanTier === 1 ? (language === 'bm' ? '2–4 jam (Pantas)' : '2–4 hours (Fast Track)') : (language === 'bm' ? 'Hari yang sama – 2 hari' : 'Same day – 2 business days'),
-                              reasons: [`Income exceeds lender minimum by ${((b2cResult.inputData.averageMonthlyNetIncome ?? 4000) / 2000).toFixed(1)}x`, 'Platform earnings accepted directly', b2cResult.report.dsr <= 50 ? `Clean DSR: ${b2cResult.report.dsr.toFixed(0)}%` : 'Will need guarantor support'],
-                              warning: b2cResult.report.dsr > 50 ? 'High DSR — consider a smaller loan amount' : (loanTier === 3 ? (language === 'bm' ? 'Jumlah > RM 50k memerlukan semakan manusia & audit dokumen' : 'Amount > RM 50k requires human underwriting & enhanced doc audit') : ''),
+                              speed: loanTier === 3 ? (language === 'bm' ? '5–7 hari bekerja' : '5–7 business days') : loanTier === 1 ? (language === 'bm' ? '2–3 hari bekerja' : '2–3 business days') : (language === 'bm' ? '3–5 hari bekerja' : '3–5 business days'),
+                              reasons: [
+                                targetLoanPurpose === 'working_capital' ? 'Lowest 4.0% subsidized rate under KUSKOP scheme' : 'Optimal product match for selected financing category',
+                                `Income RM ${((b2cResult.inputData.averageMonthlyNetIncome ?? 3500)).toFixed(0)}/mo qualifies with strong margin`,
+                                b2cResult.report.dsr <= 50 ? `Clean DSR ratio: ${b2cResult.report.dsr.toFixed(0)}%` : 'Lenient debt service assessment'
+                              ],
+                              warning: targetLoanPurpose === 'working_capital' && uploadedFiles.filter(f => f.category === 'business_proposal').length === 0
+                                ? (language === 'bm' ? 'Sertakan kertas kerja ringkas untuk mempercepatkan kelulusan 4%' : 'Include brief business proposal to accelerate 4% subsidized approval')
+                                : '',
                               url: '#',
                               isTop: true,
                             },
                             {
-                              id: 'second', rankTag: '2nd Ranked Fit', name: lenderPurposeMap[targetLoanPurpose]?.[1] ?? 'BSN MicroKredit', score: 79,
-                              rate: '4.0% flat p.a.',
+                              id: 'second', rankTag: '2nd Ranked Fit', name: lenderPurposeMap[targetLoanPurpose]?.[1] ?? 'SME Bank (SPUM)', score: 84,
+                              rate: targetLoanPurpose === 'working_capital' ? '4.0% – 5.0% flat p.a.' : '5.5% – 7.5% p.a.',
                               installment: `RM ${bsnInstallment.toLocaleString()}/mo`,
                               tenure: `${effectiveTenure} ${effectiveTenure === 1 ? 'Year' : 'Years'} (${effectiveMonths} Mo)`,
-                              speed: loanTier === 3 ? (language === 'bm' ? '5–10 hari bekerja' : '5–10 business days') : loanTier === 1 ? (language === 'bm' ? '1 hari bekerja' : '1 business day') : (language === 'bm' ? '2–3 hari bekerja' : '2–3 business days'),
-                              reasons: ['Government bank — lowest interest rate option', 'Accepts gig worker income with formal declaration'],
-                              warning: targetLoanAmount > 10000 ? (language === 'bm' ? 'Lawatan cawangan / dokumen tambahan diperlukan untuk jumlah melebihi RM 10,000' : 'Branch visit / supplementary docs required for amounts above RM 10,000') : '',
+                              speed: loanTier === 3 ? (language === 'bm' ? '5–10 hari bekerja' : '5–10 business days') : loanTier === 1 ? (language === 'bm' ? '2–3 hari bekerja' : '2–3 business days') : (language === 'bm' ? '3–5 hari bekerja' : '3–5 business days'),
+                              reasons: ['Government development institution with zero-collateral micro facility', 'Alternative gig/business cash flow accepted'],
+                              warning: targetLoanAmount > 30000 ? (language === 'bm' ? 'Lawatan tapak / gambar premis diperlukan untuk jumlah melebihi RM 30,000' : 'Premise photos required for amounts above RM 30,000') : '',
                               url: '#',
                               isTop: false,
                             },
                             {
-                              id: 'third', rankTag: '3rd Ranked Fit', name: lenderPurposeMap[targetLoanPurpose]?.[2] ?? 'AEON Credit', score: 68,
-                              rate: '18–24% p.a.',
+                              id: 'third', rankTag: '3rd Ranked Fit', name: lenderPurposeMap[targetLoanPurpose]?.[2] ?? 'Maybank SME Digital Financing', score: 76,
+                              rate: targetLoanPurpose === 'working_capital' ? '4.8% – 9.8% reducing' : '2.8% – 4.2% flat',
                               installment: `RM ${aeonInstallment.toLocaleString()}/mo`,
                               tenure: `${effectiveTenure} ${effectiveTenure === 1 ? 'Year' : 'Years'} (${effectiveMonths} Mo)`,
-                              speed: loanTier === 3 ? (language === 'bm' ? '3–5 hari bekerja' : '3–5 business days') : (language === 'bm' ? 'Dalam 2–4 jam' : 'Within 2–4 hours'),
-                              reasons: ['Fastest approval among gig-friendly lenders', 'No SSM registration required for personal loans'],
-                              warning: 'Higher interest rate — best only for urgent short-term needs',
+                              speed: (language === 'bm' ? 'Dalam 24–48 jam (Digital)' : 'Within 24–48 hours (Digital)'),
+                              reasons: ['Top tier-1 commercial bank facility with automated digital screening', 'No collateral needed for eligible SSM businesses'],
+                              warning: (language === 'bm' ? 'Memerlukan penyata bank 6 bulan format PDF rasmi' : 'Requires official 6-month bank statement in PDF format'),
                               url: '#',
                               isTop: false,
                             },
@@ -5759,18 +5814,18 @@ export default function Dashboard() {
           equipment: 'Equipment', vehicle: 'Vehicle HP', invoice_financing: 'Invoice Financing', education: 'Education'
         };
         const lenderPurposeMap: Record<string, string[]> = {
-          personal_cash: ['GX Bank', 'BSN MicroKredit', 'AEON Credit'],
-          working_capital: ['Funding Societies', 'CapBay', 'Modalku'],
-          equipment: ['AEON Credit', 'Hong Leong Finance', 'BSN MicroKredit'],
-          vehicle: ['AEON Credit', 'Hong Leong Finance', 'AmBank'],
-          invoice_financing: ['CapBay', 'Funding Societies', 'Modalku'],
-          education: ['BSN MicroKredit', 'Bank Rakyat', 'GX Bank'],
+          working_capital: ['TEKUN Nasional (Skim Niaga)', 'SME Bank (SPUM Scheme)', 'Maybank SME Digital Financing'],
+          vehicle: ['AEON Credit (Vehicle & Motor HP)', 'TEKUN Mobilepreneur', 'Maybank Hire Purchase'],
+          personal_cash: ['BSN MicroKredit Madani', 'Bank Rakyat Pembiayaan Mikro-i', 'AEON i-Cash Personal'],
+          equipment: ['SME Bank (SPUM Mesin & Alatan)', 'Agrobank Mesin-i', 'MARA (SPiM Alatan)'],
+          invoice_financing: ['Funding Societies Invoice Financing', 'CapBay Supply Chain Financing', 'MARA (SPiKE)'],
+          education: ['Bank Rakyat Pendidikan-i', 'BSN MicroKredit', 'AIM (Amanah Ikhtiar)'],
         };
-        const names = lenderPurposeMap[targetLoanPurpose] ?? ['Lender A', 'Lender B', 'Lender C'];
+        const names = lenderPurposeMap[targetLoanPurpose] ?? ['TEKUN Nasional', 'SME Bank', 'Maybank'];
         const cols = [
-          { name: names[0], rate: targetLoanPurpose === 'vehicle' ? '5.5% flat' : '12–18% p.a.', installment: Math.round(targetLoanAmount / 18 * 1.12), tenure: '6–24 mo', speed: loanTier === 3 ? '3–7 days' : loanTier === 1 ? '2–4 hrs' : 'Same day', collateral: 'None', score: 91 },
-          { name: names[1], rate: '4.0% flat', installment: Math.round(targetLoanAmount / 24 * 1.08), tenure: '12–60 mo', speed: loanTier === 3 ? '5–10 days' : loanTier === 1 ? '1 day' : '2–3 days', collateral: 'None', score: 79 },
-          { name: names[2], rate: '18–24% p.a.', installment: Math.round(targetLoanAmount / 12 * 1.21), tenure: '6–36 mo', speed: loanTier === 3 ? '3–5 days' : 'Within 2 hrs', collateral: 'None', score: 68 },
+          { name: names[0], rate: targetLoanPurpose === 'working_capital' ? '4.0% flat' : '4.0% – 5.5% flat', installment: Math.round(targetLoanAmount / 18 * 1.04), tenure: '12–60 mo', speed: loanTier === 3 ? '5–7 days' : loanTier === 1 ? '2–3 days' : '3–5 days', collateral: 'None', score: 95 },
+          { name: names[1], rate: '4.0% – 5.0% flat', installment: Math.round(targetLoanAmount / 24 * 1.05), tenure: '12–60 mo', speed: loanTier === 3 ? '5–10 days' : loanTier === 1 ? '2–3 days' : '3–5 days', collateral: 'None', score: 84 },
+          { name: names[2], rate: targetLoanPurpose === 'working_capital' ? '4.8% – 9.8% reducing' : '2.8% – 4.2% flat', installment: Math.round(targetLoanAmount / 12 * 1.06), tenure: '12–60 mo', speed: '24–48 hrs', collateral: 'None', score: 76 },
         ];
         const current = cols[compareSwipeIndex];
         return (
