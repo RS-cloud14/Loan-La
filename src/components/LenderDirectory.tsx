@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { 
   Building2, Search, CheckCircle2, ShieldCheck, ArrowRight, ExternalLink, 
   Zap, Clock, Landmark, Coins, Tag, BarChart3, X, Check, Info, Sparkles, 
-  Scale, FileText, Filter, ArrowUpDown, DollarSign, Award, ChevronRight, LayoutGrid, Table as TableIcon
+  Scale, FileText, Filter, ArrowUpDown, DollarSign, Award, ChevronRight, ChevronDown, LayoutGrid, Table as TableIcon
 } from 'lucide-react';
 import BankLogo from '@/components/BankLogo';
 import { useLanguage } from '@/context/LanguageContext';
@@ -982,10 +982,10 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
                     {language === 'bm' ? 'Tapis Cepat:' : 'Quick Presets:'}
                   </span>
                   {[
-                    { id: 'rate', label: language === 'bm' ? '⚡ Kadar Terendah' : '⚡ Lowest Rate', bankIds: ['bsn', 'tekun', 'sme_bank_mikro'] },
-                    { id: 'speed', label: language === 'bm' ? '🚀 Kelulusan Pantas' : '🚀 Fastest Speed', bankIds: ['alliance_mikro', 'aeon', 'fundingsocieties'] },
-                    { id: 'shariah', label: language === 'bm' ? '🛡️ Patuh Syariah' : '🛡️ Shariah Only', bankIds: ['bank_islam_mikro', 'agrobank_mikro', 'bank_rakyat'] },
-                    { id: 'low_income', label: language === 'bm' ? '💰 Gaji Min. Rendah' : '💰 Lowest Min. Income', bankIds: ['aim', 'tekun', 'bsn'] },
+                    { id: 'rate', label: language === 'bm' ? 'Kadar Terendah' : 'Lowest Rate', bankIds: ['bsn', 'tekun', 'sme_bank_mikro'] },
+                    { id: 'speed', label: language === 'bm' ? 'Kelulusan Pantas' : 'Fastest Speed', bankIds: ['alliance_mikro', 'aeon', 'fundingsocieties'] },
+                    { id: 'shariah', label: language === 'bm' ? 'Patuh Syariah' : 'Shariah Only', bankIds: ['bank_islam_mikro', 'agrobank_mikro', 'bank_rakyat'] },
+                    { id: 'low_income', label: language === 'bm' ? 'Gaji Min. Rendah' : 'Lowest Min. Income', bankIds: ['aim', 'tekun', 'bsn'] },
                   ].map((preset) => {
                     const isPresetActive = selectedCompareIds.length === preset.bankIds.length && 
                       preset.bankIds.every(id => selectedCompareIds.includes(id));
@@ -1026,9 +1026,10 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
                         
                         {/* Slot Header & Dropdown */}
                         <div className="mb-2.5">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="text-[9.5px] font-extrabold text-blue-950 uppercase tracking-wider font-mono">
-                              {language === 'bm' ? `BANK PILIHAN ${idx + 1}` : `COMPARE SLOT ${idx + 1}`}
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-[10px] font-extrabold text-blue-950 uppercase tracking-wider font-mono flex items-center gap-1.5">
+                              <span className="bg-blue-950 text-white px-1.5 py-0.5 rounded text-[9px]">{language === 'bm' ? `SLOT ${idx + 1}` : `SLOT ${idx + 1}`}</span>
+                              <span className="text-slate-500 font-semibold text-[10px] hidden sm:inline">{language === 'bm' ? 'Klik untuk tukar bank' : 'Click to change bank'}</span>
                             </span>
                             <span className={`text-[9.5px] font-bold px-1.5 py-0.5 rounded ${
                               l.shariah 
@@ -1039,22 +1040,27 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
                             </span>
                           </div>
                           
-                          <select
-                            value={l.id}
-                            onChange={(e) => {
-                              const newId = e.target.value;
-                              const updated = [...selectedCompareIds];
-                              updated[idx] = newId;
-                              setSelectedCompareIds(updated);
-                            }}
-                            className="w-full bg-slate-50 hover:bg-slate-100 focus:bg-white border border-slate-200 focus:border-blue-950 text-blue-950 font-bold text-xs py-1.5 px-2 rounded-lg transition-all outline-hidden cursor-pointer truncate"
-                          >
-                            {lenders.map(opt => (
-                              <option key={opt.id} value={opt.id}>
-                                {opt.name} ({opt.shortName || opt.institution})
-                              </option>
-                            ))}
-                          </select>
+                          <div className="relative">
+                            <select
+                              value={l.id}
+                              onChange={(e) => {
+                                const newId = e.target.value;
+                                const updated = [...selectedCompareIds];
+                                updated[idx] = newId;
+                                setSelectedCompareIds(updated);
+                              }}
+                              className="w-full bg-blue-50/40 hover:bg-blue-50 focus:bg-white border-2 border-blue-900/30 hover:border-blue-900 focus:border-blue-950 text-blue-950 font-bold text-xs py-2 pl-2.5 pr-7 rounded-xl transition-all outline-hidden cursor-pointer shadow-2xs truncate"
+                            >
+                              {lenders.map(opt => (
+                                <option key={opt.id} value={opt.id}>
+                                  {opt.name} ({opt.shortName || opt.institution})
+                                </option>
+                              ))}
+                            </select>
+                            <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-blue-900 flex items-center gap-0.5">
+                              <ChevronDown className="w-4 h-4" />
+                            </div>
+                          </div>
                         </div>
 
                         {/* Logo & Institution Detail */}

@@ -906,12 +906,7 @@ export default function Dashboard() {
           {userSession ? (
             <div className="flex items-center gap-1.5 sm:gap-2">
               <button
-                onClick={() => {
-                  setPerspective('B2C');
-                  setCurrentPage('app');
-                  setActiveStep(1);
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
+                onClick={() => handleStartNewApplication()}
                 className="hidden sm:flex px-3.5 sm:px-4 py-2 bg-blue-950 hover:bg-blue-900 text-white text-xs font-black rounded-xl shadow-md transition-all items-center gap-1.5 active:scale-95 whitespace-nowrap cursor-pointer"
               >
                 <span>{language === 'bm' ? 'Mohon Pinjaman Baharu +' : 'New Loan Application +'}</span>
@@ -947,9 +942,7 @@ export default function Dashboard() {
                       <button
                         onClick={() => {
                           setUserDropdownOpen(false);
-                          setCurrentPage('app');
-                          setActiveStep(1);
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                          handleStartNewApplication();
                         }}
                         className="sm:hidden w-full px-3 py-2 text-left text-xs font-bold text-blue-950 hover:bg-blue-50 rounded-xl transition-all flex items-center gap-2 cursor-pointer"
                       >
@@ -1653,13 +1646,18 @@ export default function Dashboard() {
                     <React.Fragment key={s.step}>
                       <button
                         disabled={s.step === 3 && !b2cResult}
-                        onClick={() => setActiveStep(s.step)}
-                        className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border transition-all cursor-pointer ${
-                          activeStep === s.step
-                            ? 'bg-blue-950 text-white border-blue-950 shadow-xs'
-                            : s.step < activeStep
-                              ? 'bg-blue-50 text-blue-900 border-blue-200'
-                              : 'bg-slate-50 text-slate-400 border-slate-200'
+                        onClick={() => {
+                          if (s.step === 3 && !b2cResult) return;
+                          setActiveStep(s.step);
+                        }}
+                        className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border transition-all ${
+                          s.step === 3 && !b2cResult
+                            ? 'opacity-40 cursor-not-allowed bg-slate-50 text-slate-400 border-slate-200'
+                            : activeStep === s.step
+                              ? 'bg-blue-950 text-white border-blue-950 shadow-xs cursor-pointer'
+                              : s.step < activeStep
+                                ? 'bg-blue-50 text-blue-900 border-blue-200 cursor-pointer'
+                                : 'bg-slate-50 text-slate-400 border-slate-200 cursor-pointer'
                         }`}
                       >
                         <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
@@ -2627,16 +2625,13 @@ export default function Dashboard() {
                                       {targetLoanPurpose !== 'vehicle' && targetLoanPurpose !== 'equipment' && (language === 'bm' ? '6. Rancangan Perniagaan / Kertas Kerja Ringkas' : '6. Business Proposal / Use of Funds Plan')}
                                     </h5>
                                     <span className={`text-[9px] font-bold px-2 py-0.5 rounded ${
-                                      targetLoanPurpose === 'working_capital'
-                                        ? 'bg-purple-100 text-purple-900 border border-purple-200 font-extrabold'
-                                        : targetLoanPurpose === 'equipment' || targetLoanPurpose === 'vehicle'
-                                          ? 'bg-blue-950 text-white font-bold'
-                                          : 'bg-slate-100 text-slate-600'
+                                      targetLoanPurpose === 'equipment' || targetLoanPurpose === 'vehicle'
+                                        ? 'bg-blue-950 text-white font-bold'
+                                        : 'bg-slate-100 text-slate-600'
                                     }`}>
-                                      {targetLoanPurpose === 'working_capital' && (language === 'bm' ? 'DIPERLUKAN TEKUN / MARA (4% SUBSIDI)' : 'TEKUN / MARA / SME BANK (4%)')}
                                       {targetLoanPurpose === 'equipment' && (language === 'bm' ? 'WAJIB PEMBEKAL' : 'MANDATORY (EQUIPMENT)')}
                                       {targetLoanPurpose === 'vehicle' && (language === 'bm' ? 'WAJIB LESEN' : 'MANDATORY (LICENSE)')}
-                                      {targetLoanPurpose === 'personal_cash' && (language === 'bm' ? 'PILIHAN' : 'OPTIONAL')}
+                                      {targetLoanPurpose !== 'equipment' && targetLoanPurpose !== 'vehicle' && (language === 'bm' ? 'PILIHAN' : 'OPTIONAL')}
                                     </span>
                                   </div>
                                   <p className="text-[11px] text-slate-500 mt-0.5">
