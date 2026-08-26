@@ -975,80 +975,40 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
                 </button>
               </div>
 
-              {/* 2. Professional Compact Quick Filter & Multi-Select Bar */}
-              <div className="px-5 py-2.5 bg-slate-50 border-b border-slate-200 flex flex-col gap-2 shrink-0">
-                
-                {/* Top: 1-Click Quick Filter Presets */}
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-[10px] font-bold text-slate-500 font-mono uppercase tracking-wider mr-1">
-                      {language === 'bm' ? 'Tapis Cepat:' : 'Quick Filter:'}
-                    </span>
-                    {[
-                      { id: 'rate', label: language === 'bm' ? 'Kadar Terendah' : 'Lowest Rate', bankIds: ['bsn', 'tekun', 'sme_bank_mikro'] },
-                      { id: 'speed', label: language === 'bm' ? 'Kelulusan Pantas' : 'Fastest Speed', bankIds: ['alliance_mikro', 'aeon', 'fundingsocieties'] },
-                      { id: 'shariah', label: language === 'bm' ? 'Patuh Syariah' : 'Shariah Only', bankIds: ['bank_islam_mikro', 'agrobank_mikro', 'bank_rakyat'] },
-                      { id: 'low_income', label: language === 'bm' ? 'Gaji Min. Rendah' : 'Lowest Min. Income', bankIds: ['aim', 'tekun', 'bsn'] },
-                    ].map((preset) => {
-                      const isPresetActive = selectedCompareIds.length === preset.bankIds.length && 
-                        preset.bankIds.every(id => selectedCompareIds.includes(id));
-
-                      return (
-                        <button
-                          key={preset.id}
-                          onClick={() => setSelectedCompareIds(preset.bankIds)}
-                          className={`px-2.5 py-1 text-[11px] rounded-lg font-semibold transition-all border cursor-pointer ${
-                            isPresetActive
-                              ? 'bg-blue-900 text-white border-blue-900 font-bold shadow-2xs'
-                              : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
-                          }`}
-                        >
-                          {preset.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-
-                  <span className="text-[10px] font-bold text-blue-950 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded">
-                    {selectedCompareIds.length}/3 {language === 'bm' ? 'Bank Dipilih' : 'Banks Selected'}
-                  </span>
-                </div>
-
-                {/* Bottom: Compact Multi-Select Banks */}
+              {/* 2. Sleek Quick Filter Presets Bar */}
+              <div className="px-5 py-2.5 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2 shrink-0">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-[10px] font-bold text-slate-500 font-mono uppercase tracking-wider mr-1 shrink-0">
-                    {language === 'bm' ? 'Pilih Bank:' : 'Choose Banks:'}
+                  <span className="text-[10px] font-bold text-slate-500 font-mono uppercase tracking-wider mr-1">
+                    {language === 'bm' ? 'Tapis Cepat:' : 'Quick Presets:'}
                   </span>
-                  {lenders.map((l) => {
-                    const isSelected = selectedCompareIds.includes(l.id);
+                  {[
+                    { id: 'rate', label: language === 'bm' ? '⚡ Kadar Terendah' : '⚡ Lowest Rate', bankIds: ['bsn', 'tekun', 'sme_bank_mikro'] },
+                    { id: 'speed', label: language === 'bm' ? '🚀 Kelulusan Pantas' : '🚀 Fastest Speed', bankIds: ['alliance_mikro', 'aeon', 'fundingsocieties'] },
+                    { id: 'shariah', label: language === 'bm' ? '🛡️ Patuh Syariah' : '🛡️ Shariah Only', bankIds: ['bank_islam_mikro', 'agrobank_mikro', 'bank_rakyat'] },
+                    { id: 'low_income', label: language === 'bm' ? '💰 Gaji Min. Rendah' : '💰 Lowest Min. Income', bankIds: ['aim', 'tekun', 'bsn'] },
+                  ].map((preset) => {
+                    const isPresetActive = selectedCompareIds.length === preset.bankIds.length && 
+                      preset.bankIds.every(id => selectedCompareIds.includes(id));
+
                     return (
                       <button
-                        key={l.id}
-                        onClick={() => {
-                          if (isSelected) {
-                            if (selectedCompareIds.length > 2) {
-                              setSelectedCompareIds(selectedCompareIds.filter(id => id !== l.id));
-                            }
-                          } else {
-                            if (selectedCompareIds.length >= 3) {
-                              setSelectedCompareIds([...selectedCompareIds.slice(1), l.id]);
-                            } else {
-                              setSelectedCompareIds([...selectedCompareIds, l.id]);
-                            }
-                          }
-                        }}
-                        className={`px-2 py-0.5 text-[11px] rounded-lg font-semibold transition-all border shrink-0 cursor-pointer ${
-                          isSelected
-                            ? 'bg-blue-950 text-white border-blue-950 font-bold shadow-2xs'
-                            : 'bg-white hover:bg-slate-100 text-slate-600 border-slate-200'
+                        key={preset.id}
+                        onClick={() => setSelectedCompareIds(preset.bankIds)}
+                        className={`px-2.5 py-1 text-[11px] rounded-lg font-semibold transition-all border cursor-pointer ${
+                          isPresetActive
+                            ? 'bg-blue-900 text-white border-blue-900 font-bold shadow-2xs'
+                            : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
                         }`}
                       >
-                        {isSelected ? '✓ ' : ''}{l.shortName || l.name}
+                        {preset.label}
                       </button>
                     );
                   })}
                 </div>
 
+                <span className="text-[10px] text-slate-500 font-medium">
+                  {language === 'bm' ? 'Tukar bank di bawah untuk perbandingan' : 'Select or swap any bank in the slots below'}
+                </span>
               </div>
 
               {/* 3. Professional Side-by-Side Comparison Grid (Scrollable Body) */}
@@ -1057,33 +1017,55 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
                   {selectedLenderObjects.map((l, idx) => (
                     <div 
                       key={l.id} 
-                      className={`border rounded-xl p-4.5 flex flex-col justify-between gap-4 transition-all ${
+                      className={`border rounded-xl p-4 flex flex-col justify-between gap-4 transition-all ${
                         idx === 0 ? 'border-blue-900/40 bg-blue-50/20' : 'border-slate-200 bg-white'
                       }`}
                     >
-                      {/* Top: Institution Name & Status */}
+                      {/* Top: In-Card Slot Selector Dropdown & Institution Info */}
                       <div className="border-b border-slate-100 pb-3">
-                        <div className="flex items-center justify-between gap-1 mb-2">
-                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                            {l.regulator}
-                          </span>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                            l.shariah 
-                              ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' 
-                              : 'bg-slate-100 text-slate-600'
-                          }`}>
-                            {l.shariah ? 'Shariah' : 'Conventional'}
-                          </span>
+                        
+                        {/* Slot Header & Dropdown */}
+                        <div className="mb-2.5">
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-[9.5px] font-extrabold text-blue-950 uppercase tracking-wider font-mono">
+                              {language === 'bm' ? `BANK PILIHAN ${idx + 1}` : `COMPARE SLOT ${idx + 1}`}
+                            </span>
+                            <span className={`text-[9.5px] font-bold px-1.5 py-0.5 rounded ${
+                              l.shariah 
+                                ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' 
+                                : 'bg-slate-100 text-slate-600'
+                            }`}>
+                              {l.shariah ? 'Shariah' : 'Conventional'}
+                            </span>
+                          </div>
+                          
+                          <select
+                            value={l.id}
+                            onChange={(e) => {
+                              const newId = e.target.value;
+                              const updated = [...selectedCompareIds];
+                              updated[idx] = newId;
+                              setSelectedCompareIds(updated);
+                            }}
+                            className="w-full bg-slate-50 hover:bg-slate-100 focus:bg-white border border-slate-200 focus:border-blue-950 text-blue-950 font-bold text-xs py-1.5 px-2 rounded-lg transition-all outline-hidden cursor-pointer truncate"
+                          >
+                            {lenders.map(opt => (
+                              <option key={opt.id} value={opt.id}>
+                                {opt.name} ({opt.shortName || opt.institution})
+                              </option>
+                            ))}
+                          </select>
                         </div>
 
-                        <div className="flex items-center gap-2.5">
+                        {/* Logo & Institution Detail */}
+                        <div className="flex items-center gap-2.5 pt-0.5">
                           <BankLogo bankId={l.id} bankName={l.name} size="sm" />
                           <div className="min-w-0">
-                            <h4 className="text-sm font-bold text-blue-950 truncate leading-tight">
-                              {l.name}
-                            </h4>
-                            <span className="text-[11px] text-slate-500 font-medium block truncate">
+                            <h4 className="text-xs font-bold text-blue-950 truncate leading-tight">
                               {l.institution}
+                            </h4>
+                            <span className="text-[10px] text-slate-500 font-medium block truncate">
+                              {l.regulator}
                             </span>
                           </div>
                         </div>
