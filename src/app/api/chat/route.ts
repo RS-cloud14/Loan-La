@@ -1118,10 +1118,22 @@ export async function POST(request: NextRequest) {
     }
 
     // 5. Detailed Report Explanation & Underwriting Insights (Dynamic JSON sourced)
-    const isPersonalReportQuery = (
-      lastMsgLower.includes('my report') ||
-      lastMsgLower.includes('my score') ||
-      lastMsgLower.includes('my grade') ||
+    const isProblemOrWhatIf = lastMsgLower.includes('problem') ||
+                              lastMsgLower.includes('masalah') ||
+                              lastMsgLower.includes('error') ||
+                              lastMsgLower.includes('wrong') ||
+                              lastMsgLower.includes('salah') ||
+                              lastMsgLower.includes('what if') ||
+                              lastMsgLower.includes('bagaimana jika') ||
+                              lastMsgLower.includes('issue') ||
+                              lastMsgLower.includes('how to');
+
+    const isPersonalReportQuery = !isProblemOrWhatIf && (
+      lastMsgLower === 'my report' ||
+      lastMsgLower === 'my score' ||
+      lastMsgLower === 'my grade' ||
+      lastMsgLower.includes('show my report') ||
+      lastMsgLower.includes('show my score') ||
       lastMsgLower.includes('explain my report') ||
       lastMsgLower.includes('explain my score') ||
       lastMsgLower.includes('laporan saya') ||
@@ -1159,9 +1171,29 @@ export async function POST(request: NextRequest) {
       const runway = `${dynamicRunway.toFixed(1)} bulan`;
       const runwayEn = `${dynamicRunway.toFixed(1)} Months`;
 
+      const scoreDescEn = (grade === 'FRAUD_ALERT' || grade === 'F')
+        ? `Audit Attention Required (${score}/1000 - Grade ${grade}): Document forensics flagged data inconsistencies for review.`
+        : (grade === 'A+' || grade === 'A')
+        ? `Prime borrower status (${score}/1000 - Grade ${grade}): Low default risk, supported by verified banking cashflow.`
+        : `Moderate alternative credit profile (${score}/1000 - Grade ${grade}): Supported by steady gig platform earnings.`;
+
+      const scoreDescBm = (grade === 'FRAUD_ALERT' || grade === 'F')
+        ? `Perhatian Audit Diperlukan (${score}/1000 - Gred ${grade}): Forensik dokumen mengesan ketidakselarasan data untuk semakan.`
+        : (grade === 'A+' || grade === 'A')
+        ? `Peminjam Utama (${score}/1000 - Gred ${grade}): Risiko kemungkiran rendah disokong aliran tunai bank yang kukuh.`
+        : `Profil kredit alternatif sederhana (${score}/1000 - Gred ${grade}): Disokong pendapatan platform gig yang konsisten.`;
+
+      const dsrDescEn = dynamicDsr <= 35
+        ? `Within healthy threshold (Current DSR ${dsr}): Maximum headroom under BNM 35% guideline.`
+        : `High debt ratio (Current DSR ${dsr}): Recommending lower loan installments to avoid cashflow strain.`;
+
+      const dsrDescBm = dynamicDsr <= 35
+        ? `Dalam had sihat (DSR Semasa ${dsr}): Kapasiti pembiayaan optimum di bawah garis panduan 35% BNM.`
+        : `Nisbah hutang tinggi (DSR Semasa ${dsr}): Disarankan ansuran lebih rendah untuk menjaga aliran tunai.`;
+
       const reply = isMalay
-        ? `Penjelasan Terperinci Pasport Kredit (${name}):\n\n1. Skor Kredit (${score}/1000 - Gred ${grade}): Menunjukkan profil peminjam utama berisiko rendah dengan rekod aliran tunai yang stabil.\n2. Aliran Pendapatan Disahkan (${income}/bulan): Dijana daripada aktiviti ${platform}.\n3. Nisbah Khidmat Hutang (DSR ${dsr}): Anda tidak mempunyai komitmen hutang sedia ada, memberikan kapasiti pembiayaan maksimum.\n4. Had Pinjaman Selamat: Anda mampu meminjam sehingga ${maxLoan} dengan bayaran ansuran selamat maksima ${maxMonthly} (di bawah had 35% BNM).\n5. Simpanan Kecemasan: Rezab tunai ${runway} melindungi aliran tunai anda daripada sebarang gangguan pendapatan.\n6. Padanan Bank: 92%+ kebarangkalian kelulusan pantas dengan GXBank, Boost Bank, dan AEON Credit.`
-        : `Detailed Credit Passport Breakdown (${name}):\n\n1. Credit Score (${score}/1000 - Grade ${grade}): Prime borrower status with very low default risk, supported by verified banking inflow.\n2. Monthly Inflow (${income}/month): Assessed directly from your ${platform} earnings.\n3. Debt Affordability (Current DSR ${dsr}): Zero active debt commitments, giving you maximum financing headroom under Bank Negara Malaysia's 35% cap.\n4. Safe Borrowing Capacity: Max safe loan limit of ${maxLoan} (without financial strain) with an optimal installment cap of ${maxMonthly}.\n5. Emergency Runway: ${runwayEn} of liquid buffer reserves protecting your cashflow.\n6. Lender Pre-Match: 92%+ approval odds with GXBank, Boost Bank, and AEON Credit.`;
+        ? `Penjelasan Terperinci Pasport Kredit (${name}):\n\n1. Skor Kredit: ${scoreDescBm}\n2. Aliran Pendapatan Disahkan (${income}/bulan): Dijana daripada aktiviti ${platform}.\n3. Nisbah Khidmat Hutang: ${dsrDescBm}\n4. Had Pinjaman Selamat: Anda mampu meminjam sehingga ${maxLoan} dengan bayaran ansuran selamat maksima ${maxMonthly}.\n5. Simpanan Kecemasan: Rezab tunai ${runway} melindungi aliran tunai anda.\n6. Padanan Bank: Pilihan pembiayaan tersedia di Direktori Bank Berlesen.`
+        : `Detailed Credit Passport Breakdown (${name}):\n\n1. Credit Score: ${scoreDescEn}\n2. Monthly Inflow (${income}/month): Assessed directly from your ${platform} earnings.\n3. Debt Affordability: ${dsrDescEn}\n4. Safe Borrowing Capacity: Max safe loan limit of ${maxLoan} with an optimal installment cap of ${maxMonthly}.\n5. Emergency Runway: ${runwayEn} of liquid buffer reserves protecting your cashflow.\n6. Lender Pre-Match: Available matched financing options in our Licensed Lenders Directory.`;
 
       return NextResponse.json({
         success: true,
