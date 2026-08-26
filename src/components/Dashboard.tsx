@@ -484,21 +484,24 @@ export default function Dashboard() {
         const combinedBase64 = uploadedFiles.map(f => f.fileBase64 || '').join('');
         docHash = await calculateSha256(combinedBase64 || Date.now().toString());
 
-        // Keep payload ultra-lightweight (< 200KB total) so Vercel 4.5MB limit is NEVER exceeded
-        // Full file list (names, sizes, types, categories) is preserved for complete 6-month underwriting
+        // Smart Payload Serializer: Keep full Base64 for all documents within Vercel's 3.5MB safe budget
+        // This ensures Gemini receives the original high-fidelity PDF binary to parse exact bank layouts
+        let totalPayloadBytes = 0;
+        const maxBudgetBytes = 3.5 * 1024 * 1024; // 3.5 MB safe limit for Vercel
+
         const sanitizedFiles = uploadedFiles.map(file => {
-          let smallBase64 = "";
-          if (file.fileType?.startsWith('image/') && file.fileBase64 && file.fileBase64.length < 300000) {
-            smallBase64 = file.fileBase64;
-          } else if (file.fileBase64 && file.fileBase64.length < 150000) {
-            smallBase64 = file.fileBase64;
+          const fileBytes = file.fileBase64 ? file.fileBase64.length : 0;
+          let sendBase64 = "";
+          if (file.fileBase64 && (totalPayloadBytes + fileBytes < maxBudgetBytes)) {
+            totalPayloadBytes += fileBytes;
+            sendBase64 = file.fileBase64;
           }
           return {
             fileName: file.fileName,
             fileSize: file.fileSize,
             fileType: file.fileType,
             category: file.category,
-            fileBase64: smallBase64,
+            fileBase64: sendBase64,
             fileText: file.fileText || ''
           };
         });
@@ -738,7 +741,7 @@ export default function Dashboard() {
               fileName: file.name,
               fileType: file.type || 'application/pdf',
               fileSize: ((file.size || 0) / 1024 / 1024).toFixed(2) + " MB",
-              fileBase64: file.size < 200000 ? resultStr : '',
+              fileBase64: resultStr,
               fileText: extractedText,
               category: category
             }]);

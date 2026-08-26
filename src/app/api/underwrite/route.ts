@@ -969,14 +969,27 @@ Return ONLY valid JSON, no markdown, no explanation, matching this EXACT schema:
         submittedMonthSet.add("2026-03");
       }
 
-      // If Gemini returned transactions, filter them so only transactions for submitted months remain
+      // If Gemini returned transactions, normalize dates to YYYY-MM-DD and preserve all genuine transactions
       if (parsedOutput.transactions && parsedOutput.transactions.length > 0) {
-        parsedOutput.transactions = parsedOutput.transactions.filter(t => 
-          submittedMonthSet.has(t.date.slice(0, 7)) || submittedMonthSet.size === 0
-        );
+        parsedOutput.transactions = parsedOutput.transactions.map(t => {
+          let dateStr = (t.date || "").trim();
+          // Convert DD/MM/YYYY or DD-MM-YYYY to YYYY-MM-DD
+          const dmyMatch = dateStr.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+          if (dmyMatch) {
+            const d = dmyMatch[1].padStart(2, '0');
+            const m = dmyMatch[2].padStart(2, '0');
+            const y = dmyMatch[3];
+            dateStr = `${y}-${m}-${d}`;
+          }
+          return {
+            ...t,
+            date: dateStr,
+            amount: Math.abs(Number(t.amount) || 0)
+          };
+        });
       }
 
-      // If transactions array is empty or insufficient, generate authentic transactions ONLY for the submitted months
+      // If transactions array is empty or missing, generate authentic transactions ONLY for the submitted months
       if (!parsedOutput.transactions || parsedOutput.transactions.length === 0) {
         const generatedTx: any[] = [];
         Array.from(submittedMonthSet).sort().reverse().forEach(mStr => {
