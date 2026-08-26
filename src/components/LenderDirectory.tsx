@@ -20,97 +20,295 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
   
   // Comparison Modal Interactive States
   const [compareModalOpen, setCompareModalOpen] = useState(false);
-  const [selectedCompareIds, setSelectedCompareIds] = useState<string[]>(['gxbank', 'boost', 'bsn']);
+  const [selectedCompareIds, setSelectedCompareIds] = useState<string[]>(['maybank_mikro', 'cimb_mikro', 'bsn']);
 
   const lenders = [
+    // ─── TRADITIONAL BANK MICRO LOANS ───────────────────────────────────────
     {
-      id: 'gxbank',
-      name: 'GXBank FlexiCredit',
-      shortName: 'GXBank',
-      institution: 'GX Bank Berhad',
-      category: 'digital_bank',
-      categoryLabel: language === 'bm' ? 'Bank Digital' : 'Digital Bank',
+      id: 'maybank_mikro',
+      name: 'Maybank Mikro / Maybank Islamic Mikro-i',
+      shortName: 'Maybank Mikro',
+      institution: 'Malayan Banking Berhad (Maybank)',
+      category: 'traditional_bank',
+      categoryLabel: language === 'bm' ? 'Bank Perdagangan' : 'Commercial Bank',
       regulator: 'Bank Negara Malaysia (BNM)',
       rank: 1,
-      rankLabel: language === 'bm' ? '#1 Pilihan Utama Pekerja Gig' : '#1 Top Pick for Gig Workers',
-      rate: '5.88% – 14.50% p.a.',
-      rateNumeric: 5.88,
-      minIncome: 'RM 1,500 / mo',
-      minIncomeNumeric: 1500,
-      turnaround: language === 'bm' ? '2 – 4 Jam' : '2 – 4 Hours',
-      turnaroundHours: 3,
-      maxLoan: 'RM 150,000',
-      maxLoanNumeric: 150000,
-      tenure: language === 'bm' ? '6 – 36 Bulan' : '6 – 36 Months',
-      tenureMonths: 36,
-      shariah: false,
-      isFast: true,
+      rankLabel: language === 'bm' ? '#1 Bank Terbesar Malaysia' : '#1 Largest Bank in Malaysia',
+      rate: '11% p.a. (flat, sehingga RM 20k) · BLR+1.25% (RM 20k–50k)',
+      rateNumeric: 11.0,
+      minIncome: language === 'bm' ? 'Operasi Perniagaan ≥ 2 Tahun' : 'Business in Operation ≥ 2 Years',
+      minIncomeNumeric: 0,
+      turnaround: language === 'bm' ? '3 – 5 Hari Bekerja' : '3 – 5 Working Days',
+      turnaroundHours: 72,
+      maxLoan: 'RM 50,000',
+      maxLoanNumeric: 50000,
+      tenure: language === 'bm' ? '12 – 60 Bulan' : '12 – 60 Months',
+      tenureMonths: 60,
+      shariah: true,
+      isFast: false,
       isLowIncome: false,
-      isBusiness: false,
-      highlightBadge: language === 'bm' ? 'Kelulusan Digital Terpantas' : 'Fastest Digital Approval',
+      isBusiness: true,
+      highlightBadge: language === 'bm' ? 'Bank Terbesar Malaysia' : 'Malaysia\'s Largest Bank',
       description: language === 'bm'
-        ? 'Pembiayaan mikro digital sepenuhnya untuk pemandu Grab, penghantar makanan, dan pekerja gig. Menilai pendapatan platform tanpa perlu ke cawangan fizikal atau slip gaji.'
-        : 'Fully digital micro-financing tailored for Grab drivers, food delivery riders, and gig workers. Evaluates platform earnings without requiring physical branch visits or traditional payslips.',
+        ? 'Pembiayaan mikro untuk peniaga perseorangan dan usahawan mikro yang beroperasi sekurang-kurangnya 2 tahun. Boleh mohon melalui Maybank2u atau cawangan. Versi Islam-i (Murabahah) turut tersedia.'
+        : 'Term micro-financing for sole proprietors and micro-enterprises with at least 2 years of business operation. Apply via Maybank2u or branch. Islamic Mikro-i (Murabahah) option also available.',
       features: language === 'bm' ? [
-        'Pengeluaran segera berasaskan algoritma dalam aplikasi',
-        'Tiada penalti penyelesaian awal',
-        'Pengesahan pendapatan pemandu Grab bersepadu'
+        'Tiada cagaran diperlukan untuk pembiayaan sehingga RM 20,000',
+        'Kadar tetap 11% setahun – mudah perancangan kewangan',
+        'Versi konvensional dan Islamik (Murabahah) tersedia'
       ] : [
-        'Instant algorithmic in-app disbursement',
-        'Zero early repayment settlement penalty',
-        'Integrated Grab driver earnings verification'
+        'No collateral required for financing up to RM 20,000',
+        'Fixed 11% p.a. flat rate – easy financial planning',
+        'Both conventional & Islamic Murabahah structures available'
       ],
-      requiredDocs: language === 'bm' ? ['Penyata Bank 3 Bulan', 'Ringkasan Pendapatan Grab/Platform', 'MyKad'] : ['3-Month Bank Statements', 'Grab / Platform Earnings Summary', 'MyKad Identity']
+      requiredDocs: language === 'bm' ? ['Penyata Bank 3–6 Bulan', 'Lesen Perniagaan / Pendaftaran SSM', 'MyKad · Bukti Premis Perniagaan'] : ['3–6 Months Bank Statements', 'Business License / SSM Registration', 'MyKad · Business Premise Proof']
     },
     {
-      id: 'boost',
-      name: 'Boost Credit (Capital)',
-      shortName: 'Boost Credit',
-      institution: 'Boost Bank Berhad / Axiata Digital',
-      category: 'digital_bank',
-      categoryLabel: language === 'bm' ? 'Bank Digital' : 'Digital Bank',
+      id: 'cimb_mikro',
+      name: 'CIMB SME Micro Financing',
+      shortName: 'CIMB SME Mikro',
+      institution: 'CIMB Bank Berhad',
+      category: 'traditional_bank',
+      categoryLabel: language === 'bm' ? 'Bank Perdagangan' : 'Commercial Bank',
       regulator: 'Bank Negara Malaysia (BNM)',
       rank: 2,
-      rankLabel: language === 'bm' ? '#2 Terbaik Tanpa Penjamin' : '#2 Best for Zero Guarantor',
-      rate: '1.5% / month (~18% p.a.)',
-      rateNumeric: 18.0,
-      minIncome: 'RM 1,000 / mo',
-      minIncomeNumeric: 1000,
-      turnaround: language === 'bm' ? 'Dalam 24 Jam' : 'Within 24 Hours',
-      turnaroundHours: 24,
-      maxLoan: 'RM 100,000',
-      maxLoanNumeric: 100000,
-      tenure: language === 'bm' ? '3 – 24 Bulan' : '3 – 24 Months',
-      tenureMonths: 24,
+      rankLabel: language === 'bm' ? '#2 Rangkaian Cawangan Terluas' : '#2 Widest Branch Network',
+      rate: language === 'bm' ? 'Berdasarkan profil kredit (SRF: max 3.75% p.a.)' : 'Credit-based (SRF scheme: capped at 3.75% p.a.)',
+      rateNumeric: 6.5,
+      minIncome: language === 'bm' ? 'Operasi Perniagaan ≥ 12 Bulan' : 'Business in Operation ≥ 12 Months',
+      minIncomeNumeric: 0,
+      turnaround: language === 'bm' ? '3 – 7 Hari Bekerja' : '3 – 7 Working Days',
+      turnaroundHours: 96,
+      maxLoan: 'RM 750,000',
+      maxLoanNumeric: 750000,
+      tenure: language === 'bm' ? '12 – 84 Bulan' : '12 – 84 Months',
+      tenureMonths: 84,
       shariah: true,
-      isFast: true,
+      isFast: false,
+      isLowIncome: false,
+      isBusiness: true,
+      highlightBadge: language === 'bm' ? 'Had Modal Kerja Tertinggi' : 'Highest Working Capital Limit',
+      description: language === 'bm'
+        ? 'Pembiayaan SME & mikro daripada CIMB Bank yang menyertai pelbagai skim BNM termasuk Skim Relief Penstabilan PKS (SRF). Sesuai untuk modal pusingan, pengambilalihan aset, dan pengembangan perniagaan.'
+        : 'SME & micro-financing from CIMB Bank participating in various BNM schemes including SME Stabilisation Relief Facility (SRF). Ideal for working capital, asset acquisition, and business expansion.',
+      features: language === 'bm' ? [
+        'Menyertai skim BNM/CGC – kadar lebih kompetitif',
+        'Sesuai modal pusingan, aset, dan pengembangan perniagaan',
+        'Perkhidmatan Pengurus Hubungan SME peribadi'
+      ] : [
+        'Participates in BNM/CGC guarantee schemes – competitive rates',
+        'Suitable for working capital, asset, and business expansion',
+        'Dedicated SME Relationship Manager service'
+      ],
+      requiredDocs: language === 'bm' ? ['Penyata Bank Syarikat 6 Bulan', 'Dokumen Kewangan Syarikat', 'Pendaftaran SSM · MyKad Pengarah'] : ['6-Month Business Bank Statements', 'Company Financial Documents', 'SSM Registration · Director MyKad']
+    },
+    {
+      id: 'bank_islam_mikro',
+      name: 'Bank Islam iTEKAD / Pembiayaan Mikro-i',
+      shortName: 'Bank Islam Mikro',
+      institution: 'Bank Islam Malaysia Berhad',
+      category: 'traditional_bank',
+      categoryLabel: language === 'bm' ? 'Bank Islam Penuh' : 'Full Islamic Bank',
+      regulator: 'Bank Negara Malaysia (BNM)',
+      rank: 3,
+      rankLabel: language === 'bm' ? '#3 Bank Islam Tertua Malaysia' : '#3 Malaysia\'s Oldest Islamic Bank',
+      rate: language === 'bm' ? 'Program sosial – kadar sangat rendah / tiada keuntungan' : 'Social finance programme – very low / zero profit rate',
+      rateNumeric: 3.0,
+      minIncome: language === 'bm' ? 'Usahawan Mikro B40 / Asnaf' : 'B40 Micro-Entrepreneur / Asnaf',
+      minIncomeNumeric: 0,
+      turnaround: language === 'bm' ? '5 – 10 Hari Bekerja' : '5 – 10 Working Days',
+      turnaroundHours: 120,
+      maxLoan: 'RM 50,000',
+      maxLoanNumeric: 50000,
+      tenure: language === 'bm' ? '12 – 60 Bulan' : '12 – 60 Months',
+      tenureMonths: 60,
+      shariah: true,
+      isFast: false,
       isLowIncome: true,
       isBusiness: true,
-      highlightBadge: language === 'bm' ? 'Patuh Syariah' : 'Shariah-Compliant',
+      highlightBadge: language === 'bm' ? '100% Patuh Syariah · Program Sosial' : '100% Shariah · Social Finance',
       description: language === 'bm'
-        ? 'Modal pusingan mikro untuk peniaga kecil, peruncit digital, dan freelancer. Menggunakan analitik transaksi e-dompet Boost dan aliran tunai untuk kelulusan.'
-        : 'Micro-working capital for small merchants, digital stall owners, and freelancers. Uses Boost e-wallet transaction analytics and QR turnover for underwriting.',
+        ? 'Program kewangan sosial iTEKAD BangKIT/Maju untuk usahawan mikro berpendapatan rendah (B40 & Asnaf). Selain modal, peserta mendapat latihan perniagaan dan bimbingan berterusan daripada Bank Islam.'
+        : 'iTEKAD BangKIT/Maju social finance programme for low-income (B40 & Asnaf) micro-entrepreneurs. Beyond capital, participants receive business training and ongoing mentorship from Bank Islam.',
       features: language === 'bm' ? [
-        'Sijil Patuh Syariah (Murabahah)',
-        'Tiada cagaran atau penjamin diperlukan',
-        'Kelulusan pantas untuk pemegang akaun e-dompet'
+        'Program kewangan sosial – kadar keuntungan sangat rendah',
+        'Latihan perniagaan praktikal & bimbingan usahawan percuma',
+        'Terbuka kepada peserta blacklist & usahawan baru'
       ] : [
-        'Shariah-compliant Murabahah structure',
-        'Zero collateral or guarantor required',
-        'Instant scoring for Boost merchant e-wallet users'
+        'Social finance programme – very low profit rate',
+        'Free practical business training & entrepreneurship coaching',
+        'Open to blacklisted & first-time entrepreneurs'
       ],
-      requiredDocs: language === 'bm' ? ['Penyata Bank / E-Dompet', 'Pendaftaran Perniagaan SSM (Pilihan)', 'MyKad'] : ['Bank Statement / QR Settlement PDF', 'SSM Business Reg (Optional)', 'MyKad Identity']
+      requiredDocs: language === 'bm' ? ['Penyata Bank 3 Bulan', 'Bukti Perniagaan / Lesen PBT', 'MyKad · Gambar Premis Perniagaan'] : ['3-Month Bank Statements', 'Business Proof / Local Council License', 'MyKad · Business Premise Photos']
     },
+    {
+      id: 'agrobank_mikro',
+      name: 'Agrobank Pembiayaan Kredit Mikro-i',
+      shortName: 'Agrobank Mikro',
+      institution: 'Bank Pertanian Malaysia Berhad (Agrobank)',
+      category: 'traditional_bank',
+      categoryLabel: language === 'bm' ? 'Bank Pertanian Kerajaan' : 'Government Agricultural Bank',
+      regulator: 'Bank Negara Malaysia (BNM) / MOF',
+      rank: 4,
+      rankLabel: language === 'bm' ? '#4 Terbaik Sektor Agro & Makanan' : '#4 Best for Agro & Food Sector',
+      rate: 'dari 4.75% p.a. (baki berkurangan)',
+      rateNumeric: 4.75,
+      minIncome: language === 'bm' ? 'Perniagaan Berasaskan Pertanian / Agromakanan' : 'Agriculture / Agro-food Based Business',
+      minIncomeNumeric: 0,
+      turnaround: language === 'bm' ? '3 – 7 Hari Bekerja' : '3 – 7 Working Days',
+      turnaroundHours: 96,
+      maxLoan: 'RM 100,000',
+      maxLoanNumeric: 100000,
+      tenure: language === 'bm' ? '12 – 60 Bulan' : '12 – 60 Months',
+      tenureMonths: 60,
+      shariah: true,
+      isFast: false,
+      isLowIncome: true,
+      isBusiness: true,
+      highlightBadge: language === 'bm' ? 'Khusus Sektor Agro & Luar Bandar' : 'Agro & Rural Sector Specialist',
+      description: language === 'bm'
+        ? 'Pembiayaan mikro Patuh Syariah (Tawarruq) daripada Agrobank untuk usahawan pertanian, pengusaha makanan, pesawah, penternak, dan peniaga produk kampung. Tanpa cagaran untuk kelayakan tertentu.'
+        : 'Shariah-compliant (Tawarruq) micro-financing from Agrobank for agriculture entrepreneurs, food operators, paddy farmers, livestock breeders, and rural product traders. No collateral for eligible applicants.',
+      features: language === 'bm' ? [
+        'Kadar dari 4.75% setahun – antara terendah di Malaysia',
+        'Tanpa cagaran fizikal untuk kelayakan tertentu',
+        'Sokongan khas untuk sektor pertanian, makanan & luar bandar'
+      ] : [
+        'Rate from 4.75% p.a. – among the lowest in Malaysia',
+        'No physical collateral for eligible applicants',
+        'Special support for agricultural, food & rural sectors'
+      ],
+      requiredDocs: language === 'bm' ? ['Penyata Bank 3–6 Bulan', 'Dokumen Pertanian / Lesen Perniagaan', 'MyKad · Bukti Aktiviti Pertanian'] : ['3–6 Months Bank Statements', 'Agricultural Documents / Business License', 'MyKad · Proof of Agricultural Activity']
+    },
+    {
+      id: 'affin_mikro',
+      name: 'Affin Bank SMEmerge Micro Financing',
+      shortName: 'Affin SMEmerge',
+      institution: 'Affin Bank Berhad / Affin Islamic Bank',
+      category: 'traditional_bank',
+      categoryLabel: language === 'bm' ? 'Bank Perdagangan' : 'Commercial Bank',
+      regulator: 'Bank Negara Malaysia (BNM)',
+      rank: 5,
+      rankLabel: language === 'bm' ? '#5 Mesra Usahawan Baru' : '#5 Most Startup-Friendly',
+      rate: language === 'bm' ? 'Berdasarkan skim (SRF: max 3.75% p.a.)' : 'Scheme-based (SRF: capped at 3.75% p.a.)',
+      rateNumeric: 5.5,
+      minIncome: language === 'bm' ? 'Operasi ≥ 12 Bulan (Startup: 12–24 bulan)' : 'In Operation ≥ 12 Months (Startup: 12–24 months)',
+      minIncomeNumeric: 0,
+      turnaround: language === 'bm' ? '3 – 7 Hari Bekerja' : '3 – 7 Working Days',
+      turnaroundHours: 96,
+      maxLoan: 'RM 300,000',
+      maxLoanNumeric: 300000,
+      tenure: language === 'bm' ? '12 – 84 Bulan' : '12 – 84 Months',
+      tenureMonths: 84,
+      shariah: true,
+      isFast: false,
+      isLowIncome: false,
+      isBusiness: true,
+      highlightBadge: language === 'bm' ? 'Khas untuk Startup & PKS Baru' : 'Startup & Early-Stage SME Focused',
+      description: language === 'bm'
+        ? 'Skim SMEmerge Affin Bank yang direka khas untuk perusahaan baharu dan syarikat permulaan yang beroperasi antara 12–24 bulan. Menyertai jaminan CGC/SJPP untuk membantu usahawan muda tanpa rekod kredit kukuh.'
+        : 'Affin Bank\'s SMEmerge scheme specifically designed for new enterprises and startups in operation between 12–24 months. Participates in CGC/SJPP guarantees to support young entrepreneurs without strong credit history.',
+      features: language === 'bm' ? [
+        'Sesuai untuk startup berumur 12–24 bulan tanpa rekod kredit panjang',
+        'Menyertai jaminan CGC/SJPP – kelayakan lebih mudah',
+        'Aplikasi digital melalui laman web Affin Always'
+      ] : [
+        'Ideal for 12–24 month startups without long credit history',
+        'Participates in CGC/SJPP guarantee – easier qualification',
+        'Digital application via Affin Always website'
+      ],
+      requiredDocs: language === 'bm' ? ['Penyata Bank Syarikat 6 Bulan', 'Pendaftaran SSM · Penyata Kewangan', 'MyKad Pengarah'] : ['6-Month Business Bank Statements', 'SSM Registration · Financial Statements', 'Director MyKad']
+    },
+    {
+      id: 'muamalat_mikro',
+      name: 'Bank Muamalat Skim Pembiayaan Mikro-i',
+      shortName: 'Bank Muamalat',
+      institution: 'Bank Muamalat Malaysia Berhad',
+      category: 'traditional_bank',
+      categoryLabel: language === 'bm' ? 'Bank Islam Penuh' : 'Full Islamic Bank',
+      regulator: 'Bank Negara Malaysia (BNM)',
+      rank: 6,
+      rankLabel: language === 'bm' ? '#6 Bank Islam Mikro Berdaftar BNM' : '#6 BNM-Registered Islamic Micro Bank',
+      rate: 'dari 6.99% p.a. (tetap)',
+      rateNumeric: 6.99,
+      minIncome: language === 'bm' ? 'Warganegara Malaysia · SSM/PBT berdaftar' : 'Malaysian Citizen · SSM/PBT Registered',
+      minIncomeNumeric: 0,
+      turnaround: language === 'bm' ? '3 – 5 Hari Bekerja' : '3 – 5 Working Days',
+      turnaroundHours: 72,
+      maxLoan: 'RM 100,000',
+      maxLoanNumeric: 100000,
+      tenure: language === 'bm' ? '12 – 60 Bulan' : '12 – 60 Months',
+      tenureMonths: 60,
+      shariah: true,
+      isFast: false,
+      isLowIncome: true,
+      isBusiness: true,
+      highlightBadge: language === 'bm' ? 'Peserta Skim Mikro BNM' : 'BNM Micro Scheme Participant',
+      description: language === 'bm'
+        ? 'Bank Muamalat Malaysia adalah peserta rasmi Skim Pembiayaan Mikro (SPM) Bank Negara Malaysia. Menawarkan pembiayaan mikro patuh Syariah untuk usahawan mikro berdaftar SSM dan pemohon individu.'
+        : 'Bank Muamalat Malaysia is an official participant of Bank Negara Malaysia\'s Skim Pembiayaan Mikro (SPM). Offers Shariah-compliant micro-financing for SSM-registered micro-entrepreneurs and individual applicants.',
+      features: language === 'bm' ? [
+        'Peserta rasmi BNM Skim Pembiayaan Mikro (SPM)',
+        'Kadar tetap dari 6.99% setahun – tiada kejutan bayaran',
+        'Tiada cagaran fizikal untuk kelayakan SPM'
+      ] : [
+        'Official BNM Skim Pembiayaan Mikro (SPM) participant',
+        'Fixed rate from 6.99% p.a. – no payment surprises',
+        'No physical collateral under SPM qualification'
+      ],
+      requiredDocs: language === 'bm' ? ['Penyata Bank 3–6 Bulan', 'Pendaftaran SSM / Permit PBT', 'MyKad · Gambar Premis Perniagaan'] : ['3–6 Months Bank Statements', 'SSM Registration / PBT Permit', 'MyKad · Business Premise Photos']
+    },
+    {
+      id: 'aim',
+      name: 'AIM Skim Pembiayaan Ikhtiar (PADURI Madani)',
+      shortName: 'AIM (Amanah Ikhtiar)',
+      institution: 'Amanah Ikhtiar Malaysia (AIM)',
+      category: 'government_fund',
+      categoryLabel: language === 'bm' ? 'Dana Kerajaan / B40' : 'Government Fund / B40',
+      regulator: 'KUSKOP / Amanah Ikhtiar Malaysia',
+      rank: 7,
+      rankLabel: language === 'bm' ? '#7 Terbaik Wanita & Isi Rumah B40' : '#7 Best for Women & B40 Households',
+      rate: '10% p.a. (kadar tetap standard)',
+      rateNumeric: 10.0,
+      minIncome: language === 'bm' ? 'Pendapatan Isi Rumah ≤ RM 5,880 / bulan' : 'Household Income ≤ RM 5,880 / month',
+      minIncomeNumeric: 0,
+      turnaround: language === 'bm' ? '7 – 14 Hari Bekerja' : '7 – 14 Working Days',
+      turnaroundHours: 168,
+      maxLoan: 'RM 30,000',
+      maxLoanNumeric: 30000,
+      tenure: language === 'bm' ? '12 – 36 Bulan' : '12 – 36 Months',
+      tenureMonths: 36,
+      shariah: true,
+      isFast: false,
+      isLowIncome: true,
+      isBusiness: true,
+      highlightBadge: language === 'bm' ? 'Terbuka kepada Pemegang Rekod Hitam' : 'Open to Blacklisted Applicants',
+      description: language === 'bm'
+        ? 'AIM menawarkan Skim Pembiayaan Ikhtiar (PADURI Madani) untuk isi rumah B40, wanita, Orang Asli, dan komuniti kurang bernasib baik. Terbuka kepada pemohon yang pernah blacklist atau bankrap. Tanpa penjamin atau cagaran.'
+        : 'AIM offers the Skim Pembiayaan Ikhtiar (PADURI Madani) for B40 households, women, Orang Asli, and underserved communities. Open to previously blacklisted or bankrupt applicants. Zero guarantor or collateral required.',
+      features: language === 'bm' ? [
+        'Terbuka kepada pemohon blacklist & bankrap – tiada diskriminasi',
+        'Tiada penjamin atau cagaran diperlukan',
+        'Latihan keusahawanan & bimbingan berterusan percuma'
+      ] : [
+        'Open to blacklisted & bankrupt applicants – no discrimination',
+        'Zero guarantor or collateral required',
+        'Free entrepreneurship training & ongoing mentorship'
+      ],
+      requiredDocs: language === 'bm' ? ['MyKad · Kad OKU / Dokumen B40 (Jika Ada)', 'Bukti Aktiviti Perniagaan', 'Gambar Premis / Produk'] : ['MyKad · OKU Card / B40 Document (If Available)', 'Proof of Business Activity', 'Premise / Product Photos']
+    },
+
+    // ─── GOVERNMENT & COOPERATIVE MICRO CREDIT ──────────────────────────────
     {
       id: 'bsn',
       name: 'BSN MicroKredit',
       shortName: 'BSN MicroKredit',
       institution: 'Bank Simpanan Nasional (BSN)',
-      category: 'micro_credit',
+      category: 'government_fund',
       categoryLabel: language === 'bm' ? 'Kredit Mikro Kerajaan' : 'Micro-Credit (Gov)',
       regulator: 'MOF / Bank Negara Malaysia',
-      rank: 3,
-      rankLabel: language === 'bm' ? '#3 Kadar Faedah Terendah Malaysia' : '#3 Lowest Interest Rate in Malaysia',
+      rank: 8,
+      rankLabel: language === 'bm' ? '#8 Kadar Faedah Terendah Malaysia' : '#8 Lowest Interest Rate in Malaysia',
       rate: '4.0% p.a. (Kadar Subsidi)',
       rateNumeric: 4.0,
       minIncome: 'RM 800 / mo',
@@ -141,210 +339,15 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
       requiredDocs: language === 'bm' ? ['Penyata Bank 3-6 Bulan', 'Lesen PBT / Surat Pengesahan Majlis', 'MyKad'] : ['3-6 Months Bank Statements', 'Local Council (PBT) Permit or Gig ID', 'MyKad Identity']
     },
     {
-      id: 'aeon',
-      name: 'AEON Credit i-Cash',
-      shortName: 'AEON Credit',
-      institution: 'AEON Credit Service (M) Berhad',
-      category: 'micro_credit',
-      categoryLabel: language === 'bm' ? 'Pembiayaan Patuh Syariah' : 'Shariah Financing',
-      regulator: 'Bank Negara Malaysia (BNM)',
-      rank: 4,
-      rankLabel: language === 'bm' ? '#4 Paling Popular Sewa Beli & Tunai' : '#4 Popular for Hire Purchase & Cash',
-      rate: '0.66% – 1.25% / mo (~8%–15% p.a.)',
-      rateNumeric: 7.92,
-      minIncome: 'RM 1,500 / mo',
-      minIncomeNumeric: 1500,
-      turnaround: language === 'bm' ? 'Hari Yang Sama' : 'Same Day',
-      turnaroundHours: 12,
-      maxLoan: 'RM 100,000',
-      maxLoanNumeric: 100000,
-      tenure: language === 'bm' ? '6 – 84 Bulan' : '6 – 84 Months',
-      tenureMonths: 84,
-      shariah: true,
-      isFast: true,
-      isLowIncome: false,
-      isBusiness: false,
-      highlightBadge: language === 'bm' ? 'Paling Popular Sewa Beli' : 'Popular for Vehicles',
-      description: language === 'bm'
-        ? 'Pembiayaan peribadi & sewa beli kenderaan yang paling meluas menerima pendapatan gig pemandu dan peniaga kecil di seluruh Malaysia.'
-        : 'Widespread personal financing & vehicle hire purchase with lenient income criteria for gig drivers, bike couriers, and freelance sole proprietors.',
-      features: language === 'bm' ? [
-        'Menerima penyata pendapatan aplikasi gig',
-        'Pindahan tunai segera hari yang sama',
-        'Rangkaian cawangan dan kiosk di seluruh negara'
-      ] : [
-        'Accepts rider app earnings statements',
-        'Same-day direct express bank credit',
-        'Nationwide branch & kiosk support'
-      ],
-      requiredDocs: language === 'bm' ? ['Penyata Bank 3 Bulan', 'Bukti Pendapatan Gig / Lesen Memandu', 'MyKad'] : ['3-Month Bank Statements', 'Rider / Driver Profile Screenshot', 'MyKad & Driving License']
-    },
-    {
-      id: 'fundingsocieties',
-      name: 'Funding Societies Micro Financing',
-      shortName: 'Funding Societies',
-      institution: 'Modalku Ventures Sdn Bhd',
-      category: 'p2p',
-      categoryLabel: language === 'bm' ? 'P2P / Pendanaan Awam' : 'P2P Crowdfunding',
-      regulator: 'Securities Commission Malaysia (SC)',
-      rank: 5,
-      rankLabel: language === 'bm' ? '#5 Had Pinjaman Modal Tertinggi' : '#5 Highest Business Loan Cap',
-      rate: '10.0% – 18.0% p.a.',
-      rateNumeric: 10.0,
-      minIncome: 'RM 3,000 / mo jualan',
-      minIncomeNumeric: 3000,
-      turnaround: language === 'bm' ? '24 – 48 Jam' : '24 – 48 Hours',
-      turnaroundHours: 36,
-      maxLoan: 'RM 200,000',
-      maxLoanNumeric: 200000,
-      tenure: language === 'bm' ? '1 – 12 Bulan' : '1 – 12 Months',
-      tenureMonths: 12,
-      shariah: true,
-      isFast: false,
-      isLowIncome: false,
-      isBusiness: true,
-      highlightBadge: language === 'bm' ? 'Terbaik Untuk Peniaga Shopee' : 'Best for E-Commerce',
-      description: language === 'bm'
-        ? 'Platform pendanaan P2P digital terbesar di Asia Tenggara untuk peniaga Shopee, Lazada, TikTok Shop, dan kontraktor freelance.'
-        : 'Southeast Asia largest SME digital P2P financing platform. Fast working capital for Shopee, Lazada, and TikTok Shop sellers with invoice financing options.',
-      features: language === 'bm' ? [
-        'Tiada cagaran fizikal diperlukan',
-        'Kelulusan berdasarkan jumlah jualan kedai digital',
-        'Pengeluaran modal pantas dalam 48 jam'
-      ] : [
-        'Zero hard asset collateral required',
-        'Evaluated on e-commerce seller GMV and turnover',
-        'Fast fund disbursement within 48 hours'
-      ],
-      requiredDocs: language === 'bm' ? ['Penyata Bank Syarikat 6 Bulan', 'Laporan Jualan Kedai E-Dagang', 'Pendaftaran SSM'] : ['6-Month Bank Statements', 'Marketplace Store Sales CSV Export', 'SSM Certificate']
-    },
-    {
-      id: 'spaylater',
-      name: 'SPayLater / SLoan',
-      shortName: 'SPayLater',
-      institution: 'SeaMoney Capital Malaysia Sdn Bhd',
-      category: 'bnpl',
-      categoryLabel: 'BNPL & E-Commerce',
-      regulator: 'KPKT Moneylenders Act 1951',
-      rank: 6,
-      rankLabel: language === 'bm' ? '#6 Serta-merta Tanpa Dokumen' : '#6 Instant Zero-Doc Credit',
-      rate: '1.25% – 1.50% / mo (~15% p.a.)',
-      rateNumeric: 15.0,
-      minIncome: language === 'bm' ? 'Aliran Jualan Shopee' : 'Shopee Seller / Buyer Flow',
-      minIncomeNumeric: 0,
-      turnaround: language === 'bm' ? 'Serta-merta (1 Minit)' : 'Instant (1 Minute)',
-      turnaroundHours: 0.02,
-      maxLoan: 'RM 10,000',
-      maxLoanNumeric: 10000,
-      tenure: language === 'bm' ? '1 – 12 Bulan' : '1 – 12 Months',
-      tenureMonths: 12,
-      shariah: true,
-      isFast: true,
-      isLowIncome: true,
-      isBusiness: false,
-      highlightBadge: language === 'bm' ? 'Tanpa Sebarang Kertas Kerja' : 'Zero Paperwork',
-      description: language === 'bm'
-        ? 'Kemudahan kredit mikro algoritma yang dinilai terus daripada volum jualan kedai dan rekod transaksi tanpa perlu muat naik dokumen.'
-        : 'Algorithmic micro-credit line evaluated purely on marketplace seller volume, fulfillment metrics, and buyer repayment history without file uploads.',
-      features: language === 'bm' ? [
-        'Kelulusan algoritma serta-merta',
-        'Tiada muat naik dokumen fizikal',
-        'Tolak automatik daripada dompet jualan'
-      ] : [
-        'Instant algorithmic credit approval',
-        'Zero physical document upload required',
-        'Automated checkout & wallet deduction'
-      ],
-      requiredDocs: language === 'bm' ? ['Akaun Shopee Disahkan', 'Pengesahan e-KYC MyKad'] : ['Verified Shopee Account', 'MyKad e-KYC Identity']
-    },
-    {
-      id: 'tng_gopinjam',
-      name: 'Touch \'n Go GOpinjam',
-      shortName: 'TNG GOpinjam',
-      institution: 'TNG Digital / CIMB Bank Berhad',
-      category: 'digital_bank',
-      categoryLabel: language === 'bm' ? 'E-Dompet & Kredit Mikro' : 'E-Wallet & Micro-Credit',
-      regulator: 'Bank Negara Malaysia (BNM)',
-      rank: 7,
-      rankLabel: language === 'bm' ? '#7 Tunai Terpantas Terus ke E-Dompet' : '#7 Instant In-Wallet Direct Cash',
-      rate: '8.0% – 18.0% p.a.',
-      rateNumeric: 8.0,
-      minIncome: 'RM 800 / mo',
-      minIncomeNumeric: 800,
-      turnaround: language === 'bm' ? 'Serta-merta (5 Minit)' : 'Instant (5 Minutes)',
-      turnaroundHours: 0.1,
-      maxLoan: 'RM 10,000',
-      maxLoanNumeric: 10000,
-      tenure: language === 'bm' ? '1 – 12 Bulan' : '1 – 12 Months',
-      tenureMonths: 12,
-      shariah: false,
-      isFast: true,
-      isLowIncome: true,
-      isBusiness: false,
-      highlightBadge: language === 'bm' ? 'Kelulusan 5 Minit' : '5-Minute Approval',
-      description: language === 'bm'
-        ? 'Kemudahan kredit peribadi digital penuh dalam aplikasi Touch \'n Go eWallet, dikuasakan oleh infrastruktur CIMB Bank dengan kelulusan kredit serta-merta.'
-        : 'Full digital personal credit within the Touch \'n Go eWallet app, powered by CIMB Bank infrastructure with instant disbursement to your eWallet or bank account.',
-      features: language === 'bm' ? [
-        'Pengeluaran segera terus ke TNG eWallet atau akaun bank',
-        'Ambang pendapatan permulaan serendah RM 800 sebulan',
-        'Dikuasakan oleh infrastruktur keselamatan perbankan CIMB'
-      ] : [
-        'Instant disbursement directly to TNG eWallet or bank',
-        'Low income entry threshold starting from RM 800/month',
-        'Powered by CIMB Bank institutional banking security'
-      ],
-      requiredDocs: language === 'bm' ? ['Akaun TNG eWallet Disahkan', 'Penyata Pendapatan / Bank 1 Bulan', 'MyKad'] : ['Verified TNG eWallet Account', '1-Month Bank / Gig Statement', 'MyKad Identity']
-    },
-    {
-      id: 'aeon_bank',
-      name: 'AEON Bank i-Financing',
-      shortName: 'AEON Bank',
-      institution: 'AEON Bank (M) Berhad',
-      category: 'digital_bank',
-      categoryLabel: language === 'bm' ? 'Bank Digital Islamik' : 'Islamic Digital Bank',
-      regulator: 'Bank Negara Malaysia (BNM)',
-      rank: 8,
-      rankLabel: language === 'bm' ? '#8 Bank Digital Islamik Pertama Malaysia' : '#8 Malaysia\'s 1st Islamic Digital Bank',
-      rate: '5.50% – 12.00% p.a.',
-      rateNumeric: 5.5,
-      minIncome: 'RM 1,500 / mo',
-      minIncomeNumeric: 1500,
-      turnaround: language === 'bm' ? 'Hari Yang Sama' : 'Same Day',
-      turnaroundHours: 12,
-      maxLoan: 'RM 100,000',
-      maxLoanNumeric: 100000,
-      tenure: language === 'bm' ? '6 – 60 Bulan' : '6 – 60 Months',
-      tenureMonths: 60,
-      shariah: true,
-      isFast: true,
-      isLowIncome: false,
-      isBusiness: false,
-      highlightBadge: language === 'bm' ? '100% Patuh Syariah' : '100% Shariah Compliant',
-      description: language === 'bm'
-        ? 'Bank digital Islamik berlesen pertama di Malaysia. Menawarkan pembiayaan berasaskan prinsip Tawarruq dengan integrasi mata ganjaran ekosistem AEON.'
-        : 'Malaysia\'s first licensed Islamic digital bank. Offers Tawarruq-based financing integrated with AEON Points ecosystem rewards and digital onboarding.',
-      features: language === 'bm' ? [
-        'Prinsip Tawarruq Islamik sepenuhnya',
-        'Ganjaran mata ekosistem AEON di seluruh Malaysia',
-        'Permohonan digital 100% tanpa ke kaunter'
-      ] : [
-        'Fully Shariah-compliant Tawarruq structure',
-        'AEON ecosystem rewards integration across Malaysia',
-        '100% paperless mobile app onboarding'
-      ],
-      requiredDocs: language === 'bm' ? ['Penyata Bank 3 Bulan', 'Penyata Gaji / Ringkasan Pendapatan Gig', 'MyKad'] : ['3-Month Bank Statements', 'Payslip / Gig Income Summary', 'MyKad Identity']
-    },
-    {
       id: 'bank_rakyat',
       name: 'Bank Rakyat Pembiayaan Mikro-i',
       shortName: 'Bank Rakyat',
       institution: 'Bank Kerjasama Rakyat Malaysia Berhad',
-      category: 'micro_credit',
+      category: 'government_fund',
       categoryLabel: language === 'bm' ? 'Bank Koperasi Islamik' : 'Islamic Cooperative Bank',
       regulator: 'Bank Negara Malaysia / KUSKOP',
       rank: 9,
-      rankLabel: language === 'bm' ? '#9 Terbaik Untuk Komuniti Koperasi & B40' : '#9 Best for Cooperative Members & B40',
+      rankLabel: language === 'bm' ? '#9 Terbaik Komuniti Koperasi & B40' : '#9 Best for Cooperative Members & B40',
       rate: '4.50% – 6.50% p.a.',
       rateNumeric: 4.5,
       minIncome: 'RM 1,000 / mo',
@@ -379,7 +382,7 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
       name: 'TEKUN Nasional Skim Pembiayaan',
       shortName: 'TEKUN',
       institution: 'Tabung Ekonomi Kumpulan Usaha Niaga (TEKUN)',
-      category: 'micro_credit',
+      category: 'government_fund',
       categoryLabel: language === 'bm' ? 'Kredit Agensi Kerajaan' : 'Government Agency Credit',
       regulator: 'KUSKOP (Kementerian Usahawan)',
       rank: 10,
@@ -413,6 +416,88 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
       ],
       requiredDocs: language === 'bm' ? ['Penyata Bank 3 Bulan', 'Lesen Perniagaan / Permit PBT / SSM', 'MyKad & Gambar Premis'] : ['3-Month Bank Statements', 'Business License / Local Council Permit', 'MyKad & Business Photos']
     },
+
+    // ─── AEON CREDIT (NON-BANK MICRO CREDIT) ────────────────────────────────
+    {
+      id: 'aeon',
+      name: 'AEON Credit i-Cash',
+      shortName: 'AEON Credit',
+      institution: 'AEON Credit Service (M) Berhad',
+      category: 'micro_credit',
+      categoryLabel: language === 'bm' ? 'Pembiayaan Bukan Bank' : 'Non-Bank Financing',
+      regulator: 'Bank Negara Malaysia (BNM)',
+      rank: 11,
+      rankLabel: language === 'bm' ? '#11 Popular Sewa Beli & Tunai' : '#11 Popular for Hire Purchase & Cash',
+      rate: '0.66% – 1.25% / mo (~8%–15% p.a.)',
+      rateNumeric: 7.92,
+      minIncome: 'RM 1,500 / mo',
+      minIncomeNumeric: 1500,
+      turnaround: language === 'bm' ? 'Hari Yang Sama' : 'Same Day',
+      turnaroundHours: 12,
+      maxLoan: 'RM 100,000',
+      maxLoanNumeric: 100000,
+      tenure: language === 'bm' ? '6 – 84 Bulan' : '6 – 84 Months',
+      tenureMonths: 84,
+      shariah: true,
+      isFast: true,
+      isLowIncome: false,
+      isBusiness: false,
+      highlightBadge: language === 'bm' ? 'Paling Popular Sewa Beli' : 'Popular for Vehicles',
+      description: language === 'bm'
+        ? 'Pembiayaan peribadi & sewa beli kenderaan yang paling meluas menerima pendapatan gig pemandu dan peniaga kecil di seluruh Malaysia.'
+        : 'Widespread personal financing & vehicle hire purchase with lenient income criteria for gig drivers, bike couriers, and freelance sole proprietors.',
+      features: language === 'bm' ? [
+        'Menerima penyata pendapatan aplikasi gig',
+        'Pindahan tunai segera hari yang sama',
+        'Rangkaian cawangan dan kiosk di seluruh negara'
+      ] : [
+        'Accepts rider app earnings statements',
+        'Same-day direct express bank credit',
+        'Nationwide branch & kiosk support'
+      ],
+      requiredDocs: language === 'bm' ? ['Penyata Bank 3 Bulan', 'Bukti Pendapatan Gig / Lesen Memandu', 'MyKad'] : ['3-Month Bank Statements', 'Rider / Driver Profile Screenshot', 'MyKad & Driving License']
+    },
+
+    // ─── P2P CROWDFUNDING ────────────────────────────────────────────────────
+    {
+      id: 'fundingsocieties',
+      name: 'Funding Societies Micro Financing',
+      shortName: 'Funding Societies',
+      institution: 'Modalku Ventures Sdn Bhd',
+      category: 'p2p',
+      categoryLabel: language === 'bm' ? 'P2P / Pendanaan Awam' : 'P2P Crowdfunding',
+      regulator: 'Securities Commission Malaysia (SC)',
+      rank: 12,
+      rankLabel: language === 'bm' ? '#12 Had Pinjaman Modal Tertinggi' : '#12 Highest Business Loan Cap',
+      rate: '10.0% – 18.0% p.a.',
+      rateNumeric: 10.0,
+      minIncome: 'RM 3,000 / mo jualan',
+      minIncomeNumeric: 3000,
+      turnaround: language === 'bm' ? '24 – 48 Jam' : '24 – 48 Hours',
+      turnaroundHours: 36,
+      maxLoan: 'RM 200,000',
+      maxLoanNumeric: 200000,
+      tenure: language === 'bm' ? '1 – 12 Bulan' : '1 – 12 Months',
+      tenureMonths: 12,
+      shariah: true,
+      isFast: false,
+      isLowIncome: false,
+      isBusiness: true,
+      highlightBadge: language === 'bm' ? 'Terbaik Untuk Peniaga Shopee' : 'Best for E-Commerce',
+      description: language === 'bm'
+        ? 'Platform pendanaan P2P digital terbesar di Asia Tenggara untuk peniaga Shopee, Lazada, TikTok Shop, dan kontraktor freelance.'
+        : 'Southeast Asia largest SME digital P2P financing platform. Fast working capital for Shopee, Lazada, and TikTok Shop sellers with invoice financing options.',
+      features: language === 'bm' ? [
+        'Tiada cagaran fizikal diperlukan',
+        'Kelulusan berdasarkan jumlah jualan kedai digital',
+        'Pengeluaran modal pantas dalam 48 jam'
+      ] : [
+        'Zero hard asset collateral required',
+        'Evaluated on e-commerce seller GMV and turnover',
+        'Fast fund disbursement within 48 hours'
+      ],
+      requiredDocs: language === 'bm' ? ['Penyata Bank Syarikat 6 Bulan', 'Laporan Jualan Kedai E-Dagang', 'Pendaftaran SSM'] : ['6-Month Bank Statements', 'Marketplace Store Sales CSV Export', 'SSM Certificate']
+    },
     {
       id: 'capbay',
       name: 'CapBay Supply Chain Financing',
@@ -421,8 +506,8 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
       category: 'p2p',
       categoryLabel: language === 'bm' ? 'P2P & Pembiayaan Invois' : 'P2P & Invoice Financing',
       regulator: 'Securities Commission Malaysia (SC)',
-      rank: 11,
-      rankLabel: language === 'bm' ? '#11 Had Pembiayaan Sehingga RM 500,000' : '#11 Highest Working Capital Limit',
+      rank: 13,
+      rankLabel: language === 'bm' ? '#13 Had Pembiayaan Sehingga RM 500,000' : '#13 Highest Working Capital Limit',
       rate: '6.0% – 14.0% p.a.',
       rateNumeric: 6.0,
       minIncome: 'RM 5,000 / mo jualan',
@@ -454,6 +539,7 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
     }
   ];
 
+
   // Main Directory Filtering
   const filtered = lenders.filter(l => {
     let matchCategory = true;
@@ -481,8 +567,8 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
             </h2>
             <p className="text-xs text-blue-100 mt-1 max-w-2xl leading-relaxed">
               {language === 'bm'
-                ? 'Terokai institusi kewangan dan bank digital berlesen di Malaysia yang menerima pendapatan pekerja gig, jualan peniaga, dan penyata e-dompet tanpa slip gaji tradisional.'
-                : 'Explore verified financial institutions and digital banks in Malaysia that officially accept gig worker incomes, merchant cash flows, and e-wallet statements without traditional payslips.'}
+                ? 'Bandingkan pelbagai skim pembiayaan mikro daripada bank perdagangan, institusi kerajaan, dan platform P2P yang tersedia di Malaysia. Loan-La membantu anda memilih skim yang paling sesuai dengan profil kewangan anda.'
+                : 'Compare micro-financing schemes from commercial banks, government institutions, and P2P platforms available in Malaysia. Loan-La helps you identify the best-fit scheme based on your financial profile.'}
             </p>
           </div>
 
@@ -515,11 +601,11 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
         <div className="flex items-center gap-1.5 flex-wrap w-full lg:w-auto">
           {[
             { id: 'all', label: language === 'bm' ? 'Semua Institusi' : 'All Lenders', count: lenders.length },
-            { id: 'digital_bank', label: language === 'bm' ? 'Bank Digital & Dompet' : 'Digital Banks & Wallets', count: lenders.filter(l => l.category === 'digital_bank').length },
+            { id: 'traditional_bank', label: language === 'bm' ? '🏦 Bank Perdagangan' : '🏦 Commercial Banks', count: lenders.filter(l => l.category === 'traditional_bank').length },
+            { id: 'government_fund', label: language === 'bm' ? '🏛️ Dana & Koperasi Kerajaan' : '🏛️ Gov Funds & Coops', count: lenders.filter(l => l.category === 'government_fund').length },
+            { id: 'micro_credit', label: language === 'bm' ? '💳 Kredit Bukan Bank' : '💳 Non-Bank Credit', count: lenders.filter(l => l.category === 'micro_credit').length },
+            { id: 'p2p', label: '🤝 P2P Crowdfunding', count: lenders.filter(l => l.category === 'p2p').length },
             { id: 'shariah', label: language === 'bm' ? '☪️ Patuh Syariah' : '☪️ Islamic (Shariah)', count: lenders.filter(l => l.shariah).length },
-            { id: 'micro_credit', label: language === 'bm' ? 'Kredit Mikro (Gov/Koperasi)' : 'Micro-Credit (Gov/Coop)', count: lenders.filter(l => l.category === 'micro_credit').length },
-            { id: 'p2p', label: 'P2P Crowdfunding', count: lenders.filter(l => l.category === 'p2p').length },
-            { id: 'bnpl', label: 'BNPL / E-Dagang', count: lenders.filter(l => l.category === 'bnpl').length },
           ].map((cat) => (
             <button
               key={cat.id}
