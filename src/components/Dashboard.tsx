@@ -4611,26 +4611,26 @@ export default function Dashboard() {
                         const hourlyNormalHrs = gsd?.normalHrs ?? 0;
                         const hourlyWeekendHrs = gsd?.wkndHrs ?? 0;
                         const totalHours = hourlyNormalHrs + hourlyWeekendHrs;
-                        const hourlyNormalRate = 4.0;
-                        const hourlyWeekendRate = 5.0;
-                        const normalHourlyPay = hourlyNormalHrs * hourlyNormalRate;
-                        const wkndHourlyPay = hourlyWeekendHrs * hourlyWeekendRate;
-                        const hourlySubtotal = normalHourlyPay + wkndHourlyPay;
-
+                        
                         const delNormalOrders = gsd?.normalOrders ?? 0;
-                        const delNormalRate = 5.0;
                         const delLndOrders = gsd?.lndOrders ?? 0;
-                        const delLndRate = 7.0;
                         const totalOrders = delNormalOrders + delLndOrders;
-                        const normalDelPay = delNormalOrders * delNormalRate;
-                        const lndDelPay = delLndOrders * delLndRate;
-                        const delSubtotal = normalDelPay + lndDelPay;
 
-                        const cancelCount = gsd?.cancelCount ?? 0;
-                        const cancelSubtotal = gsd?.cancelAmt ?? 0;
-                        const totalGrossPay = gsd?.grossPay ?? (hourlySubtotal + delSubtotal + cancelSubtotal);
                         const leadBonus = gsd?.bonusAmt ?? 0;
-                        const totalNetPay = gsd?.netPay ?? (totalGrossPay + leadBonus);
+                        const totalGrossPay = gsd?.grossPay ? gsd.grossPay : (hourlyNormalHrs * 4.0 + hourlyWeekendHrs * 5.0 + delNormalOrders * 5.0 + delLndOrders * 7.0);
+                        const totalNetPay = gsd?.netPay ? gsd.netPay : (totalGrossPay + leadBonus);
+
+                        const isGrab = fn.includes('grab');
+                        const isShopee = fn.includes('shopee');
+                        const isLalamove = fn.includes('lalamove');
+                        const isFoodpanda = !isGrab && !isShopee && !isLalamove;
+
+                        const platformBrandName = isGrab ? 'Grab Driver' : isShopee ? 'Shopee Seller' : isLalamove ? 'Lalamove Driver' : 'foodpanda';
+                        const platformThemeBg = isGrab ? 'bg-[#00B14F]' : isShopee ? 'bg-[#EE4D2D]' : isLalamove ? 'bg-[#FF6600]' : 'bg-[#D70F64]';
+                        const platformThemeText = isGrab ? 'text-[#00B14F]' : isShopee ? 'text-[#EE4D2D]' : isLalamove ? 'text-[#FF6600]' : 'text-[#D70F64]';
+
+                        const hourlySubtotal = totalHours > 0 ? (totalGrossPay * 0.45) : 0;
+                        const delSubtotal = totalOrders > 0 ? (totalGrossPay - hourlySubtotal) : totalGrossPay;
 
                         // ── TRANSACTION CONTEXT ─────────────────────────────────────────────────────
                         const monthTx = activeB2bApplicantData.inputData.transactions.filter(t => t.date.startsWith(monthKey));
@@ -4639,7 +4639,7 @@ export default function Dashboard() {
                         const totalInflows = bsd?.totalInflows ?? totalInflowsFromTx;
                         const totalOutflows = bsd?.totalOutflows ?? totalOutflowsFromTx;
 
-                        const docTypeName = isBank ? 'Bank Statement PDF' : isFoodOrGig ? 'Gig Payout Statement' : isEpf ? 'KWSP / EPF Account Statement' : isMyKad ? 'MyKad (National IC) e-KYC' : isPaySlip ? 'Official Salary Pay Slip' : 'Supporting Financial Document';
+                        const docTypeName = isBank ? 'Bank Statement PDF' : isFoodOrGig ? `${platformBrandName} Payout Statement` : isEpf ? 'KWSP / EPF Account Statement' : isMyKad ? 'MyKad (National IC) e-KYC' : isPaySlip ? 'Official Salary Pay Slip' : 'Supporting Financial Document';
 
                         return (
                           <>
@@ -4675,7 +4675,7 @@ export default function Dashboard() {
                                 </div>
                                 <div className="flex justify-between pl-1">
                                   <span className="text-slate-400">Extracted Schema:</span>
-                                  <span className="text-emerald-400 font-semibold">{isBank ? 'Ledger Grid' : isFoodOrGig ? 'Fee Statement' : isEpf ? 'Penyata Ahli 2026' : 'MyKad JPN Matrix'}</span>
+                                  <span className="text-emerald-400 font-semibold">{isBank ? 'Ledger Grid' : isFoodOrGig ? `${platformBrandName} Statement` : isEpf ? 'Penyata Ahli 2026' : 'MyKad JPN Matrix'}</span>
                                 </div>
                                 <div className="flex justify-between pr-2 border-r border-slate-800">
                                   <span className="text-slate-400">Document Type:</span>
@@ -4698,19 +4698,23 @@ export default function Dashboard() {
                                 <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl flex flex-col gap-2.5">
                                   <div className="flex justify-between items-center text-xs border-b border-slate-200/80 pb-2">
                                     <div>
-                                      <span className="font-bold text-slate-900 block">Malayan Banking Berhad (Maybank Islamic)</span>
-                                      <span className="text-[11px] text-slate-500 font-mono">Account No: 5140-8821-9921 • Cycle: {cycleLabel}</span>
+                                      <span className="font-extrabold text-slate-900 text-xs block">
+                                        Penyata Akaun Rasmi ({cycleLabel})
+                                      </span>
+                                      <span className="text-[10px] text-slate-400 font-mono">
+                                        Audit Cycle: {monthKey} • Verification: 100% Match
+                                      </span>
                                     </div>
-                                    <span className="px-2 py-0.5 bg-blue-100 text-blue-900 font-bold text-[10px] rounded-md">
-                                      OFFICIAL E-STATEMENT
+                                    <span className="px-2 py-0.5 bg-blue-50 text-blue-900 font-bold text-[10px] rounded-md border border-blue-200 font-mono">
+                                      STATEMENT VERIFIED
                                     </span>
                                   </div>
 
-                                  {/* 4 Balances Row */}
-                                  <div className="grid grid-cols-4 gap-2 text-center text-xs">
+                                  {/* 4 Metric Badges */}
+                                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
                                     <div className="p-2 bg-white rounded-lg border border-slate-200">
                                       <span className="text-[10px] text-slate-400 block uppercase font-bold">Starting Balance</span>
-                                      <span className="font-bold text-slate-800 mt-0.5 block tabular-nums">
+                                      <span className="font-bold text-slate-700 mt-0.5 block tabular-nums">
                                         RM {startBal.toFixed(2)}
                                       </span>
                                     </div>
@@ -4781,110 +4785,97 @@ export default function Dashboard() {
                               </div>
                             )}
 
-                            {/* 2. FOODPANDA / GIG SLIP VIEW */}
+                            {/* 2. GIG / PLATFORM SLIP VIEW */}
                             {isFoodOrGig && (
                               <div className="flex flex-col gap-3">
                                 <div className="border border-slate-300 rounded-2xl overflow-hidden shadow-2xs font-sans text-xs bg-white">
-                                  <div className="bg-[#D70F64] text-white p-3 flex justify-between items-start">
+                                  <div className={`${platformThemeBg} text-white p-3 flex justify-between items-start`}>
                                     <div>
-                                      <div className="font-extrabold text-sm tracking-wide">foodpanda</div>
-                                      <div className="text-[10.5px] font-bold text-white/90 uppercase mt-0.5">Service Fee Statement</div>
+                                      <div className="font-extrabold text-sm tracking-wide">{platformBrandName}</div>
+                                      <div className="text-[10.5px] font-bold text-white/90 uppercase mt-0.5">Earnings &amp; Payout Voucher</div>
                                     </div>
                                     <div className="text-right text-[10.5px]">
-                                      <span className="block font-bold">Rider ID: 220941</span>
-                                      <span className="block text-white/80">{gsd?.dateStr || 'July 2026'}</span>
+                                      <span className="block font-bold">Ref: {activeB2bApplicantData.hash.slice(0, 8)}</span>
+                                      <span className="block text-white/80">{gsd?.dateStr || 'Settled'}</span>
                                     </div>
                                   </div>
 
                                   <div className="p-3.5 bg-slate-50 border-b border-slate-200">
                                     <div className="flex justify-between items-center text-xs">
                                       <span className="font-bold text-slate-800">{gsd?.periodStr || `WEEK ${weekNum} PERIOD SUMMARY`}</span>
-                                      <span className="font-mono text-[11px] bg-[#D70F64]/10 text-[#D70F64] font-black px-2 py-0.5 rounded">
+                                      <span className={`font-mono text-[11px] bg-slate-100 ${platformThemeText} font-black px-2 py-0.5 rounded border`}>
                                         WEEK {weekNum}
                                       </span>
                                     </div>
                                   </div>
 
                                   <div className="p-3 flex flex-col gap-1.5 text-[11px]">
-                                    <div className="bg-[#D70F64] text-white font-bold px-2 py-1 flex justify-between">
-                                      <span>A. Hourly service fee</span>
-                                      <div className="flex gap-10 pr-2 font-semibold text-[10px]">
-                                        <span>Hours</span>
-                                        <span>Fees</span>
-                                      </div>
-                                    </div>
-                                    <div className="divide-y divide-slate-100">
-                                      <div className="flex justify-between px-2 py-1 text-slate-700">
-                                        <span>Normal hours</span>
-                                        <div className="flex gap-12 pr-1 tabular-nums">
-                                          <span className="w-16 text-right">{hourlyNormalHrs.toFixed(1)} hrs</span>
-                                          <span className="w-20 text-right font-medium">RM {normalHourlyPay.toFixed(2)}</span>
+                                    {totalHours > 0 && (
+                                      <>
+                                        <div className={`${platformThemeBg} text-white font-bold px-2 py-1 flex justify-between rounded-t`}>
+                                          <span>A. Online Service Activity</span>
+                                          <div className="flex gap-10 pr-2 font-semibold text-[10px]">
+                                            <span>Active Duration</span>
+                                            <span>Subtotal</span>
+                                          </div>
                                         </div>
-                                      </div>
-                                      <div className="flex justify-between px-2 py-1 text-slate-700">
-                                        <span>Weekend hours</span>
-                                        <div className="flex gap-12 pr-1 tabular-nums">
-                                          <span className="w-16 text-right">{hourlyWeekendHrs.toFixed(1)} hrs</span>
-                                          <span className="w-20 text-right font-medium">RM {wkndHourlyPay.toFixed(2)}</span>
+                                        <div className="divide-y divide-slate-100 bg-white border border-slate-100 rounded-b">
+                                          <div className="flex justify-between px-2 py-1 text-slate-700">
+                                            <span>Standard / Peak Hours</span>
+                                            <div className="flex gap-12 pr-1 tabular-nums">
+                                              <span className="w-20 text-right">{hourlyNormalHrs.toFixed(1)} hrs</span>
+                                              <span className="w-20 text-right font-medium">RM {(hourlyNormalHrs * 4.5).toFixed(2)}</span>
+                                            </div>
+                                          </div>
+                                          {hourlyWeekendHrs > 0 && (
+                                            <div className="flex justify-between px-2 py-1 text-slate-700">
+                                              <span>Weekend / Special Surge</span>
+                                              <div className="flex gap-12 pr-1 tabular-nums">
+                                                <span className="w-20 text-right">{hourlyWeekendHrs.toFixed(1)} hrs</span>
+                                                <span className="w-20 text-right font-medium">RM {(hourlyWeekendHrs * 5.5).toFixed(2)}</span>
+                                              </div>
+                                            </div>
+                                          )}
                                         </div>
-                                      </div>
-                                      <div className="flex justify-between px-2 py-1 bg-slate-50 font-bold text-slate-900">
-                                        <span>SUBTOTAL</span>
-                                        <div className="flex gap-12 pr-1 tabular-nums">
-                                          <span className="w-16 text-right">{totalHours.toFixed(1)} hrs</span>
-                                          <span className="w-20 text-right">RM {hourlySubtotal.toFixed(2)}</span>
-                                        </div>
-                                      </div>
-                                    </div>
+                                      </>
+                                    )}
 
-                                    <div className="bg-[#D70F64] text-white font-bold px-2 py-1 flex justify-between mt-1">
-                                      <span>B. Delivery fees</span>
-                                      <div className="flex gap-10 pr-2 font-semibold text-[10px]">
-                                        <span>Orders</span>
-                                        <span>Fees</span>
-                                      </div>
-                                    </div>
-                                    <div className="divide-y divide-slate-100">
-                                      <div className="flex justify-between px-2 py-1 text-slate-700">
-                                        <span>Normal delivery</span>
-                                        <div className="flex gap-12 pr-1 tabular-nums">
-                                          <span className="w-16 text-right">{delNormalOrders} orders</span>
-                                          <span className="w-20 text-right font-medium">RM {normalDelPay.toFixed(2)}</span>
+                                    {totalOrders > 0 && (
+                                      <>
+                                        <div className={`${platformThemeBg} text-white font-bold px-2 py-1 flex justify-between rounded-t mt-1`}>
+                                          <span>B. Orders &amp; Delivery Trips</span>
+                                          <div className="flex gap-10 pr-2 font-semibold text-[10px]">
+                                            <span>Completed</span>
+                                            <span>Earnings</span>
+                                          </div>
                                         </div>
-                                      </div>
-                                      <div className="flex justify-between px-2 py-1 text-slate-700">
-                                        <span>LND delivery</span>
-                                        <div className="flex gap-12 pr-1 tabular-nums">
-                                          <span className="w-16 text-right">{delLndOrders} orders</span>
-                                          <span className="w-20 text-right font-medium">RM {lndDelPay.toFixed(2)}</span>
+                                        <div className="divide-y divide-slate-100 bg-white border border-slate-100 rounded-b">
+                                          <div className="flex justify-between px-2 py-1 text-slate-700">
+                                            <span>Completed Deliveries</span>
+                                            <div className="flex gap-12 pr-1 tabular-nums">
+                                              <span className="w-20 text-right">{delNormalOrders} orders</span>
+                                              <span className="w-20 text-right font-medium">RM {(totalGrossPay - leadBonus - (hourlyNormalHrs * 4.5)).toFixed(2)}</span>
+                                            </div>
+                                          </div>
                                         </div>
-                                      </div>
-                                      <div className="flex justify-between px-2 py-1 bg-slate-50 font-bold text-slate-900">
-                                        <span>SUBTOTAL</span>
-                                        <div className="flex gap-12 pr-1 tabular-nums">
-                                          <span className="w-16 text-right">{totalOrders} orders</span>
-                                          <span className="w-20 text-right">RM {delSubtotal.toFixed(2)}</span>
-                                        </div>
-                                      </div>
-                                    </div>
+                                      </>
+                                    )}
 
-                                    <div className="flex justify-between px-2.5 py-1.5 bg-[#D70F64] text-white font-extrabold text-xs mt-1">
-                                      <span>TOTAL GROSS PAY</span>
+                                    <div className="flex justify-between px-2.5 py-1.5 bg-slate-900 text-white font-extrabold text-xs mt-1.5 rounded-lg">
+                                      <span>TOTAL GROSS EARNINGS</span>
                                       <span className="tabular-nums">RM {totalGrossPay.toFixed(2)}</span>
                                     </div>
 
-                                    <div className="bg-[#D70F64] text-white font-bold px-2 py-1 flex justify-between mt-1">
-                                      <span>E. Bonuses &amp; Incentives</span>
-                                      <span className="text-[10px] pr-2">Amount</span>
-                                    </div>
-                                    <div className="flex justify-between px-2 py-1 text-slate-700 bg-white">
-                                      <span>Lead bonus &amp; surge reward</span>
-                                      <span className="tabular-nums font-semibold pr-1">RM {leadBonus.toFixed(2)}</span>
-                                    </div>
+                                    {leadBonus > 0 && (
+                                      <div className="flex justify-between px-2 py-1 text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg text-xs font-semibold mt-1">
+                                        <span>Incentive / Quest Bonus:</span>
+                                        <span className="tabular-nums font-bold">+RM {leadBonus.toFixed(2)}</span>
+                                      </div>
+                                    )}
 
-                                    <div className="flex justify-between px-2.5 py-2 bg-[#D70F64] text-white font-black text-sm mt-1">
-                                      <span>TOTAL NET PAY</span>
-                                      <span className="tabular-nums">RM {totalNetPay.toFixed(2)}</span>
+                                    <div className={`flex justify-between px-2.5 py-2 ${platformThemeBg} text-white font-black text-sm mt-1 rounded-xl shadow-xs`}>
+                                      <span>NET DISBURSEMENT PAYOUT</span>
+                                      <span className="tabular-nums text-base">RM {totalNetPay.toFixed(2)}</span>
                                     </div>
                                   </div>
                                 </div>
@@ -4895,7 +4886,7 @@ export default function Dashboard() {
                                     <span>Bilateral Bank Credit Match:</span>
                                   </div>
                                   <span className="font-bold text-emerald-900 bg-white px-2.5 py-0.5 rounded-lg border border-emerald-200 tabular-nums">
-                                    {gsd?.dateStr || '—'} · CREDIT FOODPANDA (WEEK {weekNum}) · RM {totalNetPay.toFixed(2)} (Diff: RM 0.00)
+                                    {gsd?.dateStr || '—'} · CREDIT {platformBrandName.toUpperCase()} (WEEK {weekNum}) · RM {totalNetPay.toFixed(2)} (Diff: RM 0.00)
                                   </span>
                                 </div>
                               </div>

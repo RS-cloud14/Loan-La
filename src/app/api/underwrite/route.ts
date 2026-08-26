@@ -514,25 +514,26 @@ Execute ALL of the following compliance audits strictly:
      { "employerName": "STRING", "basicSalary": NUMBER, "allowances": NUMBER, "epfDeduction": NUMBER, "socsoDeduction": NUMBER, "eisDeduction": NUMBER, "pcbDeduction": NUMBER, "netPay": NUMBER, "monthYear": "STRING" }
 
 13. [GIG SLIP STRUCTURED EXTRACTION — Foodpanda / Grab / Lalamove / Shopee]
-   For each gig payout slip PDF or image in the provided documents, extract the following fields with 100% precision directly from the document:
+   For EACH gig payout slip PDF or image in the provided documents, extract the EXACT figures printed on the document:
+   - fileName: EXACT file name of this document from the submission list (e.g. "Foodpanda_Week10.pdf" or "Grab_Payout_Slip.jpg")
    - weekNum: The week number as a string (e.g. "10", "11", "26")
    - periodStr: The full period string (e.g. "2 MAR 2026 - 8 MAR 2026 (WEEK 10)")
    - dateStr: The statement date on the slip (e.g. "08-Mar-2026")
    - normalHrs: Normal hours as a decimal number (e.g. 44.5)
-   - wkndHrs: Weekend hours as a decimal number (e.g. 12.0)
-   - normalOrders: Count of normal deliveries as integer
-   - lndOrders: Count of LND deliveries as integer
-   - cancelCount: Count of cancelled orders as integer
-   - cancelAmt: Total cancelled order fee amount as decimal
-   - bonusAmt: Lead bonus (or any bonus) amount as decimal (0.0 if none)
+   - wkndHrs: Weekend / special hours as a decimal number (e.g. 12.0)
+   - normalOrders: Count of normal orders/deliveries as integer
+   - lndOrders: Count of long-distance (LND) deliveries as integer (0 if none)
+   - cancelCount: Count of cancelled orders as integer (0 if none)
+   - cancelAmt: Total cancelled order compensation amount as decimal (0.0 if none)
+   - bonusAmt: Quest / Lead bonus (or any incentive bonus) amount as decimal (0.0 if none)
    - grossPay: TOTAL GROSS PAY figure from the slip as decimal
    - netPay: TOTAL NET PAY figure from the slip as decimal
 
-   Return this as a "gigSlipFiles" array in the JSON, one entry per slip, in the same order as the documents were provided.
+   Return this as a "gigSlipFiles" array in the JSON, one entry per gig slip submitted.
 
    For bank statements, also return a "bankStatementFiles" array with one entry per bank statement:
    [
-     { "month": "2026-07", "startBal": 1000.00, "endBal": 2500.00, "totalInflows": 6500.00, "totalOutflows": 5000.00 }
+     { "fileName": "string", "month": "2026-03", "startBal": 1000.00, "endBal": 2500.00, "totalInflows": 6500.00, "totalOutflows": 5000.00 }
    ]
 
 Return ONLY valid JSON, no markdown, no explanation, matching this EXACT schema:
@@ -640,6 +641,7 @@ Return ONLY valid JSON, no markdown, no explanation, matching this EXACT schema:
   ],
   "gigSlipFiles": [
     {
+      "fileName": "string",
       "weekNum": "string",
       "periodStr": "string",
       "dateStr": "string",
@@ -656,6 +658,7 @@ Return ONLY valid JSON, no markdown, no explanation, matching this EXACT schema:
   ],
   "bankStatementFiles": [
     {
+      "fileName": "string",
       "month": "string (YYYY-MM)",
       "startBal": number,
       "endBal": number,
@@ -863,16 +866,36 @@ Return ONLY valid JSON, no markdown, no explanation, matching this EXACT schema:
         let gigSlipData: any = undefined;
         let bankStatementData: any = undefined;
         if (isFoodOrGig) {
-          const geminiSlip = gigSlipFiles[gigSlipIdx];
-          if (geminiSlip && (geminiSlip.normalHrs > 0 || geminiSlip.grossPay > 0 || geminiSlip.netPay > 0)) {
+          // 1. Try to find by exact/partial fileName
+          let geminiSlip = gigSlipFiles.find(s => s.fileName && (s.fileName.toLowerCase() === fileNameLower || fileNameLower.includes(s.fileName.toLowerCase()) || s.fileName.toLowerCase().includes(fileNameLower)));
+          // 2. Try to find by week number from filename
+          if (!geminiSlip) {
+            const weekMatch = fileNameLower.match(/week[_\s-]?(\d+)|w(\d+)|slip[_\s-]?(\d+)/i);
+            const wNum = weekMatch ? (weekMatch[1] || weekMatch[2] || weekMatch[3]) : null;
+            if (wNum) {
+              geminiSlip = gigSlipFiles.find(s => s.weekNum === wNum || s.weekNum === String(parseInt(wNum, 10)));
+            }
+          }
+          // 3. Fallback to index
+          if (!geminiSlip) {
+            geminiSlip = gigSlipFiles[gigSlipIdx];
+          }
+
+          if (geminiSlip && (geminiSlip.normalHrs > 0 || geminiSlip.grossPay > 0 || geminiSlip.netPay > 0 || geminiSlip.normalOrders > 0)) {
             gigSlipData = geminiSlip;
           } else {
             gigSlipData = generateDeterministicGigSlip(f.fileName, gigSlipIdx);
           }
           gigSlipIdx++;
         } else if (isBank) {
-          const geminiBank = bankStatementFiles[bankIdx];
-          if (geminiBank && (geminiBank.totalInflows > 0 || geminiBank.endBal > 0)) {
+          // 1. Try to find by exact/partial fileName
+          let geminiBank = bankStatementFiles.find(b => b.fileName && (b.fileName.toLowerCase() === fileNameLower || fileNameLower.includes(b.fileName.toLowerCase()) || b.fileName.toLowerCase().includes(fileNameLower)));
+          // 2. Fallback to index
+          if (!geminiBank) {
+            geminiBank = bankStatementFiles[bankIdx];
+          }
+
+          if (geminiBank && (geminiBank.totalInflows > 0 || geminiBank.endBal > 0 || geminiBank.startBal > 0)) {
             bankStatementData = geminiBank;
           } else {
             bankStatementData = generateDeterministicBankStatement(f.fileName, bankIdx);
