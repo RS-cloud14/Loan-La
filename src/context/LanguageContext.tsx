@@ -143,10 +143,10 @@ const translations: Record<Language, Translations> = {
     headline1Sub: 'Upload 3-month bank statement • We pre-check which licensed banks accept your gig or business income.',
     headline2Title: 'Grab, Shopee or Freelance? Instant Eligibility Pre-Check.',
     headline2Sub: 'Turn gig app earnings into a verified cashflow assessment in under 60 seconds.',
-    headline3Title: 'Need Fast Micro-Cash? 2–4 Hour Bank Payout.',
-    headline3Sub: 'Instant automated income pre-check for fast micro loans under RM 5,000 with digital banks.',
+    headline3Title: 'No Time to Visit Banks? Get Guided Pre-Check.',
+    headline3Sub: 'Save hours queuing at bank branches. We analyze your documents and guide you through the process.',
     headline4Title: "Don't Know Where to Apply? Compare Bank Eligibility.",
-    headline4Sub: 'Compare GXBank, Boost Credit, BSN, and licensed lenders in one place before applying.',
+    headline4Sub: 'Compare Maybank, BSN, TEKUN, SME Bank and licensed lenders in one place before applying.',
 
     // Hero Disclaimers & Cards
     heroSubtitle: 'Pre-check your real loan readiness before applying. We analyze your bank statements, calculate your safe DSR limit, and match you with licensed digital banks and micro-lenders.',
@@ -161,9 +161,9 @@ const translations: Record<Language, Translations> = {
     situation2Title: 'I Have No Payslip (Gaji)',
     situation2Desc: 'Turn Grab, Shopee, or bank statement into a verified proof of income for banks.',
     situation2Btn: 'Check My Eligibility →',
-    situation3Title: 'Need Fast Cash (< RM 5,000)',
-    situation3Desc: 'Check instant digital bank options with 2–4 hour fast approval turnaround.',
-    situation3Btn: 'Find Fast Micro Loans →',
+    situation3Title: 'Don’t Understand Loan Process?',
+    situation3Desc: 'We guide you step-by-step and analyze your eligibility — saving you time queuing at bank branches.',
+    situation3Btn: 'Get Step-by-Step Guidance →',
 
     // Calculator
     calculatorTitle: 'Loan Repayment Calculator',
@@ -262,10 +262,10 @@ const translations: Record<Language, Translations> = {
     headline1Sub: 'Muat naik penyata bank 3 bulan • Kami pra-semak bank berlesen mana yang menerima pendapatan anda.',
     headline2Title: 'Pemandu Grab, Shopee atau Freelance? Pra-Semakan Segera.',
     headline2Sub: 'Tukarkan rekod pendapatan aplikasi anda kepada penilaian aliran tunai sah dalam masa 60 saat.',
-    headline3Title: 'Perlu Tunai Mikro Pantas? Pindahan Bank 2–4 Jam.',
-    headline3Sub: 'Semakan kelayakan automatik untuk pinjaman mikro di bawah RM 5,000 dengan bank digital.',
+    headline3Title: 'Tiada Masa Ke Bank? Dapatkan Bimbingan Dalam Talian.',
+    headline3Sub: 'Jimatkan masa beratur di kaunter bank. Kami menganalisis dokumen dan membimbing proses anda.',
     headline4Title: 'Tidak Tahu Di Mana Nak Mohon? Bandingkan Kelayakan Bank.',
-    headline4Sub: 'Bandingkan GXBank, Boost Credit, BSN, dan pembiaya berlesen di satu tempat sebelum memohon.',
+    headline4Sub: 'Bandingkan Maybank, BSN, TEKUN, SME Bank dan pembiaya berlesen di satu tempat sebelum memohon.',
 
     // Hero Disclaimers & Cards
     heroSubtitle: 'Pra-semak kelayakan pinjaman sebenar anda sebelum memohon. Kami menganalisis penyata bank, mengira had DSR selamat, dan memadankan anda dengan bank digital & pembiaya berlesen.',
@@ -280,9 +280,9 @@ const translations: Record<Language, Translations> = {
     situation2Title: 'Saya Tiada Slip Gaji',
     situation2Desc: 'Tukarkan pendapatan Grab, Shopee, atau penyata bank kepada bukti pendapatan yang diiktiraf bank.',
     situation2Btn: 'Semak Kelayakan Saya →',
-    situation3Title: 'Perlu Tunai Segera (< RM 5,000)',
-    situation3Desc: 'Semak pilihan bank digital dengan kelulusan pantas seawal 2–4 jam.',
-    situation3Btn: 'Cari Pinjaman Mikro Pantas →',
+    situation3Title: 'Tidak Faham Proses Pinjaman?',
+    situation3Desc: 'Kami membimbing langkah demi langkah dan analisis kelayakan — jimat masa beratur di kaunter bank.',
+    situation3Btn: 'Dapatkan Bimbingan Langkah Demi Langkah →',
 
     // Calculator
     calculatorTitle: 'Kalkulator Bayaran Pinjaman',

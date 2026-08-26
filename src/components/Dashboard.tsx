@@ -11,7 +11,7 @@ import {
   MessageSquare, Lock, EyeOff, FileText, Check, Maximize2, Minimize2,
   Banknote, Store, Wrench, Car, FileCheck2, GraduationCap, Zap, Search,
   Smartphone, Monitor, CheckCircle2, AlertCircle, Info, Clock, Building2, ArrowLeft,
-  Bike, ShoppingBag, Package, Laptop, TrendingUp, Home, Calculator, Scale, LogOut, ChevronDown, Settings, Coins, Download, PlusCircle
+  Bike, ShoppingBag, Package, Laptop, TrendingUp, Home, Calculator, Scale, LogOut, ChevronDown, Settings, Coins, Download, PlusCircle, Headphones
 } from 'lucide-react';
 import { generateCreditPassportPdf } from '@/lib/pdfGenerator';
 import { UnderwritingInput, CreditProfileReport, getDisplayStatus, getDisplayGrade } from '@/lib/scoring';
@@ -980,7 +980,18 @@ export default function Dashboard() {
                         className="w-full px-3 py-2 text-left text-xs font-bold text-slate-700 hover:bg-slate-50 hover:text-blue-950 rounded-xl transition-all flex items-center gap-2 cursor-pointer"
                       >
                         <Settings className="w-3.5 h-3.5 text-slate-500" />
-                        <span>{language === 'bm' ? 'Tetapan Akaun & Bank' : 'Profile & Bank Account'}</span>
+                        <span>{language === 'bm' ? 'Tetapan Profil & Akaun Bank' : 'Profile & Bank Account'}</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setUserDropdownOpen(false);
+                          setIsSupportModalOpen(true);
+                        }}
+                        className="w-full px-3 py-2 text-left text-xs font-bold text-slate-700 hover:bg-slate-50 hover:text-blue-950 rounded-xl transition-all flex items-center gap-2 cursor-pointer"
+                      >
+                        <Headphones className="w-3.5 h-3.5 text-blue-900" />
+                        <span>{language === 'bm' ? 'Bantuan & Khidmat Pelanggan' : 'Customer Support & Help'}</span>
                       </button>
 
                       {/* Fast Account Switcher for Testing (Guest vs Pro) */}
@@ -1276,15 +1287,13 @@ export default function Dashboard() {
 
               <div
                 onClick={() => {
-                  setTargetLoanAmount(3000);
-                  setTargetLoanPurpose('personal_cash');
                   if (!userSession) setAuthModalOpen(true);
-                  else { setPerspective('B2C'); setCurrentPage('app'); setActiveStep(1); }
+                  else { handleStartNewApplication(); }
                 }}
                 className="p-4 bg-white border border-slate-200/90 rounded-2xl shadow-xs flex flex-col gap-1.5 hover:border-blue-300 transition-all cursor-pointer"
               >
                 <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4 text-blue-900 shrink-0" />
+                  <HelpCircle className="w-4 h-4 text-blue-900 shrink-0" />
                   <span className="text-xs font-black text-blue-950">&quot;{t.situation3Title}&quot;</span>
                 </div>
                 <p className="text-[11.5px] text-slate-600 leading-relaxed font-normal">

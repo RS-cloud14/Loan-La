@@ -1026,12 +1026,16 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
                         
                         {/* Slot Header & Dropdown */}
                         <div className="mb-2.5">
-                          <div className="flex items-center justify-between mb-1.5">
-                            <span className="text-[10px] font-extrabold text-blue-950 uppercase tracking-wider font-mono flex items-center gap-1.5">
-                              <span className="bg-blue-950 text-white px-1.5 py-0.5 rounded text-[9px]">{language === 'bm' ? `SLOT ${idx + 1}` : `SLOT ${idx + 1}`}</span>
-                              <span className="text-slate-500 font-semibold text-[10px] hidden sm:inline">{language === 'bm' ? 'Klik untuk tukar bank' : 'Click to change bank'}</span>
-                            </span>
-                            <span className={`text-[9.5px] font-bold px-1.5 py-0.5 rounded ${
+                          <div className="flex items-center justify-between gap-2 mb-1.5">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <span className="bg-blue-950 text-white font-bold px-2 py-0.5 rounded-md text-[10px] tracking-wide shrink-0">
+                                {language === 'bm' ? `SLOT ${idx + 1}` : `SLOT ${idx + 1}`}
+                              </span>
+                              <span className="text-slate-500 font-medium text-[11px] truncate">
+                                {language === 'bm' ? 'Tukar Bank' : 'Change Bank'}
+                              </span>
+                            </div>
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 ${
                               l.shariah 
                                 ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' 
                                 : 'bg-slate-100 text-slate-600'
@@ -1049,7 +1053,7 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
                                 updated[idx] = newId;
                                 setSelectedCompareIds(updated);
                               }}
-                              className="w-full bg-blue-50/40 hover:bg-blue-50 focus:bg-white border-2 border-blue-900/30 hover:border-blue-900 focus:border-blue-950 text-blue-950 font-bold text-xs py-2 pl-2.5 pr-7 rounded-xl transition-all outline-hidden cursor-pointer shadow-2xs truncate"
+                              className="w-full appearance-none bg-blue-50/30 hover:bg-blue-50/70 focus:bg-white border border-blue-900/25 hover:border-blue-900 focus:border-blue-950 text-blue-950 font-bold text-xs py-2 pl-3 pr-8 rounded-xl transition-all outline-hidden cursor-pointer shadow-2xs truncate"
                             >
                               {lenders.map(opt => (
                                 <option key={opt.id} value={opt.id}>
@@ -1057,7 +1061,7 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
                                 </option>
                               ))}
                             </select>
-                            <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-blue-900 flex items-center gap-0.5">
+                            <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-blue-900 flex items-center">
                               <ChevronDown className="w-4 h-4" />
                             </div>
                           </div>
