@@ -1234,11 +1234,7 @@ export default function Dashboard() {
           {/* ========================================================= */}
           <div className="flex flex-col items-center text-center gap-5 pt-2 sm:pt-4">
             
-            {/* Top Pill Tag */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-blue-50 border border-blue-200/90 rounded-full text-xs font-bold text-blue-950 shadow-2xs">
-              <ShieldCheck className="w-4 h-4 text-blue-900" />
-              <span>For Malaysian Gig Workers, Online Sellers &amp; Freelancers</span>
-            </div>
+
 
             {/* Dynamic Rotating Headline (Changes every 3s with smooth transition) */}
             <div className="min-h-[145px] sm:min-h-[160px] flex flex-col items-center justify-center">
