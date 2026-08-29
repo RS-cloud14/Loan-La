@@ -1849,6 +1849,8 @@ export default function Dashboard() {
                 return (
                   <div
                     key={item.id}
+                    id={`landing-category-card-${item.id}`}
+                    data-category-card={item.title}
                     onClick={() => setCategorySuitabilityModal(item)}
                     className="p-6 bg-white border border-slate-200 rounded-3xl shadow-xs hover:border-blue-900/40 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between gap-4 group"
                   >

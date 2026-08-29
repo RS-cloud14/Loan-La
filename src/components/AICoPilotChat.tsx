@@ -924,6 +924,93 @@ export default function AICoPilotChat({
 
     const isLoggedIn = Boolean(userSession && (userSession.profileId || userSession.email || userSession.name));
     const liveTickets = typeof window !== 'undefined' ? getSupportTickets() : [];
+
+    // Real-time DOM viewport element scanner: checks bounding client rects of all visible elements
+    const getLiveViewportTelemetry = () => {
+      if (typeof window === 'undefined' || typeof document === 'undefined') return undefined;
+      try {
+        const vHeight = window.innerHeight || document.documentElement.clientHeight;
+        const vWidth = window.innerWidth || document.documentElement.clientWidth;
+
+        const isRectVisible = (rect: DOMRect) => {
+          // Element is visible if it intersects with the viewport
+          return rect.top < vHeight && rect.bottom > 0 && rect.left < vWidth && rect.right > 0;
+        };
+
+        const exactVisibleItems: string[] = [];
+        const visibleSections: string[] = [];
+
+        // 1. Landing Page Section Checks
+        const heroEl = document.getElementById('landing-hero');
+        if (heroEl && isRectVisible(heroEl.getBoundingClientRect())) {
+          visibleSections.push('Hero Section');
+          exactVisibleItems.push('Hero Section (Rotating Headline: "Gig Workers & MSME Alternative Financing", CTA Buttons: "Check Loan Eligibility Report" & "Loan Repayment Calculator", 3 Problem Situation Cards)');
+        }
+
+        const howItWorksEl = document.getElementById('landing-how-it-works');
+        if (howItWorksEl && isRectVisible(howItWorksEl.getBoundingClientRect())) {
+          visibleSections.push('How the System Works');
+          exactVisibleItems.push('Section: "How the System Works" (From statement upload to bank approval in 3 simple steps)');
+          exactVisibleItems.push('Step 1: "Select Loan & Amount" (Specify how much you need RM 1,000 to RM 150,000 for emergency cash, motorbike installments, or working capital)');
+          exactVisibleItems.push('Step 2: "Upload Statement PDF" (Upload your Grab summary, Shopee store statement, or bank PDF; system audits inflow & masks IC)');
+          exactVisibleItems.push('Step 3: "Bank Matching & Payout" (Verified report pre-matched to GXBank, Boost Credit, BSN for fast digital approval and transfer)');
+        }
+
+        const whoCanApplyEl = document.getElementById('landing-who-can-apply');
+        if (whoCanApplyEl && isRectVisible(whoCanApplyEl.getBoundingClientRect())) {
+          visibleSections.push('Who Can Apply?');
+          exactVisibleItems.push('Section: "Who Can Apply?" (Choose your category to see how much you can borrow)');
+
+          const categoryCards = whoCanApplyEl.querySelectorAll('[data-category-card]');
+          let addedCount = 0;
+          categoryCards.forEach((c) => {
+            if (isRectVisible(c.getBoundingClientRect())) {
+              const title = c.getAttribute('data-category-card') || c.querySelector('h4')?.textContent || '';
+              const desc = c.querySelector('p')?.textContent || '';
+              if (title) {
+                exactVisibleItems.push(`Category Card: "${title.trim()}" (${desc.trim()})`);
+                addedCount++;
+              }
+            }
+          });
+          // Fallback if cards querySelector didn't match
+          if (addedCount === 0) {
+            exactVisibleItems.push('Category Card: "Grab & Food Delivery Drivers" (Use your weekly gig delivery earnings to qualify for fast emergency cash loans)');
+            exactVisibleItems.push('Category Card: "Shopee & Online Sellers" (Get working capital to purchase stock, inventory, and expand your online business)');
+          }
+        }
+
+        const ctaEl = document.getElementById('landing-cta');
+        if (ctaEl && isRectVisible(ctaEl.getBoundingClientRect())) {
+          visibleSections.push('Bottom CTA Banner');
+          exactVisibleItems.push('Bottom Banner: "Ready to Check Your Loan Limit?" with "Start Free Eligibility Check →" CTA button');
+        }
+
+        // 2. Directory Page lender cards
+        const directoryCards = document.querySelectorAll('[data-lender-card]');
+        if (directoryCards.length > 0) {
+          const visibleLenders: string[] = [];
+          directoryCards.forEach((c) => {
+            if (isRectVisible(c.getBoundingClientRect())) {
+              const name = c.getAttribute('data-lender-card') || c.querySelector('h3')?.textContent || '';
+              if (name) visibleLenders.push(name.trim());
+            }
+          });
+          if (visibleLenders.length > 0) {
+            visibleSections.push('Lender Directory Cards');
+            exactVisibleItems.push(`Visible Lender Cards (${visibleLenders.length}): ${visibleLenders.join(', ')}`);
+          }
+        }
+
+        return {
+          visibleSections,
+          exactVisibleItems
+        };
+      } catch {
+        return undefined;
+      }
+    };
+
     const userContext = {
       isLoggedIn,
       name: isLoggedIn ? (userSession?.name || 'Tham Ren Sheng') : 'Guest',
@@ -947,7 +1034,8 @@ export default function AICoPilotChat({
       visibleSectionLabel: visibleSectionLabel,
       uploadedFilesCount: uploadedFilesCount || (hasUploadedFiles ? 1 : 0),
       uploadedFilesSummary: uploadedFilesSummary || [],
-      activeTickets: liveTickets
+      activeTickets: liveTickets,
+      viewportTelemetry: getLiveViewportTelemetry()
     };
 
     try {

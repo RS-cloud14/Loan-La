@@ -27,6 +27,10 @@ interface UserContextPayload {
   visibleSectionLabel?: string;
   uploadedFilesCount?: number;
   uploadedFilesSummary?: string[];
+  viewportTelemetry?: {
+    visibleSections?: string[];
+    exactVisibleItems?: string[];
+  };
   activeTickets?: Array<{
     id: string;
     category: string;
@@ -1531,17 +1535,27 @@ export async function POST(request: NextRequest) {
           ? ["Kalkulator Ansuran", "Direktori Bank", "Pusat Bantuan"]
           : ["Loan Calculator", "Bank Directory", "Support Center"];
       } else {
-        // Landing Page
-        const sec = userContext?.visibleSection || 'hero';
-        if (sec === 'how_it_works') {
+        // Landing Page — Check exact DOM viewport telemetry first
+        const vSections = userContext?.viewportTelemetry?.visibleSections || [];
+        const hasHowItWorks = vSections.includes('How the System Works') || userContext?.visibleSection === 'how_it_works';
+        const hasWhoCanApply = vSections.includes('Who Can Apply?') || userContext?.visibleSection === 'who_can_apply';
+        const hasHero = vSections.includes('Hero Section') || userContext?.visibleSection === 'hero';
+        const hasCta = vSections.includes('Bottom CTA Banner') || userContext?.visibleSection === 'bottom_cta';
+
+        if (hasHowItWorks && hasWhoCanApply) {
+          // Both sections are in viewport simultaneously (e.g. Scrolled to middle of page)
+          reply = isMalay
+            ? `📱 **Apa Yang Terpapar Pada Skrin Anda Sekarang (Viewport Langsung):**\n\nAnda sedang melihat dua bahagian utama pada skrin anda:\n\n✨ **1. Bagaimana Sistem Berfungsi (3 Langkah Mudah):**\n• **1. Pilih Jenis & Jumlah Pinjaman** — Tentukan jumlah yang anda perlukan (RM 1,000 hingga RM 150,000) untuk kecemasan, ansuran motor, atau modal niaga.\n• **2. Muat Naik Penyata PDF** — Muat naik penyata Grab, Shopee atau PDF bank anda. Sistem kami mengaudit aliran pendapatan dan menutup nombor IC anda mengikut Akta PDPA.\n• **3. Padanan Bank & Pengeluaran** — Laporan disahkan anda dipadankan terus ke bank rakan kongsi (GXBank, Boost Credit, BSN) untuk kelulusan dan pemindahan digital pantas.\n\n🎯 **2. Siapa Yang Boleh Memohon? (Pilih Kategori Anda):**\n• 🚗 **Pemandu Grab & Penghantar Makanan** — Gunakan pendapatan mingguan penghantaran anda untuk layak pinjaman tunai kecemasan pantas (RM 2k–RM 8k).\n• 🛍️ **Peniaga Shopee & Jualan Online** — Dapatkan modal pusingan untuk membeli stok dan inventori (sehingga RM 20k).\n\nBolehkah saya bantu anda memulakan Langkah 1 atau semak kelayakan anda sekarang?`
+            : `📱 **What Is Currently Visible on Your Screen (Real-Time Viewport):**\n\nYou are looking at two key sections on your screen right now:\n\n✨ **1. How the System Works (From statement upload to bank approval in 3 simple steps):**\n• **1. Select Loan & Amount** — Specify how much you need (RM 1,000 to RM 150,000) for emergency cash, motorbike installments, or working capital.\n• **2. Upload Statement PDF** — Upload your Grab summary, Shopee store statement, or bank PDF. Our system audits regular inflow and masks sensitive IC numbers.\n• **3. Bank Matching & Payout** — Your verified report is pre-matched to partner lenders (GXBank, Boost Credit, BSN) for fast digital approval and transfer.\n\n🎯 **2. Who Can Apply? (Choose your category to see how much you can borrow):**\n• 🚗 **Grab & Food Delivery Drivers** — Use your weekly gig delivery earnings to qualify for fast emergency cash loans.\n• 🛍️ **Shopee & Online Sellers** — Get working capital to purchase stock, inventory, and expand your online business.\n\nWould you like me to open Step 1 for you, or calculate your monthly installment?`;
+        } else if (hasHowItWorks) {
           reply = isMalay
             ? `📱 **Apa Yang Saya Nampak Pada Skrin Anda (Bahagian: Bagaimana Sistem Berfungsi):**\n\nAnda sedang melihat bahagian **Bagaimana Sistem Berfungsi** (3 Langkah):\n\n1. **Pilih Pinjaman & Jumlah:** Julat RM 1,000 hingga RM 150,000 untuk kecemasan, modal pusingan, atau kenderaan.\n2. **Muat Naik Penyata PDF:** AI mengaudit aliran tunai dan memadam maklumat peribadi MyKad mengikut Akta PDPA.\n3. **Padanan Bank & Pengeluaran Dana:** Pasport kredit dipadankan terus dengan bank digital rakan kongsi (GXBank, Boost Credit, BSN).`
             : `📱 **What I Can See On Your Screen (Section: How the System Works):**\n\nYou are looking at the **How the System Works** 3-step section:\n\n1. **Select Loan & Amount:** RM 1,000 to RM 150,000 range for emergency cash, working capital, or vehicle installments.\n2. **Upload Statement PDF:** AI audits cashflow inflows and masks private IC details in compliance with the PDPA.\n3. **Bank Matching & Payout:** Verified report is matched to partner digital lenders (GXBank, Boost Credit, BSN) for fast approval.`;
-        } else if (sec === 'who_can_apply') {
+        } else if (hasWhoCanApply) {
           reply = isMalay
             ? `📱 **Apa Yang Saya Nampak Pada Skrin Anda (Bahagian: Siapa Yang Boleh Memohon?):**\n\nAnda sedang melihat bahagian **Siapa Yang Boleh Memohon?** (4 Kategori Pekerja Gig & PKS):\n\n1. 🚗 **Pemandu Grab & Penghantar Makanan:** Pendapatan mingguan gig dinilai (Kelulusan RM 2,000–RM 8,000 dalam 2–4 jam).\n2. 🛍️ **Peniaga Shopee & E-Dagang:** Modal pusingan stok barang (sehingga RM 20,000 dalam 24–48 jam).\n3. 💻 **Pekerja Bebas & Bekerja Sendiri:** Rekod deposit pelanggan dinilai (sehingga RM 10,000 dalam 2–6 jam).\n4. 🍲 **Penjaja & Kedai Mikro:** Rekod jualan DuitNow QR dinilai (sehingga RM 25,000 dalam 1–3 hari bekerja).`
             : `📱 **What I Can See On Your Screen (Section: Who Can Apply?):**\n\nYou are viewing the **Who Can Apply?** 4-category grid:\n\n1. 🚗 **Grab & Food Delivery Drivers:** Uses weekly gig earnings (RM 2,000–RM 8,000 limit; 2–4 hours).\n2. 🛍️ **Shopee & E-Commerce Sellers:** Working capital for inventory (up to RM 20,000; 24–48 hours).\n3. 💻 **Freelancers & Self-Employed:** Uses client deposit history (up to RM 10,000; 2–6 hours).\n4. 🍲 **Hawkers & Micro-Shops:** Uses DuitNow QR sales inflow (up to RM 25,000; 1–3 business days).`;
-        } else if (sec === 'bottom_cta') {
+        } else if (hasCta) {
           reply = isMalay
             ? `📱 **Apa Yang Saya Nampak Pada Skrin Anda (Bahagian Bawah Laman Utama):**\n\nAnda telah tatal ke bahagian bawah Laman Utama:\n\n• **Sepanduk:** *"Bersedia untuk Semak Had Kelayakan Pinjaman Anda?"*\n• **Butang Tindakan:** Butang besar *"Mula Semakan Kelayakan Percuma →"* untuk membuka borang Langkah 1.`
             : `📱 **What I Can See On Your Screen (Bottom CTA Banner):**\n\nYou have scrolled to the bottom of the Home Page:\n\n• **Banner Heading:** *"Ready to Check Your Loan Limit?"*\n• **Action Button:** Large white button *"Start Free Eligibility Check →"* to begin Step 1.`;
@@ -1572,7 +1586,10 @@ export async function POST(request: NextRequest) {
         // Map the exact live visibleSection to a precise per-element description
         const landingSectionId = userContext?.visibleSection || 'hero';
         let exactSectionDesc = '';
-        if (landingSectionId === 'hero') {
+
+        if (userContext?.viewportTelemetry?.exactVisibleItems && userContext.viewportTelemetry.exactVisibleItems.length > 0) {
+          exactSectionDesc = `The user's live browser viewport currently displays the following EXACT visible sections & items on screen:\n${userContext.viewportTelemetry.exactVisibleItems.map(item => `  • ${item}`).join('\n')}`;
+        } else if (landingSectionId === 'hero') {
           exactSectionDesc = `The user is currently looking at the HERO SECTION (top of the page).
   Exact elements visible on screen RIGHT NOW:
   • Large rotating headline: Gig Workers & MSME Alternative Financing (cycles through 4 different taglines every 3 seconds).

@@ -828,6 +828,8 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
         {filtered.map((lender) => (
           <div 
             key={lender.id} 
+            id={`lender-card-${lender.id}`}
+            data-lender-card={lender.name}
             className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 flex flex-col justify-between hover:border-blue-300 hover:shadow-md transition-all group"
           >
             
