@@ -357,17 +357,17 @@ export default function Dashboard() {
     // Priority 1: Page-based section context
     if (currentPage === 'calculator') {
       setCurrentVisibleSection('repayment_calculator');
-      setCurrentVisibleSectionLabel(language === 'bm' ? 'Kalkulator Ansuran & DSR' : 'Repayment & DSR Calculator');
+      setCurrentVisibleSectionLabel(language === 'bm' ? 'Kalkulator Ansuran & DSR' : 'Loan Repayment & DSR Calculator Page');
       return;
     }
     if (currentPage === 'directory') {
       setCurrentVisibleSection('lender_directory');
-      setCurrentVisibleSectionLabel(language === 'bm' ? 'Direktori 18 Bank & Pemberi Pinjaman' : '18 Licensed Lenders Directory');
+      setCurrentVisibleSectionLabel(language === 'bm' ? 'Direktori 18 Bank & Pemberi Pinjaman Berlesen' : '18 Licensed Lenders & Digital Banks Directory');
       return;
     }
     if (currentPage === 'tracker') {
       setCurrentVisibleSection('application_tracker');
-      setCurrentVisibleSectionLabel(language === 'bm' ? 'Penjejak Permohonan & Khidmat Pelanggan' : 'Application Tracker & Support');
+      setCurrentVisibleSectionLabel(language === 'bm' ? 'Penjejak Permohonan & Khidmat Pelanggan' : 'My Applications & Support Tracker');
       return;
     }
     if (currentPage === 'app') {
@@ -387,8 +387,12 @@ export default function Dashboard() {
       return;
     }
 
-    // When on landing page, observe active viewport section dynamically
+    // Only run landing page scroll observer when currentPage is strictly 'landing'
+    if (currentPage !== 'landing') return;
+
     const handleScroll = () => {
+      if (currentPage !== 'landing') return;
+
       const whoEl = document.getElementById('landing-who-can-apply');
       const howEl = document.getElementById('landing-how-it-works');
       const ctaEl = document.getElementById('landing-cta');

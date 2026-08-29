@@ -1519,13 +1519,30 @@ REAL-TIME SCREEN & ON-SCREEN VIEWPORT CONTEXT:
         spatialContextText = `
 REAL-TIME SCREEN & ON-SCREEN VIEWPORT CONTEXT:
 - Active Screen: 18 LICENSED LENDERS & DIGITAL BANKS DIRECTORY PAGE.
-- The user is viewing the official Directory of Malaysian Licensed Lenders.
+- The user is viewing the official Directory of Malaysian Licensed Financial Institutions & Micro-Financiers.
 - Currently Visible Viewport Section: "${userContext?.visibleSectionLabel || '18 Licensed Banks & Lenders Directory'}"
-- On-Screen Elements & Features Displayed:
-  1. Category Filters: "All", "Digital Banks" (GXBank, Boost Bank, AEON Credit), "Commercial Banks" (Maybank, CIMB, RHB, BSN, Bank Islam), "Micro-Financiers" (TEKUN, MARA, Amanah Ikhtiar), and "P2P Platforms" (Funding Societies, CapBay).
-  2. Search & Sort Bar: Filter by minimum income requirement, max loan limit, and interest rates.
-  3. Lender Cards: Each card shows the bank logo, max loan amount, minimum required monthly income, interest rate range, key approval criteria, and "Apply / Match" action.
-- If the user asks about lenders or what is on screen, summarize the visible bank options and their requirements.`;
+- Top Controls Visible:
+  • Search Input Bar ("Search bank, loan type, or keyword...")
+  • Category Filter Pills: "All", "Digital Banks", "Commercial Banks", "Micro-Financiers", "P2P Platforms"
+  • Comparison Tool Banner: "Compare Lenders Side-by-Side"
+- Specific Lender Cards Displayed in this Directory (in card order):
+  1. Maybank Mikro / Maybank Islamic Mikro-i (Commercial Bank · 11% p.a. flat · up to RM 50k · 3-5 days · Shariah available)
+  2. CIMB SME Micro Financing (Commercial Bank · SRF scheme capped at 3.75% p.a. · up to RM 750k · 3-7 days)
+  3. Bank Islam iTEKAD / Pembiayaan Mikro-i (Full Islamic Bank · Social finance 3.0% p.a. · up to RM 50k · 5-10 days)
+  4. Agrobank Pembiayaan Kredit Mikro-i (Government Agricultural Bank · from 4.75% p.a. reducing balance · up to RM 100k · 3-7 days · Shariah Tawarruq · for Agriculture/Agro-food businesses)
+  5. Affin Bank SMEmerge Micro Financing (Commercial Bank · Scheme-based SRF capped at 3.75% p.a. · up to RM 300k · 3-7 days · for 12-24 month startups with CGC/SJPP guarantee · Shariah)
+  6. Bank Muamalat Skim Pembiayaan Mikro-i (Full Islamic Bank · from 6.99% p.a. fixed · up to RM 100k · 3-5 days · BNM Skim Pembiayaan Mikro SPM participant)
+  7. GXBank Digital Micro Loan (Digital Bank · from 4.99% p.a. · instant 10 mins · up to RM 20k · gig-friendly for Grab drivers)
+  8. Boost Bank / Boost Credit (Digital Bank · from 6.5% p.a. · 24-48 hrs · up to RM 50k · e-commerce/Shopee sellers)
+  9. AEON Credit Service Personal Financing (from 7.92% p.a. · 1-3 days · up to RM 100k)
+  10. TEKUN Nasional Micro-Loan (from 4.0% p.a. fixed · 7-14 days · up to RM 100k · for micro-traders & hawkers)
+  11. Funding Societies Micro Financing (from 8.5% p.a. · 2-5 days · up to RM 200k · P2P invoice & working capital)
+- Each card has:
+  • Bank Badge & Category Tag (e.g., "Government Agricultural Bank", "Commercial Bank", "Full Islamic Bank", "Shariah", "Gig Friendly")
+  • "Check Match →" or "Apply" button
+  • Key Metrics: Indicative Rate, Approval SLA, Max Loan Limit, Min. Income Requirement
+  • Key Advantages with checkmarks
+- CRITICAL INSTRUCTION: When the user asks "what can you see on my screen?" or "what am I looking at?", describe the active Lender Directory page and the specific bank cards (such as Agrobank, Affin Bank, Bank Muamalat, Maybank, CIMB, GXBank) with their exact rates and loan limits!`;
       } else if (pageType === 'tracker') {
         spatialContextText = `
 REAL-TIME SCREEN & ON-SCREEN VIEWPORT CONTEXT:
