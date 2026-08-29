@@ -1387,37 +1387,53 @@ export async function POST(request: NextRequest) {
 
       if (pageType === 'landing') {
         spatialContextText = `
-REAL-TIME SCREEN & SPATIAL VIEWPORT CONTEXT:
+REAL-TIME SCREEN & ON-SCREEN VIEWPORT CONTEXT:
 - Active Screen: HOME / LANDING PAGE (Main Website Gateway of Loan - La).
 - The user is currently browsing the Home Page (They are NOT in the application form yet).
 - Currently Visible Viewport Section: "${userContext?.visibleSectionLabel || 'Home Page Hero Overview'}"
-- Available Main Actions on this Home Screen:
-  1. "Check Loan Eligibility Report" button (starts a new alternative credit underwriting assessment).
-  2. "Loan Calculator" button in top nav or hero (opens the loan installment & DSR calculator).
-  3. "Lender Directory" in top nav (opens directory of 18 Malaysian licensed banks and digital lenders).
-  4. "My Applications" (tracks submitted applications).
-- If the user asks where they are or what they are viewing, accurately explain that they are on the Loan - La Home Page!`;
+- On-Screen Elements & Features Displayed:
+  1. Hero Header & Headline: "AI-Powered Financing for Malaysia's Gig Workers & MSMEs".
+  2. "Check Loan Eligibility Report" CTA button (starts a new alternative credit underwriting assessment).
+  3. "Pre-Qualification Calculator" card (interactive repayment and DSR estimator).
+  4. "18 Licensed Lenders Directory" preview (comparing digital banks, commercial banks, and micro-financiers).
+  5. Top Navigation Bar: Links to Home, Loan Calculator, Lender Directory, and My Applications Tracker.
+- If the user asks where they are or what is shown on their screen, clearly describe the Home Page and highlight what they can explore next.`;
       } else if (pageType === 'calculator') {
         spatialContextText = `
-REAL-TIME SCREEN & SPATIAL VIEWPORT CONTEXT:
+REAL-TIME SCREEN & ON-SCREEN VIEWPORT CONTEXT:
 - Active Screen: LOAN REPAYMENT & DSR CALCULATOR PAGE.
-- The user is currently on the Calculator tool.
+- The user is currently on the interactive Calculator tool.
 - Currently Visible Viewport Section: "${userContext?.visibleSectionLabel || 'Loan Repayment Calculator'}"
-- In this tool, users can adjust Loan Amount (RM 1,000 - RM 250,000), Tenure (1 - 10 years), and Interest Rate (% p.a.) to see their monthly repayment and evaluate DSR capacity.`;
+- On-Screen Elements & Features Displayed:
+  1. Loan Amount Slider (RM 1,000 to RM 250,000, currently set to RM ${(userContext?.targetLoanAmount || 5000).toLocaleString()}).
+  2. Tenure Duration Slider (1 to 10 years, currently set to ${userContext?.calcTenureYears || 1} year(s)).
+  3. Interest Rate Selector (${userContext?.calcInterestRate || 6.0}% flat p.a.).
+  4. Real-Time Repayment Calculation Card: Shows Estimated Monthly Installment, Total Repayment, Total Interest, and Maximum Safe DSR Capacity.
+  5. Direct CTA: "Apply with these parameters" button to jump right into Step 1.
+- If the user asks what is on screen or how to calculate, guide them through these interactive controls.`;
       } else if (pageType === 'directory') {
         spatialContextText = `
-REAL-TIME SCREEN & SPATIAL VIEWPORT CONTEXT:
+REAL-TIME SCREEN & ON-SCREEN VIEWPORT CONTEXT:
 - Active Screen: 18 LICENSED LENDERS & DIGITAL BANKS DIRECTORY PAGE.
-- The user is browsing the Bank Directory.
-- Currently Visible Viewport Section: "${userContext?.visibleSectionLabel || '18 Licensed Banks & Lenders'}"
-- In this section, users can compare licensed digital banks (GXBank, Boost Bank, AEON Credit), traditional banks (BSN, Bank Islam, RHB, Maybank, CIMB), micro-financiers (MARA, TEKUN), and P2P platforms (Funding Societies, CapBay).`;
+- The user is viewing the official Directory of Malaysian Licensed Lenders.
+- Currently Visible Viewport Section: "${userContext?.visibleSectionLabel || '18 Licensed Banks & Lenders Directory'}"
+- On-Screen Elements & Features Displayed:
+  1. Category Filters: "All", "Digital Banks" (GXBank, Boost Bank, AEON Credit), "Commercial Banks" (Maybank, CIMB, RHB, BSN, Bank Islam), "Micro-Financiers" (TEKUN, MARA, Amanah Ikhtiar), and "P2P Platforms" (Funding Societies, CapBay).
+  2. Search & Sort Bar: Filter by minimum income requirement, max loan limit, and interest rates.
+  3. Lender Cards: Each card shows the bank logo, max loan amount, minimum required monthly income, interest rate range, key approval criteria, and "Apply / Match" action.
+- If the user asks about lenders or what is on screen, summarize the visible bank options and their requirements.`;
       } else if (pageType === 'tracker') {
         spatialContextText = `
-REAL-TIME SCREEN & SPATIAL VIEWPORT CONTEXT:
+REAL-TIME SCREEN & ON-SCREEN VIEWPORT CONTEXT:
 - Active Screen: MY APPLICATIONS & SUPPORT INQUIRIES TRACKER.
-- The user is viewing their application tracking dashboard.
+- The user is viewing their personal application tracking dashboard.
 - Currently Visible Viewport Section: "${userContext?.visibleSectionLabel || 'Application Tracker & History'}"
-- In this section, users can track submitted loan applications, download certified credit reports, and review active support tickets.`;
+- On-Screen Elements & Features Displayed:
+  1. Active Loan Application Status Pipeline (Stage 1: Submitted -> Stage 2: Underwriting -> Stage 3: Bank Review -> Stage 4: Disbursed).
+  2. Download Certified Credit Passport PDF button.
+  3. Support Inquiries & Help Tickets History table with SLA countdown timers.
+  4. "Start New Assessment" button.
+- If the user asks where they are or what is shown, give a status overview of their application and active tickets.`;
       } else if (pageType === 'app') {
         const step = userContext?.activeStep || 1;
         const stepNames: Record<number, string> = {
@@ -1427,11 +1443,21 @@ REAL-TIME SCREEN & SPATIAL VIEWPORT CONTEXT:
           4: 'Step 4: AI Underwritten Credit Passport & Matched Bank Pre-Approvals'
         };
         spatialContextText = `
-REAL-TIME SCREEN & SPATIAL VIEWPORT CONTEXT:
+REAL-TIME SCREEN & ON-SCREEN VIEWPORT CONTEXT:
 - Active Screen: CREDIT ASSESSMENT APPLICATION PIPELINE (${stepNames[step] || `Step ${step} of 4`}).
 - Currently Visible Viewport Section: "${userContext?.visibleSectionLabel || stepNames[step]}"
-- User Configuration: Selected loan need of RM ${(userContext?.targetLoanAmount || 5000).toLocaleString()} for ${(userContext?.targetLoanPurpose || 'personal_cash').replace('_', ' ')} (Tenure: ${userContext?.calcTenureYears || 1} years).
-- Uploaded Documents: ${userContext?.uploadedFilesCount || 0} file(s) attached ${userContext?.uploadedFilesSummary?.length ? `(${userContext.uploadedFilesSummary.join(', ')})` : ''}.`;
+- On-Screen Elements & Features Displayed in ${stepNames[step]}:
+  ${step === 1 ? `• Loan Purpose Tiles: Personal Cash, Working Capital, Equipment, Vehicle Financing, Invoice Financing, Education.
+  • Amount Input & Tenure Selector: Currently set to RM ${(userContext?.targetLoanAmount || 5000).toLocaleString()} over ${userContext?.calcTenureYears || 1} year(s).
+  • "Save Draft" button and "Next: Upload Documents" CTA button.` : ''}
+  ${step === 2 ? `• Document Dropzone: Drag-and-drop or browse Bank Statements (PDF/Images), Gig Platform Inflow (Grab, Foodpanda, Shopee, TikTok Shop), Pay Slips, or Tax/EPF forms.
+  • Currently Attached: ${userContext?.uploadedFilesCount || 0} file(s) ${userContext?.uploadedFilesSummary?.length ? `(${userContext.uploadedFilesSummary.join(', ')})` : ''}.
+  • "Start Instant AI Underwriting" CTA button.` : ''}
+  ${step === 3 ? `• Legal & Regulatory Declarations: PDPA Consent, Income Authenticity Declaration, and Bank Negera Malaysia regulatory terms.` : ''}
+  ${step === 4 ? `• Underwritten Credit Passport: Alternative Credit Score (${userContext?.latestScore || 710}/1000, Grade ${userContext?.latestGrade || 'A'}), Debt-Service Ratio (DSR), Emergency Runway, and Safe Borrowing Ceiling (RM ${(userContext?.maxSafeLoan || 53550).toLocaleString()}).
+  • Matched Lenders Pre-Approval Cards (GXBank, Boost Bank, AEON Credit, Maybank).
+  • "Download Certified Credit Passport PDF" button.` : ''}
+- If the user asks what is on screen, explain the active step, their current form parameters, and guide them on what to do next.`;
       }
 
       const systemInstruction = `You are the intelligent, highly knowledgeable AI Live Co-Pilot & Concierge for Loan - La.

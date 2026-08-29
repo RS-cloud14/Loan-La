@@ -425,7 +425,8 @@ export default function AICoPilotChat({
   const lastSpeechActivityTimestampRef = useRef<number>(0);
   const isUserScrollingSubtitlesRef = useRef(false);
   const userScrollResumeTimerRef = useRef<any>(null);
-  const cachedVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
+  const activeUtteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const speechWatchdogRef = useRef<any>(null);
   const isMalayRef = useRef(isMalay);
   isMalayRef.current = isMalay;
 
@@ -570,9 +571,10 @@ export default function AICoPilotChat({
     }
   }, [spokenCharIndex, isCallActive, callStatus, lastAgentReply]);
 
-  // Text-to-speech engine
+  // Text-to-speech engine with bulletproof state lifecycle and watchdog auto-recovery
   const speakText = useCallback((text: string, onFinish?: () => void) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      setCallStatus('listening');
       if (onFinish) onFinish();
       return;
     }
@@ -584,8 +586,11 @@ export default function AICoPilotChat({
     }
     if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
     if (speechIntervalRef.current) clearInterval(speechIntervalRef.current);
+    if (speechWatchdogRef.current) clearTimeout(speechWatchdogRef.current);
 
-    window.speechSynthesis.cancel();
+    try {
+      window.speechSynthesis.cancel();
+    } catch(e){}
     setSpokenCharIndex(0);
 
     const cleanText = text
@@ -596,11 +601,13 @@ export default function AICoPilotChat({
 
     if (!cleanText) {
       isAgentSpeakingRef.current = false;
+      setCallStatus('listening');
       if (onFinish) onFinish();
       return;
     }
 
     const utterance = new SpeechSynthesisUtterance(cleanText);
+    activeUtteranceRef.current = utterance; // Retain ref to prevent V8 GC bug
     utterance.lang = isMalay ? 'ms-MY' : 'en-US';
     utterance.rate = 1.0;
     utterance.pitch = 1.05;
@@ -610,19 +617,44 @@ export default function AICoPilotChat({
       utterance.voice = lockedVoice;
     }
 
+    let speechEnded = false;
+    const handleSpeechEnd = () => {
+      if (speechEnded) return;
+      speechEnded = true;
+      if (speechIntervalRef.current) clearInterval(speechIntervalRef.current);
+      if (speechWatchdogRef.current) clearTimeout(speechWatchdogRef.current);
+      activeUtteranceRef.current = null;
+      setSpokenCharIndex(cleanText.length);
+      isAgentSpeakingRef.current = false;
+      setCallStatus('listening');
+      if (isCallActiveRef.current) {
+        startCallListening();
+      }
+      if (onFinish) onFinish();
+    };
+
     utterance.onstart = () => {
       setCallStatus('speaking');
       isAgentSpeakingRef.current = true;
       setSpokenCharIndex(0);
 
       // Smooth progress fallback timer across word count
-      const totalEstimatedSeconds = Math.max(2, cleanText.split(/\s+/).length / 2.6);
+      const wordCount = cleanText.split(/\s+/).length;
+      const totalEstimatedSeconds = Math.max(2, wordCount / 2.6);
       const startTime = Date.now();
       speechIntervalRef.current = setInterval(() => {
         const elapsed = (Date.now() - startTime) / 1000;
         const progress = Math.min(1, elapsed / totalEstimatedSeconds);
         setSpokenCharIndex(Math.floor(cleanText.length * progress));
       }, 150);
+
+      // Safety Watchdog: If browser SpeechSynthesis hangs or fails to emit onend, auto-finish!
+      const maxWatchdogMs = Math.max(2500, (wordCount / 2.0) * 1000 + 1500);
+      speechWatchdogRef.current = setTimeout(() => {
+        if (isAgentSpeakingRef.current) {
+          handleSpeechEnd();
+        }
+      }, maxWatchdogMs);
     };
 
     utterance.onboundary = (event: any) => {
@@ -631,26 +663,26 @@ export default function AICoPilotChat({
       }
     };
 
-    const handleSpeechEnd = () => {
-      if (speechIntervalRef.current) clearInterval(speechIntervalRef.current);
-      setSpokenCharIndex(cleanText.length);
-      setTimeout(() => {
-        isAgentSpeakingRef.current = false;
-        if (onFinish) onFinish();
-      }, 400);
-    };
-
     utterance.onend = handleSpeechEnd;
     utterance.onerror = handleSpeechEnd;
 
-    window.speechSynthesis.speak(utterance);
+    try {
+      window.speechSynthesis.speak(utterance);
+    } catch(e) {
+      handleSpeechEnd();
+    }
   }, [isMalay, getConsistentVoice]);
 
   const stopSpeaking = () => {
+    if (speechWatchdogRef.current) clearTimeout(speechWatchdogRef.current);
+    if (speechIntervalRef.current) clearInterval(speechIntervalRef.current);
+    activeUtteranceRef.current = null;
+    isAgentSpeakingRef.current = false;
+    setCallStatus('listening');
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      isAgentSpeakingRef.current = false;
-      if (speechIntervalRef.current) clearInterval(speechIntervalRef.current);
+      try {
+        window.speechSynthesis.cancel();
+      } catch(e){}
     }
   };
 
@@ -1003,7 +1035,7 @@ export default function AICoPilotChat({
         setCallStatus('listening');
       };
 
-      const scheduleAutoSubmit = (delayMs: number = 3500) => {
+      const scheduleAutoSubmit = (delayMs: number = 3000) => {
         if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
         silenceTimerRef.current = setTimeout(() => {
           const speechToSubmit = cleanSpeechDuplicates(currentAccumulatedSpeechRef.current || persistedTurnSpeechRef.current);
@@ -1017,9 +1049,9 @@ export default function AICoPilotChat({
       };
 
       recog.onspeechend = () => {
-        // User stopped vocalizing -> start the 3.5s countdown to auto-submit
+        // User stopped vocalizing -> start the 3.0s countdown to auto-submit
         if (currentAccumulatedSpeechRef.current || persistedTurnSpeechRef.current) {
-          scheduleAutoSubmit(3500);
+          scheduleAutoSubmit(3000);
         }
       };
 
@@ -1058,8 +1090,8 @@ export default function AICoPilotChat({
 
           const isThinkingOrConnecting = thinkingSounds.includes(lastWord) || trailingConnectives.includes(lastWord);
 
-          // Standard silence timer: 3.5s (3500ms) if finished; 5.5s (5500ms) if thinking/hesitating with "ur", "ah", etc.
-          const waitTimeout = isThinkingOrConnecting ? 5500 : 3500;
+          // Standard silence timer: 3.0s (3000ms) if finished; 4.0s (4000ms) if thinking/hesitating with "ur", "ah", etc.
+          const waitTimeout = isThinkingOrConnecting ? 4000 : 3000;
           scheduleAutoSubmit(waitTimeout);
         }
       };
@@ -1369,77 +1401,26 @@ export default function AICoPilotChat({
           </button>
         )}
 
-        {/* 2. Floating Live Audio Ball / Orb: Ultra-sleek minimized glowing orb */}
+        {/* 2. Floating Live Audio Ball: Ultra-sleek minimalist floating glowing AI Ball / Orb */}
         {!isOpen && isCallActive && (
-          <div className="flex items-center gap-2.5 animate-slide-up group select-none">
-            {/* Live Context Badge Chip */}
-            <div 
-              onClick={() => setIsOpen(true)}
-              className="cursor-pointer hidden sm:flex items-center gap-2 px-3 py-1.5 bg-slate-950/95 hover:bg-slate-900 border border-blue-500/40 rounded-full shadow-2xl text-white text-[11px] backdrop-blur-xl transition-all duration-200 hover:scale-105"
-              title={isMalay ? "Klik untuk buka tetingkap penuh" : "Click to expand full call screen"}
-            >
-              <span className="relative flex h-2 w-2 shrink-0">
-                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${callStatus === 'speaking' ? 'bg-cyan-400 opacity-75' : 'bg-emerald-400 opacity-75'}`}></span>
-                <span className={`relative inline-flex rounded-full h-2 w-2 ${callStatus === 'speaking' ? 'bg-cyan-500' : 'bg-emerald-500'}`}></span>
-              </span>
-              <span className="font-semibold text-slate-200 max-w-[140px] truncate">
-                {visibleSectionLabel || visibleSection || 'Overview'}
-              </span>
-              <span className="font-mono text-[10px] text-cyan-300 font-bold bg-blue-950/90 px-1.5 py-0.5 rounded-full border border-blue-800/80 shrink-0">
+          <button
+            type="button"
+            onClick={() => setIsOpen(true)}
+            className="relative w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer bg-gradient-to-tr from-slate-950 via-blue-950 to-indigo-900 border-2 border-cyan-400/90 shadow-cyan-500/30 group select-none animate-slide-up"
+            title={isMalay ? "Klik untuk buka panggilan penuh (atau sebut 'buka panggilan')" : "Click to expand full call screen (or say 'open the call')"}
+          >
+            {/* Outer Pulsing Soundwave Waveform Rings */}
+            <span className={`absolute inset-0 rounded-full border-2 border-cyan-400/60 ${callStatus === 'speaking' ? 'animate-ping duration-1000' : 'animate-pulse'}`} />
+            <span className={`absolute -inset-1.5 rounded-full bg-cyan-500/25 blur-sm ${callStatus === 'speaking' ? 'animate-pulse' : ''}`} />
+
+            {/* Inner Glowing Core with AI Logo and Call Timer */}
+            <div className="relative z-10 flex flex-col items-center justify-center">
+              <AILogoIcon className={`w-5 h-5 text-white ${callStatus === 'speaking' ? 'animate-bounce' : ''}`} />
+              <span className="text-[8px] font-black text-cyan-300 font-mono tracking-tighter mt-0.5">
                 {formatCallTime(callDuration)}
               </span>
             </div>
-
-            {/* Quick Mute Action Button */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsMuted(prev => !prev);
-              }}
-              className={`p-2.5 rounded-full shadow-2xl border transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer backdrop-blur-xl ${
-                isMuted 
-                  ? 'bg-rose-500/90 hover:bg-rose-600 text-white border-rose-400 shadow-rose-900/40' 
-                  : 'bg-slate-950/95 hover:bg-slate-900 text-slate-200 border-slate-700 hover:border-slate-500'
-              }`}
-              title={isMuted ? (isMalay ? "Buka Suara" : "Unmute") : (isMalay ? "Bisu" : "Mute")}
-            >
-              {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-            </button>
-
-            {/* Main Pulsating Floating AI Ball / Orb */}
-            <button
-              type="button"
-              onClick={() => setIsOpen(true)}
-              className="relative w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer bg-gradient-to-tr from-slate-950 via-blue-950 to-indigo-900 border-2 border-cyan-400/90 shadow-cyan-500/20"
-              title={isMalay ? "Klik untuk buka panggilan penuh (sebut 'buka panggilan')" : "Click to expand call screen (or say 'open the call')"}
-            >
-              {/* Outer Pulsing Soundwave Waveform Rings */}
-              <span className={`absolute inset-0 rounded-full border-2 border-cyan-400/60 ${callStatus === 'speaking' ? 'animate-ping duration-1000' : 'animate-pulse'}`} />
-              <span className={`absolute -inset-1 rounded-full bg-cyan-500/25 blur-sm ${callStatus === 'speaking' ? 'animate-pulse' : ''}`} />
-
-              {/* Inner Glowing Core */}
-              <div className="relative z-10 flex flex-col items-center justify-center">
-                <AILogoIcon className={`w-5 h-5 text-white ${callStatus === 'speaking' ? 'animate-bounce' : ''}`} />
-                <span className="text-[8px] font-black text-cyan-300 font-mono tracking-tighter mt-0.5">
-                  {formatCallTime(callDuration)}
-                </span>
-              </div>
-            </button>
-
-            {/* Quick End Call Button */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleEndCall();
-              }}
-              className="p-2.5 bg-rose-600/90 hover:bg-rose-500 text-white rounded-full shadow-2xl border border-rose-400/60 transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer backdrop-blur-xl shadow-rose-900/40"
-              title={isMalay ? "Tamatkan Panggilan (sebut 'tamatkan panggilan')" : "End Call (or say 'close the call')"}
-            >
-              <PhoneOff className="w-4 h-4" />
-            </button>
-          </div>
+          </button>
         )}
 
         {/* 3. Open Full Chat / Voice Call Window */}
