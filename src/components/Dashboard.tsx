@@ -1189,7 +1189,7 @@ export default function Dashboard() {
             onViewActiveTaskResult={() => {
               setPerspective('B2C');
               setCurrentPage('app');
-              setActiveStep(3);
+              setActiveStep(4);
             }}
             onNewApplication={() => {
               if (!userSession) {
@@ -1205,7 +1205,7 @@ export default function Dashboard() {
               setTargetLoanAmount(rep.loanAmount || 5000);
               setTargetLoanPurpose((rep.loanPurpose as any) || 'personal_cash');
               setPerspective('B2C');
-              setActiveStep(3);
+              setActiveStep(4);
               setCurrentPage('app');
             }}
             onDownloadReportPdf={(rep) => {
@@ -1218,7 +1218,7 @@ export default function Dashboard() {
                 setIsCurrentResultDemo(latest.isDemo);
               }
               setPerspective('B2C');
-              setActiveStep(3);
+              setActiveStep(4);
               setCurrentPage('app');
             }}
           />
@@ -1604,25 +1604,26 @@ export default function Dashboard() {
                   <ArrowLeft className="w-4 h-4 text-blue-950" /> {language === 'bm' ? 'Kembali ke Laman Utama' : 'Back to Home'}
                 </button>
 
-                {/* Visual 3-Step Stepper */}
-                <div className="flex items-center gap-1.5 sm:gap-3 font-bold text-xs">
+                {/* Visual 4-Step Stepper */}
+                <div className="flex items-center gap-1.5 sm:gap-2.5 font-bold text-xs">
                   {[
-                    { step: 1, label: language === 'bm' ? '1. Keperluan Pinjaman' : '1. Loan Need' },
-                    { step: 2, label: language === 'bm' ? '2. Dokumen & Perakuan' : '2. Documents & Declarations' },
-                    { step: 3, label: language === 'bm' ? '3. Laporan & Padanan Bank' : '3. Report & Lenders' }
+                    { step: 1, label: language === 'bm' ? '1. Keperluan' : '1. Loan Need' },
+                    { step: 2, label: language === 'bm' ? '2. Dokumen' : '2. Documents' },
+                    { step: 3, label: language === 'bm' ? '3. Pengesahan' : '3. Review & Consent' },
+                    { step: 4, label: language === 'bm' ? '4. Laporan' : '4. Report' }
                   ].map((s, idx) => (
                     <React.Fragment key={s.step}>
                       <button
-                        disabled={s.step === 3 && !b2cResult}
+                        disabled={s.step === 4 && !b2cResult}
                         onClick={() => {
-                          if (s.step === 3 && !b2cResult) return;
+                          if (s.step === 4 && !b2cResult) return;
                           setActiveStep(s.step);
                           window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
                           document.documentElement.scrollTop = 0;
                           document.body.scrollTop = 0;
                         }}
-                        className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl border transition-all ${
-                          s.step === 3 && !b2cResult
+                        className={`flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-xl border transition-all ${
+                          s.step === 4 && !b2cResult
                             ? 'opacity-40 cursor-not-allowed bg-slate-50 text-slate-400 border-slate-200'
                             : activeStep === s.step
                               ? 'bg-blue-950 text-white border-blue-950 shadow-xs cursor-pointer'
@@ -1631,14 +1632,14 @@ export default function Dashboard() {
                                 : 'bg-slate-50 text-slate-400 border-slate-200 cursor-pointer'
                         }`}
                       >
-                        <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                        <span className={`w-4.5 h-4.5 rounded-full flex items-center justify-center text-[9.5px] font-bold ${
                           activeStep === s.step ? 'bg-white text-blue-950' : 'bg-slate-200 text-slate-700'
                         }`}>
                           {s.step < activeStep ? '✓' : s.step}
                         </span>
                         <span className="hidden sm:inline">{s.label}</span>
                       </button>
-                      {idx < 2 && <span className="text-slate-300 text-xs hidden sm:inline">→</span>}
+                      {idx < 3 && <span className="text-slate-300 text-xs hidden sm:inline">→</span>}
                     </React.Fragment>
                   ))}
                 </div>
@@ -2640,180 +2641,14 @@ export default function Dashboard() {
 
                       </div>
 
-                      {/* STEP 2.3: BORROWER CONFIRMATIONS */}
-                      <div 
-                        id="mandatory-declarations-box"
-                        className={`p-5 sm:p-6 rounded-2xl transition-all duration-200 ${
-                          declarationError 
-                            ? 'bg-rose-50/70 border-2 border-rose-400 ring-4 ring-rose-400/10' 
-                            : 'bg-slate-50/80 border border-slate-200'
-                        }`}
-                      >
-                        {/* Section Header */}
-                        <div className="flex items-center justify-between gap-2.5 mb-4 pb-3 border-b border-slate-200/80">
-                          <div className="flex items-center gap-2">
-                            <span className="w-5 h-5 rounded-full bg-blue-950 text-white flex items-center justify-center text-[10px] font-black shrink-0">3</span>
-                            <h3 className="text-xs font-bold text-slate-900">
-                              {language === 'bm' ? 'Perakuan & Kebenaran Pemohon (Wajib)' : 'Borrower Legal Declarations & Statutory Consent (Mandatory)'}
-                            </h3>
-                          </div>
-                          
-                          <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full shrink-0 ${
-                            preUploadDeclNoDefault && preUploadDeclAuthentic && preUploadDeclConsent && preUploadDeclPdpa
-                              ? 'bg-emerald-100 text-emerald-800 font-bold'
-                              : 'bg-slate-200 text-slate-600'
-                          }`}>
-                            {preUploadDeclNoDefault && preUploadDeclAuthentic && preUploadDeclConsent && preUploadDeclPdpa
-                              ? (language === 'bm' ? '✓ 4/4 Disahkan' : '✓ 4/4 Confirmed')
-                              : (language === 'bm' ? '4 Diperlukan' : '4 Required')}
-                          </span>
-                        </div>
-
-                        {declarationError && (
-                          <div className="mb-3.5 p-3.5 bg-rose-100 border border-rose-300 rounded-xl text-xs text-rose-900 font-semibold flex items-center gap-2.5 animate-pulse shadow-xs">
-                            <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
-                            <span>
-                              {language === 'bm'
-                                ? 'Sila tandakan keempat-empat kotak perakuan statutori di bawah untuk mengesahkan permohonan anda.'
-                                : 'Please read and acknowledge all 4 statutory declaration items below to proceed.'}
-                            </span>
-                          </div>
-                        )}
-
-                        {/* Interactive Consolidated Declaration Card */}
-                        <label className={`flex items-start gap-3.5 p-4 rounded-2xl border transition-all cursor-pointer ${
-                          (preUploadDeclNoDefault && preUploadDeclAuthentic && preUploadDeclConsent && preUploadDeclPdpa)
-                            ? 'bg-blue-50/50 border-blue-950 shadow-xs ring-1 ring-blue-950/10'
-                            : 'bg-slate-50/80 border-slate-200 hover:border-slate-300 hover:bg-slate-100/60'
-                        }`}>
-                          <input
-                            type="checkbox"
-                            checked={preUploadDeclNoDefault && preUploadDeclAuthentic && preUploadDeclConsent && preUploadDeclPdpa}
-                            onChange={(e) => {
-                              const checked = e.target.checked;
-                              setPreUploadDeclNoDefault(checked);
-                              setPreUploadDeclAuthentic(checked);
-                              setPreUploadDeclConsent(checked);
-                              setPreUploadDeclPdpa(checked);
-                              if (checked) setDeclarationError(false);
-                            }}
-                            className="mt-0.5 accent-blue-950 h-5 w-5 rounded shrink-0 cursor-pointer"
-                          />
-                          <div className="flex-1">
-                            <div className="flex items-center justify-between gap-2 flex-wrap">
-                              <span className="text-xs font-bold text-slate-900">
-                                {language === 'bm' ? 'Perakuan Pemohon & Persetujuan Privasi (PDPA 2010)' : 'Applicant Declaration & PDPA Consent'}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  setShowPdpaModal(true);
-                                }}
-                                className="text-[11px] font-semibold text-blue-950 hover:underline cursor-pointer"
-                              >
-                                {language === 'bm' ? 'Terma Privasi PDPA →' : 'PDPA Privacy Terms →'}
-                              </button>
-                            </div>
-                            <span className="text-[11px] text-slate-500 block mt-1 leading-relaxed font-normal">
-                              {language === 'bm'
-                                ? 'Saya mengesahkan dokumen kewangan yang dimuat naik adalah tulen, tiada rekod kebankrapan aktif, dan bersetuju dengan semakan pra-kelayakan kredit AI mengikut peruntukan Akta Perlindungan Data Peribadi 2010 (PDPA) & garis panduan Bank Negara Malaysia.'
-                                : 'I declare that the uploaded financial documents are authentic, I have no active bankruptcy records, and I consent to automated AI credit pre-scoring under the Personal Data Protection Act 2010 (PDPA) and Bank Negara Malaysia responsible financing guidelines.'}
-                            </span>
-                          </div>
-                        </label>
-                      </div>
-
-                      {/* Bottom Controls & Action Button */}
-                      <div className="flex flex-col gap-3 pt-3 border-t border-slate-100">
+                      {/* Bottom Controls for Step 2 */}
+                      <div className="flex flex-col gap-3 pt-4 border-t border-slate-100">
                         
                         {/* Validation Error Alert Banner */}
                         {uploadValidationError && (
                           <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-900 font-semibold flex items-center gap-2.5 animate-pulse shadow-xs">
                             <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
                             <span>{uploadValidationError}</span>
-                          </div>
-                        )}
-
-                        {/* PII Masking Shield */}
-                        <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl flex justify-between items-center gap-3">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-950 flex items-center justify-center shrink-0">
-                              <Lock className="w-4 h-4" />
-                            </div>
-                            <div>
-                              <span className="text-xs font-bold text-slate-900 block">
-                                {language === 'bm' ? 'Perlindungan Data Peribadi (PII Shield)' : 'Bank-Grade PII Masking Shield'}
-                              </span>
-                              <span className="text-[11px] text-slate-500 block">
-                                {language === 'bm'
-                                  ? 'Menutup nombor MyKad dan nombor akaun bank secara setempat sebelum dihantar (mematuhi PDPA 2010).'
-                                  : 'Locally redacts MyKad and bank account numbers before analysis (PDPA 2010).'}
-                              </span>
-                            </div>
-                          </div>
-                          <label className="relative inline-flex items-center cursor-pointer shrink-0">
-                            <input 
-                              type="checkbox" 
-                              checked={piiMaskingEnabled} 
-                              onChange={(e) => setPiiMaskingEnabled(e.target.checked)}
-                              className="sr-only peer"
-                            />
-                            <div className="w-10 h-5.5 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-blue-950"></div>
-                          </label>
-                        </div>
-
-                        {/* Automated Document Quality Assurance Gate (Safe Batch Check) */}
-                        {uploadedFiles.length > 0 && (
-                          <div className="p-4 bg-emerald-50/80 border border-emerald-200/90 rounded-2xl flex flex-col gap-2.5 shadow-xs">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2.5">
-                                <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
-                                  <ShieldCheck className="w-4 h-4" />
-                                </div>
-                                <div>
-                                  <span className="text-xs font-black text-emerald-950 block">
-                                    {language === 'bm' ? 'Pra-Pemeriksaan Kualiti Dokumen (Jaminan Ketepatan 100%)' : 'Document Quality Pre-Screening (100% Assurance)'}
-                                  </span>
-                                  <span className="text-[11px] text-emerald-700 block">
-                                    {language === 'bm' ? 'Semua fail disahkan format dan sedia untuk penyatuan kredit penuh tanpa ralat.' : 'All uploaded files pre-validated for OCR readability and guaranteed ready for full multi-month consolidation.'}
-                                  </span>
-                                </div>
-                              </div>
-                              <span className="text-[10px] font-extrabold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full border border-emerald-300 shrink-0">
-                                ✓ {uploadedFiles.length} {language === 'bm' ? 'Fail Sedia' : 'Files Ready'}
-                              </span>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-2 pt-1">
-                              <div className="p-2 bg-white/90 border border-emerald-200/60 rounded-xl flex items-center gap-2 text-xs">
-                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                                <span className="text-[11px] text-slate-700 font-medium truncate">
-                                  {uploadedFiles.filter(f => f.category === 'bank_statement').length} {language === 'bm' ? 'Penyata Bank' : 'Bank Statements'}
-                                </span>
-                              </div>
-                              <div className="p-2 bg-white/90 border border-emerald-200/60 rounded-xl flex items-center gap-2 text-xs">
-                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                                <span className="text-[11px] text-slate-700 font-medium truncate">
-                                  {uploadedFiles.filter(f => f.category === 'platform_dashboard' || f.category === 'pay_slip').length} {language === 'bm' ? 'Slip Pendapatan' : 'Income Proof Slips'}
-                                </span>
-                              </div>
-                              <div className="p-2 bg-white/90 border border-emerald-200/60 rounded-xl flex items-center gap-2 text-xs">
-                                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                                <span className="text-[11px] text-slate-700 font-medium truncate">
-                                  {uploadedFiles.filter(f => f.category === 'mykad_id').length > 0 ? (language === 'bm' ? 'e-KYC MyKad Sah' : 'MyKad e-KYC Verified') : (language === 'bm' ? 'e-KYC Diperlukan' : 'e-KYC Required')}
-                                </span>
-                              </div>
-                              {uploadedFiles.some(f => f.category === 'ssm_license' || f.category === 'business_proposal') && (
-                                <div className="p-2 bg-blue-50/90 border border-blue-200/60 rounded-xl flex items-center gap-2 text-xs">
-                                  <CheckCircle2 className="w-3.5 h-3.5 text-blue-700 shrink-0" />
-                                  <span className="text-[11px] text-blue-900 font-bold truncate">
-                                    {uploadedFiles.filter(f => f.category === 'ssm_license' || f.category === 'business_proposal').length} {language === 'bm' ? 'Dokumen PKS Sah' : 'SME Docs Attached'}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
                           </div>
                         )}
 
@@ -2828,7 +2663,7 @@ export default function Dashboard() {
                             }}
                             className="w-full sm:w-auto py-3.5 px-5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-2xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer order-2 sm:order-1"
                           >
-                            <ArrowLeft className="w-3.5 h-3.5" /> {language === 'bm' ? 'Kembali' : 'Back'}
+                            <ArrowLeft className="w-3.5 h-3.5" /> {language === 'bm' ? 'Kembali ke Langkah 1' : 'Back to Step 1'}
                           </button>
                           
                           <button
@@ -2842,7 +2677,7 @@ export default function Dashboard() {
                                 }
                               };
 
-                              // 1. Bank Statements (min 3 PDFs - Top Section)
+                              // 1. Bank Statements (min 3 PDFs)
                               const bankStatements = uploadedFiles.filter(f => f.category === 'bank_statement');
                               if (bankStatements.length < 3) {
                                 setUploadValidationError(
@@ -2900,31 +2735,15 @@ export default function Dashboard() {
                                 return;
                               }
 
-                              // 4. Declarations check (all 4 required)
-                              if (!preUploadDeclNoDefault || !preUploadDeclAuthentic || !preUploadDeclConsent || !preUploadDeclPdpa) {
-                                setDeclarationError(true);
-                                setUploadValidationError(
-                                  language === 'bm'
-                                    ? 'Sila baca perakuan prasyarat dan tandakan keempat-empat kotak pengesahan di Bahagian 3.'
-                                    : 'Please read the prerequisite declarations and check all 4 confirmation boxes in Section 3.'
-                                );
-                                scrollToBox('mandatory-declarations-box');
-                                return;
-                              }
-                              setDeclarationError(false);
-
                               setUploadValidationError(null);
-                              runUnderwritingPipeline('real');
+                              setActiveStep(3);
+                              window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                              document.documentElement.scrollTop = 0;
+                              document.body.scrollTop = 0;
                             }}
-                            disabled={isProcessing || !!viewingArchivedReport}
-                            className="flex-1 w-full py-3.5 px-6 bg-blue-950 hover:bg-blue-900 text-white font-bold rounded-2xl text-xs transition-all shadow-md hover:shadow-lg disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed active:scale-[0.99] flex items-center justify-center gap-2 order-1 sm:order-2"
+                            className="flex-1 w-full py-4 px-6 bg-blue-950 hover:bg-blue-900 text-white font-bold rounded-2xl text-xs sm:text-sm transition-all shadow-md hover:shadow-lg cursor-pointer active:scale-[0.99] flex items-center justify-center gap-2 order-1 sm:order-2"
                           >
-                            <Play className="w-3.5 h-3.5 fill-white text-white" />
-                            <span>
-                              {viewingArchivedReport 
-                                ? (language === 'bm' ? 'Laporan Sejarah (Hanya Baca)' : 'Archived Assessment (Read-Only)')
-                                : (language === 'bm' ? 'Mula Semakan Kelayakan AI & Padankan Bank' : 'Run AI Underwriting & Match Lenders')}
-                            </span>
+                            <span>{language === 'bm' ? 'Teruskan ke Langkah 3: Pengesahan & Perakuan →' : 'Continue to Step 3: Review & Consent →'}</span>
                           </button>
                         </div>
                       </div>
@@ -2934,8 +2753,211 @@ export default function Dashboard() {
 
 
 
-                {/* STEP 3: ASSESSMENT REPORT & MATCHED LENDERS */}
-                {activeStep === 3 && b2cResult && (
+                {/* STEP 3: DOCUMENT VERIFICATION, PII SHIELD & MANDATORY CONSENT */}
+                {activeStep === 3 && (
+                  <div className="bg-white rounded-3xl border border-slate-200 shadow-md p-6 sm:p-8 flex flex-col gap-6 animate-fade-in">
+                    
+                    {/* Header */}
+                    <div className="border-b border-slate-100 pb-3.5">
+                      <span className="text-[11px] font-extrabold text-blue-900 uppercase tracking-wider block">
+                        {language === 'bm' ? 'Langkah 3 daripada 4' : 'Step 3 of 4'}
+                      </span>
+                      <h2 className="text-xl sm:text-2xl font-black text-blue-950 tracking-tight mt-0.5">
+                        {language === 'bm' ? 'Pengesahan Dokumen & Perakuan Privasi' : 'Document Review & Statutory Consent'}
+                      </h2>
+                      <p className="text-xs text-slate-500 mt-1">
+                        {language === 'bm'
+                          ? 'Sila semak dokumen yang dimuat naik dan sahkan perakuan pemohon sebelum memulakan pengunderaitan AI.'
+                          : 'Review your uploaded financial evidence and grant AI underwriting consent under PDPA 2010 guidelines.'}
+                      </p>
+                    </div>
+
+                    {/* 1. Review Summary Checklist */}
+                    <div className="p-4 bg-emerald-50/70 border border-emerald-200 rounded-2xl flex flex-col gap-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <ShieldCheck className="w-5 h-5 text-emerald-700 shrink-0" />
+                          <span className="text-xs font-bold text-emerald-950">
+                            {language === 'bm' ? 'Ringkasan Dokumen Dimuat Naik' : 'Uploaded Evidence Summary'}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setActiveStep(2)}
+                          className="text-[11px] font-semibold text-blue-950 hover:underline cursor-pointer"
+                        >
+                          {language === 'bm' ? 'Ubah Dokumen ✎' : 'Edit Documents ✎'}
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 pt-1">
+                        <div className="p-2.5 bg-white border border-emerald-200/80 rounded-xl flex items-center gap-2 text-xs">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <div className="truncate">
+                            <span className="text-[11px] font-bold text-slate-800 block">
+                              {uploadedFiles.filter(f => f.category === 'bank_statement').length} {language === 'bm' ? 'Penyata Bank' : 'Bank Statements'}
+                            </span>
+                            <span className="text-[10px] text-slate-400 block">{language === 'bm' ? '3–6 Bulan e-Statement' : '3–6 Months e-Statement'}</span>
+                          </div>
+                        </div>
+
+                        <div className="p-2.5 bg-white border border-emerald-200/80 rounded-xl flex items-center gap-2 text-xs">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <div className="truncate">
+                            <span className="text-[11px] font-bold text-slate-800 block">
+                              {uploadedFiles.filter(f => f.category === 'platform_dashboard' || f.category === 'pay_slip').length} {language === 'bm' ? 'Slip Pendapatan' : 'Income Slips'}
+                            </span>
+                            <span className="text-[10px] text-slate-400 block">
+                              {incomeWorkType === 'gig' ? '12 Weekly Gig Slips' : '3 Months Salary Slips'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="p-2.5 bg-white border border-emerald-200/80 rounded-xl flex items-center gap-2 text-xs">
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                          <div className="truncate">
+                            <span className="text-[11px] font-bold text-slate-800 block">
+                              {language === 'bm' ? 'MyKad e-KYC' : 'MyKad e-KYC'}
+                            </span>
+                            <span className="text-[10px] text-slate-400 block">{language === 'bm' ? 'Pengesahan Identiti' : 'Identity Verified'}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 2. PII Masking Shield (Privacy Protection) */}
+                    <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-955 flex items-center justify-center shrink-0">
+                          <Lock className="w-4.5 h-4.5" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-slate-900">
+                              {language === 'bm' ? 'Perlindungan Data Peribadi (PII Shield)' : 'Bank-Grade PII Masking Shield'}
+                            </span>
+                            <span className="text-[9px] font-bold bg-blue-100 text-blue-950 px-1.5 py-0.2 rounded border border-blue-200">
+                              PDPA 2010
+                            </span>
+                          </div>
+                          <span className="text-[11px] text-slate-500 block mt-0.5">
+                            {language === 'bm'
+                              ? 'Menutup nombor MyKad dan nombor akaun bank secara setempat sebelum dihantar ke AI.'
+                              : 'Locally redacts MyKad and bank account numbers in your browser before AI analysis.'}
+                          </span>
+                        </div>
+                      </div>
+                      <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                        <input 
+                          type="checkbox" 
+                          checked={piiMaskingEnabled} 
+                          onChange={(e) => setPiiMaskingEnabled(e.target.checked)}
+                          className="sr-only peer"
+                        />
+                        <div className="w-10 h-5.5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-blue-950"></div>
+                      </label>
+                    </div>
+
+                    {/* 3. The 1 Single Consolidated Consent Card */}
+                    <div className="flex flex-col gap-2">
+                      {declarationError && (
+                        <div className="p-3.5 bg-rose-100 border border-rose-300 rounded-xl text-xs text-rose-900 font-semibold flex items-center gap-2.5 animate-pulse shadow-xs">
+                          <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                          <span>
+                            {language === 'bm'
+                              ? 'Sila tandakan kotak perakuan statutori di bawah untuk memulakan pengunderaitan AI.'
+                              : 'Please check the declaration box below to authorize AI underwriting.'}
+                          </span>
+                        </div>
+                      )}
+
+                      <label className={`flex items-start gap-3.5 p-4 rounded-2xl border transition-all cursor-pointer ${
+                        (preUploadDeclNoDefault && preUploadDeclAuthentic && preUploadDeclConsent && preUploadDeclPdpa)
+                          ? 'bg-blue-50/50 border-blue-950 shadow-xs ring-1 ring-blue-950/10'
+                          : 'bg-slate-50 border-slate-200 hover:border-slate-300'
+                      }`}>
+                        <input
+                          type="checkbox"
+                          checked={preUploadDeclNoDefault && preUploadDeclAuthentic && preUploadDeclConsent && preUploadDeclPdpa}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            setPreUploadDeclNoDefault(checked);
+                            setPreUploadDeclAuthentic(checked);
+                            setPreUploadDeclConsent(checked);
+                            setPreUploadDeclPdpa(checked);
+                            if (checked) setDeclarationError(false);
+                          }}
+                          className="mt-1 accent-blue-950 h-5 w-5 rounded shrink-0 cursor-pointer"
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
+                            <span className="text-xs font-bold text-slate-900">
+                              {language === 'bm' ? 'Perakuan Pemohon & Persetujuan Privasi (PDPA 2010)' : 'Applicant Declaration & PDPA Consent'}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setShowPdpaModal(true);
+                              }}
+                              className="text-[11px] font-semibold text-blue-950 hover:underline cursor-pointer"
+                            >
+                              {language === 'bm' ? 'Terma Privasi PDPA →' : 'PDPA Privacy Terms →'}
+                            </button>
+                          </div>
+                          <span className="text-[11px] text-slate-500 block mt-1 leading-relaxed font-normal">
+                            {language === 'bm'
+                              ? 'Saya mengesahkan dokumen kewangan yang dimuat naik adalah tulen, tiada rekod kebankrapan aktif, dan bersetuju dengan semakan pra-kelayakan kredit AI mengikut peruntukan Akta Perlindungan Data Peribadi 2010 (PDPA) & garis panduan Bank Negara Malaysia.'
+                              : 'I declare that the uploaded financial documents are authentic, I have no active bankruptcy records, and I consent to automated AI credit pre-scoring under the Personal Data Protection Act 2010 (PDPA) and Bank Negara Malaysia responsible financing guidelines.'}
+                          </span>
+                        </div>
+                      </label>
+                    </div>
+
+                    {/* Bottom Actions */}
+                    <div className="flex flex-col sm:flex-row items-center gap-3 pt-2 border-t border-slate-100">
+                      <button
+                        onClick={() => {
+                          setActiveStep(2);
+                          window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                          document.documentElement.scrollTop = 0;
+                          document.body.scrollTop = 0;
+                        }}
+                        className="w-full sm:w-auto py-3.5 px-5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-2xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer order-2 sm:order-1"
+                      >
+                        <ArrowLeft className="w-3.5 h-3.5" /> {language === 'bm' ? 'Kembali ke Muat Naik Dokumen' : 'Back to Upload Documents'}
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          if (!preUploadDeclNoDefault || !preUploadDeclAuthentic || !preUploadDeclConsent || !preUploadDeclPdpa) {
+                            setDeclarationError(true);
+                            return;
+                          }
+                          setDeclarationError(false);
+                          setActiveStep(4);
+                          runUnderwritingPipeline('real');
+                        }}
+                        disabled={isProcessing || !!viewingArchivedReport}
+                        className="flex-1 w-full py-4 px-6 bg-blue-950 hover:bg-blue-900 text-white font-bold rounded-2xl text-xs sm:text-sm transition-all shadow-md hover:shadow-lg disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed active:scale-[0.99] flex items-center justify-center gap-2 order-1 sm:order-2"
+                      >
+                        <Play className="w-4 h-4 fill-white text-white" />
+                        <span>
+                          {viewingArchivedReport 
+                            ? (language === 'bm' ? 'Laporan Sejarah (Hanya Baca)' : 'Archived Assessment (Read-Only)')
+                            : (language === 'bm' ? 'Mula Semakan Kelayakan AI & Padankan Bank →' : 'Run AI Underwriting & Match Lenders →')}
+                        </span>
+                      </button>
+                    </div>
+
+                  </div>
+                )}
+
+
+
+                {/* STEP 4: ASSESSMENT REPORT & MATCHED LENDERS */}
+                {activeStep === 4 && b2cResult && (
                   <div className="flex flex-col gap-6">
                     
                     {/* FREEMIUM PREVIEW BANNER */}
@@ -5539,7 +5561,7 @@ export default function Dashboard() {
         onNavigateToReport={() => {
           setPerspective('B2C');
           setCurrentPage('app');
-          setActiveStep(3);
+          setActiveStep(4);
           window.scrollTo({ top: 0, behavior: 'smooth' });
         }}
         onDownloadReportPdf={() => {
@@ -5935,55 +5957,34 @@ export default function Dashboard() {
                         <span className="flex items-center gap-1.5 text-blue-900"><CheckCircle2 className="w-3.5 h-3.5" /> {language === 'bm' ? `Indeks Kesediaan Kewangan (Skor FRI: ${b2cResult?.report.score || 85})` : `Financial Readiness Index (FRI Score: ${b2cResult?.report.score || 85})`}</span>
                       </div>
 
-                      {/* MANDATORY BORROWER DECLARATIONS / ACKNOWLEDGEMENTS */}
-                      <div className="p-3.5 bg-blue-50/50 border border-blue-200 rounded-xl flex flex-col gap-2.5">
-                        <span className="text-[11px] font-extrabold uppercase tracking-wider text-blue-950 flex items-center gap-1.5">
-                          <CheckSquare className="w-3.5 h-3.5 text-blue-900" />
-                          {language === 'bm' ? 'Perakuan & Pengisytiharan Peminjam (Wajib)' : 'Mandatory Borrower Declarations'}
-                        </span>
-
-                        <label className="flex items-start gap-2.5 cursor-pointer text-xs group">
-                          <input
-                            type="checkbox"
-                            checked={applyDeclNoDefault}
-                            onChange={(e) => setApplyDeclNoDefault(e.target.checked)}
-                            className="mt-0.5 accent-blue-950 h-4 w-4 rounded shrink-0 cursor-pointer"
-                          />
-                          <span className={`text-[11px] leading-snug ${applyDeclNoDefault ? 'text-blue-950 font-bold' : 'text-slate-700'}`}>
-                            {language === 'bm'
-                              ? '1. Tiada Pinjaman Tertunggak: Saya mengesahkan tiada hutang tertunggak / ingkar di bank lain.'
-                              : '1. No Undisclosed Defaults: I confirm I have no active defaulted loans with other lenders.'}
+                      {/* MANDATORY BORROWER DECLARATION */}
+                      <label className={`p-3.5 rounded-xl border transition-all cursor-pointer flex items-start gap-2.5 ${
+                        applyDeclNoDefault
+                          ? 'bg-blue-50/70 border-blue-950 shadow-xs'
+                          : 'bg-slate-50 border-slate-200 hover:border-slate-300'
+                      }`}>
+                        <input
+                          type="checkbox"
+                          checked={applyDeclNoDefault}
+                          onChange={(e) => {
+                            const checked = e.target.checked;
+                            setApplyDeclNoDefault(checked);
+                            setApplyDeclAffordability(checked);
+                            setApplyDeclSingleReport(checked);
+                          }}
+                          className="mt-0.5 accent-blue-950 h-4.5 w-4.5 rounded shrink-0 cursor-pointer"
+                        />
+                        <div className="flex-1">
+                          <span className="text-xs font-bold text-slate-900 block">
+                            {language === 'bm' ? 'Pengesahan Permohonan & Kemampuan Bayaran' : 'Application & Affordability Confirmation'}
                           </span>
-                        </label>
-
-                        <label className="flex items-start gap-2.5 cursor-pointer text-xs group">
-                          <input
-                            type="checkbox"
-                            checked={applyDeclAffordability}
-                            onChange={(e) => setApplyDeclAffordability(e.target.checked)}
-                            className="mt-0.5 accent-blue-950 h-4 w-4 rounded shrink-0 cursor-pointer"
-                          />
-                          <span className={`text-[11px] leading-snug ${applyDeclAffordability ? 'text-blue-950 font-bold' : 'text-slate-700'}`}>
+                          <span className="text-[11px] text-slate-500 block mt-0.5 leading-relaxed">
                             {language === 'bm'
-                              ? `2. Had Kemampuan DSR: Saya mengesahkan bayaran bulanan pinjaman ini adalah dalam kemampuan pendapatan saya.`
-                              : `2. Affordability Confirmation: I confirm this monthly installment is within my repayment capacity.`}
+                              ? `Saya mengesahkan tiada hutang tertunggak di institusi lain, bayaran ansuran adalah dalam kemampuan pendapatan saya, dan laporan ini dihantar secara eksklusif kepada ${applyTarget.lenderName}.`
+                              : `I confirm I have no active undisclosed loan defaults, the monthly installment is within my capacity, and this report is submitted exclusively to ${applyTarget.lenderName}.`}
                           </span>
-                        </label>
-
-                        <label className="flex items-start gap-2.5 cursor-pointer text-xs group">
-                          <input
-                            type="checkbox"
-                            checked={applyDeclSingleReport}
-                            onChange={(e) => setApplyDeclSingleReport(e.target.checked)}
-                            className="mt-0.5 accent-blue-950 h-4 w-4 rounded shrink-0 cursor-pointer"
-                          />
-                          <span className={`text-[11px] leading-snug ${applyDeclSingleReport ? 'text-blue-950 font-bold' : 'text-slate-700'}`}>
-                            {language === 'bm'
-                              ? `3. Perakuan Permohonan Tunggal: Laporan kelayakan ini digunakan secara eksklusif untuk permohonan pinjaman ini.`
-                              : `3. Single-Report Exclusive: This certified report is submitted strictly for this single lender application.`}
-                          </span>
-                        </label>
-                      </div>
+                        </div>
+                      </label>
 
                       <p className="text-[10px] text-slate-400 leading-relaxed">
                         {applyTarget.lenderName} will contact you directly. Loan - La earns no commission from referrals. Always verify lender credentials at BNM.gov.my before signing agreements.
@@ -6002,7 +6003,7 @@ export default function Dashboard() {
                           {language === 'bm' ? 'Batal' : 'Cancel'}
                         </button>
                         <button
-                          disabled={!applyDeclNoDefault || !applyDeclAffordability || !applyDeclSingleReport}
+                          disabled={!applyDeclNoDefault}
                           onClick={() => {
                             const timestamp = new Date().toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit' });
                             setAppliedLenders(prev => ({ ...prev, [applyTarget.lenderName]: { appliedAt: timestamp, refCode: currentRefCode } }));
@@ -6028,7 +6029,7 @@ export default function Dashboard() {
                             setApplySubmitted(true);
                           }}
                           className={`flex-1 py-3 font-extrabold rounded-xl text-sm shadow-md flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                            applyDeclNoDefault && applyDeclAffordability && applyDeclSingleReport
+                            applyDeclNoDefault
                               ? 'bg-blue-950 hover:bg-blue-900 text-white'
                               : 'bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300 shadow-none'
                           }`}
