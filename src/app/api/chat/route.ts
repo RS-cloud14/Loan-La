@@ -603,6 +603,87 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // 1F. Direct Navigation Commands (e.g. "bring me to the calculator", "go to calculator", "open calculator", "bring me to directory", "bring me to tracker", "open step 1")
+    const isNavCalculator = (
+      (lastMsgLower.includes('calculator') || lastMsgLower.includes('kalkulator')) &&
+      (lastMsgLower.includes('bring') || lastMsgLower.includes('take') || lastMsgLower.includes('go to') || lastMsgLower.includes('open') || lastMsgLower.includes('buka') || lastMsgLower.includes('bawa') || lastMsgLower.includes('pergi') || lastMsgLower.includes('show') || lastMsgLower.includes('tunjuk') || lastMsgLower.includes('can bring') || lastMsgLower.includes('navigate') || lastMsgLower === 'calculator' || lastMsgLower === 'kalkulator' || lastMsgLower === 'open calculator' || lastMsgLower === 'buka kalkulator')
+    );
+
+    if (isNavCalculator) {
+      return NextResponse.json({
+        success: true,
+        reply: isMalay
+          ? "Membuka Kalkulator Ansuran Pinjaman & DSR untuk anda sekarang!"
+          : "Opening the interactive Loan Repayment & DSR Calculator for you now!",
+        action: { type: 'NAVIGATE_CALCULATOR' },
+        suggestions: isMalay ? ["Kira Ansuran", "Direktori Bank", "Mula Langkah 1"] : ["Loan Calculator", "Bank Directory", "Start Step 1"]
+      });
+    }
+
+    const isNavDirectory = (
+      (lastMsgLower.includes('directory') || lastMsgLower.includes('direktori') || lastMsgLower.includes('lenders') || lastMsgLower.includes('senarai bank')) &&
+      (lastMsgLower.includes('bring') || lastMsgLower.includes('take') || lastMsgLower.includes('go to') || lastMsgLower.includes('open') || lastMsgLower.includes('buka') || lastMsgLower.includes('bawa') || lastMsgLower.includes('pergi') || lastMsgLower.includes('show') || lastMsgLower.includes('tunjuk') || lastMsgLower.includes('can bring') || lastMsgLower.includes('navigate') || lastMsgLower === 'directory' || lastMsgLower === 'direktori')
+    );
+
+    if (isNavDirectory) {
+      return NextResponse.json({
+        success: true,
+        reply: isMalay
+          ? "Membuka senarai direktori 11 bank berlesen dan bank digital untuk anda sekarang!"
+          : "Opening the licensed bank and digital lender directory for you now!",
+        action: { type: 'NAVIGATE_DIRECTORY' },
+        suggestions: isMalay ? ["Bandingkan Bank", "Kadar Faedah", "Mula Permohonan"] : ["Compare Lenders", "Interest Rates", "Start Application"]
+      });
+    }
+
+    const isNavTracker = (
+      (lastMsgLower.includes('tracker') || lastMsgLower.includes('penjejak') || (lastMsgLower.includes('status') && !lastMsgLower.includes('what is'))) &&
+      (lastMsgLower.includes('bring') || lastMsgLower.includes('take') || lastMsgLower.includes('go to') || lastMsgLower.includes('open') || lastMsgLower.includes('buka') || lastMsgLower.includes('bawa') || lastMsgLower.includes('check') || lastMsgLower.includes('semak') || lastMsgLower.includes('pergi') || lastMsgLower.includes('show') || lastMsgLower.includes('tunjuk') || lastMsgLower.includes('can bring') || lastMsgLower.includes('navigate'))
+    );
+
+    if (isNavTracker) {
+      return NextResponse.json({
+        success: true,
+        reply: isMalay
+          ? "Membuka Penjejak Status Permohonan untuk menyemak permohonan pembiayaan anda."
+          : "Opening your Application Tracker to check the live status of your loan submissions.",
+        action: { type: 'NAVIGATE_TRACKER' },
+        suggestions: isMalay ? ["Muat Naik Dokumen", "Direktori Bank", "Pusat Bantuan"] : ["Upload Documents", "Bank Directory", "Support Center"]
+      });
+    }
+
+    const isNavStep1 = (
+      (lastMsgLower.includes('step 1') || lastMsgLower.includes('langkah 1') || lastMsgLower.includes('loan need') || lastMsgLower.includes('loan purpose') || lastMsgLower.includes('keperluan pinjaman')) &&
+      (lastMsgLower.includes('bring') || lastMsgLower.includes('take') || lastMsgLower.includes('go to') || lastMsgLower.includes('open') || lastMsgLower.includes('buka') || lastMsgLower.includes('bawa') || lastMsgLower.includes('start') || lastMsgLower.includes('mula') || lastMsgLower.includes('can bring') || lastMsgLower.includes('navigate'))
+    );
+
+    if (isNavStep1) {
+      return NextResponse.json({
+        success: true,
+        reply: isMalay
+          ? "Membuka Langkah 1 untuk menetapkan tujuan, jumlah, dan tempoh pinjaman anda."
+          : "Opening Step 1 so you can configure your loan purpose, amount, and tenure.",
+        action: { type: 'NAVIGATE_LOAN_NEED' },
+        suggestions: isMalay ? ["Modal Pusingan", "Wang Tunai Kecemasan", "Seterusnya: Dokumen"] : ["Working Capital", "Emergency Cash", "Next: Documents"]
+      });
+    }
+
+    const isNavStep2 = (
+      (lastMsgLower.includes('step 2') || lastMsgLower.includes('langkah 2') || lastMsgLower.includes('upload document') || lastMsgLower.includes('upload statement') || lastMsgLower.includes('muat naik penyata')) &&
+      (lastMsgLower.includes('bring') || lastMsgLower.includes('take') || lastMsgLower.includes('go to') || lastMsgLower.includes('open') || lastMsgLower.includes('buka') || lastMsgLower.includes('bawa') || lastMsgLower.includes('can bring') || lastMsgLower.includes('navigate'))
+    );
+
+    if (isNavStep2) {
+      return NextResponse.json({
+        success: true,
+        reply: isMalay
+          ? "Menavigasi ke Langkah 2 untuk anda memuat naik penyata bank atau e-dompet anda."
+          : "Navigating to Step 2 so you can upload your bank or e-wallet statements.",
+        action: { type: 'NAVIGATE_UPLOAD' },
+        suggestions: isMalay ? ["Penyata Bank", "Slip Pendapatan Gig", "Langkah 1"] : ["Bank Statement", "Gig Inflow", "Step 1"]
+      });
+    }
+
     // 1C. Educational Intent: Explain DSR & Credit Score (e.g. "what is DSR", "explain credit score", "like 10 years old", "apa itu DSR")
     const isDsrOrScoreEducationalQuery = (
       (lastMsgLower.includes('dsr') || lastMsgLower.includes('debt service') || lastMsgLower.includes('nisbah khidmat') || lastMsgLower.includes('credit score') || lastMsgLower.includes('skor kredit')) &&
@@ -2068,15 +2149,34 @@ Guidelines:
       console.warn("Gemini chat reasoning error:", e);
     }
 
-    // Default Fallback
+    // Intelligent Context-Aware Fallback
     let reply = isMalay
       ? "Bagaimanakah saya boleh membantu permohonan pembiayaan anda?"
       : "How may I assist you with your financing today?";
 
+    let fallbackAction: any = undefined;
+    if (lastMsgLower.includes('calculator') || lastMsgLower.includes('kalkulator') || lastMsgLower.includes('kira')) {
+      reply = isMalay 
+        ? "Membuka Kalkulator Ansuran Pinjaman & DSR untuk anda." 
+        : "Opening the interactive Loan Repayment & DSR Calculator for you.";
+      fallbackAction = { type: 'NAVIGATE_CALCULATOR' };
+    } else if (lastMsgLower.includes('directory') || lastMsgLower.includes('direktori') || (lastMsgLower.includes('bank') && !lastMsgLower.includes('statement'))) {
+      reply = isMalay
+        ? "Membuka Direktori Bank & Institusi Kewangan Berlesen."
+        : "Opening the Licensed Lenders & Digital Bank Directory.";
+      fallbackAction = { type: 'NAVIGATE_DIRECTORY' };
+    } else if (lastMsgLower.includes('tracker') || lastMsgLower.includes('status') || lastMsgLower.includes('permohonan')) {
+      reply = isMalay
+        ? "Membuka Penjejak Status Permohonan Pembiayaan anda."
+        : "Opening your Loan Application Status Tracker.";
+      fallbackAction = { type: 'NAVIGATE_TRACKER' };
+    }
+
     return NextResponse.json({
       success: true,
       reply,
-      suggestions: isMalay ? ["Kalkulator", "Keperluan Pinjaman"] : ["Calculator", "Loan Need Setup"]
+      action: fallbackAction,
+      suggestions: isMalay ? ["Kalkulator", "Direktori Bank", "Mula Permohonan"] : ["Calculator", "Bank Directory", "Start Application"]
     });
   } catch (error: any) {
     return NextResponse.json({ 

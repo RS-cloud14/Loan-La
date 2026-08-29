@@ -1053,6 +1053,88 @@ export default function AICoPilotChat({
     const isReportInquiry = lower.includes('report') || lower.includes('laporan') || lower.includes('score') || lower.includes('skor') || lower.includes('explain') || lower.includes('terangkan');
     
     if (!isQuestionOrScroll) {
+      // Calculator Navigation
+      if (lower.includes('calculator') || lower.includes('kalkulator')) {
+        if (
+          lower.includes('bring') || lower.includes('take') || lower.includes('go to') || 
+          lower.includes('open') || lower.includes('buka') || lower.includes('bawa') || 
+          lower.includes('pergi') || lower.includes('show') || lower.includes('tunjuk') || 
+          lower.includes('can bring') || lower.includes('navigate') || lower === 'calculator' || 
+          lower === 'kalkulator' || lower === 'open calculator' || lower === 'buka kalkulator' ||
+          lower.includes('loan calculator') || lower.includes('kalkulator pinjaman')
+        ) {
+          const replyText = isMalay 
+            ? "Membuka Kalkulator Ansuran Pinjaman & DSR untuk anda sekarang!"
+            : "Opening the interactive Loan Repayment & DSR Calculator for you now!";
+          if (isCallActiveRef.current) {
+            speakText(replyText, () => {
+              executeAgentAction({ type: 'NAVIGATE_CALCULATOR' }, false);
+              if (isCallActiveRef.current) startCallListening();
+            });
+          } else {
+            executeAgentAction({ type: 'NAVIGATE_CALCULATOR' }, true);
+          }
+          const userMsgItem: ChatMessage = { id: `user-${Date.now()}`, role: 'user', content: textToSend, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+          const botMsgItem: ChatMessage = { id: `bot-${Date.now()}`, role: 'assistant', content: replyText, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), action: { type: 'NAVIGATE_CALCULATOR' } };
+          setMessages(prev => [...prev, userMsgItem, botMsgItem]);
+          return;
+        }
+      }
+
+      // Directory Navigation
+      if (lower.includes('directory') || lower.includes('direktori') || lower.includes('lenders') || lower.includes('senarai bank')) {
+        if (
+          lower.includes('bring') || lower.includes('take') || lower.includes('go to') || 
+          lower.includes('open') || lower.includes('buka') || lower.includes('bawa') || 
+          lower.includes('pergi') || lower.includes('show') || lower.includes('tunjuk') || 
+          lower.includes('can bring') || lower.includes('navigate') || lower === 'directory' || 
+          lower === 'direktori' || lower.includes('bank directory') || lower.includes('direktori bank')
+        ) {
+          const replyText = isMalay
+            ? "Membuka senarai direktori 11 bank berlesen dan bank digital untuk anda sekarang!"
+            : "Opening the licensed bank and digital lender directory for you now!";
+          if (isCallActiveRef.current) {
+            speakText(replyText, () => {
+              executeAgentAction({ type: 'NAVIGATE_DIRECTORY' }, false);
+              if (isCallActiveRef.current) startCallListening();
+            });
+          } else {
+            executeAgentAction({ type: 'NAVIGATE_DIRECTORY' }, true);
+          }
+          const userMsgItem: ChatMessage = { id: `user-${Date.now()}`, role: 'user', content: textToSend, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+          const botMsgItem: ChatMessage = { id: `bot-${Date.now()}`, role: 'assistant', content: replyText, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), action: { type: 'NAVIGATE_DIRECTORY' } };
+          setMessages(prev => [...prev, userMsgItem, botMsgItem]);
+          return;
+        }
+      }
+
+      // Tracker Navigation
+      if (lower.includes('tracker') || lower.includes('penjejak') || (!isReportInquiry && lower.includes('status'))) {
+        if (
+          lower.includes('bring') || lower.includes('take') || lower.includes('go to') || 
+          lower.includes('open') || lower.includes('buka') || lower.includes('bawa') || 
+          lower.includes('pergi') || lower.includes('show') || lower.includes('tunjuk') || 
+          lower.includes('can bring') || lower.includes('navigate') || lower.includes('check') || 
+          lower.includes('semak') || lower.includes('application') || lower.includes('permohonan')
+        ) {
+          const replyText = isMalay
+            ? "Membuka Penjejak Status Permohonan untuk menyemak permohonan pembiayaan anda."
+            : "Opening your Application Tracker to check the live status of your loan submissions.";
+          if (isCallActiveRef.current) {
+            speakText(replyText, () => {
+              executeAgentAction({ type: 'NAVIGATE_TRACKER' }, false);
+              if (isCallActiveRef.current) startCallListening();
+            });
+          } else {
+            executeAgentAction({ type: 'NAVIGATE_TRACKER' }, true);
+          }
+          const userMsgItem: ChatMessage = { id: `user-${Date.now()}`, role: 'user', content: textToSend, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+          const botMsgItem: ChatMessage = { id: `bot-${Date.now()}`, role: 'assistant', content: replyText, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), action: { type: 'NAVIGATE_TRACKER' } };
+          setMessages(prev => [...prev, userMsgItem, botMsgItem]);
+          return;
+        }
+      }
+
       if (!isReportInquiry && lower.includes('check') && (lower.includes('application') || lower.includes('status'))) {
         executeAgentAction({ type: 'NAVIGATE_TRACKER' }, true);
         return;
