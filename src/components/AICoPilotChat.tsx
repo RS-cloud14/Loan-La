@@ -1506,6 +1506,10 @@ export default function AICoPilotChat({
       };
 
       recog.onerror = (e: any) => {
+        // 'no-speech' and 'aborted' are normal browser events fired when user is silent; no need to flood console
+        if (e.error === 'no-speech' || e.error === 'aborted') {
+          return;
+        }
         console.warn("Call speech recog notice:", e.error);
         if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
           isRecognitionRunningRef.current = false;
@@ -1696,7 +1700,9 @@ export default function AICoPilotChat({
           };
 
           recog.onerror = (e: any) => {
-            console.warn("Dictation recog notice:", e.error);
+            if (e.error !== 'no-speech' && e.error !== 'aborted') {
+              console.warn("Dictation recog notice:", e.error);
+            }
             setIsDictating(false);
           };
 

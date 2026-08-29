@@ -53,17 +53,48 @@ export function getBankSlug(bankId?: string, bankName?: string): string {
   return 'default';
 }
 
-const SUPPORTED_EXTENSIONS = ['.png', '.svg', '.webp', '.jpg', '.jpeg'];
+const BANK_LOGO_MAP: Record<string, string> = {
+  aeon_bank: '/banks/aeon_bank.png',
+  aeon_credit: '/banks/aeon_credit.png',
+  affin: '/banks/affin.jpg',
+  agrobank: '/banks/agrobank.svg',
+  aim: '/banks/aim.svg',
+  al_rajhi: '/banks/al_rajhi.png',
+  alliance: '/banks/alliance.png',
+  ambank: '/banks/ambank.png',
+  ambank_hp: '/banks/ambank_hp.png',
+  bank_islam: '/banks/bank_islam.png',
+  bank_muamalat: '/banks/bank_muamalat.png',
+  bank_rakyat: '/banks/bank_rakyat.png',
+  boost_bank: '/banks/boost_bank.png',
+  bsn: '/banks/bsn.png',
+  capbay: '/banks/capbay.png',
+  cimb: '/banks/cimb.jpg',
+  cimb_biz: '/banks/cimb_biz.png',
+  default: '/banks/default.svg',
+  funding_societies: '/banks/funding_societies.jpg',
+  gxbank: '/banks/gxbank.png',
+  hong_leong: '/banks/hong_leong.png',
+  hong_leong_finance: '/banks/hong_leong_finance.png',
+  mara: '/banks/mara.svg',
+  maybank: '/banks/maybank.png',
+  modalku: '/banks/modalku.png',
+  public_bank: '/banks/public_bank.png',
+  rhb: '/banks/rhb.png',
+  rhb_sme: '/banks/rhb_sme.webp',
+  sme_bank: '/banks/sme_bank.svg',
+  spaylater: '/banks/spaylater.webp',
+  tekun: '/banks/tekun.png',
+  tng_gopinjam: '/banks/tng_gopinjam.png'
+};
 
 export default function BankLogo({ bankId, bankName, size = 'md', className = '' }: BankLogoProps) {
   const slug = getBankSlug(bankId, bankName);
-  const [extIndex, setExtIndex] = useState(0);
-  const [hasFailedAll, setHasFailedAll] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
-  // Reset extension index when bank changes
+  // Reset error state when bank slug changes
   useEffect(() => {
-    setExtIndex(0);
-    setHasFailedAll(false);
+    setHasError(false);
   }, [slug]);
 
   const sizeClasses = {
@@ -78,23 +109,15 @@ export default function BankLogo({ bankId, bankName, size = 'md', className = ''
     lg: 'w-8 h-8'
   };
 
-  const handleImageError = () => {
-    if (extIndex < SUPPORTED_EXTENSIONS.length - 1) {
-      setExtIndex(prev => prev + 1);
-    } else {
-      setHasFailedAll(true);
-    }
-  };
+  const currentSrc = BANK_LOGO_MAP[slug];
 
-  if (hasFailedAll) {
+  if (!currentSrc || hasError) {
     return (
       <div className={`bg-blue-50 text-blue-900 border border-blue-100 flex items-center justify-center shrink-0 shadow-2xs ${sizeClasses[size]} ${className}`}>
         <Building2 className={`${iconSizes[size]} text-blue-900`} />
       </div>
     );
   }
-
-  const currentSrc = `/banks/${slug}${SUPPORTED_EXTENSIONS[extIndex]}`;
 
   return (
     <div className={`overflow-hidden shrink-0 shadow-2xs border border-slate-100 bg-white flex items-center justify-center ${sizeClasses[size]} ${className}`}>
@@ -103,7 +126,7 @@ export default function BankLogo({ bankId, bankName, size = 'md', className = ''
         src={currentSrc}
         alt={bankName || bankId || 'Bank Logo'}
         className="w-full h-full object-contain p-1"
-        onError={handleImageError}
+        onError={() => setHasError(true)}
       />
     </div>
   );
