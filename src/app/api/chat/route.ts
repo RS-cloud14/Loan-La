@@ -1379,6 +1379,65 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // 9C. Spoken Loan Calculation Handler — Parse numbers, do math, emit SET_CALCULATOR action
+    // Triggers: "calculate 4527 at 4.5% for 2 years", "kira pinjaman 20000 kadar 6% tempoh 3 tahun", etc.
+    const isCalcIntent = (
+      lastMsgLower.includes('calculate') ||
+      lastMsgLower.includes('kira') ||
+      lastMsgLower.includes('kirakan') ||
+      lastMsgLower.includes('compute') ||
+      lastMsgLower.includes('installment') ||
+      lastMsgLower.includes('ansuran') ||
+      lastMsgLower.includes('repayment') ||
+      lastMsgLower.includes('monthly payment') ||
+      lastMsgLower.includes('bayaran bulanan') ||
+      lastMsgLower.includes('how much per month') ||
+      lastMsgLower.includes('berapa sebulan') ||
+      lastMsgLower.includes('berapa ansuran') ||
+      lastMsgLower.includes('simulation') ||
+      lastMsgLower.includes('simulasi') ||
+      lastMsgLower.includes('estimate') ||
+      lastMsgLower.includes('anggaran')
+    );
+
+    if (isCalcIntent) {
+      const parsedAmount = parseSpokenAmount(lastUserMessage);
+      const parsedTenure = parseSpokenTenure(lastUserMessage);
+      const parsedRate = parseSpokenRate(lastUserMessage);
+
+      // We need at least an amount to do a meaningful calculation
+      if (parsedAmount) {
+        const loanAmt = parsedAmount;
+        const tenureYrs = parsedTenure || userContext?.calcTenureYears || 1;
+        const rate = parsedRate || userContext?.calcInterestRate || 6.0;
+        const months = tenureYrs * 12;
+        const monthlyInterest = (loanAmt * rate * tenureYrs) / months;
+        const totalRepay = loanAmt + (loanAmt * (rate / 100) * tenureYrs);
+        const monthlyInstallment = totalRepay / months;
+        const totalInterest = loanAmt * (rate / 100) * tenureYrs;
+
+        const reply = isMalay
+          ? `🧮 **Hasil Kiraan Pinjaman Anda:**\n\n• **Jumlah Pinjaman:** RM ${loanAmt.toLocaleString('en-MY', { minimumFractionDigits: 0 })}\n• **Tempoh Bayaran Balik:** ${tenureYrs} Tahun (${months} Bulan)\n• **Kadar Faedah (Flat):** ${rate}% setahun\n\n**→ Ansuran Bulanan:** RM ${monthlyInstallment.toFixed(2)}\n**→ Jumlah Faedah:** RM ${totalInterest.toFixed(2)}\n**→ Jumlah Bayaran Balik:** RM ${totalRepay.toFixed(2)}\n\nNilai-nilai ini telah dikemaskini terus dalam Kalkulator Pinjaman di bawah. Anda boleh melaraskan gelangsar untuk melihat senario berbeza!`
+          : `🧮 **Your Loan Calculation Summary:**\n\n• **Loan Amount:** RM ${loanAmt.toLocaleString('en-MY', { minimumFractionDigits: 0 })}\n• **Repayment Tenure:** ${tenureYrs} Year${tenureYrs !== 1 ? 's' : ''} (${months} Months)\n• **Interest Rate (Flat):** ${rate}% p.a.\n\n**→ Monthly Installment: RM ${monthlyInstallment.toFixed(2)}**\n**→ Total Interest:** RM ${totalInterest.toFixed(2)}\n**→ Total Repayment:** RM ${totalRepay.toFixed(2)}\n\nThese values have been automatically pre-filled into the Loan Calculator. You can adjust the sliders to explore different scenarios!`;
+
+        return NextResponse.json({
+          success: true,
+          reply,
+          action: {
+            type: 'SET_CALCULATOR',
+            payload: {
+              loanAmount: loanAmt,
+              tenureYears: tenureYrs,
+              interestRate: rate
+            }
+          },
+          suggestions: isMalay
+            ? ['Buka Kalkulator', 'Semak DSR', 'Direktori Bank']
+            : ['Open Calculator', 'Check DSR', 'Bank Directory']
+        });
+      }
+    }
+
     // 10. Intelligent Gemini 2.5 Flash Conversational Reasoning (Full Context & Knowledge)
     try {
       const targetLanguageName = isMalay ? 'Bahasa Melayu' : 'English';
@@ -1386,24 +1445,63 @@ export async function POST(request: NextRequest) {
       let spatialContextText = '';
 
       if (pageType === 'landing') {
+        // Map the exact live visibleSection to a precise per-element description
+        const landingSectionId = userContext?.visibleSection || 'hero';
+        let exactSectionDesc = '';
+        if (landingSectionId === 'hero') {
+          exactSectionDesc = `The user is currently looking at the HERO SECTION (top of the page).
+  Exact elements visible on screen RIGHT NOW:
+  • Large rotating headline: Gig Workers & MSME Alternative Financing (cycles through 4 different taglines every 3 seconds).
+  • Primary CTA Button: "Check Loan Eligibility Report" (dark navy blue button, starts the credit underwriting assessment).
+  • Secondary Button: "Loan Repayment Calculator" (white border button, opens calculator page).
+  • 3 Customer Situation Cards visible at the bottom of this section:
+    1. "I Got Rejected By The Bank" → leads to the Licensed Lenders Directory.
+    2. "I Don't Have Official Payslips" → starts the AI underwriting assessment.
+    3. "I'm Not Sure If I Qualify" → starts the AI underwriting assessment.
+  • Partnership notice banner: small grey box stating Loan - La is a matchmaking platform, not a lender.
+  The user has NOT scrolled down yet. They are looking at the top of the Home Page.`;
+        } else if (landingSectionId === 'how_it_works') {
+          exactSectionDesc = `The user has scrolled down to the HOW IT WORKS SECTION.
+  Exact elements visible on screen RIGHT NOW:
+  • Section heading: "How the System Works"
+  • 3 step cards displayed side by side (or stacked on mobile):
+    Step 1: "Select Loan & Amount" — RM 1,000 to RM 150,000 range for emergency cash, motorbike installments, or working capital.
+    Step 2: "Upload Statement PDF" — Upload Grab/Shopee/bank PDF; system audits income inflows and masks IC numbers.
+    Step 3: "Bank Matching & Payout" — Verified report is matched to partner lenders (GXBank, Boost Credit, BSN) for fast digital approval.
+  The user is reading about how the 3-step loan process works.`;
+        } else if (landingSectionId === 'who_can_apply') {
+          exactSectionDesc = `The user has scrolled down to the WHO CAN APPLY SECTION.
+  Exact elements visible on screen RIGHT NOW:
+  • Section heading: "Who Can Apply?"
+  • 4 category cards displayed in a 2x2 grid:
+    Card 1: "Grab & Food Delivery Drivers" — Uses weekly gig earnings to qualify; estimated approval RM 2,000–RM 8,000; 2–4 Hours.
+    Card 2: "Shopee & Online Sellers" — Working capital for e-commerce stock; up to RM 20,000; 24–48 Hours.
+    Card 3: "Freelancers & Self-Employed" — Uses client deposit history; up to RM 10,000; 2–6 Hours.
+    Card 4: "Hawkers & Micro-Shops" — DuitNow QR-based income; up to RM 25,000; 1–3 Business Days.
+  • Each card has a "View Details" / "Why Loan-La is Suitable?" link.
+  The user is reviewing which borrower category applies to them.`;
+        } else if (landingSectionId === 'bottom_cta') {
+          exactSectionDesc = `The user has scrolled to the BOTTOM CTA BANNER (bottom of the Home Page).
+  Exact elements visible on screen RIGHT NOW:
+  • Dark navy blue gradient banner: "Ready to Check Your Loan Limit?"
+  • Subtitle: "Get your bank-ready loan readiness report in under 2 minutes."
+  • Big white CTA button: "Start Free Eligibility Check →"
+  The user is at the bottom of the Home Page, about to start their assessment.`;
+        } else {
+          exactSectionDesc = `The user is browsing the Home Page. Currently visible section: "${userContext?.visibleSectionLabel || 'Home Page'}".`;
+        }
+
         spatialContextText = `
 REAL-TIME SCREEN & ON-SCREEN VIEWPORT CONTEXT:
-- Active Screen: HOME / LANDING PAGE (Main Website Gateway of Loan - La).
-- The user is currently browsing the Home Page (They are NOT in the application form yet).
-- Currently Visible Viewport Section: "${userContext?.visibleSectionLabel || 'Home Page Hero Overview'}"
-- Available Sections & On-Screen Elements on Home Page:
-  1. Hero Section (ID: landing-hero):
-     • Dynamic Rotating Headline (Gig Workers & MSME Alternative Financing).
-     • Action Buttons: "Check Loan Eligibility Report" (Starts new assessment) and "Loan Repayment Calculator".
-     • 3 Customer Situation Cards: Bank rejection help, Income proof without payslips, Loan suitability check.
-  2. How It Works Section (ID: landing-how-it-works):
-     • 3 Simple Steps: 1. Select Loan & Amount -> 2. Upload Statement PDF -> 3. Bank Matching & Payout.
-  3. Who Can Apply Section (ID: landing-who-can-apply):
-     • 4 Category Cards: 1. Grab & Food Delivery Drivers, 2. Shopee & Online Sellers, 3. Freelancers & Self-Employed, 4. Hawkers & Micro-Shops.
-  4. Bottom Action Banner (ID: landing-cta):
-     • "Start Free Eligibility Check" CTA button.
-  5. Top Navigation Bar: Links to Home, Loan Calculator, Lender Directory, and My Applications Tracker.
-- If the user asks where they are or what is shown on their screen, accurately describe their currently visible section and provide direct, helpful guidance.`;
+- Active Screen: HOME / LANDING PAGE.
+- ${exactSectionDesc}
+- ALL available page sections for reference (in scroll order):
+  1. Hero Section → landing-hero (top)
+  2. How It Works → landing-how-it-works
+  3. Who Can Apply → landing-who-can-apply
+  4. Bottom CTA Banner → landing-cta (bottom)
+- Top Navigation Bar (always visible): Home, Loan Calculator, Lender Directory, My Applications Tracker.
+- CRITICAL INSTRUCTION: When the user asks "what am I looking at?", "what do I see?", "what is on my screen?" or similar, ONLY describe the EXACT currently visible section stated above ("${userContext?.visibleSectionLabel || 'Home Page Hero Overview'}"), NOT the full page overview. Be specific about the actual visible elements listed above.`;
       } else if (pageType === 'calculator') {
         spatialContextText = `
 REAL-TIME SCREEN & ON-SCREEN VIEWPORT CONTEXT:
@@ -1539,6 +1637,7 @@ When the user asks to configure or perform actions on screen:
 - To choose or set loan purpose, amount, or tenure in Step 1 (e.g. "I want to choose working capital for RM 6,000 and 2 years"): append [ACTION:SET_LOAN_PURPOSE:{"purpose":"working_capital"|"personal_cash"|"equipment"|"vehicle"|"invoice_financing"|"education","amount":6000,"tenureYears":2}].
 - To adjust loan amount: append [ACTION:SET_LOAN_AMOUNT:{"amount":10000}].
 - To adjust loan tenure: append [ACTION:SET_TENURE:{"tenureYears":3}].
+- CRITICAL — To calculate a loan repayment AND update the calculator UI with those exact values: always append [ACTION:SET_CALCULATOR:{"loanAmount":4527,"tenureYears":2,"interestRate":4.5}]. You MUST do this whenever the user mentions any specific loan amount, rate, or tenure in a calculation request (e.g. "calculate 4,527 at 4.5% for 2 years"). This automatically pre-fills the calculator page with the exact values the user just spoke.
 - To minimize call window to the floating ball: append [ACTION:MINIMIZE_CALL].
 - To open or expand the call window: append [ACTION:EXPAND_CALL].
 - To close or end the call: append [ACTION:END_CALL].
