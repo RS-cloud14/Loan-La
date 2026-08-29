@@ -28,8 +28,17 @@ interface UserContextPayload {
   uploadedFilesCount?: number;
   uploadedFilesSummary?: string[];
   viewportTelemetry?: {
+    detectedPage?: string;
     visibleSections?: string[];
     exactVisibleItems?: string[];
+    visibleLenders?: Array<{
+      name: string;
+      category?: string;
+      rate?: string;
+      sla?: string;
+      maxLoan?: string;
+      minIncome?: string;
+    }>;
   };
   activeTickets?: Array<{
     id: string;
@@ -1480,14 +1489,31 @@ export async function POST(request: NextRequest) {
     );
 
     if (isScreenVisionQuery) {
-      const pageType = userContext?.currentPage || 'landing';
+      const pageType = userContext?.viewportTelemetry?.detectedPage || userContext?.currentPage || 'landing';
       let reply = '';
       let suggestions: string[] = [];
 
-      if (pageType === 'directory') {
-        reply = isMalay
-          ? `📱 **Apa Yang Saya Nampak Pada Skrin Anda (Direktori 18 Bank & Pembiaya Mikro Berlesen):**\n\nAnda kini sedang melihat **Direktori Institusi Kewangan Berlesen** di Loan - La. Berikut adalah skim pembiayaan yang terpapar di skrin anda sekarang:\n\n1. 🌾 **Agrobank Pembiayaan Kredit Mikro-i** (Bank Pertanian Kerajaan)\n• **Kadar Indikatif:** dari 4.75% setahun (baki berkurangan)\n• **Had Pinjaman:** sehingga RM 100,000 | **Tempoh Kelulusan:** 3–7 Hari Bekerja\n• **Syarat Utama:** Perniagaan berasaskan pertanian & agromakanan (Patuh Syariah Tawarruq, tanpa cagaran fizikal).\n\n2. 🏢 **Affin Bank SMEmerge Micro Financing** (Bank Perdagangan)\n• **Kadar Indikatif:** Skim SRF dihadkan pada 3.75% setahun\n• **Had Pinjaman:** sehingga RM 300,000 | **Tempoh Kelulusan:** 3–7 Hari Bekerja\n• **Syarat Utama:** Perniagaan pemula operasi 12–24 bulan dengan sokongan jaminan CGC/SJPP.\n\n3. 🕌 **Bank Muamalat Skim Pembiayaan Mikro-i** (Bank Islam Penuh)\n• **Kadar Indikatif:** dari 6.99% setahun (tetap)\n• **Had Pinjaman:** sehingga RM 100,000 | **Tempoh Kelulusan:** 3–5 Hari Bekerja\n• **Syarat Utama:** Warganegara Malaysia dengan pendaftaran SSM/PBT (Peserta rasmi Skim Pembiayaan Mikro BNM).\n\n4. ⚡ **Pilihan Digital & Bank Lain:**\n• **GXBank Digital Micro Loan** (dari 4.99% setahun, kelulusan 10 minit untuk pemandu Grab)\n• **Boost Bank / Boost Credit** (dari 6.5% setahun untuk peniaga Shopee/e-dagang)\n• **Maybank Mikro**, **CIMB SME**, **TEKUN Nasional**, dan **Funding Societies** turut tersedia di direktori ini.\n\nAdakah anda ingin saya bantu menilai pinjaman mana yang paling sesuai dengan pendapatan anda, atau kira ansuran bulanan?`
-          : `📱 **What I Can See On Your Screen (18 Licensed Lenders Directory):**\n\nYou are currently looking at our official **18 Licensed Lenders & Digital Banks Directory** on Loan - La.\n\nHere are the specific loan schemes displayed on your screen right now:\n\n1. 🌾 **Agrobank Pembiayaan Kredit Mikro-i** (Government Agricultural Bank)\n• **Indicative Rate:** from 4.75% p.a. (reducing balance)\n• **Max Loan Limit:** RM 100,000 | **Approval SLA:** 3–7 Working Days\n• **Eligibility:** Agriculture / Agro-food based business (Shariah Tawarruq compliant, no physical collateral required).\n\n2. 🏢 **Affin Bank SMEmerge Micro Financing** (Commercial Bank)\n• **Indicative Rate:** Scheme-based SRF capped at 3.75% p.a.\n• **Max Loan Limit:** RM 300,000 | **Approval SLA:** 3–7 Working Days\n• **Eligibility:** Startups in operation 12–24 months with CGC/SJPP guarantee support.\n\n3. 🕌 **Bank Muamalat Skim Pembiayaan Mikro-i** (Full Islamic Bank)\n• **Indicative Rate:** from 6.99% p.a. (fixed)\n• **Max Loan Limit:** RM 100,000 | **Approval SLA:** 3–5 Working Days\n• **Eligibility:** Malaysian citizens with SSM/PBT registration (Official Bank Negara Malaysia SPM participant).\n\n4. ⚡ **Digital Lenders & Other Options:**\n• **GXBank Digital Micro Loan** (from 4.99% p.a., instant 10 mins approval for Grab drivers)\n• **Boost Bank / Boost Credit** (from 6.5% p.a. for Shopee & e-commerce sellers)\n• **Maybank Mikro**, **CIMB SME**, **TEKUN**, and **Funding Societies** are also available in this directory.\n\nWould you like me to check which loan matches your income, or calculate your monthly installment?`;
+      if (pageType === 'directory' || (userContext?.viewportTelemetry?.visibleLenders && userContext.viewportTelemetry.visibleLenders.length > 0)) {
+        const lenders = userContext?.viewportTelemetry?.visibleLenders || [];
+        if (lenders.length > 0) {
+          const listText = lenders.map((l, idx) => {
+            const lines: string[] = [];
+            lines.push(`${idx + 1}. 🏦 **${l.name}** (${l.category || 'Licensed Financial Institution'})`);
+            if (l.rate) lines.push(`   • **Indicative Rate:** ${l.rate}`);
+            if (l.sla) lines.push(`   • **Approval SLA:** ${l.sla}`);
+            if (l.maxLoan) lines.push(`   • **Max Loan Limit:** ${l.maxLoan}`);
+            if (l.minIncome) lines.push(`   • **Requirement:** ${l.minIncome}`);
+            return lines.join('\n');
+          }).join('\n\n');
+
+          reply = isMalay
+            ? `📱 **Apa Yang Saya Nampak Pada Skrin Anda (Direktori Institusi Kewangan Berlesen):**\n\nAnda sedang melihat **Direktori Institusi Kewangan & Bank Digital Berlesen** di Loan - La.\n\nBerikut adalah skim pembiayaan yang terpapar di skrin anda sekarang:\n\n${listText}\n\nAdakah anda ingin saya bantu menilai pinjaman mana yang paling sesuai dengan profil pendapatan anda, atau kira ansuran bulanan?`
+            : `📱 **What I Can See On Your Screen (Licensed Alternative Lenders Directory):**\n\nYou are currently looking at the **Licensed Alternative Lenders Directory** on Loan - La.\n\nHere are the exact lender schemes displayed on your screen right now:\n\n${listText}\n\nWould you like me to check which loan matches your income profile, or calculate your monthly installment?`;
+        } else {
+          reply = isMalay
+            ? `📱 **Apa Yang Saya Nampak Pada Skrin Anda (Direktori 18 Bank Berlesen):**\n\nAnda kini sedang melihat **Direktori Institusi Kewangan Berlesen** di Loan - La (18 Pembiaya Mikro & Bank Digital termasuk Maybank Mikro, CIMB SME, Bank Islam iTEKAD, Agrobank, dan GXBank).`
+            : `📱 **What I Can See On Your Screen (Licensed Lenders Directory):**\n\nYou are viewing the **Licensed Alternative Lenders Directory** on Loan - La (18 Micro-Financing Institutions & Digital Banks including Maybank Mikro, CIMB SME, Bank Islam iTEKAD, Agrobank, and GXBank).`;
+        }
         suggestions = isMalay
           ? ["Kira Ansuran", "Mula Langkah 1", "Pusat Bantuan"]
           : ["Calculate Repayment", "Start Step 1", "Support Center"];

@@ -933,27 +933,62 @@ export default function AICoPilotChat({
         const vWidth = window.innerWidth || document.documentElement.clientWidth;
 
         const isRectVisible = (rect: DOMRect) => {
-          // Element is visible if it intersects with the viewport
-          return rect.top < vHeight && rect.bottom > 0 && rect.left < vWidth && rect.right > 0;
+          return rect.top < vHeight && rect.bottom > 50 && rect.left < vWidth && rect.right > 0;
         };
 
         const exactVisibleItems: string[] = [];
         const visibleSections: string[] = [];
+        const visibleLenders: Array<{ name: string; category?: string; rate?: string; sla?: string; maxLoan?: string; minIncome?: string }> = [];
 
-        // 1. Landing Page Section Checks
+        // 1. Directory Page dynamic lender card extraction
+        const directoryCards = document.querySelectorAll('[data-lender-card], [id^="lender-card-"]');
+        if (directoryCards.length > 0) {
+          directoryCards.forEach((c) => {
+            const rect = c.getBoundingClientRect();
+            if (isRectVisible(rect)) {
+              const name = c.getAttribute('data-lender-card') || c.querySelector('h3')?.textContent?.trim() || '';
+              if (name && !visibleLenders.some(l => l.name === name)) {
+                // Extract metrics from card DOM
+                const cat = c.querySelector('span.bg-slate-100, span.bg-emerald-50, span.bg-slate-50, span.bg-emerald-100')?.textContent?.trim();
+                const textNodes: string[] = [];
+                c.querySelectorAll('div, p, span').forEach(el => {
+                  const txt = el.textContent?.trim();
+                  if (txt && txt.length > 2 && txt.length < 90 && !textNodes.includes(txt)) textNodes.push(txt);
+                });
+
+                let rate = '';
+                let sla = '';
+                let maxLoan = '';
+                let minIncome = '';
+                textNodes.forEach(t => {
+                  if (t.includes('%') || t.includes('BLR') || t.includes('Kadar') || t.includes('Rate')) rate = t;
+                  if (t.includes('Working Days') || t.includes('Hari Bekerja') || t.includes('Hours') || t.includes('Jam')) sla = t;
+                  if (t.includes('RM ') && (t.includes('50,000') || t.includes('100,000') || t.includes('300,000') || t.includes('750,000') || t.includes('20,000') || t.includes('10,000') || t.includes('250,000'))) maxLoan = t;
+                  if (t.includes('Operation') || t.includes('Operasi') || t.includes('B40') || t.includes('SSM') || t.includes('Income')) minIncome = t;
+                });
+
+                visibleLenders.push({ name, category: cat, rate, sla, maxLoan, minIncome });
+                exactVisibleItems.push(`Lender Card: "${name}" [${cat || 'Bank'}] ${rate ? `| Rate: ${rate}` : ''} ${sla ? `| SLA: ${sla}` : ''} ${maxLoan ? `| Limit: ${maxLoan}` : ''}`);
+              }
+            }
+          });
+
+          if (visibleLenders.length > 0) {
+            visibleSections.push('Licensed Alternative Lenders Directory');
+          }
+        }
+
+        // 2. Landing Page Section Checks
         const heroEl = document.getElementById('landing-hero');
         if (heroEl && isRectVisible(heroEl.getBoundingClientRect())) {
           visibleSections.push('Hero Section');
-          exactVisibleItems.push('Hero Section (Rotating Headline: "Gig Workers & MSME Alternative Financing", CTA Buttons: "Check Loan Eligibility Report" & "Loan Repayment Calculator", 3 Problem Situation Cards)');
+          exactVisibleItems.push('Hero Section (Headline: "Gig Workers & MSME Alternative Financing", CTA Buttons: "Check Loan Eligibility Report" & "Loan Repayment Calculator", 3 Customer Situation Cards)');
         }
 
         const howItWorksEl = document.getElementById('landing-how-it-works');
         if (howItWorksEl && isRectVisible(howItWorksEl.getBoundingClientRect())) {
           visibleSections.push('How the System Works');
-          exactVisibleItems.push('Section: "How the System Works" (From statement upload to bank approval in 3 simple steps)');
-          exactVisibleItems.push('Step 1: "Select Loan & Amount" (Specify how much you need RM 1,000 to RM 150,000 for emergency cash, motorbike installments, or working capital)');
-          exactVisibleItems.push('Step 2: "Upload Statement PDF" (Upload your Grab summary, Shopee store statement, or bank PDF; system audits inflow & masks IC)');
-          exactVisibleItems.push('Step 3: "Bank Matching & Payout" (Verified report pre-matched to GXBank, Boost Credit, BSN for fast digital approval and transfer)');
+          exactVisibleItems.push('Section: "How the System Works" (3 Step Cards: 1. Select Loan & Amount, 2. Upload Statement PDF, 3. Bank Matching & Payout)');
         }
 
         const whoCanApplyEl = document.getElementById('landing-who-can-apply');
@@ -973,10 +1008,9 @@ export default function AICoPilotChat({
               }
             }
           });
-          // Fallback if cards querySelector didn't match
           if (addedCount === 0) {
-            exactVisibleItems.push('Category Card: "Grab & Food Delivery Drivers" (Use your weekly gig delivery earnings to qualify for fast emergency cash loans)');
-            exactVisibleItems.push('Category Card: "Shopee & Online Sellers" (Get working capital to purchase stock, inventory, and expand your online business)');
+            exactVisibleItems.push('Category Card: "Grab & Food Delivery Drivers" (Use weekly gig earnings)');
+            exactVisibleItems.push('Category Card: "Shopee & Online Sellers" (Working capital for inventory)');
           }
         }
 
@@ -986,25 +1020,19 @@ export default function AICoPilotChat({
           exactVisibleItems.push('Bottom Banner: "Ready to Check Your Loan Limit?" with "Start Free Eligibility Check →" CTA button');
         }
 
-        // 2. Directory Page lender cards
-        const directoryCards = document.querySelectorAll('[data-lender-card]');
-        if (directoryCards.length > 0) {
-          const visibleLenders: string[] = [];
-          directoryCards.forEach((c) => {
-            if (isRectVisible(c.getBoundingClientRect())) {
-              const name = c.getAttribute('data-lender-card') || c.querySelector('h3')?.textContent || '';
-              if (name) visibleLenders.push(name.trim());
-            }
-          });
-          if (visibleLenders.length > 0) {
-            visibleSections.push('Lender Directory Cards');
-            exactVisibleItems.push(`Visible Lender Cards (${visibleLenders.length}): ${visibleLenders.join(', ')}`);
-          }
+        // 3. Detect actual page
+        let detectedPage = currentPage;
+        if (visibleLenders.length > 0 || document.querySelector('[data-lender-card], .lender-card, button:has-text("Compare Lenders")')) {
+          detectedPage = 'directory';
+        } else if (visibleSections.length > 0 && !visibleSections.includes('Licensed Alternative Lenders Directory')) {
+          detectedPage = 'landing';
         }
 
         return {
+          detectedPage,
           visibleSections,
-          exactVisibleItems
+          exactVisibleItems,
+          visibleLenders
         };
       } catch {
         return undefined;
