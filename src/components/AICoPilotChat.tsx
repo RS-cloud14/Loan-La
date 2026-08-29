@@ -863,15 +863,97 @@ export default function AICoPilotChat({
 
     const lower = textToSend.toLowerCase();
 
-    // Voice window control commands
-    const isMinimizeVoice = lower === 'minimize' || lower === 'minimize call' || lower === 'minimize the call' || lower === 'kecilkan panggilan' || lower.includes('minimize call') || lower.includes('minimize the call') || lower.includes('kecilkan panggilan') || lower.includes('hide call') || lower.includes('hide chat');
-    const isExpandVoice = lower === 'expand' || lower === 'expand call' || lower === 'open call' || lower === 'open the call' || lower === 'buka panggilan' || lower.includes('expand call') || lower.includes('open the call') || lower.includes('buka panggilan') || lower.includes('show call') || lower.includes('besarkan panggilan');
-    const isEndCallVoice = lower === 'close the call' || lower === 'close call' || lower === 'end call' || lower === 'end the call' || lower === 'tamatkan panggilan' || lower === 'hang up' || lower.includes('close the call') || lower.includes('close call') || lower.includes('end call') || lower.includes('end the call') || lower.includes('tamatkan panggilan') || lower.includes('hang up') || lower.includes('tutup panggilan') || lower.includes('stop call');
+    // Voice & Chat window control commands
+    const isMinimizeVoice = (
+      lower === 'minimize' ||
+      lower === 'minimize chat' ||
+      lower === 'minimize the chat' ||
+      lower === 'minimize call' ||
+      lower === 'minimize the call' ||
+      lower === 'minimize window' ||
+      lower === 'minimize the window' ||
+      lower === 'kecilkan' ||
+      lower === 'kecilkan chat' ||
+      lower === 'kecilkan sembang' ||
+      lower === 'kecilkan panggilan' ||
+      lower === 'kecilkan tetingkap' ||
+      lower === 'hide chat' ||
+      lower === 'hide call' ||
+      lower === 'hide window' ||
+      lower.includes('minimize chat') ||
+      lower.includes('minimize the chat') ||
+      lower.includes('minimize call') ||
+      lower.includes('minimize the call') ||
+      lower.includes('minimize window') ||
+      lower.includes('kecilkan chat') ||
+      lower.includes('kecilkan sembang') ||
+      lower.includes('kecilkan panggilan') ||
+      lower.includes('kecilkan tetingkap') ||
+      lower.includes('hide chat') ||
+      lower.includes('hide call')
+    );
+
+    const isExpandVoice = (
+      lower === 'expand' ||
+      lower === 'expand chat' ||
+      lower === 'expand the chat' ||
+      lower === 'expand call' ||
+      lower === 'open call' ||
+      lower === 'open the call' ||
+      lower === 'open chat' ||
+      lower === 'open the chat' ||
+      lower === 'buka chat' ||
+      lower === 'buka sembang' ||
+      lower === 'buka panggilan' ||
+      lower === 'besarkan chat' ||
+      lower === 'besarkan panggilan' ||
+      lower.includes('expand call') ||
+      lower.includes('expand chat') ||
+      lower.includes('open the call') ||
+      lower.includes('open chat') ||
+      lower.includes('buka panggilan') ||
+      lower.includes('show call') ||
+      lower.includes('show chat') ||
+      lower.includes('besarkan panggilan')
+    );
+
+    const isEndOrCloseVoice = (
+      lower === 'close' ||
+      lower === 'close chat' ||
+      lower === 'close the chat' ||
+      lower === 'close window' ||
+      lower === 'close the window' ||
+      lower === 'close call' ||
+      lower === 'close the call' ||
+      lower === 'end call' ||
+      lower === 'end the call' ||
+      lower === 'tutup' ||
+      lower === 'tutup chat' ||
+      lower === 'tutup sembang' ||
+      lower === 'tutup tetingkap' ||
+      lower === 'tutup panggilan' ||
+      lower === 'tamatkan panggilan' ||
+      lower === 'hang up' ||
+      lower === 'exit chat' ||
+      lower.includes('close chat') ||
+      lower.includes('close the chat') ||
+      lower.includes('close the window') ||
+      lower.includes('close call') ||
+      lower.includes('close the call') ||
+      lower.includes('tutup chat') ||
+      lower.includes('tutup sembang') ||
+      lower.includes('tutup tetingkap') ||
+      lower.includes('tutup panggilan') ||
+      lower.includes('end call') ||
+      lower.includes('end the call') ||
+      lower.includes('tamatkan panggilan') ||
+      lower.includes('hang up')
+    );
 
     if (isMinimizeVoice) {
       setIsOpen(false);
       if (isCallActiveRef.current) {
-        speakText(isMalay ? "Mengecilkan tetingkap panggilan. Saya masih mendengar di bebola terapung ini." : "Minimizing call window. I am still listening right here in the floating orb.", () => {
+        speakText(isMalay ? "Mengecilkan tetingkap sembang. Saya masih mendengar di bebola terapung ini." : "Minimizing chat window. I am still listening right here in the floating orb.", () => {
           if (isCallActiveRef.current) startCallListening();
         });
       }
@@ -880,16 +962,21 @@ export default function AICoPilotChat({
     if (isExpandVoice) {
       setIsOpen(true);
       if (isCallActiveRef.current) {
-        speakText(isMalay ? "Membuka tetingkap panggilan penuh." : "Expanding full call window.", () => {
+        speakText(isMalay ? "Membuka tetingkap sembang penuh." : "Expanding full chat window.", () => {
           if (isCallActiveRef.current) startCallListening();
         });
       }
       return;
     }
-    if (isEndCallVoice) {
-      speakText(isMalay ? "Menamatkan panggilan. Terima kasih dan semoga berjaya!" : "Ending call. Thank you and have a great day!", () => {
-        handleEndCall();
-      });
+    if (isEndOrCloseVoice) {
+      if (isCallActiveRef.current) {
+        speakText(isMalay ? "Menamatkan panggilan dan menutup tetingkap. Terima kasih dan semoga berjaya!" : "Ending call and closing chat. Thank you and have a great day!", () => {
+          handleEndCall();
+          setIsOpen(false);
+        });
+      } else {
+        setIsOpen(false);
+      }
       return;
     }
 

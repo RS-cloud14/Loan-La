@@ -453,7 +453,103 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 1B. Educational Intent: Explain DSR & Credit Score (e.g. "what is DSR", "explain credit score", "like 10 years old", "apa itu DSR")
+    // 1B. Window & Chat UI Controls (Minimize, Close, Expand)
+    const isMinimizeChat = (
+      lastMsgLower === 'minimize' ||
+      lastMsgLower === 'minimize chat' ||
+      lastMsgLower === 'minimize the chat' ||
+      lastMsgLower === 'minimize window' ||
+      lastMsgLower === 'minimize the window' ||
+      lastMsgLower === 'kecilkan' ||
+      lastMsgLower === 'kecilkan chat' ||
+      lastMsgLower === 'kecilkan sembang' ||
+      lastMsgLower === 'kecilkan tetingkap' ||
+      lastMsgLower === 'hide chat' ||
+      lastMsgLower === 'hide call' ||
+      lastMsgLower.includes('minimize chat') ||
+      lastMsgLower.includes('minimize the chat') ||
+      lastMsgLower.includes('minimize window') ||
+      lastMsgLower.includes('minimize call') ||
+      lastMsgLower.includes('kecilkan chat') ||
+      lastMsgLower.includes('kecilkan sembang') ||
+      lastMsgLower.includes('kecilkan tetingkap') ||
+      lastMsgLower.includes('hide chat')
+    );
+
+    const isCloseChat = (
+      lastMsgLower === 'close' ||
+      lastMsgLower === 'close chat' ||
+      lastMsgLower === 'close the chat' ||
+      lastMsgLower === 'close window' ||
+      lastMsgLower === 'close the window' ||
+      lastMsgLower === 'exit chat' ||
+      lastMsgLower === 'tutup' ||
+      lastMsgLower === 'tutup chat' ||
+      lastMsgLower === 'tutup sembang' ||
+      lastMsgLower === 'tutup tetingkap' ||
+      lastMsgLower === 'tutup panggilan' ||
+      lastMsgLower === 'end chat' ||
+      lastMsgLower === 'end call' ||
+      lastMsgLower.includes('close chat') ||
+      lastMsgLower.includes('close the chat') ||
+      lastMsgLower.includes('close window') ||
+      lastMsgLower.includes('close the window') ||
+      lastMsgLower.includes('tutup chat') ||
+      lastMsgLower.includes('tutup sembang') ||
+      lastMsgLower.includes('tutup tetingkap') ||
+      lastMsgLower.includes('end chat')
+    );
+
+    const isExpandChat = (
+      lastMsgLower === 'expand' ||
+      lastMsgLower === 'expand chat' ||
+      lastMsgLower === 'expand the chat' ||
+      lastMsgLower === 'open chat' ||
+      lastMsgLower === 'open the chat' ||
+      lastMsgLower === 'buka chat' ||
+      lastMsgLower === 'buka sembang' ||
+      lastMsgLower === 'besarkan chat' ||
+      lastMsgLower.includes('expand chat') ||
+      lastMsgLower.includes('expand the chat') ||
+      lastMsgLower.includes('open chat') ||
+      lastMsgLower.includes('buka chat') ||
+      lastMsgLower.includes('besarkan chat')
+    );
+
+    if (isMinimizeChat) {
+      return NextResponse.json({
+        success: true,
+        reply: isMalay
+          ? "Mengecilkan tetingkap sembang. Saya kekal aktif di bebola terapung ini bila-bila masa anda perlukan saya!"
+          : "Minimizing the chat window. I am still active right here in the floating orb whenever you need me!",
+        action: { type: 'MINIMIZE_CALL' },
+        suggestions: isMalay ? ["Buka Sembang", "Kira Ansuran", "Direktori Bank"] : ["Open Chat", "Loan Calculator", "Bank Directory"]
+      });
+    }
+
+    if (isCloseChat) {
+      return NextResponse.json({
+        success: true,
+        reply: isMalay
+          ? "Menutup tetingkap sembang. Terima kasih dan semoga berjaya dengan permohonan anda!"
+          : "Closing the chat window. Thank you and best of luck with your loan assessment!",
+        action: { type: 'MINIMIZE_CALL' },
+        suggestions: isMalay ? ["Buka Sembang", "Kira Ansuran", "Direktori Bank"] : ["Open Chat", "Loan Calculator", "Bank Directory"]
+      });
+    }
+
+    if (isExpandChat) {
+      return NextResponse.json({
+        success: true,
+        reply: isMalay
+          ? "Membuka tetingkap sembang penuh. Bagaimana saya boleh bantu anda?"
+          : "Expanding full chat window. How can I help you today?",
+        action: { type: 'EXPAND_CALL' },
+        suggestions: isMalay ? ["Kira Ansuran", "Direktori Bank", "Mula Permohonan"] : ["Loan Calculator", "Bank Directory", "Start Application"]
+      });
+    }
+
+    // 1C. Educational Intent: Explain DSR & Credit Score (e.g. "what is DSR", "explain credit score", "like 10 years old", "apa itu DSR")
     const isDsrOrScoreEducationalQuery = (
       (lastMsgLower.includes('dsr') || lastMsgLower.includes('debt service') || lastMsgLower.includes('nisbah khidmat') || lastMsgLower.includes('credit score') || lastMsgLower.includes('skor kredit')) &&
       (lastMsgLower.includes('what is') || lastMsgLower.includes('what are') || lastMsgLower.includes('apa itu') || lastMsgLower.includes('maksud') || lastMsgLower.includes('explain') || lastMsgLower.includes('terangkan') || lastMsgLower.includes('like 10 years old') || lastMsgLower.includes('like 5 years old') || lastMsgLower.includes('macam mana') || lastMsgLower.includes('how does') || lastMsgLower.includes('tell me about'))
