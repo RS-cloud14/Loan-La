@@ -1874,39 +1874,11 @@ export default function Dashboard() {
                           </div>
                           <div>
                             <h2 className="text-base font-bold text-slate-900">
-                              {language === 'bm' ? 'Muat Naik Dokumen & Pengesahan' : 'Upload Documents & Confirmation'}
+                              {language === 'bm' ? 'Muat Naik Dokumen' : 'Upload Documents'}
                             </h2>
-                            <p className="text-xs text-slate-500 mt-0.5">
-                              {language === 'bm'
-                                ? 'Pilih jenis pekerjaan anda di bawah untuk melihat dokumen wajib yang diperlukan.'
-                                : 'Select your employment profile below to see your tailored document checklist.'}
-                            </p>
                           </div>
                         </div>
 
-                        {/* Live Readiness Counter */}
-                        <div className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200/80 self-start sm:self-center">
-                          <span className="text-[11px] text-slate-600 font-medium">
-                            {language === 'bm' ? 'Status Dokumen Wajib:' : 'Mandatory Status:'}
-                          </span>
-                          <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${
-                            uploadedFiles.filter(f => f.category === 'bank_statement').length >= 3 &&
-                            ((incomeWorkType === 'gig' && uploadedFiles.filter(f => f.category === 'platform_dashboard').length >= 12) ||
-                             (incomeWorkType === 'salaried' && uploadedFiles.filter(f => f.category === 'pay_slip').length >= 3) ||
-                             (incomeWorkType === 'both' && (uploadedFiles.filter(f => f.category === 'platform_dashboard').length >= 12 || uploadedFiles.filter(f => f.category === 'pay_slip').length >= 3))) &&
-                            uploadedFiles.filter(f => f.category === 'mykad_id').length > 0
-                              ? 'bg-emerald-600 text-white'
-                              : 'bg-blue-950 text-white'
-                          }`}>
-                            {[
-                              uploadedFiles.filter(f => f.category === 'bank_statement').length >= 3,
-                              (incomeWorkType === 'gig' && uploadedFiles.filter(f => f.category === 'platform_dashboard').length >= 12) ||
-                              (incomeWorkType === 'salaried' && uploadedFiles.filter(f => f.category === 'pay_slip').length >= 3) ||
-                              (incomeWorkType === 'both' && (uploadedFiles.filter(f => f.category === 'platform_dashboard').length >= 12 || uploadedFiles.filter(f => f.category === 'pay_slip').length >= 3)),
-                              uploadedFiles.filter(f => f.category === 'mykad_id').length > 0
-                            ].filter(Boolean).length} / 3 {language === 'bm' ? 'Lengkap' : 'Ready'}
-                          </span>
-                        </div>
                       </div>
 
                       {/* STEP 2.1: CHOOSE EMPLOYMENT TYPE (CLEAR CARDS) */}
@@ -1995,15 +1967,12 @@ export default function Dashboard() {
                       </div>
 
                       {/* STEP 2.2: DOCUMENT UPLOAD CHECKLIST */}
-                      <div className="flex flex-col gap-3.5 pt-2 border-t border-slate-100">
+<div className="flex flex-col gap-3.5 pt-2 border-t border-slate-100">
                         <div className="flex items-center justify-between">
                           <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                             <span className="w-5 h-5 rounded-full bg-blue-950 text-white flex items-center justify-center text-[10px] font-black">2</span>
                             <span>{language === 'bm' ? 'Senarai Dokumen Diperlukan:' : 'Required Document Checklist:'}</span>
                           </label>
-                          <span className="text-[11px] text-slate-500">
-                            {language === 'bm' ? '3 Wajib • 1 Pilihan' : '3 Mandatory • 1 Optional'}
-                          </span>
                         </div>
 
                         {/* CARD 1: OFFICIAL BANK STATEMENTS (MANDATORY) */}
@@ -2015,7 +1984,7 @@ export default function Dashboard() {
                               : 'border-slate-200 bg-white hover:border-slate-300'
                           }`}
                         >
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <div className="flex items-start gap-3">
                               <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-900 flex items-center justify-center shrink-0 mt-0.5">
                                 <FileText className="w-4.5 h-4.5" />
@@ -2029,8 +1998,8 @@ export default function Dashboard() {
                                     {language === 'bm' ? 'WAJIB' : 'MANDATORY'}
                                   </span>
                                 </div>
-                                <p className="text-[11px] text-slate-500 mt-1">
-                                  {language === 'bm' ? 'Muat naik e-statement rasmi bank (Maybank, CIMB, RHB, Public Bank, HLB, dsb.)' : 'Official bank e-statements (Maybank, CIMB, RHB, Public Bank, etc.)'}
+                                <p className="text-[11px] text-slate-500 mt-0.5">
+                                  {language === 'bm' ? 'Muat naik e-statement rasmi bank (Maybank, CIMB, RHB, Public Bank, dsb.)' : 'Official bank e-statements (Maybank, CIMB, RHB, Public Bank, etc.)'}
                                 </p>
                               </div>
                             </div>
@@ -2068,8 +2037,8 @@ export default function Dashboard() {
                           </div>
 
                           {/* Staged Bank Statements Chips */}
-                          {uploadedFiles.filter(f => f.category === 'bank_statement').length > 0 ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-3">
+                          {uploadedFiles.filter(f => f.category === 'bank_statement').length > 0 && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-3 mt-2 border-t border-slate-100">
                               {uploadedFiles.map((file, idx) => {
                                 if (file.category !== 'bank_statement') return null;
                                 const n = uploadedFiles.filter((f,i) => f.category === 'bank_statement' && i <= idx).length;
@@ -2091,10 +2060,6 @@ export default function Dashboard() {
                                 );
                               })}
                             </div>
-                          ) : (
-                            <div className="pt-2 text-center text-xs text-slate-400 font-normal">
-                              {language === 'bm' ? 'Tiada fail lagi • Sila muat naik sekurang-kurangnya 3 bulan penyata bank' : 'No files added yet • Please upload at least 3 months of bank statements'}
-                            </div>
                           )}
                         </div>
 
@@ -2108,7 +2073,7 @@ export default function Dashboard() {
                                 ? 'border-rose-400 bg-rose-50/40 ring-2 ring-rose-400/10'
                                 : 'border-slate-200 bg-white hover:border-slate-300'
                             }`}>
-                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                 <div className="flex items-start gap-3">
                                   <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-900 flex items-center justify-center shrink-0 mt-0.5">
                                     <FileSpreadsheet className="w-4.5 h-4.5" />
@@ -2116,14 +2081,14 @@ export default function Dashboard() {
                                   <div>
                                     <div className="flex items-center gap-2 flex-wrap">
                                       <h3 className="text-xs font-bold text-slate-900">
-                                        {language === 'bm' ? '2. Slip Mingguan Platform Gig (12 Minggu)' : '2. Gig Platform Weekly Slips (12 Weeks)'}
+                                        {language === 'bm' ? '2. Slip Pendapatan Mingguan Gig (Min. 12 Minggu)' : '2. Gig Income Slips (Min. 12 Weeks)'}
                                       </h3>
                                       <span className="text-[9px] font-black text-white bg-blue-950 px-2 py-0.5 rounded">
                                         {language === 'bm' ? 'WAJIB' : 'MANDATORY'}
                                       </span>
                                     </div>
-                                    <p className="text-[11px] text-slate-500 mt-1">
-                                      {language === 'bm' ? 'Tangkapan skrin / penyata mingguan (Grab, Foodpanda, Shopee, Lalamove, dsb.)' : 'Weekly earnings screenshots or statements (Grab, Foodpanda, Shopee, Lalamove, etc.)'}
+                                    <p className="text-[11px] text-slate-500 mt-0.5">
+                                      {language === 'bm' ? 'Penyata pendapatan mingguan (Grab, Foodpanda, Shopee, Lalamove, dsb.)' : 'Weekly earnings statements (Grab, Foodpanda, Shopee, Lalamove, etc.)'}
                                     </p>
                                   </div>
                                 </div>
@@ -2138,7 +2103,7 @@ export default function Dashboard() {
                                   </span>
                                   <label className="py-1.5 px-3 bg-blue-950 hover:bg-blue-900 text-white font-semibold text-xs rounded-xl cursor-pointer transition-all flex items-center gap-1.5 active:scale-95 shadow-xs">
                                     <UploadCloud className="w-3.5 h-3.5" />
-                                    <span>{language === 'bm' ? '+ Tambah Slip' : '+ Upload Slips'}</span>
+                                    <span>{language === 'bm' ? '+ Tambah PDF' : '+ Upload PDF'}</span>
                                     <input type="file" multiple accept="application/pdf,image/*" className="hidden"
                                       onChange={(e) => {
                                         setUploadValidationError(null);
@@ -2148,8 +2113,8 @@ export default function Dashboard() {
                                 </div>
                               </div>
 
-                              {uploadedFiles.filter(f => f.category === 'platform_dashboard').length > 0 ? (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1.5 pt-2.5">
+                              {uploadedFiles.filter(f => f.category === 'platform_dashboard').length > 0 && (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-1.5 pt-2.5 mt-2 border-t border-slate-100">
                                   {uploadedFiles.map((file, idx) => {
                                     if (file.category !== 'platform_dashboard') return null;
                                     const tag = /foodpanda/i.test(file.fileName) ? 'Foodpanda' : /grab/i.test(file.fileName) ? 'Grab' : /shopee/i.test(file.fileName) ? 'Shopee' : /lalamove/i.test(file.fileName) ? 'Lalamove' : 'Gig';
@@ -2167,10 +2132,6 @@ export default function Dashboard() {
                                     );
                                   })}
                                 </div>
-                              ) : (
-                                <div className="pt-2 text-center text-xs text-slate-400 font-normal">
-                                  {language === 'bm' ? 'Tiada slip mingguan • Muat naik sekurang-kurangnya 12 minggu penyata platform' : 'No slips added yet • Upload at least 12 weekly platform statements'}
-                                </div>
                               )}
                             </div>
                           )}
@@ -2182,7 +2143,7 @@ export default function Dashboard() {
                                 ? 'border-rose-400 bg-rose-50/40 ring-2 ring-rose-400/10'
                                 : 'border-slate-200 bg-white hover:border-slate-300'
                             }`}>
-                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                 <div className="flex items-start gap-3">
                                   <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-900 flex items-center justify-center shrink-0 mt-0.5">
                                     <FileText className="w-4.5 h-4.5" />
@@ -2196,7 +2157,7 @@ export default function Dashboard() {
                                         {language === 'bm' ? 'WAJIB' : 'MANDATORY'}
                                       </span>
                                     </div>
-                                    <p className="text-[11px] text-slate-500 mt-1">
+                                    <p className="text-[11px] text-slate-500 mt-0.5">
                                       {language === 'bm' ? 'Slip gaji rasmi 3 bulan terkini yang dikeluarkan majikan' : 'Official salary slips for the latest 3 months issued by employer'}
                                     </p>
                                   </div>
@@ -2212,7 +2173,7 @@ export default function Dashboard() {
                                   </span>
                                   <label className="py-1.5 px-3 bg-blue-950 hover:bg-blue-900 text-white font-semibold text-xs rounded-xl cursor-pointer transition-all flex items-center gap-1.5 active:scale-95 shadow-xs">
                                     <UploadCloud className="w-3.5 h-3.5" />
-                                    <span>{language === 'bm' ? '+ Tambah Slip' : '+ Upload Pay Slips'}</span>
+                                    <span>{language === 'bm' ? '+ Tambah PDF' : '+ Upload PDF'}</span>
                                     <input type="file" multiple accept="application/pdf,image/*" className="hidden"
                                       onChange={(e) => {
                                         setUploadValidationError(null);
@@ -2222,8 +2183,8 @@ export default function Dashboard() {
                                 </div>
                               </div>
 
-                              {uploadedFiles.filter(f => f.category === 'pay_slip').length > 0 ? (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-2.5">
+                              {uploadedFiles.filter(f => f.category === 'pay_slip').length > 0 && (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 pt-2.5 mt-2 border-t border-slate-100">
                                   {uploadedFiles.map((file, idx) => {
                                     if (file.category !== 'pay_slip') return null;
                                     const n = uploadedFiles.filter((f,i) => f.category === 'pay_slip' && i <= idx).length;
@@ -2240,10 +2201,6 @@ export default function Dashboard() {
                                     );
                                   })}
                                 </div>
-                              ) : (
-                                <div className="pt-2 text-center text-xs text-slate-400 font-normal">
-                                  {language === 'bm' ? 'Tiada slip gaji • Muat naik sekurang-kurangnya 3 bulan slip gaji terkini' : 'No pay slips added yet • Upload at least 3 months of pay slips'}
-                                </div>
                               )}
                             </div>
                           )}
@@ -2259,7 +2216,7 @@ export default function Dashboard() {
                               : 'border-slate-200 bg-white hover:border-slate-300'
                           }`}
                         >
-                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                             <div className="flex items-start gap-3">
                               <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-900 flex items-center justify-center shrink-0 mt-0.5">
                                 <UserCheck className="w-4.5 h-4.5" />
@@ -2273,7 +2230,7 @@ export default function Dashboard() {
                                     {language === 'bm' ? 'WAJIB' : 'MANDATORY'}
                                   </span>
                                 </div>
-                                <p className="text-[11px] text-slate-500 mt-1">
+                                <p className="text-[11px] text-slate-500 mt-0.5">
                                   {language === 'bm' ? 'Salinan gambar jelas atau PDF MyKad bahagian depan & belakang' : 'Clear photo or PDF copy of MyKad front & back'}
                                 </p>
                               </div>
@@ -2301,8 +2258,8 @@ export default function Dashboard() {
                             </div>
                           </div>
 
-                          {uploadedFiles.filter(f => f.category === 'mykad_id').length > 0 ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2.5">
+                          {uploadedFiles.filter(f => f.category === 'mykad_id').length > 0 && (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2.5 mt-2 border-t border-slate-100">
                               {uploadedFiles.map((file, idx) => {
                                 if (file.category !== 'mykad_id') return null;
                                 return (
@@ -2318,10 +2275,6 @@ export default function Dashboard() {
                                 );
                               })}
                             </div>
-                          ) : (
-                            <div className="pt-2 text-center text-xs text-slate-400 font-normal">
-                              {language === 'bm' ? 'Tiada MyKad • Ambil gambar atau muat naik salinan MyKad anda' : 'No MyKad added yet • Upload photo or PDF of your MyKad'}
-                            </div>
                           )}
                         </div>
 
@@ -2336,7 +2289,7 @@ export default function Dashboard() {
                                 : 'border-slate-200 bg-white hover:border-slate-300'
                             }`}
                           >
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                               <div className="flex items-start gap-3">
                                 <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-900 flex items-center justify-center shrink-0 mt-0.5">
                                   <FileCheck2 className="w-4.5 h-4.5" />
@@ -2350,7 +2303,7 @@ export default function Dashboard() {
                                       {language === 'bm' ? 'WAJIB (PERNIAGAAN)' : 'MANDATORY (BUSINESS)'}
                                     </span>
                                   </div>
-                                  <p className="text-[11px] text-slate-500 mt-1">
+                                  <p className="text-[11px] text-slate-500 mt-0.5">
                                     {language === 'bm'
                                       ? 'Sijil SSM (Borang D / Maklumat Perniagaan) atau Lesen Penjaja / Permit PBT Majlis Tempatan.'
                                       : 'SSM Certificate (Form D / Business Profile) or Local Council (PBT) Hawker Permit.'}
@@ -2380,8 +2333,8 @@ export default function Dashboard() {
                               </div>
                             </div>
 
-                            {uploadedFiles.filter(f => f.category === 'ssm_license').length > 0 ? (
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2.5">
+                            {uploadedFiles.filter(f => f.category === 'ssm_license').length > 0 && (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2.5 mt-2 border-t border-slate-100">
                                 {uploadedFiles.map((file, idx) => {
                                   if (file.category !== 'ssm_license') return null;
                                   return (
@@ -2397,10 +2350,6 @@ export default function Dashboard() {
                                   );
                                 })}
                               </div>
-                            ) : (
-                              <div className="pt-2 text-center text-xs text-slate-400 font-normal">
-                                {language === 'bm' ? 'Tiada fail SSM • Muat naik sijil SSM atau permit perniagaan anda' : 'No SSM added yet • Upload your SSM certificate or trade permit'}
-                              </div>
                             )}
                           </div>
                         )}
@@ -2415,7 +2364,7 @@ export default function Dashboard() {
                                 : 'border-slate-200 bg-white hover:border-slate-300'
                             }`}
                           >
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                               <div className="flex items-start gap-3">
                                 <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-900 flex items-center justify-center shrink-0 mt-0.5">
                                   <Briefcase className="w-4.5 h-4.5" />
@@ -2429,7 +2378,7 @@ export default function Dashboard() {
                                       {language === 'bm' ? 'WAJIB PEMBEKAL' : 'MANDATORY (EQUIPMENT)'}
                                     </span>
                                   </div>
-                                  <p className="text-[11px] text-slate-500 mt-1">
+                                  <p className="text-[11px] text-slate-500 mt-0.5">
                                     {language === 'bm' ? 'Sebut harga rasmi pembekal jentera, mesin pemprosesan, atau peralatan perniagaan.' : 'Official supplier sales quotation for commercial machinery, kitchen tools, or hardware.'}
                                   </p>
                                 </div>
@@ -2457,8 +2406,8 @@ export default function Dashboard() {
                               </div>
                             </div>
 
-                            {uploadedFiles.filter(f => f.category === 'business_proposal').length > 0 ? (
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2.5">
+                            {uploadedFiles.filter(f => f.category === 'business_proposal').length > 0 && (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2.5 mt-2 border-t border-slate-100">
                                 {uploadedFiles.map((file, idx) => {
                                   if (file.category !== 'business_proposal') return null;
                                   return (
@@ -2473,10 +2422,6 @@ export default function Dashboard() {
                                     </div>
                                   );
                                 })}
-                              </div>
-                            ) : (
-                              <div className="pt-2 text-center text-xs text-slate-400 font-normal">
-                                {language === 'bm' ? 'Tiada sebutharga • Muat naik dokumen sebutharga pembekal anda' : 'No quotation added yet • Upload machinery supplier quotation'}
                               </div>
                             )}
                           </div>
@@ -2494,7 +2439,7 @@ export default function Dashboard() {
                                   : 'border-slate-200 bg-white hover:border-slate-300'
                               }`}
                             >
-                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                 <div className="flex items-start gap-3">
                                   <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-900 flex items-center justify-center shrink-0 mt-0.5">
                                     <Car className="w-4.5 h-4.5" />
@@ -2508,7 +2453,7 @@ export default function Dashboard() {
                                         {language === 'bm' ? 'WAJIB KENDERAAN' : 'MANDATORY (VEHICLE)'}
                                       </span>
                                     </div>
-                                    <p className="text-[11px] text-slate-500 mt-1">
+                                    <p className="text-[11px] text-slate-500 mt-0.5">
                                       {language === 'bm' ? 'Salinan sebutharga rasmi (sales order) dari kedai motosikal atau bilik pameran kereta.' : 'Official sales quotation/order from motorcycle shop or car dealer.'}
                                     </p>
                                   </div>
@@ -2536,8 +2481,8 @@ export default function Dashboard() {
                                 </div>
                               </div>
 
-                              {uploadedFiles.filter(f => f.category === 'ssm_license').length > 0 ? (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2.5">
+                              {uploadedFiles.filter(f => f.category === 'ssm_license').length > 0 && (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2.5 mt-2 border-t border-slate-100">
                                   {uploadedFiles.map((file, idx) => {
                                     if (file.category !== 'ssm_license') return null;
                                     return (
@@ -2553,10 +2498,6 @@ export default function Dashboard() {
                                     );
                                   })}
                                 </div>
-                              ) : (
-                                <div className="pt-2 text-center text-xs text-slate-400 font-normal">
-                                  {language === 'bm' ? 'Tiada sebutharga • Muat naik sebutharga pengedar kenderaan anda' : 'No quotation added yet • Upload vehicle dealer quotation'}
-                                </div>
                               )}
                             </div>
 
@@ -2569,7 +2510,7 @@ export default function Dashboard() {
                                   : 'border-slate-200 bg-white hover:border-slate-300'
                               }`}
                             >
-                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                 <div className="flex items-start gap-3">
                                   <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-900 flex items-center justify-center shrink-0 mt-0.5">
                                     <FileText className="w-4.5 h-4.5" />
@@ -2583,7 +2524,7 @@ export default function Dashboard() {
                                         {language === 'bm' ? 'WAJIB LESEN' : 'MANDATORY (LICENSE)'}
                                       </span>
                                     </div>
-                                    <p className="text-[11px] text-slate-500 mt-1">
+                                    <p className="text-[11px] text-slate-500 mt-0.5">
                                       {language === 'bm' ? 'Salinan lesen memandu sah untuk pengesahan sewa beli kenderaan.' : 'Valid driving license copy for vehicle hire-purchase eligibility.'}
                                     </p>
                                   </div>
@@ -2611,8 +2552,8 @@ export default function Dashboard() {
                                 </div>
                               </div>
 
-                              {uploadedFiles.filter(f => f.category === 'business_proposal').length > 0 ? (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2.5">
+                              {uploadedFiles.filter(f => f.category === 'business_proposal').length > 0 && (
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2.5 mt-2 border-t border-slate-100">
                                   {uploadedFiles.map((file, idx) => {
                                     if (file.category !== 'business_proposal') return null;
                                     return (
@@ -2628,10 +2569,6 @@ export default function Dashboard() {
                                     );
                                   })}
                                 </div>
-                              ) : (
-                                <div className="pt-2 text-center text-xs text-slate-400 font-normal">
-                                  {language === 'bm' ? 'Tiada lesen • Muat naik salinan lesen memandu anda' : 'No license added yet • Upload your driving license'}
-                                </div>
                               )}
                             </div>
                           </>
@@ -2639,41 +2576,40 @@ export default function Dashboard() {
 
                         {/* EXPANDABLE ACCORDION FOR OPTIONAL SUPPORTING DOCUMENTS */}
                         {(() => {
-                          const isSsmMandatory = targetLoanPurpose === 'working_capital' || targetLoanPurpose === 'equipment' || targetLoanPurpose === 'vehicle';
-                          const isProposalMandatory = targetLoanPurpose === 'equipment' || targetLoanPurpose === 'vehicle';
+                          const isPersonalOrEdu = targetLoanPurpose === 'personal_cash' || targetLoanPurpose === 'education';
+                          const isWorkingCapital = targetLoanPurpose === 'working_capital';
+                          const isEquipment = targetLoanPurpose === 'equipment';
+                          const isVehicle = targetLoanPurpose === 'vehicle';
 
-                          const optionalCount = uploadedFiles.filter(f => 
-                            f.category === 'tax_epf' || 
-                            f.category === 'premise_photos' ||
-                            (!isSsmMandatory && f.category === 'ssm_license') ||
-                            (!isProposalMandatory && f.category === 'business_proposal')
-                          ).length;
+                          // Count only purpose-relevant optional files
+                          const optionalCount = uploadedFiles.filter(f => {
+                            if (isPersonalOrEdu) return f.category === 'tax_epf';
+                            if (isWorkingCapital) return f.category === 'tax_epf' || f.category === 'premise_photos' || f.category === 'business_proposal';
+                            if (isEquipment) return f.category === 'tax_epf' || f.category === 'premise_photos';
+                            if (isVehicle) return f.category === 'tax_epf' || f.category === 'premise_photos';
+                            return f.category === 'tax_epf';
+                          }).length;
 
                           return (
-                            <div className="rounded-2xl border border-dashed border-blue-200 bg-blue-50/30 overflow-hidden transition-all mt-2">
+                            <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 overflow-hidden transition-all mt-1">
                               <button
                                 type="button"
                                 onClick={() => setShowOptionalDocs(!showOptionalDocs)}
-                                className="w-full p-4 flex items-center justify-between gap-3 text-left hover:bg-blue-50/70 transition-colors cursor-pointer"
+                                className="w-full p-3.5 sm:p-4 flex items-center justify-between gap-3 text-left hover:bg-slate-100/70 transition-colors cursor-pointer"
                               >
                                 <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-950 flex items-center justify-center shrink-0">
-                                    <Sparkles className="w-4 h-4 text-blue-900" />
+                                  <div className="w-7 h-7 rounded-lg bg-blue-100 text-blue-950 flex items-center justify-center shrink-0">
+                                    <Sparkles className="w-3.5 h-3.5 text-blue-900" />
                                   </div>
-                                  <div>
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <span className="text-xs font-bold text-slate-900">
-                                        {language === 'bm' ? '+ Tambah Dokumen Pilihan (KWSP, SSM, Gambar Operasi)' : '+ Add Optional Supporting Documents (EPF, SSM, Photos)'}
-                                      </span>
-                                      <span className="text-[9.5px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-200">
-                                        {language === 'bm' ? 'Tingkatkan Had Pinjaman & Kelulusan' : 'Boost Approval Rate & Credit Limit'}
-                                      </span>
-                                    </div>
-                                    <p className="text-[11px] text-slate-500 mt-0.5">
-                                      {language === 'bm'
-                                        ? 'Memuat naik dokumen sokongan membantu AI menilai kapasiti pembayaran dengan lebih tepat dan melayakkan anda untuk kadar faedah subsidi 4.0%.'
-                                        : 'Uploading optional supporting evidence helps AI verify repayment stability and unlocks 4.0% subsidized financing schemes.'}
-                                    </p>
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-xs font-bold text-slate-900">
+                                      {isPersonalOrEdu 
+                                        ? (language === 'bm' ? '+ Tambah Penyata KWSP / EPF (Pilihan)' : '+ Add EPF / KWSP Statement (Optional)')
+                                        : (language === 'bm' ? '+ Dokumen Sokongan Pilihan' : '+ Optional Supporting Documents')}
+                                    </span>
+                                    <span className="text-[9.5px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-200">
+                                      {language === 'bm' ? 'Tingkatkan Kelulusan' : 'Boosts Approval'}
+                                    </span>
                                   </div>
                                 </div>
 
@@ -2689,9 +2625,9 @@ export default function Dashboard() {
 
                               {/* Accordion Expandable Body */}
                               {showOptionalDocs && (
-                                <div className="p-4 pt-1 border-t border-blue-100/70 flex flex-col gap-3">
+                                <div className="p-3.5 sm:p-4 pt-1 border-t border-slate-200/70 flex flex-col gap-3">
                                   
-                                  {/* OPTIONAL 1: EPF / KWSP STATEMENT */}
+                                  {/* OPTIONAL 1: EPF / KWSP STATEMENT (Relevant to all purposes) */}
                                   <div id="box-epf" className="p-3.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-all">
                                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                       <div className="flex items-start gap-3">
@@ -2708,7 +2644,7 @@ export default function Dashboard() {
                                             </span>
                                           </div>
                                           <p className="text-[11px] text-slate-500 mt-0.5">
-                                            {language === 'bm' ? 'Muat naik PDF dari portal i-Akaun KWSP jika ada caruman majikan atau i-Saraan sukarela.' : 'Upload PDF from i-Akaun KWSP if you have employer contributions or voluntary i-Saraan.'}
+                                            {language === 'bm' ? 'Muat naik PDF dari portal i-Akaun KWSP jika ada caruman.' : 'Upload PDF from i-Akaun KWSP if you have contributions.'}
                                           </p>
                                         </div>
                                       </div>
@@ -2751,67 +2687,8 @@ export default function Dashboard() {
                                     )}
                                   </div>
 
-                                  {/* OPTIONAL 2: SSM BUSINESS PERMIT (If not mandatory above) */}
-                                  {!isSsmMandatory && (
-                                    <div id="box-ssm-opt" className="p-3.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-all">
-                                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                        <div className="flex items-start gap-3">
-                                          <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-900 flex items-center justify-center shrink-0 mt-0.5">
-                                            <FileCheck2 className="w-4 h-4" />
-                                          </div>
-                                          <div>
-                                            <div className="flex items-center gap-2 flex-wrap">
-                                              <h4 className="text-xs font-bold text-slate-900">
-                                                {language === 'bm' ? 'Pendaftaran Perniagaan SSM / Lesen Penjaja PBT' : 'SSM Registration / Local Hawker Permit'}
-                                              </h4>
-                                              <span className="text-[9px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200">
-                                                {language === 'bm' ? 'PILIHAN' : 'OPTIONAL'}
-                                              </span>
-                                            </div>
-                                            <p className="text-[11px] text-slate-500 mt-0.5">
-                                              {language === 'bm' ? 'Jika anda menjalankan perniagaan sampingan, lampirkan SSM untuk melayakkan skim subsidi BSN/TEKUN.' : 'If you run a side business or stall, attach SSM to qualify for subsidized SME grants.'}
-                                            </p>
-                                          </div>
-                                        </div>
-
-                                        <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                                          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-lg ${
-                                            uploadedFiles.filter(f => f.category === 'ssm_license').length > 0 ? 'bg-emerald-100 text-emerald-800 font-bold' : 'bg-slate-100 text-slate-500'
-                                          }`}>
-                                            {uploadedFiles.filter(f => f.category === 'ssm_license').length > 0 ? (language === 'bm' ? '✓ Dimuat naik' : '✓ Uploaded') : (language === 'bm' ? 'Pilihan' : 'Optional')}
-                                          </span>
-                                          <label className="py-1 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs rounded-xl cursor-pointer transition-all flex items-center gap-1.5 active:scale-95 border border-slate-300">
-                                            <UploadCloud className="w-3.5 h-3.5 text-blue-900" />
-                                            <span>{language === 'bm' ? '+ Tambah SSM' : '+ Upload SSM'}</span>
-                                            <input type="file" multiple accept="application/pdf,image/*" className="hidden"
-                                              onChange={(e) => handleMultipleFilesUploadWithCategory(e, 'ssm_license')} />
-                                          </label>
-                                        </div>
-                                      </div>
-
-                                      {uploadedFiles.filter(f => f.category === 'ssm_license').length > 0 && (
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2.5 mt-2 border-t border-slate-100">
-                                          {uploadedFiles.map((file, idx) => {
-                                            if (file.category !== 'ssm_license') return null;
-                                            return (
-                                              <div key={idx} className="flex items-center justify-between p-2 bg-slate-50 border border-slate-200/80 rounded-lg text-xs">
-                                                <div className="flex items-center gap-1.5 truncate pr-1.5">
-                                                  <span className="text-[8px] font-bold uppercase bg-blue-100 text-blue-950 px-1 py-0.5 rounded">SSM</span>
-                                                  <span className="font-medium text-slate-800 truncate">{file.fileName}</span>
-                                                </div>
-                                                <button onClick={() => removeUploadedFile(idx)} className="p-1 text-slate-400 hover:text-rose-600 rounded cursor-pointer">
-                                                  <Trash2 className="w-3 h-3" />
-                                                </button>
-                                              </div>
-                                            );
-                                          })}
-                                        </div>
-                                      )}
-                                    </div>
-                                  )}
-
-                                  {/* OPTIONAL 3: BUSINESS PROPOSAL / USE OF FUNDS (If not mandatory) */}
-                                  {!isProposalMandatory && (
+                                  {/* OPTIONAL 2: BUSINESS PROPOSAL (Only for Working Capital) */}
+                                  {isWorkingCapital && (
                                     <div id="box-proposal-opt" className="p-3.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-all">
                                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                                         <div className="flex items-start gap-3">
@@ -2821,14 +2698,14 @@ export default function Dashboard() {
                                           <div>
                                             <div className="flex items-center gap-2 flex-wrap">
                                               <h4 className="text-xs font-bold text-slate-900">
-                                                {language === 'bm' ? 'Rancangan Penggunaan Modal / Sebutharga' : 'Business Plan / Use of Funds Forecast'}
+                                                {language === 'bm' ? 'Rancangan Penggunaan Modal / Aliran Tunai' : 'Cashflow Forecast / Use of Funds Plan'}
                                               </h4>
                                               <span className="text-[9px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200">
                                                 {language === 'bm' ? 'PILIHAN' : 'OPTIONAL'}
                                               </span>
                                             </div>
                                             <p className="text-[11px] text-slate-500 mt-0.5">
-                                              {language === 'bm' ? 'Kertas kerja ringkas, perancangan modal, atau sebut harga pembekal.' : 'Brief outline of fund utilization or supplier price quotations.'}
+                                              {language === 'bm' ? 'Kertas kerja ringkas unjuran jualan atau sebut harga bekalan stok (PDF / Word / Excel).' : 'Brief outline of sales projections or supplier stock quotes (PDF / Word / Excel).'}
                                             </p>
                                           </div>
                                         </div>
@@ -2869,62 +2746,68 @@ export default function Dashboard() {
                                     </div>
                                   )}
 
-                                  {/* OPTIONAL 4: PREMISE / STALL / RIDER PROFILE PHOTOS */}
-                                  <div id="box-premise-opt" className="p-3.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-all">
-                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                      <div className="flex items-start gap-3">
-                                        <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-900 flex items-center justify-center shrink-0 mt-0.5">
-                                          <Building2 className="w-4 h-4" />
-                                        </div>
-                                        <div>
-                                          <div className="flex items-center gap-2 flex-wrap">
-                                            <h4 className="text-xs font-bold text-slate-900">
-                                              {language === 'bm' ? 'Gambar Premis / Gerai / Profil Platform Aktif' : 'Premise Photos / Active Platform Profile'}
-                                            </h4>
-                                            <span className="text-[9px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200">
-                                              {language === 'bm' ? 'PILIHAN' : 'OPTIONAL'}
-                                            </span>
+                                  {/* OPTIONAL 3: PREMISE / OPERATION / RIDER PROFILE PHOTOS (For Business / Equipment / Vehicle) */}
+                                  {(isWorkingCapital || isEquipment || isVehicle) && (
+                                    <div id="box-premise-opt" className="p-3.5 rounded-xl border border-slate-200 bg-white hover:border-slate-300 transition-all">
+                                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                        <div className="flex items-start gap-3">
+                                          <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-900 flex items-center justify-center shrink-0 mt-0.5">
+                                            <Building2 className="w-4 h-4" />
                                           </div>
-                                          <p className="text-[11px] text-slate-500 mt-0.5">
-                                            {language === 'bm' ? 'Gambar papan tanda kedai, gerai pasar malam, van jualan, atau tangkapan skrin profil Grab/Foodpanda.' : 'Photos of shop signboard, night market stall, delivery vehicle, or active Grab/Foodpanda profile.'}
-                                          </p>
+                                          <div>
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                              <h4 className="text-xs font-bold text-slate-900">
+                                                {isVehicle 
+                                                  ? (language === 'bm' ? 'Tangkapan Skrin Profil Rider / Platform Aktif' : 'Active Rider / Platform Profile')
+                                                  : (language === 'bm' ? 'Gambar Premis / Gerai / Stok Niaga' : 'Premise / Stall / Inventory Photos')}
+                                              </h4>
+                                              <span className="text-[9px] font-bold text-slate-600 bg-slate-100 px-1.5 py-0.2 rounded border border-slate-200">
+                                                {language === 'bm' ? 'PILIHAN' : 'OPTIONAL'}
+                                              </span>
+                                            </div>
+                                            <p className="text-[11px] text-slate-500 mt-0.5">
+                                              {isVehicle
+                                                ? (language === 'bm' ? 'Tangkapan skrin profil aktif akaun Grab, Foodpanda, Lalamove, atau ShopeeFood.' : 'Screenshot of active Grab, Foodpanda, Lalamove or ShopeeFood profile.')
+                                                : (language === 'bm' ? 'Gambar papan tanda kedai, gerai pasar malam, van jualan, atau stok produk.' : 'Photos of shop signboard, market stall, delivery vehicle, or product stock.')}
+                                            </p>
+                                          </div>
+                                        </div>
+
+                                        <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                                          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-lg ${
+                                            uploadedFiles.filter(f => f.category === 'premise_photos').length > 0 ? 'bg-emerald-100 text-emerald-800 font-bold' : 'bg-slate-100 text-slate-500'
+                                          }`}>
+                                            {uploadedFiles.filter(f => f.category === 'premise_photos').length > 0 ? (language === 'bm' ? '✓ Dimuat naik' : '✓ Uploaded') : (language === 'bm' ? 'Pilihan' : 'Optional')}
+                                          </span>
+                                          <label className="py-1 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs rounded-xl cursor-pointer transition-all flex items-center gap-1.5 active:scale-95 border border-slate-300">
+                                            <UploadCloud className="w-3.5 h-3.5 text-amber-800" />
+                                            <span>{language === 'bm' ? '+ Tambah Gambar' : '+ Upload Photos'}</span>
+                                            <input type="file" multiple accept="image/*" className="hidden"
+                                              onChange={(e) => handleMultipleFilesUploadWithCategory(e, 'premise_photos')} />
+                                          </label>
                                         </div>
                                       </div>
 
-                                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                                        <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-lg ${
-                                          uploadedFiles.filter(f => f.category === 'premise_photos').length > 0 ? 'bg-emerald-100 text-emerald-800 font-bold' : 'bg-slate-100 text-slate-500'
-                                        }`}>
-                                          {uploadedFiles.filter(f => f.category === 'premise_photos').length > 0 ? (language === 'bm' ? '✓ Dimuat naik' : '✓ Uploaded') : (language === 'bm' ? 'Pilihan' : 'Optional')}
-                                        </span>
-                                        <label className="py-1 px-3 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs rounded-xl cursor-pointer transition-all flex items-center gap-1.5 active:scale-95 border border-slate-300">
-                                          <UploadCloud className="w-3.5 h-3.5 text-amber-800" />
-                                          <span>{language === 'bm' ? '+ Tambah Gambar' : '+ Upload Photos'}</span>
-                                          <input type="file" multiple accept="image/*" className="hidden"
-                                            onChange={(e) => handleMultipleFilesUploadWithCategory(e, 'premise_photos')} />
-                                        </label>
-                                      </div>
-                                    </div>
-
-                                    {uploadedFiles.filter(f => f.category === 'premise_photos').length > 0 && (
-                                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2.5 mt-2 border-t border-slate-100">
-                                        {uploadedFiles.map((file, idx) => {
-                                          if (file.category !== 'premise_photos') return null;
-                                          return (
-                                            <div key={idx} className="flex items-center justify-between p-2 bg-slate-50 border border-slate-200/80 rounded-lg text-xs">
-                                              <div className="flex items-center gap-1.5 truncate pr-1.5">
-                                                <span className="text-[8px] font-bold uppercase bg-amber-100 text-amber-950 px-1 py-0.5 rounded">FOTO</span>
-                                                <span className="font-medium text-slate-800 truncate">{file.fileName}</span>
+                                      {uploadedFiles.filter(f => f.category === 'premise_photos').length > 0 && (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2.5 mt-2 border-t border-slate-100">
+                                          {uploadedFiles.map((file, idx) => {
+                                            if (file.category !== 'premise_photos') return null;
+                                            return (
+                                              <div key={idx} className="flex items-center justify-between p-2 bg-slate-50 border border-slate-200/80 rounded-lg text-xs">
+                                                <div className="flex items-center gap-1.5 truncate pr-1.5">
+                                                  <span className="text-[8px] font-bold uppercase bg-amber-100 text-amber-950 px-1 py-0.5 rounded">FOTO</span>
+                                                  <span className="font-medium text-slate-800 truncate">{file.fileName}</span>
+                                                </div>
+                                                <button onClick={() => removeUploadedFile(idx)} className="p-1 text-slate-400 hover:text-rose-600 rounded cursor-pointer">
+                                                  <Trash2 className="w-3 h-3" />
+                                                </button>
                                               </div>
-                                              <button onClick={() => removeUploadedFile(idx)} className="p-1 text-slate-400 hover:text-rose-600 rounded cursor-pointer">
-                                                <Trash2 className="w-3 h-3" />
-                                              </button>
-                                            </div>
-                                          );
-                                        })}
-                                      </div>
-                                    )}
-                                  </div>
+                                            );
+                                          })}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
 
                                 </div>
                               )}
