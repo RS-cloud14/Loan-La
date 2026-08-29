@@ -63,6 +63,7 @@ interface AICoPilotChatProps {
   onChangeLanguage?: (lang: 'en' | 'bm') => void;
   onStartAssessmentWithFile: (fileData: { fileName: string; fileType: string; fileSize: string; fileBase64: string; category: 'bank_statement' | 'platform_dashboard' | 'tax_epf' | 'mykad_id' | 'pay_slip' }) => void;
   onScrollToSection?: (sectionId: string) => void;
+  onSetLoanPurpose?: (purpose: string, amount?: number, tenureYears?: number) => void;
   onSetLoanAmount?: (amount: number) => void;
   onSetTenure?: (tenureYears: number) => void;
   onSaveDraftVoice?: () => void;
@@ -378,6 +379,7 @@ export default function AICoPilotChat({
   onChangeLanguage,
   onStartAssessmentWithFile,
   onScrollToSection,
+  onSetLoanPurpose,
   onSetLoanAmount,
   onSetTenure,
   onSaveDraftVoice,
@@ -729,6 +731,29 @@ export default function AICoPilotChat({
       if (typeof onOpenSettings === 'function') onOpenSettings();
     } else if (action.type === 'NAVIGATE_SUPPORT') {
       if (typeof onOpenSupportModal === 'function') onOpenSupportModal(action.payload?.id);
+    } else if (action.type === 'SET_LOAN_PURPOSE') {
+      if (typeof onSetLoanPurpose === 'function' && action.payload?.purpose) {
+        onSetLoanPurpose(action.payload.purpose, action.payload.amount, action.payload.tenureYears);
+      } else {
+        if (action.payload?.amount && typeof onSetLoanAmount === 'function') onSetLoanAmount(action.payload.amount);
+        if (action.payload?.tenureYears && typeof onSetTenure === 'function') onSetTenure(action.payload.tenureYears);
+      }
+    } else if (action.type === 'SET_LOAN_AMOUNT' && action.payload?.amount) {
+      if (typeof onSetLoanAmount === 'function') onSetLoanAmount(action.payload.amount);
+    } else if (action.type === 'SET_TENURE' && action.payload?.tenureYears) {
+      if (typeof onSetTenure === 'function') onSetTenure(action.payload.tenureYears);
+    } else if (action.type === 'SCROLL_TO_SECTION' && action.payload?.sectionId) {
+      if (typeof onScrollToSection === 'function') onScrollToSection(action.payload.sectionId);
+    } else if (action.type === 'SAVE_DRAFT') {
+      if (typeof onSaveDraftVoice === 'function') onSaveDraftVoice();
+    } else if (action.type === 'NAVIGATE_PAGE' && action.payload?.page) {
+      if (typeof onNavigatePage === 'function') onNavigatePage(action.payload.page, action.payload.step);
+    } else if (action.type === 'MINIMIZE_CALL') {
+      setIsOpen(false);
+    } else if (action.type === 'EXPAND_CALL') {
+      setIsOpen(true);
+    } else if (action.type === 'END_CALL') {
+      handleEndCall();
     } else if (action.type === 'DISPATCH_TICKET' && action.payload) {
       saveSupportTicket(action.payload);
       if (typeof onOpenSupportModal === 'function') {
@@ -757,6 +782,36 @@ export default function AICoPilotChat({
     }
 
     const lower = textToSend.toLowerCase();
+
+    // Voice window control commands
+    const isMinimizeVoice = lower === 'minimize' || lower === 'minimize call' || lower === 'minimize the call' || lower === 'kecilkan panggilan' || lower.includes('minimize call') || lower.includes('minimize the call') || lower.includes('kecilkan panggilan') || lower.includes('hide call') || lower.includes('hide chat');
+    const isExpandVoice = lower === 'expand' || lower === 'expand call' || lower === 'open call' || lower === 'open the call' || lower === 'buka panggilan' || lower.includes('expand call') || lower.includes('open the call') || lower.includes('buka panggilan') || lower.includes('show call') || lower.includes('besarkan panggilan');
+    const isEndCallVoice = lower === 'close the call' || lower === 'close call' || lower === 'end call' || lower === 'end the call' || lower === 'tamatkan panggilan' || lower === 'hang up' || lower.includes('close the call') || lower.includes('close call') || lower.includes('end call') || lower.includes('end the call') || lower.includes('tamatkan panggilan') || lower.includes('hang up') || lower.includes('tutup panggilan') || lower.includes('stop call');
+
+    if (isMinimizeVoice) {
+      setIsOpen(false);
+      if (isCallActiveRef.current) {
+        speakText(isMalay ? "Mengecilkan tetingkap panggilan. Saya masih mendengar di bebola terapung ini." : "Minimizing call window. I am still listening right here in the floating orb.", () => {
+          if (isCallActiveRef.current) startCallListening();
+        });
+      }
+      return;
+    }
+    if (isExpandVoice) {
+      setIsOpen(true);
+      if (isCallActiveRef.current) {
+        speakText(isMalay ? "Membuka tetingkap panggilan penuh." : "Expanding full call window.", () => {
+          if (isCallActiveRef.current) startCallListening();
+        });
+      }
+      return;
+    }
+    if (isEndCallVoice) {
+      speakText(isMalay ? "Menamatkan panggilan. Terima kasih dan semoga berjaya!" : "Ending call. Thank you and have a great day!", () => {
+        handleEndCall();
+      });
+      return;
+    }
 
     // Instant local triggers (Avoid intercepting questions, how-to guides, or scroll requests)
     const isQuestionOrScroll = lower.includes('how') || lower.includes('what') || lower.includes('why') || lower.includes('bagaimana') || lower.includes('macam mana') || lower.includes('cara') || lower.includes('terangkan') || lower.includes('explain') || lower.includes('scroll') || lower.includes('scoll') || lower.includes('skrol') || lower.includes('turun') || lower.includes('naik');
@@ -1314,89 +1369,76 @@ export default function AICoPilotChat({
           </button>
         )}
 
-        {/* 2. Floating Live Audio Island: Active voice session when modal is minimized */}
+        {/* 2. Floating Live Audio Ball / Orb: Ultra-sleek minimized glowing orb */}
         {!isOpen && isCallActive && (
-          <div className="w-[calc(100vw-2rem)] sm:w-[420px] bg-slate-950/95 backdrop-blur-xl border border-blue-500/50 shadow-2xl rounded-2xl p-3.5 text-white flex flex-col gap-2.5 animate-slide-up">
-            {/* Top Bar: Pulse Status & Live Section Viewing Badge */}
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="relative flex h-2.5 w-2.5 shrink-0">
-                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${callStatus === 'speaking' ? 'bg-cyan-400 opacity-75' : 'bg-emerald-400 opacity-75'}`}></span>
-                  <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${callStatus === 'speaking' ? 'bg-cyan-500' : 'bg-emerald-500'}`}></span>
-                </span>
-                <span className="text-xs font-bold text-slate-100 truncate">
-                  {callStatus === 'speaking' ? (isMalay ? 'AI Bercakap...' : 'AI Speaking...') : callStatus === 'thinking' ? (isMalay ? 'AI Memproses...' : 'AI Thinking...') : (isMalay ? 'Mendengar...' : 'Listening...')}
-                </span>
-                <span className="text-[10px] font-mono text-cyan-300 font-bold bg-blue-900/60 px-1.5 py-0.5 rounded-md shrink-0">
+          <div className="flex items-center gap-2.5 animate-slide-up group select-none">
+            {/* Live Context Badge Chip */}
+            <div 
+              onClick={() => setIsOpen(true)}
+              className="cursor-pointer hidden sm:flex items-center gap-2 px-3 py-1.5 bg-slate-950/95 hover:bg-slate-900 border border-blue-500/40 rounded-full shadow-2xl text-white text-[11px] backdrop-blur-xl transition-all duration-200 hover:scale-105"
+              title={isMalay ? "Klik untuk buka tetingkap penuh" : "Click to expand full call screen"}
+            >
+              <span className="relative flex h-2 w-2 shrink-0">
+                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${callStatus === 'speaking' ? 'bg-cyan-400 opacity-75' : 'bg-emerald-400 opacity-75'}`}></span>
+                <span className={`relative inline-flex rounded-full h-2 w-2 ${callStatus === 'speaking' ? 'bg-cyan-500' : 'bg-emerald-500'}`}></span>
+              </span>
+              <span className="font-semibold text-slate-200 max-w-[140px] truncate">
+                {visibleSectionLabel || visibleSection || 'Overview'}
+              </span>
+              <span className="font-mono text-[10px] text-cyan-300 font-bold bg-blue-950/90 px-1.5 py-0.5 rounded-full border border-blue-800/80 shrink-0">
+                {formatCallTime(callDuration)}
+              </span>
+            </div>
+
+            {/* Quick Mute Action Button */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsMuted(prev => !prev);
+              }}
+              className={`p-2.5 rounded-full shadow-2xl border transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer backdrop-blur-xl ${
+                isMuted 
+                  ? 'bg-rose-500/90 hover:bg-rose-600 text-white border-rose-400 shadow-rose-900/40' 
+                  : 'bg-slate-950/95 hover:bg-slate-900 text-slate-200 border-slate-700 hover:border-slate-500'
+              }`}
+              title={isMuted ? (isMalay ? "Buka Suara" : "Unmute") : (isMalay ? "Bisu" : "Mute")}
+            >
+              {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+            </button>
+
+            {/* Main Pulsating Floating AI Ball / Orb */}
+            <button
+              type="button"
+              onClick={() => setIsOpen(true)}
+              className="relative w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer bg-gradient-to-tr from-slate-950 via-blue-950 to-indigo-900 border-2 border-cyan-400/90 shadow-cyan-500/20"
+              title={isMalay ? "Klik untuk buka panggilan penuh (sebut 'buka panggilan')" : "Click to expand call screen (or say 'open the call')"}
+            >
+              {/* Outer Pulsing Soundwave Waveform Rings */}
+              <span className={`absolute inset-0 rounded-full border-2 border-cyan-400/60 ${callStatus === 'speaking' ? 'animate-ping duration-1000' : 'animate-pulse'}`} />
+              <span className={`absolute -inset-1 rounded-full bg-cyan-500/25 blur-sm ${callStatus === 'speaking' ? 'animate-pulse' : ''}`} />
+
+              {/* Inner Glowing Core */}
+              <div className="relative z-10 flex flex-col items-center justify-center">
+                <AILogoIcon className={`w-5 h-5 text-white ${callStatus === 'speaking' ? 'animate-bounce' : ''}`} />
+                <span className="text-[8px] font-black text-cyan-300 font-mono tracking-tighter mt-0.5">
                   {formatCallTime(callDuration)}
                 </span>
               </div>
+            </button>
 
-              {/* Real-time Viewing Badge */}
-              <div className="flex items-center gap-1 bg-slate-800/80 border border-slate-700/80 px-2 py-0.5 rounded-lg text-[10px] text-slate-200 font-semibold max-w-[170px] truncate shrink-0">
-                <Eye className="w-3 h-3 text-cyan-400 shrink-0" />
-                <span className="truncate">{visibleSectionLabel || visibleSection || 'Overview'}</span>
-              </div>
-            </div>
-
-            {/* Subtitle Ticker of AI Speech */}
-            <div className="bg-slate-900/80 border border-slate-800/80 rounded-xl p-2 max-h-[56px] overflow-y-auto custom-scrollbar text-[11px] text-slate-200 leading-snug">
-              <FormattedMessage 
-                text={lastAgentReply || (isMalay ? "Saya sedia membimbing sambil anda skrol laman ini..." : "I'm listening and guiding you as you scroll...")} 
-                isDark={true}
-              />
-            </div>
-
-            {/* Bottom Floating Island Controls */}
-            <div className="flex items-center justify-between pt-1 border-t border-slate-800/80">
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsMuted(prev => !prev)}
-                  className={`px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
-                    isMuted 
-                      ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' 
-                      : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
-                  }`}
-                  title={isMuted ? "Unmute" : "Mute"}
-                >
-                  {isMuted ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
-                  <span className="text-[10px]">{isMuted ? (isMalay ? 'Buka Suara' : 'Unmute') : (isMalay ? 'Bisu' : 'Mute')}</span>
-                </button>
-
-                {callStatus === 'speaking' && (
-                  <button
-                    type="button"
-                    onClick={handleInterruptAndSpeak}
-                    className="px-2.5 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 rounded-xl text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer"
-                  >
-                    <Pause className="w-3 h-3" />
-                    <span>{isMalay ? 'Sampuk' : 'Interrupt'}</span>
-                  </button>
-                )}
-              </div>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsOpen(true)}
-                  className="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-[10px] font-bold flex items-center gap-1 shadow-xs transition-all cursor-pointer"
-                  title={isMalay ? "Buka Tetingkap Penuh" : "Expand Full View"}
-                >
-                  <Maximize2 className="w-3 h-3" />
-                  <span>{isMalay ? 'Buka Penuh' : 'Expand'}</span>
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleEndCall}
-                  className="p-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl shadow-xs transition-transform active:scale-95 cursor-pointer"
-                  title={isMalay ? "Tamatkan Panggilan" : "End Call"}
-                >
-                  <PhoneOff className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
+            {/* Quick End Call Button */}
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleEndCall();
+              }}
+              className="p-2.5 bg-rose-600/90 hover:bg-rose-500 text-white rounded-full shadow-2xl border border-rose-400/60 transition-all duration-200 hover:scale-110 active:scale-95 cursor-pointer backdrop-blur-xl shadow-rose-900/40"
+              title={isMalay ? "Tamatkan Panggilan (sebut 'tamatkan panggilan')" : "End Call (or say 'close the call')"}
+            >
+              <PhoneOff className="w-4 h-4" />
+            </button>
           </div>
         )}
 

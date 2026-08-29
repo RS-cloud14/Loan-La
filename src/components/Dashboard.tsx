@@ -478,6 +478,35 @@ export default function Dashboard() {
     window.scrollBy({ top: window.innerHeight * 0.7, behavior: 'smooth' });
   };
 
+  const handleSetLoanPurpose = (purpose: string, amount?: number, tenureYears?: number) => {
+    const validPurposes: Array<'personal_cash' | 'working_capital' | 'equipment' | 'vehicle' | 'invoice_financing' | 'education'> = [
+      'personal_cash', 'working_capital', 'equipment', 'vehicle', 'invoice_financing', 'education'
+    ];
+    let p = (purpose || '').toLowerCase().replace('-', '_').replace(' ', '_');
+    if (p.includes('working') || p.includes('modal') || p.includes('business')) p = 'working_capital';
+    else if (p.includes('cash') || p.includes('personal') || p.includes('kecemasan')) p = 'personal_cash';
+    else if (p.includes('equip') || p.includes('alat') || p.includes('mesin')) p = 'equipment';
+    else if (p.includes('vehic') || p.includes('kenderaan') || p.includes('kereta') || p.includes('motor')) p = 'vehicle';
+    else if (p.includes('invoic')) p = 'invoice_financing';
+    else if (p.includes('educat') || p.includes('belajar') || p.includes('pendidikan')) p = 'education';
+
+    if (validPurposes.includes(p as any)) {
+      setTargetLoanPurpose(p as any);
+    }
+    if (amount && amount > 0) {
+      setTargetLoanAmount(amount);
+    }
+    if (tenureYears && tenureYears > 0) {
+      setCalcTenureYears(tenureYears);
+    }
+    // Navigate to Step 1 in the app so user sees their updated selections
+    setCurrentPage('app');
+    setActiveStep(1);
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   // Load existing draft on initial mount
   useEffect(() => {
     try {
@@ -6084,6 +6113,7 @@ export default function Dashboard() {
         uploadedFilesCount={uploadedFiles.length}
         uploadedFilesSummary={uploadedFiles.map(f => `${f.fileName} (${f.category})`)}
         onScrollToSection={handleScrollToSection}
+        onSetLoanPurpose={handleSetLoanPurpose}
         onSetLoanAmount={(amt) => setTargetLoanAmount(amt)}
         onSetTenure={(yrs) => setCalcTenureYears(yrs)}
         onSaveDraftVoice={() => handleSaveDraft(false)}

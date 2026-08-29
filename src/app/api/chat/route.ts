@@ -1298,41 +1298,6 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 7C. Explicit Loan Calculation with Real Numbers
-    const parsedAmount = parseSpokenAmount(lastMsgLower);
-    const parsedTenure = parseSpokenTenure(lastMsgLower);
-    const parsedRate = parseSpokenRate(lastMsgLower);
-
-    // Only compute calculation summary if user explicitly provided a loan amount or numeric parameters
-    if (parsedAmount !== undefined && (parsedTenure !== undefined || parsedRate !== undefined || lastMsgLower.includes('kira') || lastMsgLower.includes('calc') || lastMsgLower.includes('ansuran') || lastMsgLower.includes('installment') || lastMsgLower.includes('sebulan') || lastMsgLower.includes('month'))) {
-      const amt = parsedAmount;
-      const yrs = parsedTenure || 1;
-      const rate = parsedRate || 6.0;
-
-      const totalMonths = Math.round(yrs * 12);
-      const totalInterest = Math.round(amt * (rate / 100) * yrs * 100) / 100;
-      const totalRepay = Math.round((amt + totalInterest) * 100) / 100;
-      const monthlyInstallment = Math.round((totalRepay / totalMonths) * 100) / 100;
-
-      const reply = isMalay
-        ? `📊 **Ringkasan Pengiraan Pembiayaan:**\n\n• **Jumlah Pinjaman:** RM ${amt.toLocaleString()}\n• **Tempoh Bayaran:** ${yrs} Tahun (${totalMonths} Bulan)\n• **Kadar Faedah:** ${rate}% p.a. (Kadar Rata)\n• **Jumlah Faedah:** RM ${totalInterest.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\n• **Jumlah Bayaran Balik:** RM ${totalRepay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\n• **Anggaran Ansuran Bulanan:** **RM ${monthlyInstallment.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / bulan**\n\nMembuka kalkulator interaktif yang dikonfigurasikan dengan maklumat ini untuk anda.`
-        : `📊 **Loan Payment Calculation Summary:**\n\n• **Financing Amount:** RM ${amt.toLocaleString()}\n• **Tenure:** ${yrs} ${yrs === 1 ? 'Year' : 'Years'} (${totalMonths} Months)\n• **Interest Rate:** ${rate}% flat p.a.\n• **Total Interest:** RM ${totalInterest.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\n• **Total Repayment:** RM ${totalRepay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}\n• **Est. Monthly Installment:** **RM ${monthlyInstallment.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / month**\n\nOpening the calculator pre-configured with your exact parameters.`;
-
-      return NextResponse.json({
-        success: true,
-        reply,
-        suggestions: isMalay ? ["Direktori Bank", "Mula Permohonan", "Ubah Jumlah"] : ["Bank Directory", "Start Application", "Adjust Amount"],
-        action: { 
-          type: 'SET_CALCULATOR', 
-          payload: { 
-            loanAmount: amt, 
-            tenureYears: yrs, 
-            interestRate: rate 
-          } 
-        }
-      });
-    }
-
     // 8. Settings / Profile Navigation (Explicit commands only)
     if (
       (lastMsgLower.includes('open setting') || lastMsgLower.includes('open profile') || lastMsgLower.includes('buka tetapan') || lastMsgLower.includes('buka profil') || lastMsgLower.includes('go to settings')) &&
@@ -1538,10 +1503,14 @@ Pricing, Packages & Plan Benefits Knowledge Base:
    - Live Application Tracker with real-time bank status sync & priority underwriting queue routing.
    - Dedicated 30-day AI Financing CoPilot with continuous debt restructuring counseling.
 
-When the user asks to perform actions on screen:
-- To scroll to a section on screen: append [ACTION:SCROLL_TO_SECTION:{"sectionId":"hero"|"calculator"|"directory"|"tracker"|"step1"|"step2"|"step3"|"step4"}].
+When the user asks to configure or perform actions on screen:
+- To choose or set loan purpose, amount, or tenure in Step 1 (e.g. "I want to choose working capital for RM 6,000 and 2 years"): append [ACTION:SET_LOAN_PURPOSE:{"purpose":"working_capital"|"personal_cash"|"equipment"|"vehicle"|"invoice_financing"|"education","amount":6000,"tenureYears":2}].
 - To adjust loan amount: append [ACTION:SET_LOAN_AMOUNT:{"amount":10000}].
 - To adjust loan tenure: append [ACTION:SET_TENURE:{"tenureYears":3}].
+- To minimize call window to the floating ball: append [ACTION:MINIMIZE_CALL].
+- To open or expand the call window: append [ACTION:EXPAND_CALL].
+- To close or end the call: append [ACTION:END_CALL].
+- To scroll to a section on screen: append [ACTION:SCROLL_TO_SECTION:{"sectionId":"hero"|"calculator"|"directory"|"tracker"|"step1"|"step2"|"step3"|"step4"}].
 - To save their current progress/draft: append [ACTION:SAVE_DRAFT].
 - To navigate to a specific page or step: append [ACTION:NAVIGATE_PAGE:{"page":"calculator"|"directory"|"tracker"|"app","step":1|2|3|4}].
 - If user asks to download, export, or save the credit passport report / PDF, append [ACTION:DOWNLOAD_REPORT].
@@ -1597,7 +1566,7 @@ Guidelines:
 
         let extractedAction: any = undefined;
 
-        const actionMatch = cleanReply.match(/\[ACTION:(SET_CALCULATOR|NAVIGATE_TRACKER|NAVIGATE_LOAN_NEED|NAVIGATE_DIRECTORY|NAVIGATE_SETTINGS|NAVIGATE_REPORT|DOWNLOAD_REPORT|SAVE_DRAFT|SCROLL_TO_SECTION|SET_LOAN_AMOUNT|SET_TENURE|NAVIGATE_PAGE):?([^\]]*)\]/);
+        const actionMatch = cleanReply.match(/\[ACTION:(SET_LOAN_PURPOSE|SET_CALCULATOR|NAVIGATE_TRACKER|NAVIGATE_LOAN_NEED|NAVIGATE_DIRECTORY|NAVIGATE_SETTINGS|NAVIGATE_REPORT|DOWNLOAD_REPORT|SAVE_DRAFT|SCROLL_TO_SECTION|SET_LOAN_AMOUNT|SET_TENURE|NAVIGATE_PAGE|MINIMIZE_CALL|EXPAND_CALL|END_CALL):?([^\]]*)\]/);
         if (actionMatch) {
           const actionType = actionMatch[1];
           let payload = undefined;
