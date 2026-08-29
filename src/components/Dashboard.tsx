@@ -1468,25 +1468,11 @@ export default function Dashboard() {
                 {
                   id: 'personal_cash',
                   title: language === 'bm' ? 'Pemandu Grab & Penghantar Makanan' : 'Grab & Food Delivery Drivers',
-                  sub: 'Grab, Foodpanda, Lalamove, ShopeeFood',
-                  limit: 'RM 1,000 – RM 20,000',
                   defaultAmount: 5000,
                   speed: language === 'bm' ? '2–4 Jam' : '2–4 Hours',
                   incomeType: language === 'bm' ? 'Penyata Aplikasi Gig' : 'Gig Inflow Auditing',
                   desc: language === 'bm' ? 'Gunakan pendapatan mingguan penghantaran anda untuk layak pinjaman tunai kecemasan pantas.' : 'Use your weekly gig delivery earnings to qualify for fast emergency cash loans.',
                   icon: Car,
-                  bankBarrier: language === 'bm'
-                    ? ['Mewajibkan slip gaji bulanan tetap 3 bulan & penyata KWSP.', 'Menolak bayaran mingguan aplikasi gig sebagai pendapatan tidak sah.']
-                    : ['Demands 3 months fixed monthly payslips & formal EPF contributions.', 'Flags weekly platform gig payouts as unverified or irregular income.'],
-                  platformSolutions: language === 'bm' ? [
-                    { title: 'Audit Pendapatan Mingguan', desc: 'Mengiktiraf kemasukan tunai Grab & Foodpanda secara terus dari penyata bank.' },
-                    { title: 'Pengiraan DSR & Lebihan Bersih', desc: 'Menilai keupayaan bayaran balik sebenar tanpa memerlukan slip gaji rasmi.' },
-                    { title: 'Padanan Bank Digital Segera', desc: 'Kelayakan pantas dengan GXBank, Boost Credit dan AEON Credit.' }
-                  ] : [
-                    { title: 'Weekly Payout Recognition', desc: 'Directly audits Grab & Foodpanda weekly inflows from your bank statement.' },
-                    { title: 'Real Cash Surplus Scoring', desc: 'Measures net disposable income and DSR without requiring payslips.' },
-                    { title: 'Instant Digital Bank Matching', desc: 'Direct pre-qualification for GXBank, Boost Credit & AEON Credit.' }
-                  ],
                   requiredDocs: language === 'bm'
                     ? ['Penyata Bank 3 Bulan (PDF)', 'Penyata Grab / Foodpanda', 'MyKad (Privasi Terkawal)']
                     : ['3 Months Bank Statement (PDF)', 'Grab / Foodpanda Statement', 'MyKad (PDPA Masked)'],
@@ -1495,25 +1481,11 @@ export default function Dashboard() {
                 {
                   id: 'working_capital',
                   title: language === 'bm' ? 'Peniaga Shopee & Jualan Online' : 'Shopee & Online Sellers',
-                  sub: 'Shopee, Lazada, TikTok Shop',
-                  limit: 'RM 5,000 – RM 100,000',
                   defaultAmount: 20000,
                   speed: language === 'bm' ? '24–48 Jam' : '24–48 Hours',
                   incomeType: language === 'bm' ? 'Jualan Dompet E-Dagang' : 'E-Commerce Cashflow',
                   desc: language === 'bm' ? 'Dapatkan modal pusingan untuk membeli stok, inventori dan kembangkan perniagaan dalam talian anda.' : 'Get working capital to purchase stock, inventory, and expand your online business.',
                   icon: ShoppingBag,
-                  bankBarrier: language === 'bm'
-                    ? ['Memerlukan akaun beraudit 2 tahun dan premis perniagaan fizikal.', 'Mengabaikan jualan dompet e-dagang Shopee & TikTok.']
-                    : ['Requires 2+ years audited company financials and physical premises.', 'Ignores digital e-wallet settlements from Shopee & TikTok Shop.'],
-                  platformSolutions: language === 'bm' ? [
-                    { title: 'Pengiktirafan Jualan E-Dagang', desc: 'Mengiktiraf pusingan jualan Shopee & TikTok sebagai pendapatan perniagaan sah.' },
-                    { title: 'Had Pembiayaan Stok Dinamik', desc: 'Mengira saiz pinjaman optimum mengikut kadar putaran inventori & promosi.' },
-                    { title: 'Akses Pembiaya Peniaga P2P', desc: 'Padanan terus dengan Boost Merchant, Funding Societies & CIMB Mikro.' }
-                  ] : [
-                    { title: 'E-Commerce Revenue Auditing', desc: 'Recognizes marketplace wallet payouts as legitimate business revenue.' },
-                    { title: 'Dynamic Working Capital Sizing', desc: 'Calculates optimal credit limits tailored for inventory stocking cycles.' },
-                    { title: 'Merchant FinTech Matching', desc: 'Direct access to Boost Merchant, Funding Societies & CIMB Micro-SME.' }
-                  ],
                   requiredDocs: language === 'bm'
                     ? ['Penyata Bank 3–6 Bulan', 'Penyata Jualan Shopee/TikTok', 'Sijil SSM (jika ada)']
                     : ['3–6 Months Bank Statement', 'Shopee / TikTok Sales Summary', 'SSM Certificate (if any)'],
@@ -1522,25 +1494,11 @@ export default function Dashboard() {
                 {
                   id: 'vehicle',
                   title: language === 'bm' ? 'Pekerja Bebas (Freelancer) & Bekerja Sendiri' : 'Freelancers & Self-Employed',
-                  sub: language === 'bm' ? 'Pereka, Pengaturcara, Ejen, Kontraktor' : 'Designers, Programmers, Agents, Contractors',
-                  limit: 'RM 3,000 – RM 50,000',
                   defaultAmount: 10000,
                   speed: language === 'bm' ? '2–6 Jam' : '2–6 Hours',
                   incomeType: language === 'bm' ? 'Invois Pelanggan & Projek' : 'Client Invoices & Deposits',
                   desc: language === 'bm' ? 'Layak menggunakan sejarah deposit pelanggan tetap selama 3 hingga 6 bulan dalam penyata bank anda.' : 'Qualify using 3 to 6 months of regular client deposit history in your bank statements.',
                   icon: Laptop,
-                  bankBarrier: language === 'bm'
-                    ? ['Invois projek & bayaran berbeza-beza ditandakan sebagai berisiko tinggi.', 'Tiada slip gaji korporat standard untuk pengiraan skor lama.']
-                    : ['Flags project-based client payments as erratic and high-risk.', 'Rejects applicants lacking traditional corporate payroll structures.'],
-                  platformSolutions: language === 'bm' ? [
-                    { title: 'Skor Kepelbagaian Pelanggan (HHI)', desc: 'Memberi markah tinggi bagi pendapatan dari pelbagai sumber pelanggan.' },
-                    { title: 'Metrik Rezab Modal (Runway)', desc: 'Mengira penimbal tunai untuk membuktikan keupayaan bayaran ansuran.' },
-                    { title: 'Pasport Kredit Alternatif Disahkan', desc: 'Laporan digital sah mematuhi standard Bank Negara Malaysia.' }
-                  ] : [
-                    { title: 'Client Diversification Scoring', desc: 'Rewards freelancers with multiple recurring client revenue streams.' },
-                    { title: 'Liquid Capital Runway Metric', desc: 'Measures cash reserves to prove resilience during slow invoice months.' },
-                    { title: 'Certified Credit Passport', desc: 'Standardized alternative underwriting dossier for partner digital banks.' }
-                  ],
                   requiredDocs: language === 'bm'
                     ? ['Penyata Bank 3–6 Bulan (PDF)', 'Invois Pelanggan / Penyata Platform', 'Borang Cukai LHDN (Pilihan)']
                     : ['3–6 Months Bank Statement (PDF)', 'Client Invoices / Platform Statement', 'LHDN Tax e-Filing (Optional)'],
@@ -1549,25 +1507,11 @@ export default function Dashboard() {
                 {
                   id: 'equipment',
                   title: language === 'bm' ? 'Penjaja & Kedai Runcit Mikro' : 'Hawkers & Micro-Shops',
-                  sub: language === 'bm' ? 'Pasar Malam, Gerai Makanan, Kedai Runcit' : 'Pasar Malam, Food Stalls, Retail Shops',
-                  limit: language === 'bm' ? 'Sehingga RM 150,000' : 'Up to RM 150,000',
                   defaultAmount: 25000,
                   speed: language === 'bm' ? '1–3 Hari Bekerja' : '1–3 Business Days',
                   incomeType: language === 'bm' ? 'Penyelesaian DuitNow QR' : 'DuitNow QR Settlement',
                   desc: language === 'bm' ? 'Akses pembiayaan peralatan perniagaan daripada agensi kerajaan dan institusi berlesen dengan kadar rendah.' : 'Access low-rate government and institutional business equipment financing.',
                   icon: Store,
-                  bankBarrier: language === 'bm'
-                    ? ['Peniaga gerai banyak mengendalikan transaksi DuitNow QR & tunai tanpa audit.', 'Bank komersial menolak permohonan tanpa buku perakaunan rasmi.']
-                    : ['Heavy DuitNow QR and cash transactions without formal accounting audits.', 'Traditional banks decline micro-stalls lacking audited financial reports.'],
-                  platformSolutions: language === 'bm' ? [
-                    { title: 'Audit Kemasukan DuitNow QR', desc: 'Sistem AI mengesan dan mengaudit transaksi QR harian secara automatik.' },
-                    { title: 'Akses Skim Khas Kerajaan & BSN', desc: 'Padanan terus dengan BSN Mikro Madani & TEKUN berkadar rendah (4–6% p.a.).' },
-                    { title: 'Penstrukturan Pembiayaan Aset', desc: 'Khas untuk pembelian peralatan niaga, mesin dapur dan sistem POS.' }
-                  ] : [
-                    { title: 'DuitNow QR Velocity Auditing', desc: 'AI automatically totals and audits daily merchant QR settlement batches.' },
-                    { title: 'BSN & Government Scheme Access', desc: 'Direct matching to BSN Mikro Madani & TEKUN low-rate funds (~4–6% p.a.).' },
-                    { title: 'Equipment & Asset Financing', desc: 'Structured financing specifically for stall gear, POS, and appliances.' }
-                  ],
                   requiredDocs: language === 'bm'
                     ? ['Penyata Bank 3–6 Bulan (Kemasukan QR)', 'Lesen Penjaja Majlis / SSM', 'Bil Utiliti / Perjanjian Gerai']
                     : ['3–6 Months Bank Statement (QR Inflows)', 'Hawker License / Majlis Permit / SSM', 'Utility Bill / Stall Agreement'],
@@ -1582,18 +1526,12 @@ export default function Dashboard() {
                     className="p-6 bg-white border border-slate-200 rounded-3xl shadow-xs hover:border-blue-900/40 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between gap-4 group"
                   >
                     <div className="flex flex-col gap-3">
-                      <div className="flex items-center justify-between">
-                        <div className="w-11 h-11 bg-blue-50 text-blue-950 rounded-2xl flex items-center justify-center group-hover:bg-blue-950 group-hover:text-white transition-colors shadow-2xs">
-                          <Icon className="w-5 h-5 text-blue-900 group-hover:text-white" />
-                        </div>
-                        <span className="px-3 py-1 bg-blue-50 text-blue-950 font-bold text-xs rounded-xl border border-blue-100 tabular-nums">
-                          {item.limit}
-                        </span>
+                      <div className="w-11 h-11 bg-blue-50 text-blue-950 rounded-2xl flex items-center justify-center group-hover:bg-blue-950 group-hover:text-white transition-colors shadow-2xs">
+                        <Icon className="w-5 h-5 text-blue-900 group-hover:text-white" />
                       </div>
 
                       <div>
                         <h4 className="text-base font-black text-blue-950">{item.title}</h4>
-                        <span className="text-xs text-slate-400 font-medium block mt-0.5">{item.sub}</span>
                       </div>
 
                       <p className="text-xs text-slate-600 leading-relaxed font-normal">
@@ -6372,10 +6310,10 @@ export default function Dashboard() {
       {/* Category Suitability Modal ("Why Loan - La is Suitable For You") */}
       {categorySuitabilityModal && (
         <div className="fixed inset-0 z-[110] flex items-center justify-center bg-blue-950/70 backdrop-blur-xs p-4 animate-fade-in overflow-y-auto">
-          <div className="w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200 flex flex-col my-6 animate-scale-in">
+          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200 flex flex-col my-6 animate-scale-in">
             
-            {/* Modal Header */}
-            <div className="px-6 py-5 bg-gradient-to-r from-blue-950 via-blue-900 to-blue-950 text-white flex items-center justify-between border-b border-blue-800">
+            {/* Minimal Header */}
+            <div className="px-6 py-5 bg-gradient-to-r from-blue-950 via-blue-900 to-blue-950 text-white flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="p-2.5 bg-blue-900/90 rounded-2xl border border-blue-700/60 shadow-xs">
                   {(() => {
@@ -6383,15 +6321,7 @@ export default function Dashboard() {
                     return <ModalIcon className="w-5 h-5 text-blue-200" />;
                   })()}
                 </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <h3 className="text-base font-extrabold tracking-tight">{categorySuitabilityModal.title}</h3>
-                    <span className="px-2.5 py-0.5 bg-blue-800 text-blue-200 text-[11px] font-bold rounded-lg border border-blue-700 tabular-nums">
-                      {categorySuitabilityModal.limit}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-blue-200 font-medium mt-0.5">{categorySuitabilityModal.sub}</p>
-                </div>
+                <h3 className="text-base font-extrabold tracking-tight">{categorySuitabilityModal.title}</h3>
               </div>
               <button 
                 onClick={() => setCategorySuitabilityModal(null)} 
@@ -6403,90 +6333,71 @@ export default function Dashboard() {
             </div>
 
             {/* Quick Metrics Bar */}
-            <div className="grid grid-cols-3 bg-slate-50 border-b border-slate-200 px-6 py-3 text-center text-xs">
-              <div className="border-r border-slate-200 pr-2">
+            <div className="grid grid-cols-3 bg-slate-50 border-b border-slate-200 px-4 py-2.5 text-center text-xs">
+              <div className="border-r border-slate-200 pr-1">
                 <span className="text-[10px] uppercase font-bold text-slate-400 block">{language === 'bm' ? 'Kelulusan' : 'Speed'}</span>
                 <span className="font-extrabold text-blue-950 text-xs mt-0.5 block">{categorySuitabilityModal.speed || '2–4 Hours'}</span>
               </div>
-              <div className="border-r border-slate-200 px-2">
-                <span className="text-[10px] uppercase font-bold text-slate-400 block">{language === 'bm' ? 'Bukti Pendapatan' : 'Income Proof'}</span>
-                <span className="font-extrabold text-blue-950 text-xs mt-0.5 block truncate">{categorySuitabilityModal.incomeType || 'No Payslip'}</span>
+              <div className="border-r border-slate-200 px-1">
+                <span className="text-[10px] uppercase font-bold text-slate-400 block">{language === 'bm' ? 'Slip Gaji' : 'Payslip'}</span>
+                <span className="font-extrabold text-blue-950 text-xs mt-0.5 block">{language === 'bm' ? 'Tidak Wajib' : 'Not Required'}</span>
               </div>
-              <div className="pl-2">
+              <div className="pl-1">
                 <span className="text-[10px] uppercase font-bold text-slate-400 block">{language === 'bm' ? 'Kesan CTOS' : 'CTOS Impact'}</span>
                 <span className="font-extrabold text-emerald-700 text-xs mt-0.5 block">{language === 'bm' ? '0 Kesan' : 'Zero Impact'}</span>
               </div>
             </div>
 
-            {/* Modal Body */}
-            <div className="p-6 flex flex-col gap-4 max-h-[70vh] overflow-y-auto">
+            {/* Minimized Modal Body */}
+            <div className="p-5 flex flex-col gap-3.5">
 
-              {/* 1. The Traditional Bank Problem */}
-              <div className="p-4 bg-rose-50/70 border border-rose-200/80 rounded-2xl flex flex-col gap-2 text-left">
-                <div className="flex items-center gap-1.5 text-rose-900 font-bold text-xs uppercase tracking-wide">
-                  <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
-                  <span>{language === 'bm' ? 'Halangan Bank Tradisional' : 'The Traditional Bank Barrier'}</span>
-                </div>
-                <ul className="flex flex-col gap-1.5 text-xs text-rose-950">
-                  {categorySuitabilityModal.bankBarrier.map((barrier: string, idx: number) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <span className="text-rose-600 font-bold shrink-0">✕</span>
-                      <span className="leading-relaxed">{barrier}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              {/* 2. Why Loan - La is Built For You */}
-              <div className="p-4 bg-blue-50/70 border border-blue-200 rounded-2xl flex flex-col gap-3 text-left">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-blue-950 font-bold text-xs uppercase tracking-wide">
-                    <Activity className="w-4 h-4 text-blue-900 shrink-0" />
-                    <span>{language === 'bm' ? 'Penyelesaian AI Loan - La' : 'How Loan - La Qualifies You'}</span>
+              {/* Key Highlights */}
+              <div className="p-3.5 bg-blue-50/60 border border-blue-100 rounded-2xl flex flex-col gap-2">
+                <span className="text-[11px] font-bold text-blue-950 uppercase tracking-wide flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  {language === 'bm' ? 'Kelebihan Utama' : 'Key Highlights'}
+                </span>
+                <div className="flex flex-col gap-1.5 text-xs text-slate-700">
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-900 shrink-0" />
+                    <span>{language === 'bm' ? 'Tiada slip gaji atau KWSP tetap diperlukan' : 'No fixed payslips or EPF needed'}</span>
                   </div>
-                  <span className="px-2 py-0.5 bg-blue-950 text-white rounded-md text-[9px] font-bold uppercase">
-                    AI Verified
-                  </span>
-                </div>
-
-                <div className="flex flex-col gap-2.5">
-                  {categorySuitabilityModal.platformSolutions.map((item: { title: string; desc: string }, idx: number) => (
-                    <div key={idx} className="flex items-start gap-2.5 text-xs">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                      <div>
-                        <span className="font-bold text-blue-950 block">{item.title}</span>
-                        <span className="text-slate-600 text-[11.5px] leading-relaxed">{item.desc}</span>
-                      </div>
-                    </div>
-                  ))}
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-900 shrink-0" />
+                    <span>{language === 'bm' ? 'Audit automatik penyata bank & pendapatan gig' : 'Direct bank statement & gig income auditing'}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-blue-900 shrink-0" />
+                    <span>{language === 'bm' ? 'Padanan pantas ke bank digital berlesen (GXBank, Boost, AEON)' : 'Pre-qualified with GXBank, Boost Credit & AEON'}</span>
+                  </div>
                 </div>
               </div>
 
-              {/* 3. Documents & Matched Lenders */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left">
-                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col gap-1.5">
-                  <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+              {/* Documents & Matched Lenders */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-left">
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex flex-col gap-1.5">
+                  <span className="text-[10.5px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
                     <FileText className="w-3.5 h-3.5 text-blue-900" />
-                    {language === 'bm' ? 'Dokumen Diperlukan' : 'Required Documents'}
+                    {language === 'bm' ? 'Dokumen Ringkas' : 'Required Docs'}
                   </span>
                   <div className="flex flex-col gap-1 text-[11px] text-slate-600">
                     {categorySuitabilityModal.requiredDocs.map((doc: string, idx: number) => (
                       <span key={idx} className="flex items-center gap-1.5">
-                        <span className="w-1.5 h-1.5 rounded-full bg-blue-900 shrink-0" />
-                        <span>{doc}</span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />
+                        <span className="truncate">{doc}</span>
                       </span>
                     ))}
                   </div>
                 </div>
 
-                <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col gap-1.5">
-                  <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex flex-col gap-1.5">
+                  <span className="text-[10.5px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
                     <Building2 className="w-3.5 h-3.5 text-blue-900" />
-                    {language === 'bm' ? 'Rakan Bank Digital' : 'Matched Digital Banks'}
+                    {language === 'bm' ? 'Rakan Bank' : 'Matched Banks'}
                   </span>
                   <div className="flex flex-wrap gap-1">
                     {categorySuitabilityModal.matchedLenders.slice(0, 3).map((lender: string, idx: number) => (
-                      <span key={idx} className="px-2 py-0.5 bg-white border border-slate-200 rounded-md text-[10px] font-bold text-slate-800 shadow-2xs">
+                      <span key={idx} className="px-2 py-0.5 bg-white border border-slate-200 rounded text-[10px] font-bold text-slate-800 shadow-2xs">
                         {lender}
                       </span>
                     ))}
@@ -6494,36 +6405,27 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* Modal Action CTA */}
-              <div className="pt-2 flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setCategorySuitabilityModal(null)}
-                  className="px-4 py-3 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all cursor-pointer"
-                >
-                  {language === 'bm' ? 'Tutup' : 'Close'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const purposeId = categorySuitabilityModal.id;
-                    const defaultAmt = categorySuitabilityModal.defaultAmount || 5000;
-                    setTargetLoanPurpose(purposeId);
-                    setTargetLoanAmount(defaultAmt);
-                    setCategorySuitabilityModal(null);
-                    if (!userSession) {
-                      setAuthModalOpen(true);
-                    } else {
-                      setPerspective('B2C');
-                      setCurrentPage('app');
-                      setActiveStep(1);
-                    }
-                  }}
-                  className="flex-1 py-3 bg-blue-950 hover:bg-blue-900 text-white font-extrabold text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
-                >
-                  <span>{language === 'bm' ? 'Mula Permohonan Pinjaman →' : 'Start Loan Application →'}</span>
-                </button>
-              </div>
+              {/* Action CTA Button */}
+              <button
+                type="button"
+                onClick={() => {
+                  const purposeId = categorySuitabilityModal.id;
+                  const defaultAmt = categorySuitabilityModal.defaultAmount || 5000;
+                  setTargetLoanPurpose(purposeId);
+                  setTargetLoanAmount(defaultAmt);
+                  setCategorySuitabilityModal(null);
+                  if (!userSession) {
+                    setAuthModalOpen(true);
+                  } else {
+                    setPerspective('B2C');
+                    setCurrentPage('app');
+                    setActiveStep(1);
+                  }
+                }}
+                className="w-full mt-1 py-3.5 bg-blue-950 hover:bg-blue-900 text-white font-black text-xs sm:text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+              >
+                <span>{language === 'bm' ? 'Semak Kelayakan Percuma →' : 'Start Free Eligibility Check →'}</span>
+              </button>
 
             </div>
           </div>
