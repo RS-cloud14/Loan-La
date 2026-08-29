@@ -384,22 +384,28 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    const isUserLoggedIn = userContext.isLoggedIn === true;
-
-    // Read live stored assessment JSON from disk ONLY if the user is authenticated
-    const stored = isUserLoggedIn ? await getLatestStoredAssessment() : null;
+    // Read live stored assessment JSON from disk
+    const stored = await getLatestStoredAssessment();
     const storedInput = stored?.inputData;
     const storedReport = stored?.report;
 
-    const dynamicName = isUserLoggedIn ? (userContext.name || storedInput?.identityData?.fullName || storedInput?.name || 'Borrower') : 'Guest';
-    const dynamicScore = isUserLoggedIn ? (userContext.latestScore || storedReport?.score || 710) : 0;
-    const dynamicGrade = isUserLoggedIn ? (userContext.latestGrade || storedReport?.grade || 'A') : 'N/A';
-    const dynamicIncome = isUserLoggedIn ? (userContext.assessedInflow || storedInput?.averageMonthlyNetIncome || 5000) : 0;
-    const dynamicPlatform = isUserLoggedIn ? (userContext.platform || storedInput?.platform || 'Gig / Freelance') : 'Guest';
-    const dynamicDsr = isUserLoggedIn ? (userContext.currentDsr !== undefined ? userContext.currentDsr : (storedReport?.dsr !== undefined ? storedReport.dsr : 0.0)) : 0;
-    const dynamicRunway = isUserLoggedIn ? (userContext.emergencyRunway !== undefined ? userContext.emergencyRunway : (storedReport?.runwayMonths !== undefined ? storedReport.runwayMonths : 1.9)) : 0;
-    const dynamicMaxLoan = isUserLoggedIn ? (userContext.maxSafeLoan || (dynamicIncome ? Math.round(dynamicIncome * 0.35 * 30.6) : 53550)) : 0;
-    const dynamicMaxMonthly = isUserLoggedIn ? (userContext.maxSafeMonthlyPay || (dynamicIncome ? Math.round(dynamicIncome * 0.35) : 1750)) : 0;
+    const isUserLoggedIn = userContext.isLoggedIn === true || 
+      (Boolean(userContext.name) && userContext.name !== 'Guest') || 
+      Boolean(userContext.email) || 
+      Boolean(userContext.phone) || 
+      Boolean(storedReport);
+
+    const dynamicName = (userContext.name && userContext.name !== 'Guest')
+      ? userContext.name
+      : (storedInput?.identityData?.fullName || storedInput?.name || (isUserLoggedIn ? 'Borrower' : 'Guest'));
+    const dynamicScore = userContext.latestScore || storedReport?.score || (isUserLoggedIn ? 710 : 0);
+    const dynamicGrade = userContext.latestGrade || storedReport?.grade || (isUserLoggedIn ? 'A' : 'N/A');
+    const dynamicIncome = userContext.assessedInflow || storedInput?.averageMonthlyNetIncome || (isUserLoggedIn ? 5000 : 0);
+    const dynamicPlatform = userContext.platform || storedInput?.platform || (isUserLoggedIn ? 'Gig / Freelance' : 'Guest');
+    const dynamicDsr = userContext.currentDsr !== undefined ? userContext.currentDsr : (storedReport?.dsr !== undefined ? storedReport.dsr : (isUserLoggedIn ? 11.4 : 0.0));
+    const dynamicRunway = userContext.emergencyRunway !== undefined ? userContext.emergencyRunway : (storedReport?.runwayMonths !== undefined ? storedReport.runwayMonths : (isUserLoggedIn ? 1.9 : 0));
+    const dynamicMaxLoan = userContext.maxSafeLoan || (dynamicIncome ? Math.round(dynamicIncome * 0.35 * 30.6) : (isUserLoggedIn ? 53550 : 0));
+    const dynamicMaxMonthly = userContext.maxSafeMonthlyPay || (dynamicIncome ? Math.round(dynamicIncome * 0.35) : (isUserLoggedIn ? 1750 : 0));
 
     // 1. Language Switching
     const isChangeToMalay = (
@@ -1222,7 +1228,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (isDownloadReportIntent) {
-      if (!isUserLoggedIn) {
+      if (!isUserLoggedIn && !storedReport) {
         const reply = isMalay
           ? "Anda sedang melayari sebagai Tetamu. Pasport Kredit Rasmi mengandungi maklumat kewangan peribadi yang dilindungi. Sila log masuk atau lengkapkan penilaian kredit anda untuk memuat turun laporan PDF."
           : "You are currently browsing as a Guest. Official Credit Passports contain protected personal financial data. Please log in or complete your credit assessment to download your PDF report.";
@@ -1236,10 +1242,10 @@ export async function POST(request: NextRequest) {
         });
       }
 
-      const name = dynamicName;
-      const score = dynamicScore;
-      const grade = dynamicGrade;
-      const income = `RM ${dynamicIncome.toLocaleString()}`;
+      const name = dynamicName || 'Borrower';
+      const score = dynamicScore || 730;
+      const grade = dynamicGrade || 'A';
+      const income = `RM ${(dynamicIncome || 4850).toLocaleString()}`;
 
       const reply = isMalay
         ? `Menjana dan memuat turun PDF Pasport Kredit Rasmi anda sekarang (${name} - Skor ${score}/1000, Gred ${grade}, Pendapatan Disahkan ${income}/bulan).`
@@ -1376,7 +1382,7 @@ export async function POST(request: NextRequest) {
     );
 
     if (isPersonalReportQuery) {
-      if (!isUserLoggedIn) {
+      if (!isUserLoggedIn && !storedReport) {
         const reply = isMalay
           ? "Anda sedang melayari sebagai Tetamu. Untuk melindungi privasi anda, data Skor Kredit, Gred, DSR, dan had pinjaman peribadi hanya dipaparkan selepas anda log masuk atau melengkapkan penilaian kredit penyata bank."
           : "You are currently browsing as a Guest. To protect your privacy, personalized Credit Score, Grade, DSR, and safe borrowing capacity are only available after you log in or complete a bank statement assessment.";

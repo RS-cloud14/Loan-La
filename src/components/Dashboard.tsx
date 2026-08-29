@@ -241,12 +241,8 @@ export default function Dashboard() {
       if (typeof window !== 'undefined') {
         const sessionStr = localStorage.getItem('crediflow_user_session');
         const sessionObj = sessionStr ? JSON.parse(sessionStr) : null;
-        if (sessionObj && sessionObj.profileId === 'guest_tester') {
-          // Guest tester ALWAYS resets to locked on load so user can test paywall anytime!
-          localStorage.removeItem('creditflow_passport_unlocked');
-          setIsPassportUnlocked(false);
-        } else if (sessionObj && sessionObj.profileId === 'premium_pro') {
-          localStorage.setItem('creditflow_passport_unlocked', 'true');
+        if (sessionObj) {
+          setUserSession(sessionObj);
           setIsPassportUnlocked(true);
         } else {
           const unlocked = localStorage.getItem('creditflow_passport_unlocked');
@@ -6882,21 +6878,11 @@ export default function Dashboard() {
             epfStatus: 'i-saraan'
           };
           setUserSession(fullUser);
+          setIsPassportUnlocked(true);
           try {
             localStorage.setItem('crediflow_user_session', JSON.stringify(fullUser));
+            localStorage.setItem('creditflow_passport_unlocked', 'true');
           } catch (e) {}
-
-          if (user.profileId === 'guest_tester') {
-            setIsPassportUnlocked(false);
-            try {
-              localStorage.removeItem('creditflow_passport_unlocked');
-            } catch (e) {}
-          } else if (user.profileId === 'premium_pro') {
-            setIsPassportUnlocked(true);
-            try {
-              localStorage.setItem('creditflow_passport_unlocked', 'true');
-            } catch (e) {}
-          }
 
           setPdpaConsent(true);
           setPerspective('B2C');
