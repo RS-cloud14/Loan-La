@@ -3051,40 +3051,7 @@ export default function Dashboard() {
                       </div>
                     </div>
 
-                    {/* 2. PII Masking Shield (Privacy Protection) */}
-                    <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-955 flex items-center justify-center shrink-0">
-                          <Lock className="w-4.5 h-4.5" />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold text-slate-900">
-                              {language === 'bm' ? 'Perlindungan Data Peribadi (PII Shield)' : 'Bank-Grade PII Masking Shield'}
-                            </span>
-                            <span className="text-[9px] font-bold bg-blue-100 text-blue-950 px-1.5 py-0.2 rounded border border-blue-200">
-                              PDPA 2010
-                            </span>
-                          </div>
-                          <span className="text-[11px] text-slate-500 block mt-0.5">
-                            {language === 'bm'
-                              ? 'Menutup nombor MyKad dan nombor akaun bank secara setempat sebelum dihantar ke AI.'
-                              : 'Locally redacts MyKad and bank account numbers in your browser before AI analysis.'}
-                          </span>
-                        </div>
-                      </div>
-                      <label className="relative inline-flex items-center cursor-pointer shrink-0">
-                        <input 
-                          type="checkbox" 
-                          checked={piiMaskingEnabled} 
-                          onChange={(e) => setPiiMaskingEnabled(e.target.checked)}
-                          className="sr-only peer"
-                        />
-                        <div className="w-10 h-5.5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4.5 after:w-4.5 after:transition-all peer-checked:bg-blue-950"></div>
-                      </label>
-                    </div>
-
-                    {/* 3. The 1 Single Consolidated Consent Card */}
+                    {/* 2. The Standard Single Consolidated Statutory Declaration & PDPA Consent */}
                     <div className="flex flex-col gap-2">
                       {declarationError && (
                         <div className="p-3.5 bg-rose-100 border border-rose-300 rounded-xl text-xs text-rose-900 font-semibold flex items-center gap-2.5 animate-pulse shadow-xs">
@@ -3117,9 +3084,14 @@ export default function Dashboard() {
                         />
                         <div className="flex-1">
                           <div className="flex items-center justify-between gap-2 flex-wrap">
-                            <span className="text-xs font-bold text-slate-900">
-                              {language === 'bm' ? 'Perakuan Pemohon & Persetujuan Privasi (PDPA 2010)' : 'Applicant Declaration & PDPA Consent'}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-slate-900">
+                                {language === 'bm' ? 'Perakuan Pemohon & Persetujuan Privasi (PDPA 2010)' : 'Applicant Declaration & PDPA Consent'}
+                              </span>
+                              <span className="text-[9px] font-bold bg-blue-100 text-blue-950 px-1.5 py-0.2 rounded border border-blue-200">
+                                PDPA 2010
+                              </span>
+                            </div>
                             <button
                               type="button"
                               onClick={(e) => {
@@ -3132,10 +3104,10 @@ export default function Dashboard() {
                               {language === 'bm' ? 'Terma Privasi PDPA →' : 'PDPA Privacy Terms →'}
                             </button>
                           </div>
-                          <span className="text-[11px] text-slate-500 block mt-1 leading-relaxed font-normal">
+                          <span className="text-[11px] text-slate-600 block mt-1 leading-relaxed font-normal">
                             {language === 'bm'
-                              ? 'Saya mengesahkan dokumen kewangan yang dimuat naik adalah tulen, tiada rekod kebankrapan aktif, dan bersetuju dengan semakan pra-kelayakan kredit AI mengikut peruntukan Akta Perlindungan Data Peribadi 2010 (PDPA) & garis panduan Bank Negara Malaysia.'
-                              : 'I declare that the uploaded financial documents are authentic, I have no active bankruptcy records, and I consent to automated AI credit pre-scoring under the Personal Data Protection Act 2010 (PDPA) and Bank Negara Malaysia responsible financing guidelines.'}
+                              ? 'Saya mengesahkan semua dokumen dan maklumat kewangan yang dikemukakan adalah benar dan tepat tanpa rekod muflis aktif. Saya memberi kebenaran untuk analisis pra-kelayakan kredit AI dengan perlindungan automatik data peribadi (PII Masking) tertakluk di bawah Akta Perlindungan Data Peribadi 2010 (PDPA) dan garis panduan Bank Negara Malaysia.'
+                              : 'I declare that all submitted financial documents and details are true and accurate with no active bankruptcy/default records. I authorize automated AI pre-qualification credit assessment with bank-grade personal data protection (PII Redaction) in accordance with the Personal Data Protection Act 2010 (PDPA) and Bank Negara Malaysia responsible financing guidelines.'}
                           </span>
                         </div>
                       </label>
