@@ -1401,55 +1401,6 @@ export default function Dashboard() {
                         <span>{language === 'bm' ? 'Bantuan & Khidmat Pelanggan' : 'Customer Support & Help'}</span>
                       </button>
 
-                      {/* Fast Account Switcher for Testing (Guest vs Pro) */}
-                      <div className="pt-1 mt-1 border-t border-slate-100 flex flex-col gap-0.5">
-                        {userSession.profileId !== 'guest_tester' ? (
-                          <button
-                            onClick={() => {
-                              setUserDropdownOpen(false);
-                              const guestUser: UserProfileData = {
-                                name: 'Guest Tester (Free Preview)',
-                                phone: '+60 12-000 1111',
-                                role: language === 'bm' ? 'Peminjam Percuma (Terkunci)' : 'Guest Borrower (Free Preview Tier)',
-                                profileId: 'guest_tester'
-                              };
-                              setUserSession(guestUser);
-                              setIsPassportUnlocked(false);
-                              try {
-                                localStorage.setItem('crediflow_user_session', JSON.stringify(guestUser));
-                                localStorage.removeItem('creditflow_passport_unlocked');
-                              } catch (e) {}
-                            }}
-                            className="w-full px-3 py-1.5 text-left text-[11px] font-bold text-slate-600 hover:bg-slate-100 rounded-lg transition-all flex items-center gap-2 cursor-pointer"
-                          >
-                            <span className="w-2 h-2 rounded-full bg-slate-400 shrink-0" />
-                            <span>{language === 'bm' ? 'Tukar ke: Akaun Guest (Kunci)' : 'Switch: Guest (Free / Locked)'}</span>
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() => {
-                              setUserDropdownOpen(false);
-                              const proUser: UserProfileData = {
-                                name: 'Ahmad Bin Razali (Pro Member)',
-                                phone: '+60 12-482 9182',
-                                role: language === 'bm' ? 'Ahli Pro 1 Bulan (Dibuka Penuh)' : 'Pro 1-Month Member (Fully Unlocked)',
-                                profileId: 'premium_pro'
-                              };
-                              setUserSession(proUser);
-                              setIsPassportUnlocked(true);
-                              try {
-                                localStorage.setItem('crediflow_user_session', JSON.stringify(proUser));
-                                localStorage.setItem('creditflow_passport_unlocked', 'true');
-                              } catch (e) {}
-                            }}
-                            className="w-full px-3 py-1.5 text-left text-[11px] font-bold text-blue-950 hover:bg-blue-50 rounded-lg transition-all flex items-center gap-2 cursor-pointer"
-                          >
-                            <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
-                            <span>{language === 'bm' ? 'Tukar ke: Akaun Pro (Buka)' : 'Switch: Pro (RM 19.90 Unlocked)'}</span>
-                          </button>
-                        )}
-                      </div>
-
                       <button
                         onClick={() => {
                           setUserDropdownOpen(false);
