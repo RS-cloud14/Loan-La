@@ -684,6 +684,38 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    const isNavSettings = (
+      (lastMsgLower.includes('setting') || lastMsgLower.includes('tetapan') || lastMsgLower.includes('profile') || lastMsgLower.includes('profil')) &&
+      (lastMsgLower.includes('bring') || lastMsgLower.includes('take') || lastMsgLower.includes('go to') || lastMsgLower.includes('open') || lastMsgLower.includes('buka') || lastMsgLower.includes('bawa') || lastMsgLower.includes('pergi') || lastMsgLower.includes('show') || lastMsgLower.includes('tunjuk') || lastMsgLower.includes('can bring') || lastMsgLower.includes('navigate') || lastMsgLower === 'setting' || lastMsgLower === 'settings' || lastMsgLower === 'tetapan' || lastMsgLower === 'open setting' || lastMsgLower === 'open settings')
+    );
+
+    if (isNavSettings) {
+      return NextResponse.json({
+        success: true,
+        reply: isMalay
+          ? "Membuka Tetapan Profil Pengguna untuk anda."
+          : "Opening your Profile and Account Settings for you now.",
+        action: { type: 'NAVIGATE_SETTINGS' },
+        suggestions: isMalay ? ["Kalkulator", "Direktori Bank", "Mula Permohonan"] : ["Loan Calculator", "Bank Directory", "Start Application"]
+      });
+    }
+
+    const isNavSupport = (
+      (lastMsgLower.includes('support') || lastMsgLower.includes('bantuan') || lastMsgLower.includes('ticket') || lastMsgLower.includes('tiket') || lastMsgLower.includes('help center') || lastMsgLower.includes('pusat bantuan')) &&
+      (lastMsgLower.includes('bring') || lastMsgLower.includes('take') || lastMsgLower.includes('go to') || lastMsgLower.includes('open') || lastMsgLower.includes('buka') || lastMsgLower.includes('bawa') || lastMsgLower.includes('pergi') || lastMsgLower.includes('show') || lastMsgLower.includes('tunjuk') || lastMsgLower.includes('can bring') || lastMsgLower.includes('navigate') || lastMsgLower === 'support' || lastMsgLower === 'bantuan')
+    );
+
+    if (isNavSupport) {
+      return NextResponse.json({
+        success: true,
+        reply: isMalay
+          ? "Membuka Pusat Bantuan & Sokongan Pelanggan untuk anda."
+          : "Opening Customer Support and Help Center for you now.",
+        action: { type: 'NAVIGATE_SUPPORT' },
+        suggestions: isMalay ? ["Buka Tiket", "Soalan Lazim", "Mula Langkah 1"] : ["Open Ticket", "FAQs", "Start Step 1"]
+      });
+    }
+
     // 1C. Educational Intent: Explain DSR & Credit Score (e.g. "what is DSR", "explain credit score", "like 10 years old", "apa itu DSR")
     const isDsrOrScoreEducationalQuery = (
       (lastMsgLower.includes('dsr') || lastMsgLower.includes('debt service') || lastMsgLower.includes('nisbah khidmat') || lastMsgLower.includes('credit score') || lastMsgLower.includes('skor kredit')) &&
@@ -2145,8 +2177,12 @@ Guidelines:
             : ["Loan Calculator", "Bank Directory", "Start Application"]
         });
       }
-    } catch (e) {
+    } catch (e: any) {
       console.warn("Gemini chat reasoning error:", e);
+      const isQuotaOrLimit = e?.message?.includes('429') || e?.message?.toLowerCase().includes('quota') || e?.message?.toLowerCase().includes('resource_exhausted');
+      if (isQuotaOrLimit) {
+        console.warn("[GEMINI LIMIT REACHED] API keys are throttled or quota-limited. Activating heuristic underwriting fallback.");
+      }
     }
 
     // Intelligent Context-Aware Fallback
@@ -2170,6 +2206,20 @@ Guidelines:
         ? "Membuka Penjejak Status Permohonan Pembiayaan anda."
         : "Opening your Loan Application Status Tracker.";
       fallbackAction = { type: 'NAVIGATE_TRACKER' };
+    } else if (lastMsgLower.includes('setting') || lastMsgLower.includes('tetapan') || lastMsgLower.includes('profile') || lastMsgLower.includes('profil')) {
+      reply = isMalay
+        ? "Membuka Tetapan Profil Pengguna untuk anda."
+        : "Opening your Profile and Account Settings for you now.";
+      fallbackAction = { type: 'NAVIGATE_SETTINGS' };
+    } else if (lastMsgLower.includes('support') || lastMsgLower.includes('bantuan') || lastMsgLower.includes('ticket')) {
+      reply = isMalay
+        ? "Membuka Pusat Bantuan & Sokongan Pelanggan untuk anda."
+        : "Opening Customer Support and Help Center for you now.";
+      fallbackAction = { type: 'NAVIGATE_SUPPORT' };
+    } else if (lastUserMessage.trim().length > 3 && !['hi', 'hello', 'hey', 'salam', 'hai'].includes(lastMsgLower.trim())) {
+      reply = isMalay
+        ? "Sistem pengunderaitan AI Loan - La sedia membantu. Anda boleh menyatakan keperluan pinjaman anda (cth: 'Saya mahu pinjam RM 8,000') atau gunakan alat navigasi di bawah."
+        : "Loan - La's smart underwriting engine is ready to assist. You can state your loan requirements (e.g. 'I need RM 8,000 for Raya stock') or use the tools below to calculate installments or view licensed lenders.";
     }
 
     return NextResponse.json({

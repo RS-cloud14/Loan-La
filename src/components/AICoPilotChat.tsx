@@ -1135,14 +1135,63 @@ export default function AICoPilotChat({
         }
       }
 
+      // Settings / Profile Navigation
+      if (lower.includes('setting') || lower.includes('tetapan') || lower.includes('profile') || lower.includes('profil')) {
+        if (
+          lower.includes('bring') || lower.includes('take') || lower.includes('go to') || 
+          lower.includes('open') || lower.includes('buka') || lower.includes('bawa') || 
+          lower.includes('pergi') || lower.includes('show') || lower.includes('tunjuk') || 
+          lower.includes('can bring') || lower.includes('navigate') || lower === 'settings' || 
+          lower === 'setting' || lower === 'tetapan' || lower === 'open settings' || lower === 'buka tetapan' ||
+          lower.includes('user profile') || lower.includes('profil pengguna')
+        ) {
+          const replyText = isMalay
+            ? "Membuka Tetapan Profil Pengguna untuk anda."
+            : "Opening your Profile and Account Settings for you now.";
+          if (isCallActiveRef.current) {
+            speakText(replyText, () => {
+              executeAgentAction({ type: 'NAVIGATE_SETTINGS' }, false);
+              if (isCallActiveRef.current) startCallListening();
+            });
+          } else {
+            executeAgentAction({ type: 'NAVIGATE_SETTINGS' }, true);
+          }
+          const userMsgItem: ChatMessage = { id: `user-${Date.now()}`, role: 'user', content: textToSend, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+          const botMsgItem: ChatMessage = { id: `bot-${Date.now()}`, role: 'assistant', content: replyText, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), action: { type: 'NAVIGATE_SETTINGS' } };
+          setMessages(prev => [...prev, userMsgItem, botMsgItem]);
+          return;
+        }
+      }
+
+      // Support Center Navigation
+      if (lower.includes('support') || lower.includes('bantuan') || lower.includes('ticket') || lower.includes('tiket') || lower.includes('help center') || lower.includes('pusat bantuan')) {
+        if (
+          lower.includes('bring') || lower.includes('take') || lower.includes('go to') || 
+          lower.includes('open') || lower.includes('buka') || lower.includes('bawa') || 
+          lower.includes('pergi') || lower.includes('show') || lower.includes('tunjuk') || 
+          lower.includes('can bring') || lower.includes('navigate') || lower === 'support' || 
+          lower === 'bantuan' || lower === 'open support' || lower === 'buka bantuan'
+        ) {
+          const replyText = isMalay
+            ? "Membuka Pusat Bantuan & Sokongan Pelanggan untuk anda."
+            : "Opening Customer Support and Help Center for you now.";
+          if (isCallActiveRef.current) {
+            speakText(replyText, () => {
+              executeAgentAction({ type: 'NAVIGATE_SUPPORT' }, false);
+              if (isCallActiveRef.current) startCallListening();
+            });
+          } else {
+            executeAgentAction({ type: 'NAVIGATE_SUPPORT' }, true);
+          }
+          const userMsgItem: ChatMessage = { id: `user-${Date.now()}`, role: 'user', content: textToSend, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+          const botMsgItem: ChatMessage = { id: `bot-${Date.now()}`, role: 'assistant', content: replyText, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), action: { type: 'NAVIGATE_SUPPORT' } };
+          setMessages(prev => [...prev, userMsgItem, botMsgItem]);
+          return;
+        }
+      }
+
       if (!isReportInquiry && lower.includes('check') && (lower.includes('application') || lower.includes('status'))) {
         executeAgentAction({ type: 'NAVIGATE_TRACKER' }, true);
-        return;
-      } else if (lower.includes('open support') || lower.includes('buka pusat bantuan') || lower.includes('open tickets')) {
-        executeAgentAction({ type: 'NAVIGATE_SUPPORT' }, true);
-        return;
-      } else if (lower.includes('open setting') || lower.includes('buka tetapan') || lower.includes('open profile')) {
-        executeAgentAction({ type: 'NAVIGATE_SETTINGS' }, true);
         return;
       }
     }
