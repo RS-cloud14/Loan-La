@@ -138,7 +138,7 @@ function cleanSpeechDuplicates(raw: string): string {
   }
   text = dedupedSingle.join(' ');
 
-  // 5. Malaysian Manglish & Bahasa Rojak Phonetic Normalization
+  // 5. Malaysian Manglish & Bahasa Rojak Phonetic Normalization & Keyword Boosting
   text = text
     .replace(/\b(?:i\s*bought|i\s*boat|i\s*board|i\s*bot)\s*(?:personal\s*loan|loan|pinjaman)\b/gi, 'nak buat personal loan')
     .replace(/\b(?:upper\s*step|a\s*part\s*step|up\s*step)\b/gi, 'apa step')
@@ -147,20 +147,52 @@ function cleanSpeechDuplicates(raw: string): string {
     .replace(/\bnak\s*(?:play|supply|ape|plei)\b/gi, 'nak apply')
     .replace(/\b(?:mau|mohon|buat)\s*(?:lon|luen)\b/gi, 'nak apply loan')
     .replace(/\b(?:interes|interset|inte\s*rest)\s*rate\b/gi, 'interest rate')
-    .replace(/\b(?:kalkulat|kalkulate)\b/gi, 'calculate')
+    .replace(/\b(?:kalkulat|kalkulate|kalkulator)\b/gi, 'kalkulator')
     .replace(/\b(?:the\s*sr|d\s*s\s*r|ds\s*are|d\s*s\s*are)\b/gi, 'DSR')
     .replace(/\b(?:c\s*cris|see\s*cris|c\s*crisp|sekris)\b/gi, 'CCRIS')
-    .replace(/\b(?:c\s*tos|see\s*tos|c\s*toss)\b/gi, 'CTOS');
+    .replace(/\b(?:c\s*tos|see\s*tos|c\s*toss)\b/gi, 'CTOS')
+    .replace(/\b(?:gx\s*bank|g\s*x\s*bank)\b/gi, 'GXBank')
+    .replace(/\b(?:boost\s*bank|post\s*bank)\b/gi, 'Boost Bank')
+    .replace(/\b(?:aeon\s*credit|ion\s*credit|aon\s*credit)\b/gi, 'AEON Credit')
+    .replace(/\b(?:ring\s*git|arm\s*m)\b/gi, 'RM');
 
   return text.trim();
 }
 
 function parseSpeechRecognitionResults(results: any): string {
   if (!results || results.length === 0) return '';
+
+  const scoreTranscript = (t: string): number => {
+    let score = 0;
+    const lower = t.toLowerCase();
+    const keywords = ['loan', 'pinjaman', 'kadar', 'interest', 'rate', 'ansuran', 'repayment', 'kalkulator', 'calculator', 'bank', 'rm', 'ringgit', 'tahun', 'year', 'month', 'bulan', 'dsr', 'ccris', 'ctos', 'gxbank', 'boost', 'aeon', 'peratus', 'percent'];
+    for (const kw of keywords) {
+      if (lower.includes(kw)) score += 2;
+    }
+    return score;
+  };
+
+  const getBestAlternative = (item: any): string => {
+    if (!item || item.length === 0) return '';
+    if (item.length === 1) return item[0]?.transcript || '';
+    
+    let bestText = item[0]?.transcript || '';
+    let bestScore = scoreTranscript(bestText) + (item[0]?.confidence || 0.5);
+
+    for (let j = 1; j < item.length; j++) {
+      const altText = item[j]?.transcript || '';
+      const altScore = scoreTranscript(altText) + (item[j]?.confidence || 0.5);
+      if (altScore > bestScore) {
+        bestText = altText;
+        bestScore = altScore;
+      }
+    }
+    return bestText;
+  };
   
-  // If only 1 result, return its transcript
+  // If only 1 result, return its best alternative transcript
   if (results.length === 1) {
-    return cleanSpeechDuplicates(results[0][0]?.transcript || '');
+    return cleanSpeechDuplicates(getBestAlternative(results[0]));
   }
 
   // Check if mobile Android speech engine emitted cumulative/progressive results where each result starts with result[0]
@@ -181,7 +213,7 @@ function parseSpeechRecognitionResults(results: any): string {
 
   if (isCumulative) {
     // In Android cumulative mode, the last result entry is the complete cumulative transcription!
-    const last = results[results.length - 1][0]?.transcript || '';
+    const last = getBestAlternative(results[results.length - 1]);
     return cleanSpeechDuplicates(last);
   }
 
@@ -190,10 +222,11 @@ function parseSpeechRecognitionResults(results: any): string {
   let interimTranscript = '';
   for (let i = 0; i < results.length; ++i) {
     const item = results[i];
+    const bestText = getBestAlternative(item);
     if (item.isFinal) {
-      finalTranscript += (item[0]?.transcript || '') + ' ';
+      finalTranscript += bestText + ' ';
     } else {
-      interimTranscript += (item[0]?.transcript || '') + ' ';
+      interimTranscript += bestText + ' ';
     }
   }
 
@@ -429,6 +462,12 @@ export default function AICoPilotChat({
   const speechWatchdogRef = useRef<any>(null);
   const isMalayRef = useRef(isMalay);
   isMalayRef.current = isMalay;
+  // Barge-in: mic stays alive during TTS; this flag lets onresult know to interrupt
+  const isBargeInListeningRef = useRef(false);
+  const [bargeInFlash, setBargeInFlash] = useState(false);
+  const startCallListeningRef = useRef<() => void>(() => {});
+
+
 
   // Consistent High-Clarity Voice Selection: Malay (ms-MY/id-ID) vs US English
   const getConsistentVoice = useCallback((langMalay: boolean) => {
@@ -571,7 +610,7 @@ export default function AICoPilotChat({
     }
   }, [spokenCharIndex, isCallActive, callStatus, lastAgentReply]);
 
-  // Text-to-speech engine with bulletproof state lifecycle and watchdog auto-recovery
+  // Text-to-speech engine with barge-in voice interrupt and watchdog auto-recovery
   const speakText = useCallback((text: string, onFinish?: () => void) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
       setCallStatus('listening');
@@ -580,10 +619,9 @@ export default function AICoPilotChat({
     }
 
     isAgentSpeakingRef.current = true;
+    isBargeInListeningRef.current = true;
     isUserScrollingSubtitlesRef.current = false;
-    if (callRecognitionRef.current) {
-      try { callRecognitionRef.current.stop(); } catch(e){}
-    }
+
     if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
     if (speechIntervalRef.current) clearInterval(speechIntervalRef.current);
     if (speechWatchdogRef.current) clearTimeout(speechWatchdogRef.current);
@@ -601,6 +639,7 @@ export default function AICoPilotChat({
 
     if (!cleanText) {
       isAgentSpeakingRef.current = false;
+      isBargeInListeningRef.current = false;
       setCallStatus('listening');
       if (onFinish) onFinish();
       return;
@@ -626,9 +665,10 @@ export default function AICoPilotChat({
       activeUtteranceRef.current = null;
       setSpokenCharIndex(cleanText.length);
       isAgentSpeakingRef.current = false;
+      isBargeInListeningRef.current = false;
       setCallStatus('listening');
-      if (isCallActiveRef.current) {
-        startCallListening();
+      if (isCallActiveRef.current && !isRecognitionRunningRef.current) {
+        startCallListeningRef.current();
       }
       if (onFinish) onFinish();
     };
@@ -636,7 +676,13 @@ export default function AICoPilotChat({
     utterance.onstart = () => {
       setCallStatus('speaking');
       isAgentSpeakingRef.current = true;
+      isBargeInListeningRef.current = true;
       setSpokenCharIndex(0);
+
+      // Keep speech recognition listening for barge-in while AI speaks
+      if (isCallActiveRef.current && !isRecognitionRunningRef.current && !isMutedRef.current) {
+        startCallListeningRef.current();
+      }
 
       // Smooth progress fallback timer across word count
       const wordCount = cleanText.split(/\s+/).length;
@@ -678,6 +724,7 @@ export default function AICoPilotChat({
     if (speechIntervalRef.current) clearInterval(speechIntervalRef.current);
     activeUtteranceRef.current = null;
     isAgentSpeakingRef.current = false;
+    isBargeInListeningRef.current = false;
     setCallStatus('listening');
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       try {
@@ -690,11 +737,12 @@ export default function AICoPilotChat({
   const handleInterruptAndSpeak = () => {
     stopSpeaking();
     isAgentSpeakingRef.current = false;
+    isBargeInListeningRef.current = false;
     setCallStatus('listening');
     setLiveTranscript('');
     currentAccumulatedSpeechRef.current = '';
     persistedTurnSpeechRef.current = '';
-    startCallListening();
+    startCallListeningRef.current();
   };
 
   // Execute Agentic Action & Auto-Close Window when navigating!
@@ -1002,11 +1050,12 @@ export default function AICoPilotChat({
     }
   };
 
-  // Continuous, robust speech recognition for Live Voice Call
+  // Continuous, robust speech recognition for Live Voice Call with instant voice barge-in interrupt
   const startCallListening = useCallback(() => {
-    if (!isCallActiveRef.current || isMutedRef.current || isAgentSpeakingRef.current || isProcessingRef.current) return;
+    if (!isCallActiveRef.current || isMutedRef.current || isProcessingRef.current) return;
+    if (isRecognitionRunningRef.current) return;
     
-    setCallStatus('listening');
+    setCallStatus(isAgentSpeakingRef.current ? 'speaking' : 'listening');
 
     if (typeof window === 'undefined') return;
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -1027,19 +1076,21 @@ export default function AICoPilotChat({
       const recog = new SpeechRecognition();
       recog.continuous = true;
       recog.interimResults = true;
-      recog.maxAlternatives = 1;
+      recog.maxAlternatives = 3;
       recog.lang = isMalay ? 'ms-MY' : 'en-US';
 
       recog.onstart = () => {
         isRecognitionRunningRef.current = true;
-        setCallStatus('listening');
+        if (!isAgentSpeakingRef.current) {
+          setCallStatus('listening');
+        }
       };
 
-      const scheduleAutoSubmit = (delayMs: number = 3000) => {
+      const scheduleAutoSubmit = (delayMs: number = 1600) => {
         if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
         silenceTimerRef.current = setTimeout(() => {
           const speechToSubmit = cleanSpeechDuplicates(currentAccumulatedSpeechRef.current || persistedTurnSpeechRef.current);
-          if (speechToSubmit && isCallActiveRef.current && !isAgentSpeakingRef.current) {
+          if (speechToSubmit && isCallActiveRef.current && !isAgentSpeakingRef.current && !isProcessingRef.current) {
             currentAccumulatedSpeechRef.current = '';
             persistedTurnSpeechRef.current = '';
             try { recog.stop(); } catch(e){}
@@ -1049,17 +1100,31 @@ export default function AICoPilotChat({
       };
 
       recog.onspeechend = () => {
-        // User stopped vocalizing -> start the 3.0s countdown to auto-submit
+        // User stopped vocalizing -> fast auto-submit
         if (currentAccumulatedSpeechRef.current || persistedTurnSpeechRef.current) {
-          scheduleAutoSubmit(3000);
+          scheduleAutoSubmit(1600);
         }
       };
 
       recog.onresult = (event: any) => {
-        if (isAgentSpeakingRef.current) return;
-
         const currentSegment = parseSpeechRecognitionResults(event.results);
-        if (!currentSegment) return;
+        if (!currentSegment || currentSegment.trim().length < 2) return;
+
+        // INSTANT VOICE BARGE-IN: User spoke while AI was speaking!
+        if (isAgentSpeakingRef.current) {
+          // Interrupt TTS immediately
+          if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+            try { window.speechSynthesis.cancel(); } catch(e){}
+          }
+          if (speechWatchdogRef.current) clearTimeout(speechWatchdogRef.current);
+          if (speechIntervalRef.current) clearInterval(speechIntervalRef.current);
+          activeUtteranceRef.current = null;
+          isAgentSpeakingRef.current = false;
+          isBargeInListeningRef.current = false;
+          setCallStatus('listening');
+          setBargeInFlash(true);
+          setTimeout(() => setBargeInFlash(false), 1400);
+        }
 
         // Merge with previously persisted speech from earlier in this user turn so pausing doesn't wipe previous words
         let fullText = currentSegment;
@@ -1090,8 +1155,11 @@ export default function AICoPilotChat({
 
           const isThinkingOrConnecting = thinkingSounds.includes(lastWord) || trailingConnectives.includes(lastWord);
 
-          // Standard silence timer: 3.0s (3000ms) if finished; 4.0s (4000ms) if thinking/hesitating with "ur", "ah", etc.
-          const waitTimeout = isThinkingOrConnecting ? 4000 : 3000;
+          // Fast path: if the latest result is marked final, submit even faster
+          const latestResult = event.results[event.results.length - 1];
+          const hasFinal = latestResult && latestResult.isFinal;
+
+          let waitTimeout = isThinkingOrConnecting ? 2600 : (hasFinal ? 1100 : 1600);
           scheduleAutoSubmit(waitTimeout);
         }
       };
@@ -1109,17 +1177,17 @@ export default function AICoPilotChat({
         if (currentAccumulatedSpeechRef.current) {
           persistedTurnSpeechRef.current = currentAccumulatedSpeechRef.current;
           // Ensure auto-submit is scheduled if user is quiet
-          if (!silenceTimerRef.current && isCallActiveRef.current && !isAgentSpeakingRef.current) {
-            scheduleAutoSubmit(3000);
+          if (!silenceTimerRef.current && isCallActiveRef.current && !isAgentSpeakingRef.current && !isProcessingRef.current) {
+            scheduleAutoSubmit(1600);
           }
         }
-        // Graceful auto-restart if call is still active and agent is not speaking
-        if (isCallActiveRef.current && !isMutedRef.current && !isAgentSpeakingRef.current && !isProcessingRef.current) {
+        // Ultra-low latency auto-restart (40ms) to keep mic live seamlessly
+        if (isCallActiveRef.current && !isMutedRef.current && !isProcessingRef.current) {
           setTimeout(() => {
-            if (isCallActiveRef.current && !isMutedRef.current && !isAgentSpeakingRef.current && !isRecognitionRunningRef.current && !isProcessingRef.current) {
+            if (isCallActiveRef.current && !isMutedRef.current && !isRecognitionRunningRef.current && !isProcessingRef.current) {
               startCallListening();
             }
-          }, 250);
+          }, 40);
         }
       };
 
@@ -1130,11 +1198,13 @@ export default function AICoPilotChat({
       isRecognitionRunningRef.current = false;
     }
   }, [isMalay]);
+  startCallListeningRef.current = startCallListening;
+
 
   // Synchronize Speech Recognition language dynamically whenever language changes
   useEffect(() => {
     isMalayRef.current = isMalay;
-    if (isCallActiveRef.current && !isAgentSpeakingRef.current && !isProcessingRef.current) {
+    if (isCallActiveRef.current && !isProcessingRef.current) {
       if (callRecognitionRef.current) {
         try {
           callRecognitionRef.current.onresult = null;
@@ -1146,10 +1216,10 @@ export default function AICoPilotChat({
         isRecognitionRunningRef.current = false;
       }
       const timer = setTimeout(() => {
-        if (isCallActiveRef.current && !isAgentSpeakingRef.current && !isProcessingRef.current) {
+        if (isCallActiveRef.current && !isProcessingRef.current) {
           startCallListening();
         }
-      }, 150);
+      }, 100);
       return () => clearTimeout(timer);
     }
   }, [isMalay, startCallListening]);
@@ -1157,7 +1227,7 @@ export default function AICoPilotChat({
   // Tab Visibility & Focus Auto-Healer: Re-engage microphone when switching back to tab
   useEffect(() => {
     const handleReviveOnFocus = () => {
-      if (document.visibilityState === 'visible' && isCallActiveRef.current && !isAgentSpeakingRef.current && !isMutedRef.current && !isProcessingRef.current) {
+      if (document.visibilityState === 'visible' && isCallActiveRef.current && !isMutedRef.current && !isProcessingRef.current) {
         if (!isRecognitionRunningRef.current) {
           startCallListening();
         }
@@ -1167,14 +1237,14 @@ export default function AICoPilotChat({
     document.addEventListener('visibilitychange', handleReviveOnFocus);
     window.addEventListener('focus', handleReviveOnFocus);
 
-    // Keep-alive Heartbeat Watchdog every 2.5 seconds
+    // Keep-alive Heartbeat Watchdog every 750ms (ultra-reliable mic retention)
     const heartbeatInterval = setInterval(() => {
-      if (isCallActiveRef.current && !isAgentSpeakingRef.current && !isMutedRef.current && !isProcessingRef.current) {
+      if (isCallActiveRef.current && !isMutedRef.current && !isProcessingRef.current) {
         if (!isRecognitionRunningRef.current) {
           startCallListening();
         }
       }
-    }, 2500);
+    }, 750);
 
     return () => {
       document.removeEventListener('visibilitychange', handleReviveOnFocus);
@@ -1556,8 +1626,15 @@ export default function AICoPilotChat({
                     <span className={`w-1 bg-blue-400 rounded-full transition-all duration-200 ${callStatus === 'speaking' ? 'h-1.5 animate-pulse [animation-duration:0.7s]' : callStatus === 'listening' ? 'h-1' : 'h-1 opacity-40'}`}></span>
                   </div>
 
-                  <span className="text-[11px] font-semibold text-slate-300 tracking-wide">
-                    {callStatus === 'speaking' && (isMalay ? "Ejen Sedang Menjawab..." : "AI Speaking...")}
+                  {bargeInFlash && (
+                    <div className="px-3 py-1 bg-amber-500/20 border border-amber-500/50 rounded-full text-[11px] font-bold text-amber-300 flex items-center gap-1.5 animate-bounce shadow-lg">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                      <span>{isMalay ? "Disampuk! Mendengar soalan seterusnya..." : "Interrupted! Listening to your question..."}</span>
+                    </div>
+                  )}
+
+                  <span className="text-[11px] font-semibold text-slate-300 tracking-wide text-center">
+                    {callStatus === 'speaking' && (isMalay ? "Ejen Sedang Menjawab (Terus bercakap untuk sampuk)" : "AI Speaking (Speak anytime to interrupt)")}
                     {callStatus === 'thinking' && (isMalay ? "AI Sedang Memproses & Mengira..." : "AI Processing & Calculating...")}
                     {callStatus === 'listening' && (isMalay ? "Mendengar suara anda..." : "Listening...")}
                   </span>
