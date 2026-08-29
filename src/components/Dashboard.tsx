@@ -1361,31 +1361,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* ========================================================= */}
-          {/* 2. ACCEPTED INCOMES STRIP                                 */}
-          {/* ========================================================= */}
-          <div className="w-full bg-slate-50/80 border border-slate-200/80 rounded-3xl p-5 sm:p-6 flex flex-col items-center gap-3 text-center">
-            <span className="text-[11px] font-extrabold uppercase tracking-widest text-slate-400 font-mono">
-              {language === 'bm' ? 'Penyata Platform & Aliran Bank Yang Diterima' : 'Accepted Platform Statements & Bank Flows'}
-            </span>
-            <div className="flex items-center justify-center gap-4 sm:gap-8 text-xs sm:text-sm font-bold text-slate-700 flex-wrap">
-              <span className="flex items-center gap-2 bg-white px-3.5 py-2 rounded-xl border border-slate-200 shadow-2xs">
-                <Car className="w-4 h-4 text-blue-900" /> {language === 'bm' ? 'Pemandu & Penghantar Grab' : 'Grab Driver & Food'}
-              </span>
-              <span className="flex items-center gap-2 bg-white px-3.5 py-2 rounded-xl border border-slate-200 shadow-2xs">
-                <Bike className="w-4 h-4 text-blue-900" /> Foodpanda Logistics
-              </span>
-              <span className="flex items-center gap-2 bg-white px-3.5 py-2 rounded-xl border border-slate-200 shadow-2xs">
-                <ShoppingBag className="w-4 h-4 text-blue-900" /> {language === 'bm' ? 'Peniaga Shopee & Lazada' : 'Shopee & Lazada'}
-              </span>
-              <span className="flex items-center gap-2 bg-white px-3.5 py-2 rounded-xl border border-slate-200 shadow-2xs">
-                <Package className="w-4 h-4 text-blue-900" /> Lalamove Fleet
-              </span>
-              <span className="flex items-center gap-2 bg-white px-3.5 py-2 rounded-xl border border-slate-200 shadow-2xs">
-                <Laptop className="w-4 h-4 text-blue-900" /> {language === 'bm' ? 'Penyata PDF Maybank / CIMB / Bank' : 'Maybank / CIMB / Bank PDFs'}
-              </span>
-            </div>
-          </div>
+
 
           {/* ========================================================= */}
           {/* 3. 3 EASY STEPS TO GET CASH (LARGE & SPACIOUS CARDS)      */}
