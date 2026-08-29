@@ -348,7 +348,6 @@ export default function Dashboard() {
   const [savedDraft, setSavedDraft] = useState<SavedApplicationDraft | null>(null);
   const [showResumeDraftModal, setShowResumeDraftModal] = useState<boolean>(false);
   const [draftSavedToast, setDraftSavedToast] = useState<string | null>(null);
-  const [isDraftSavedFeedback, setIsDraftSavedFeedback] = useState<boolean>(false);
 
   // Load existing draft on initial mount
   useEffect(() => {
@@ -422,12 +421,10 @@ export default function Dashboard() {
       setSavedDraft(draft);
 
       if (!silent) {
-        setIsDraftSavedFeedback(true);
         setDraftSavedToast(language === 'bm' ? '✓ Kemajuan permohonan berjaya disimpan!' : '✓ Application progress saved successfully!');
         setTimeout(() => {
-          setIsDraftSavedFeedback(false);
           setDraftSavedToast(null);
-        }, 2500);
+        }, 3000);
       }
     } catch (e) {
       console.error('Error saving draft:', e);
@@ -479,12 +476,10 @@ export default function Dashboard() {
     setB2cResult(null);
     setPerspective('B2C');
     setCurrentPage('app');
-    setIsDraftSavedFeedback(true);
     setDraftSavedToast(language === 'bm' ? '✓ Draf permohonan dipulihkan!' : '✓ Saved draft restored!');
     setTimeout(() => {
-      setIsDraftSavedFeedback(false);
       setDraftSavedToast(null);
-    }, 2500);
+    }, 3000);
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -1832,24 +1827,11 @@ export default function Dashboard() {
                   <button
                     type="button"
                     onClick={() => handleSaveDraft(false)}
-                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-2xs active:scale-95 cursor-pointer ${
-                      isDraftSavedFeedback
-                        ? 'bg-emerald-600 text-white border border-emerald-600'
-                        : 'bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-blue-950 border border-slate-200'
-                    }`}
+                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-blue-950 border border-slate-200 transition-all shadow-2xs active:scale-95 cursor-pointer"
                     title={language === 'bm' ? 'Simpan kemajuan permohonan' : 'Save application progress'}
                   >
-                    {isDraftSavedFeedback ? (
-                      <>
-                        <Check className="w-3.5 h-3.5 text-white" />
-                        <span>{language === 'bm' ? 'Disimpan ✓' : 'Saved ✓'}</span>
-                      </>
-                    ) : (
-                      <>
-                        <Bookmark className="w-3.5 h-3.5 text-blue-900" />
-                        <span>{language === 'bm' ? 'Simpan Draf' : 'Save Progress'}</span>
-                      </>
-                    )}
+                    <Bookmark className="w-3.5 h-3.5 text-blue-900" />
+                    <span>{language === 'bm' ? 'Simpan Draf' : 'Save Progress'}</span>
                   </button>
                 )}
               </div>
