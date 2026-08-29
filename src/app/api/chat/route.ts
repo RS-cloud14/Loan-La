@@ -1239,38 +1239,73 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 7. Loan Calculation & Setup (Direct Proactive Execution)
+    // 7A. Calculator Explanatory / How-To Guide (Educational)
+    const isCalculatorInquiry = (
+      (lastMsgLower.includes('how') || lastMsgLower.includes('bagaimana') || lastMsgLower.includes('macam mana') || lastMsgLower.includes('cara') || lastMsgLower.includes('what is') || lastMsgLower.includes('apa itu') || lastMsgLower.includes('guide') || lastMsgLower.includes('ajar') || lastMsgLower.includes('guna')) &&
+      (lastMsgLower.includes('calc') || lastMsgLower.includes('kalkulator')) &&
+      !lastMsgLower.includes('kira untuk') &&
+      !lastMsgLower.includes('calculate for')
+    );
+
+    if (isCalculatorInquiry) {
+      const reply = isMalay
+        ? `🧮 **Cara Menggunakan Kalkulator Pinjaman Loan - La:**\n\n1. **Tetapkan Jumlah Pinjaman (Loan Amount):**\n• Gerakkan gelangsar atau masukkan jumlah pembiayaan yang anda perlukan (cth: RM 5,000 – RM 100,000).\n\n2. **Pilih Tempoh Pinjaman (Tenure):**\n• Tetapkan tempoh bayaran balik antara 1 hingga 10 tahun mengikut kemampuan aliran tunai bulanan anda.\n\n3. **Masukkan Anggaran Kadar Faedah (Interest Rate):**\n• Masukkan kadar faedah tahunan (cth: 5.5% – 8.0% p.a.).\n\n4. **Semak Ansuran & Nisbah DSR Selamat:**\n• Kalkulator akan memaparkan anggaran bayaran bulanan, jumlah faedah keseluruhan, dan mengesahkan sama ada ansuran berada di bawah had selamat 35% DSR sebelum anda memohon!\n\n💡 *Tip Suara:* Anda juga boleh sebut terus kepada saya, contohnya: *"Kira pinjaman RM 20,000 selama 3 tahun kadar 6%"* dan saya akan kirakan untuk anda secara automatik.`
+        : `🧮 **How to Use the Loan - La Repayment Calculator:**\n\n1. **Set Financing Amount (Loan Amount):**\n• Adjust the slider or type the financing amount you need (e.g. RM 5,000 to RM 100,000).\n\n2. **Choose Repayment Tenure (Years):**\n• Select your repayment period between 1 to 10 years based on your monthly cashflow.\n\n3. **Set Estimated Interest Rate (% p.a.):**\n• Enter the annual interest rate (e.g. 5.5% to 8.0% p.a.).\n\n4. **Inspect Monthly Repayment & Safe DSR Buffer:**\n• The calculator instantly computes your monthly installment, total interest charges, and verifies that your debt service ratio remains below the safe 35% threshold!\n\n💡 *Voice Tip:* You can also speak specific numbers directly to me, e.g.: *"Calculate RM 20,000 for 3 years at 6%"* and I will calculate and configure it for you.`;
+
+      return NextResponse.json({
+        success: true,
+        reply,
+        suggestions: isMalay ? ["Buka Kalkulator", "Keperluan Pinjaman", "Direktori Bank"] : ["Open Calculator", "Loan Need Setup", "Bank Directory"]
+      });
+    }
+
+    // 7B. Voice Scroll Screen Command (Smooth current page scrolling)
+    const isScrollCommand = (
+      lastMsgLower === 'scroll down' ||
+      lastMsgLower === 'scroll up' ||
+      lastMsgLower === 'scroll' ||
+      lastMsgLower === 'scoll down' ||
+      lastMsgLower === 'scoll up' ||
+      lastMsgLower.includes('scroll down') ||
+      lastMsgLower.includes('scoll down') ||
+      lastMsgLower.includes('scroll up') ||
+      lastMsgLower.includes('scoll up') ||
+      lastMsgLower.includes('scroll to top') ||
+      lastMsgLower.includes('scroll to bottom') ||
+      lastMsgLower.includes('skrol bawah') ||
+      lastMsgLower.includes('skrol atas') ||
+      lastMsgLower.includes('skrol ke bawah') ||
+      lastMsgLower.includes('skrol ke atas') ||
+      lastMsgLower.includes('turun ke bawah') ||
+      lastMsgLower.includes('naik ke atas')
+    );
+
+    if (isScrollCommand) {
+      const isUp = lastMsgLower.includes('up') || lastMsgLower.includes('atas');
+      const isTop = lastMsgLower.includes('top');
+      const isBottom = lastMsgLower.includes('bottom');
+      const direction = isTop ? 'top' : (isBottom ? 'bottom' : (isUp ? 'up' : 'down'));
+      
+      const reply = isMalay
+        ? (direction === 'top' ? "Menatal ke bahagian atas halaman." : direction === 'bottom' ? "Menatal ke bahagian bawah halaman." : direction === 'up' ? "Menatal ke atas untuk anda." : "Menatal ke bawah untuk anda.")
+        : (direction === 'top' ? "Scrolling to the top of the page." : direction === 'bottom' ? "Scrolling to the bottom of the page." : direction === 'up' ? "Scrolling up for you." : "Scrolling down for you.");
+
+      return NextResponse.json({
+        success: true,
+        reply,
+        action: { type: 'SCROLL_TO_SECTION', payload: { sectionId: direction } },
+        suggestions: isMalay ? ["Kalkulator", "Direktori Bank"] : ["Calculator", "Bank Directory"]
+      });
+    }
+
+    // 7C. Explicit Loan Calculation with Real Numbers
     const parsedAmount = parseSpokenAmount(lastMsgLower);
     const parsedTenure = parseSpokenTenure(lastMsgLower);
     const parsedRate = parseSpokenRate(lastMsgLower);
 
-    const hasCalcIntent = lastMsgLower.includes('calc') || 
-                          lastMsgLower.includes('kira') || 
-                          lastMsgLower.includes('calculator') || 
-                          lastMsgLower.includes('kalkulator') || 
-                          lastMsgLower.includes('set') || 
-                          lastMsgLower.includes('tetap') || 
-                          lastMsgLower.includes('monthly') || 
-                          lastMsgLower.includes('ansuran') || 
-                          lastMsgLower.includes('installment') || 
-                          lastMsgLower.includes('rate') || 
-                          lastMsgLower.includes('kadar') || 
-                          lastMsgLower.includes('interest') || 
-                          lastMsgLower.includes('faedah') || 
-                          lastMsgLower.includes('%') || 
-                          lastMsgLower.includes('peratus') || 
-                          lastMsgLower.includes('year') || 
-                          lastMsgLower.includes('tahun') || 
-                          lastMsgLower.includes('apply') || 
-                          lastMsgLower.includes('loan') || 
-                          lastMsgLower.includes('pinjam') || 
-                          lastMsgLower.includes('nak') ||
-                          parsedAmount !== undefined ||
-                          parsedTenure !== undefined ||
-                          parsedRate !== undefined;
-
-    if (hasCalcIntent && (parsedAmount !== undefined || parsedTenure !== undefined || parsedRate !== undefined || lastMsgLower.includes('calc') || lastMsgLower.includes('kalkulator'))) {
-      const amt = parsedAmount || userContext.targetLoanAmount || 5000;
+    // Only compute calculation summary if user explicitly provided a loan amount or numeric parameters
+    if (parsedAmount !== undefined && (parsedTenure !== undefined || parsedRate !== undefined || lastMsgLower.includes('kira') || lastMsgLower.includes('calc') || lastMsgLower.includes('ansuran') || lastMsgLower.includes('installment') || lastMsgLower.includes('sebulan') || lastMsgLower.includes('month'))) {
+      const amt = parsedAmount;
       const yrs = parsedTenure || 1;
       const rate = parsedRate || 6.0;
 

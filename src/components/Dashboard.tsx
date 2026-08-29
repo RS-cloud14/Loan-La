@@ -408,36 +408,74 @@ export default function Dashboard() {
   }, [currentPage, activeStep, language]);
 
   const handleScrollToSection = (sectionId: string) => {
-    const s = sectionId.toLowerCase();
-    if (s.includes('calc') || s.includes('kalkulator')) {
+    const s = (sectionId || '').toLowerCase().trim();
+    
+    // Directional scrolling on the active page
+    if (s === 'down' || s === 'scroll_down' || s.includes('bawah') || s.includes('down')) {
+      window.scrollBy({ top: window.innerHeight * 0.7, behavior: 'smooth' });
+      return;
+    }
+    if (s === 'up' || s === 'scroll_up' || s.includes('atas') || s.includes('up')) {
+      window.scrollBy({ top: -window.innerHeight * 0.7, behavior: 'smooth' });
+      return;
+    }
+    if (s === 'top') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    if (s === 'bottom') {
+      window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+      return;
+    }
+
+    // Explicit page navigations
+    if (s === 'calculator' || s.includes('kalkulator')) {
       setCurrentPage('calculator');
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (s.includes('dir') || s.includes('bank') || s.includes('lender')) {
+      return;
+    }
+    if (s === 'directory' || s.includes('direktori') || s.includes('bank') || s.includes('lender')) {
       setCurrentPage('directory');
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (s.includes('track') || s.includes('status') || s.includes('permohonan')) {
+      return;
+    }
+    if (s === 'tracker' || s.includes('penjejak') || s.includes('status') || s.includes('permohonan')) {
       setCurrentPage('tracker');
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (s.includes('step1') || s.includes('need') || s.includes('tujuan')) {
+      return;
+    }
+    if (s === 'step1' || s === 'step_1' || s === 'step 1') {
       setCurrentPage('app');
       setActiveStep(1);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (s.includes('step2') || s.includes('upload') || s.includes('dokumen')) {
+      return;
+    }
+    if (s === 'step2' || s === 'step_2' || s === 'step 2') {
       setCurrentPage('app');
       setActiveStep(2);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (s.includes('step3') || s.includes('consent') || s.includes('akuan')) {
+      return;
+    }
+    if (s === 'step3' || s === 'step_3' || s === 'step 3') {
       setCurrentPage('app');
       setActiveStep(3);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (s.includes('step4') || s.includes('report') || s.includes('laporan') || s.includes('pasport')) {
+      return;
+    }
+    if (s === 'step4' || s === 'step_4' || s === 'step 4') {
       setCurrentPage('app');
       setActiveStep(4);
       window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (s.includes('hero') || s.includes('top') || s.includes('home')) {
+      return;
+    }
+    if (s === 'hero' || s === 'home' || s === 'landing') {
       setCurrentPage('landing');
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
     }
+
+    // Default: smooth scroll on current page
+    window.scrollBy({ top: window.innerHeight * 0.7, behavior: 'smooth' });
   };
 
   // Load existing draft on initial mount

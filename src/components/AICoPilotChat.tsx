@@ -758,24 +758,21 @@ export default function AICoPilotChat({
 
     const lower = textToSend.toLowerCase();
 
-    // Instant local triggers (avoid intercepting report inquiries)
+    // Instant local triggers (Avoid intercepting questions, how-to guides, or scroll requests)
+    const isQuestionOrScroll = lower.includes('how') || lower.includes('what') || lower.includes('why') || lower.includes('bagaimana') || lower.includes('macam mana') || lower.includes('cara') || lower.includes('terangkan') || lower.includes('explain') || lower.includes('scroll') || lower.includes('scoll') || lower.includes('skrol') || lower.includes('turun') || lower.includes('naik');
     const isReportInquiry = lower.includes('report') || lower.includes('laporan') || lower.includes('score') || lower.includes('skor') || lower.includes('explain') || lower.includes('terangkan');
     
-    if (!isReportInquiry && lower.includes('check') && (lower.includes('application') || lower.includes('status'))) {
-      executeAgentAction({ type: 'NAVIGATE_TRACKER' }, true);
-      return;
-    } else if (lower.includes('support center') || lower.includes('pusat bantuan') || lower.includes('pusat sokongan') || lower.includes('my tickets') || lower.includes('tiket saya') || lower.includes('open support')) {
-      executeAgentAction({ type: 'NAVIGATE_SUPPORT' }, true);
-      return;
-    } else if (lower.includes('setting') || lower.includes('tetapan') || lower.includes('profile')) {
-      executeAgentAction({ type: 'NAVIGATE_SETTINGS' }, true);
-      return;
-    } else if (lower.includes('keperluan pinjaman') || lower.includes('loan need') || lower.includes('step 1')) {
-      executeAgentAction({ type: 'NAVIGATE_LOAN_NEED' }, true);
-      return;
-    } else if (lower.includes('direktori') || lower.includes('directory') || (lower.includes('bank') && (lower.includes('list') || lower.includes('senarai')))) {
-      executeAgentAction({ type: 'NAVIGATE_DIRECTORY' }, true);
-      return;
+    if (!isQuestionOrScroll) {
+      if (!isReportInquiry && lower.includes('check') && (lower.includes('application') || lower.includes('status'))) {
+        executeAgentAction({ type: 'NAVIGATE_TRACKER' }, true);
+        return;
+      } else if (lower.includes('open support') || lower.includes('buka pusat bantuan') || lower.includes('open tickets')) {
+        executeAgentAction({ type: 'NAVIGATE_SUPPORT' }, true);
+        return;
+      } else if (lower.includes('open setting') || lower.includes('buka tetapan') || lower.includes('open profile')) {
+        executeAgentAction({ type: 'NAVIGATE_SETTINGS' }, true);
+        return;
+      }
     }
 
     const userMsg: ChatMessage = {
