@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { ArrowRight, FileCheck } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 
 interface PublicCalculatorProps {
@@ -31,52 +31,45 @@ export default function PublicCalculator({
   }, [initialTenureYears]);
 
   useEffect(() => {
-    if (initialInterestRate !== undefined && initialInterestRate > 0) setInterestRate(initialInterestRate);
+    if (initialInterestRate) setInterestRate(initialInterestRate);
   }, [initialInterestRate]);
 
-  const tenureMonths = Math.max(1, Math.round(tenureYears * 12));
-
-  // Financial calculations
+  // Standard flat-rate loan calculation
+  const totalMonths = tenureYears * 12;
   const totalInterest = loanAmount * (interestRate / 100) * tenureYears;
   const totalRepayment = loanAmount + totalInterest;
-  const monthlyInstallment = Math.round(totalRepayment / tenureMonths);
+  const monthlyInstallment = totalRepayment / totalMonths;
 
-  const formatTenureDisplay = (years: number) => {
-    if (years === 0.5) return language === 'bm' ? '6 Bulan' : '6 Months';
-    if (years === 1) return language === 'bm' ? '1 Tahun' : '1 Year';
-    return `${years} ${language === 'bm' ? 'Tahun' : 'Years'}`;
-  };
+  // Preset loan amount options for quick buttons
+  const presetAmounts = [3000, 5000, 10000, 20000, 50000];
 
-  // Reusable Monitor Card component
+  // Reusable Sticky Monitor Card
   const MonitorCard = (
-    <div className="bg-slate-950 text-white p-5 sm:p-6 rounded-3xl flex flex-col items-center text-center gap-3.5 shadow-xl border border-slate-800 w-full">
-      <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-        {t.monthlyRepaymentLabel}
-      </span>
-      <div className="text-4xl sm:text-5xl font-black text-white tracking-tight">
-        RM {monthlyInstallment.toLocaleString()}
-        <span className="text-sm font-medium text-slate-400"> {language === 'bm' ? '/ bulan' : '/ month'}</span>
+    <div className="w-full bg-slate-900 text-white rounded-3xl p-6 shadow-xl border border-slate-800 flex flex-col gap-4">
+      <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <span className="text-xs uppercase font-bold text-slate-400 tracking-wider">
+          {t.monthlyRepaymentLabel}
+        </span>
+        <span className="px-2.5 py-1 bg-slate-800 text-slate-300 font-bold text-[11px] rounded-lg">
+          {tenureYears} {language === 'bm' ? 'Tahun' : 'Years'} ({totalMonths} {language === 'bm' ? 'Bulan' : 'Mths'})
+        </span>
       </div>
 
-      {/* 4 Key Metrics */}
-      <div className="grid grid-cols-2 gap-2 w-full pt-3 mt-1 border-t border-slate-800/80 text-xs">
-        <div className="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 text-left">
-          <span className="text-[10px] text-slate-400 block">{language === 'bm' ? 'Pinjaman Pokok' : 'Principal Loan'}</span>
-          <span className="font-bold text-white mt-0.5 block text-sm">RM {loanAmount.toLocaleString()}</span>
-        </div>
+      <div className="flex items-baseline gap-1.5">
+        <span className="text-2xl font-bold text-slate-400">RM</span>
+        <span className="text-4xl sm:text-5xl font-black tracking-tight text-white tabular-nums">
+          {Math.round(monthlyInstallment).toLocaleString()}
+        </span>
+        <span className="text-xs text-slate-400 font-medium">/{language === 'bm' ? 'bulan' : 'mo'}</span>
+      </div>
 
-        <div className="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 text-left">
-          <span className="text-[10px] text-slate-400 block">{language === 'bm' ? 'Tempoh Bayaran' : 'Tenure'}</span>
-          <span className="font-bold text-white mt-0.5 block text-sm">{formatTenureDisplay(tenureYears)}</span>
-        </div>
-
-        <div className="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 text-left">
-          <span className="text-[10px] text-slate-400 block">{language === 'bm' ? 'Jumlah Faedah' : 'Total Interest'}</span>
+      <div className="grid grid-cols-2 gap-3 pt-3 border-t border-slate-800 text-xs">
+        <div>
+          <span className="text-slate-400 text-[11px] block">{language === 'bm' ? 'Jumlah Faedah' : 'Total Interest'}</span>
           <span className="font-bold text-white mt-0.5 block text-sm">RM {Math.round(totalInterest).toLocaleString()}</span>
         </div>
-
-        <div className="bg-slate-900/80 p-2.5 rounded-xl border border-slate-800 text-left">
-          <span className="text-[10px] text-slate-400 block">{language === 'bm' ? 'Kadar Tahunan' : 'Interest Rate'}</span>
+        <div>
+          <span className="text-slate-400 text-[11px] block">{language === 'bm' ? 'Kadar Tahunan' : 'Interest Rate'}</span>
           <span className="font-bold text-white mt-0.5 block text-sm">{interestRate.toFixed(2)}% p.a.</span>
         </div>
       </div>
@@ -87,25 +80,9 @@ export default function PublicCalculator({
     </div>
   );
 
-  // Reusable Advisory & CTA Button
+  // Reusable CTA Button
   const AdvisoryAndCTA = (
     <div className="flex flex-col gap-3.5 w-full">
-      <div className="p-4 bg-white border border-slate-200 rounded-2xl flex items-start gap-3 text-xs shadow-xs">
-        <div className="p-2 bg-slate-900 text-white rounded-xl shrink-0 mt-0.5">
-          <FileCheck className="w-4 h-4" />
-        </div>
-        <div>
-          <h4 className="font-bold text-slate-900 text-xs sm:text-sm">
-            {language === 'bm' ? 'Penilaian Pra-Kelayakan Diperibadikan' : 'Personalized Pre-Screening & Eligibility'}
-          </h4>
-          <p className="text-slate-500 text-[11px] mt-0.5 leading-relaxed">
-            {language === 'bm'
-              ? 'Jalankan semakan aliran tunai pintar untuk mengesahkan kelayakan pinjaman berasaskan penyata bank sebenar anda & dapatkan padanan bank digital secara terus.'
-              : 'Run our customized underwriting pre-check to assess your true debt-service ratio (DSR) and get pre-matched with licensed digital banks.'}
-          </p>
-        </div>
-      </div>
-
       <button
         onClick={() => onStartAudit({ loanAmount, loanPurpose: 'personal_cash', monthlyIncome: 3000 })}
         className="w-full py-3.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
