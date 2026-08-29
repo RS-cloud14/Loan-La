@@ -264,130 +264,17 @@ export default function Dashboard() {
     } catch (e) {}
   };
 
-  const [savedDraft, setSavedDraft] = useState<SavedApplicationDraft | null>(null);
-  const [showResumeDraftModal, setShowResumeDraftModal] = useState<boolean>(false);
-  const [draftSavedToast, setDraftSavedToast] = useState<string | null>(null);
+  // Form and Workflow States
+  const [activeStep, setActiveStep] = useState<number>(1);
+  const [targetLoanPurpose, setTargetLoanPurpose] = useState<'personal_cash' | 'working_capital' | 'equipment' | 'vehicle' | 'invoice_financing' | 'education'>('personal_cash');
+  const [targetLoanAmount, setTargetLoanAmount] = useState<number>(5000);
+  const [calcTenureYears, setCalcTenureYears] = useState<number>(1);
+  const [calcInterestRate, setCalcInterestRate] = useState<number>(6.0);
+  const [downpaymentAmount, setDownpaymentAmount] = useState<number>(500);
+  const [incomeWorkType, setIncomeWorkType] = useState<'gig' | 'salaried' | 'both'>('gig');
+  const [shariahPreference, setShariahPreference] = useState(false);
 
-  // Load existing draft on initial mount
-  useEffect(() => {
-    try {
-      const stored = localStorage.getItem('loanla_saved_application_draft');
-      if (stored) {
-        const parsed = JSON.parse(stored) as SavedApplicationDraft;
-        if (parsed && (parsed.uploadedFiles?.length > 0 || parsed.activeStep > 1)) {
-          setSavedDraft(parsed);
-        }
-      }
-    } catch (e) {
-      console.error('Error reading saved draft:', e);
-    }
-  }, []);
-
-  const handleSaveDraft = () => {
-    try {
-      const draft: SavedApplicationDraft = {
-        savedAt: new Date().toISOString(),
-        activeStep,
-        targetLoanAmount,
-        targetLoanPurpose,
-        calcTenureYears,
-        calcInterestRate,
-        downpaymentAmount,
-        incomeWorkType,
-        shariahPreference,
-        uploadedFiles: uploadedFiles.map(f => ({
-          fileName: f.fileName,
-          fileType: f.fileType,
-          fileSize: f.fileSize,
-          fileBase64: f.fileBase64 && f.fileBase64.length < 300000 ? f.fileBase64 : '',
-          fileText: f.fileText,
-          category: f.category
-        })),
-        preUploadDeclNoDefault,
-        preUploadDeclAuthentic,
-        preUploadDeclConsent,
-        preUploadDeclPdpa
-      };
-      localStorage.setItem('loanla_saved_application_draft', JSON.stringify(draft));
-      setSavedDraft(draft);
-      setDraftSavedToast(language === 'bm' ? '✓ Draf permohonan berjaya disimpan!' : '✓ Application progress saved successfully!');
-      setTimeout(() => setDraftSavedToast(null), 3500);
-    } catch (e) {
-      console.error('Error saving draft:', e);
-    }
-  };
-
-  const handleResumeDraft = (draftToLoad?: SavedApplicationDraft) => {
-    const draft = draftToLoad || savedDraft;
-    if (!draft) return;
-    setTargetLoanAmount(draft.targetLoanAmount || 5000);
-    setTargetLoanPurpose(draft.targetLoanPurpose || 'personal_cash');
-    setCalcTenureYears(draft.calcTenureYears || 1);
-    setCalcInterestRate(draft.calcInterestRate || 6.0);
-    setDownpaymentAmount(draft.downpaymentAmount || 500);
-    setIncomeWorkType(draft.incomeWorkType || 'gig');
-    setShariahPreference(draft.shariahPreference || false);
-    setUploadedFiles(draft.uploadedFiles || []);
-    setPreUploadDeclNoDefault(draft.preUploadDeclNoDefault || false);
-    setPreUploadDeclAuthentic(draft.preUploadDeclAuthentic || false);
-    setPreUploadDeclConsent(draft.preUploadDeclConsent || false);
-    setPreUploadDeclPdpa(draft.preUploadDeclPdpa || false);
-    setActiveStep(draft.activeStep || 1);
-    setShowResumeDraftModal(false);
-    setViewingArchivedReport(null);
-    setB2cResult(null);
-    setCurrentPage('app');
-    setDraftSavedToast(language === 'bm' ? '✓ Draf permohonan dipulihkan!' : '✓ Saved draft restored!');
-    setTimeout(() => setDraftSavedToast(null), 3000);
-    if (typeof window !== 'undefined') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
-
-  const handleDiscardDraftAndStartNew = () => {
-    try {
-      localStorage.removeItem('loanla_saved_application_draft');
-    } catch (e) {}
-    setSavedDraft(null);
-    setShowResumeDraftModal(false);
-    handleStartNewApplication();
-  };
-
-  const triggerNewApplicationFlow = () => {
-    try {
-      const stored = localStorage.getItem('loanla_saved_application_draft');
-      if (stored) {
-        const parsed = JSON.parse(stored) as SavedApplicationDraft;
-        if (parsed && (parsed.uploadedFiles?.length > 0 || parsed.activeStep > 1)) {
-          setSavedDraft(parsed);
-          setShowResumeDraftModal(true);
-          return;
-        }
-      }
-    } catch (e) {}
-    handleStartNewApplication();
-  };
-
-  const [viewingArchivedReport, setViewingArchivedReport] = useState<ReportHistoryItem | null>(null);
-
-  const handleStartNewApplication = () => {
-    setViewingArchivedReport(null);
-    setUploadedFiles([]);
-    setB2cResult(null);
-    setPreUploadDeclNoDefault(false);
-    setPreUploadDeclAuthentic(false);
-    setPreUploadDeclConsent(false);
-    setPreUploadDeclPdpa(false);
-    setDeclarationError(false);
-    setUploadValidationError(null);
-    setActiveStep(1);
-    setCurrentPage('app');
-    if (typeof window !== 'undefined') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-  };
-  
-  // Pre-Upload Prerequisite Borrower Declarations (Step 2)
+  // Pre-Upload Prerequisite Borrower Declarations (Step 2 & 3)
   const [preUploadDeclNoDefault, setPreUploadDeclNoDefault] = useState<boolean>(false);
   const [preUploadDeclAuthentic, setPreUploadDeclAuthentic] = useState<boolean>(false);
   const [preUploadDeclConsent, setPreUploadDeclConsent] = useState<boolean>(false);
@@ -395,12 +282,9 @@ export default function Dashboard() {
   const [showPdpaModal, setShowPdpaModal] = useState<boolean>(false);
   const [declarationError, setDeclarationError] = useState<boolean>(false);
   const [uploadValidationError, setUploadValidationError] = useState<string | null>(null);
-  const [incomeWorkType, setIncomeWorkType] = useState<'gig' | 'salaried' | 'both'>('gig');
-
-  // Step 2 Optional Documents Expandable State
   const [showOptionalDocs, setShowOptionalDocs] = useState<boolean>(false);
 
-  // Apply Modal Mandatory Borrower Declarations (Step 3 / Apply)
+  // Apply Modal Mandatory Borrower Declarations
   const [applyDeclNoDefault, setApplyDeclNoDefault] = useState<boolean>(false);
   const [applyDeclAffordability, setApplyDeclAffordability] = useState<boolean>(false);
   const [applyDeclSingleReport, setApplyDeclSingleReport] = useState<boolean>(false);
@@ -410,12 +294,6 @@ export default function Dashboard() {
     5: false, 6: false, 7: false, 8: false, 9: false
   });
   const [pdpaConsent, setPdpaConsent] = useState(false);
-  const [targetLoanPurpose, setTargetLoanPurpose] = useState<'personal_cash' | 'working_capital' | 'equipment' | 'vehicle' | 'invoice_financing' | 'education'>('personal_cash');
-  const [targetLoanAmount, setTargetLoanAmount] = useState<number>(5000);
-  const [calcTenureYears, setCalcTenureYears] = useState<number>(1);
-  const [calcInterestRate, setCalcInterestRate] = useState<number>(6.0);
-  const [downpaymentAmount, setDownpaymentAmount] = useState<number>(500);
-  const [activeStep, setActiveStep] = useState<number>(1);
   const [appliedLenders, setAppliedLenders] = useState<Record<string, { appliedAt: string; refCode: string }>>({});
   const [compareOpen, setCompareOpen] = useState(false);
   const [applyModalOpen, setApplyModalOpen] = useState(false);
@@ -429,7 +307,6 @@ export default function Dashboard() {
   const [lenderMatchOpen, setLenderMatchOpen] = useState(false);
   const [showLandingGuide, setShowLandingGuide] = useState(false);
   const [showOtherLenders, setShowOtherLenders] = useState(true);
-  const [shariahPreference, setShariahPreference] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [pipelineLogs, setPipelineLogs] = useState<string[]>([]);
   const [pipelineStep, setPipelineStep] = useState(0);
@@ -464,6 +341,178 @@ export default function Dashboard() {
     report: CreditProfileReport;
     hash: string;
   } | null>(null);
+
+  const [viewingArchivedReport, setViewingArchivedReport] = useState<ReportHistoryItem | null>(null);
+
+  // Draft Storage State
+  const [savedDraft, setSavedDraft] = useState<SavedApplicationDraft | null>(null);
+  const [showResumeDraftModal, setShowResumeDraftModal] = useState<boolean>(false);
+  const [draftSavedToast, setDraftSavedToast] = useState<string | null>(null);
+  const [isDraftSavedFeedback, setIsDraftSavedFeedback] = useState<boolean>(false);
+
+  // Load existing draft on initial mount
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem('loanla_saved_application_draft');
+      if (stored) {
+        const parsed = JSON.parse(stored) as SavedApplicationDraft;
+        if (parsed && (parsed.uploadedFiles?.length > 0 || parsed.activeStep > 1)) {
+          setSavedDraft(parsed);
+        }
+      }
+    } catch (e) {
+      console.error('Error reading saved draft:', e);
+    }
+  }, []);
+
+  const handleStartNewApplication = () => {
+    setViewingArchivedReport(null);
+    setUploadedFiles([]);
+    setB2cResult(null);
+    setPreUploadDeclNoDefault(false);
+    setPreUploadDeclAuthentic(false);
+    setPreUploadDeclConsent(false);
+    setPreUploadDeclPdpa(false);
+    setDeclarationError(false);
+    setUploadValidationError(null);
+    setActiveStep(1);
+    setCurrentPage('app');
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleSaveDraft = (silent = false) => {
+    try {
+      const draft: SavedApplicationDraft = {
+        savedAt: new Date().toISOString(),
+        activeStep,
+        targetLoanAmount,
+        targetLoanPurpose,
+        calcTenureYears,
+        calcInterestRate,
+        downpaymentAmount,
+        incomeWorkType,
+        shariahPreference,
+        uploadedFiles: uploadedFiles.map(f => ({
+          fileName: f.fileName,
+          fileType: f.fileType,
+          fileSize: f.fileSize,
+          fileBase64: f.fileBase64 && f.fileBase64.length < 200000 ? f.fileBase64 : '',
+          fileText: f.fileText ? f.fileText.slice(0, 40000) : '',
+          category: f.category
+        })),
+        preUploadDeclNoDefault,
+        preUploadDeclAuthentic,
+        preUploadDeclConsent,
+        preUploadDeclPdpa
+      };
+
+      try {
+        localStorage.setItem('loanla_saved_application_draft', JSON.stringify(draft));
+      } catch (storageErr) {
+        // Fallback: strip base64 completely if quota is hit
+        const minimalDraft: SavedApplicationDraft = {
+          ...draft,
+          uploadedFiles: draft.uploadedFiles.map(f => ({ ...f, fileBase64: '' }))
+        };
+        localStorage.setItem('loanla_saved_application_draft', JSON.stringify(minimalDraft));
+      }
+
+      setSavedDraft(draft);
+
+      if (!silent) {
+        setIsDraftSavedFeedback(true);
+        setDraftSavedToast(language === 'bm' ? '✓ Kemajuan permohonan berjaya disimpan!' : '✓ Application progress saved successfully!');
+        setTimeout(() => {
+          setIsDraftSavedFeedback(false);
+          setDraftSavedToast(null);
+        }, 2500);
+      }
+    } catch (e) {
+      console.error('Error saving draft:', e);
+    }
+  };
+
+  // Background auto-save draft whenever user updates application form (Steps 1-3)
+  useEffect(() => {
+    if (currentPage !== 'app' || activeStep >= 4 || !!viewingArchivedReport) return;
+    const timer = setTimeout(() => {
+      handleSaveDraft(true);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [
+    activeStep,
+    targetLoanAmount,
+    targetLoanPurpose,
+    calcTenureYears,
+    calcInterestRate,
+    downpaymentAmount,
+    incomeWorkType,
+    shariahPreference,
+    uploadedFiles,
+    preUploadDeclNoDefault,
+    preUploadDeclAuthentic,
+    preUploadDeclConsent,
+    preUploadDeclPdpa,
+    currentPage
+  ]);
+
+  const handleResumeDraft = (draftToLoad?: SavedApplicationDraft) => {
+    const draft = draftToLoad || savedDraft;
+    if (!draft) return;
+    setTargetLoanAmount(draft.targetLoanAmount || 5000);
+    setTargetLoanPurpose(draft.targetLoanPurpose || 'personal_cash');
+    setCalcTenureYears(draft.calcTenureYears || 1);
+    setCalcInterestRate(draft.calcInterestRate || 6.0);
+    setDownpaymentAmount(draft.downpaymentAmount || 500);
+    setIncomeWorkType(draft.incomeWorkType || 'gig');
+    setShariahPreference(draft.shariahPreference || false);
+    setUploadedFiles(draft.uploadedFiles || []);
+    setPreUploadDeclNoDefault(draft.preUploadDeclNoDefault || false);
+    setPreUploadDeclAuthentic(draft.preUploadDeclAuthentic || false);
+    setPreUploadDeclConsent(draft.preUploadDeclConsent || false);
+    setPreUploadDeclPdpa(draft.preUploadDeclPdpa || false);
+    setActiveStep(draft.activeStep || 1);
+    setShowResumeDraftModal(false);
+    setViewingArchivedReport(null);
+    setB2cResult(null);
+    setPerspective('B2C');
+    setCurrentPage('app');
+    setIsDraftSavedFeedback(true);
+    setDraftSavedToast(language === 'bm' ? '✓ Draf permohonan dipulihkan!' : '✓ Saved draft restored!');
+    setTimeout(() => {
+      setIsDraftSavedFeedback(false);
+      setDraftSavedToast(null);
+    }, 2500);
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleDiscardDraftAndStartNew = () => {
+    try {
+      localStorage.removeItem('loanla_saved_application_draft');
+    } catch (e) {}
+    setSavedDraft(null);
+    setShowResumeDraftModal(false);
+    handleStartNewApplication();
+  };
+
+  const triggerNewApplicationFlow = () => {
+    try {
+      const stored = localStorage.getItem('loanla_saved_application_draft');
+      if (stored) {
+        const parsed = JSON.parse(stored) as SavedApplicationDraft;
+        if (parsed && (parsed.uploadedFiles?.length > 0 || parsed.activeStep > 1)) {
+          setSavedDraft(parsed);
+          setShowResumeDraftModal(true);
+          return;
+        }
+      }
+    } catch (e) {}
+    handleStartNewApplication();
+  };
 
   // B2B Active Applicant
   const [selectedB2bApplicant, setSelectedB2bApplicant] = useState<string>('ahmad');
@@ -581,6 +630,12 @@ export default function Dashboard() {
         role: 'BORROWER'
       });
     }
+
+    // Clear draft once application is submitted to underwriting pipeline
+    try {
+      localStorage.removeItem('loanla_saved_application_draft');
+      setSavedDraft(null);
+    } catch (e) {}
 
     // Immediately route user straight to "My Applications"
     setCurrentPage('tracker');
@@ -1404,12 +1459,10 @@ export default function Dashboard() {
                   if (!userSession) {
                     setAuthModalOpen(true);
                   } else {
-                    setPerspective('B2C');
-                    setCurrentPage('app');
-                    setActiveStep(1);
+                    triggerNewApplicationFlow();
                   }
                 }}
-                className="w-full sm:w-auto px-8 py-4 bg-blue-950 hover:bg-blue-900 text-white font-black text-sm rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2.5 active:scale-98"
+                className="w-full sm:w-auto px-8 py-4 bg-blue-950 hover:bg-blue-900 text-white font-black text-sm rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2.5 active:scale-98 cursor-pointer"
               >
                 <span>{t.startAssessmentBtn}</span>
                 <ArrowRight className="w-4 h-4 text-blue-200" />
@@ -1446,7 +1499,7 @@ export default function Dashboard() {
               <div
                 onClick={() => {
                   if (!userSession) setAuthModalOpen(true);
-                  else { setPerspective('B2C'); setCurrentPage('app'); setActiveStep(1); }
+                  else triggerNewApplicationFlow();
                 }}
                 className="p-4 bg-white border border-slate-200/90 rounded-2xl shadow-xs flex flex-col gap-1.5 hover:border-blue-300 transition-all cursor-pointer"
               >
@@ -1465,7 +1518,7 @@ export default function Dashboard() {
               <div
                 onClick={() => {
                   if (!userSession) setAuthModalOpen(true);
-                  else { handleStartNewApplication(); }
+                  else triggerNewApplicationFlow();
                 }}
                 className="p-4 bg-white border border-slate-200/90 rounded-2xl shadow-xs flex flex-col gap-1.5 hover:border-blue-300 transition-all cursor-pointer"
               >
@@ -1672,9 +1725,7 @@ export default function Dashboard() {
                 if (!userSession) {
                   setAuthModalOpen(true);
                 } else {
-                  setPerspective('B2C');
-                  setCurrentPage('app');
-                  setActiveStep(1);
+                  triggerNewApplicationFlow();
                 }
               }}
               className="mt-2 px-8 py-4 bg-white hover:bg-slate-100 text-blue-950 font-black text-sm rounded-2xl shadow-lg transition-all active:scale-98 cursor-pointer"
@@ -1728,10 +1779,10 @@ export default function Dashboard() {
                 </div>
               </div>
             ) : (
-              <>
+              <div className="flex flex-col sm:flex-row items-center justify-between w-full gap-3">
                 <button
                   onClick={() => setCurrentPage('landing')}
-                  className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-xl transition-all w-full sm:w-auto justify-center cursor-pointer"
+                  className="flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-50 border border-slate-200 hover:bg-slate-100 rounded-xl transition-all w-full sm:w-auto justify-center cursor-pointer shadow-2xs"
                 >
                   <ArrowLeft className="w-4 h-4 text-blue-950" /> {language === 'bm' ? 'Kembali ke Laman Utama' : 'Back to Home'}
                 </button>
@@ -1775,7 +1826,33 @@ export default function Dashboard() {
                     </React.Fragment>
                   ))}
                 </div>
-              </>
+
+                {/* Single Unified Save Progress Action */}
+                {activeStep < 4 && (
+                  <button
+                    type="button"
+                    onClick={() => handleSaveDraft(false)}
+                    className={`flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-2xs active:scale-95 cursor-pointer ${
+                      isDraftSavedFeedback
+                        ? 'bg-emerald-600 text-white border border-emerald-600'
+                        : 'bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-blue-950 border border-slate-200'
+                    }`}
+                    title={language === 'bm' ? 'Simpan kemajuan permohonan' : 'Save application progress'}
+                  >
+                    {isDraftSavedFeedback ? (
+                      <>
+                        <Check className="w-3.5 h-3.5 text-white" />
+                        <span>{language === 'bm' ? 'Disimpan ✓' : 'Saved ✓'}</span>
+                      </>
+                    ) : (
+                      <>
+                        <Bookmark className="w-3.5 h-3.5 text-blue-900" />
+                        <span>{language === 'bm' ? 'Simpan Draf' : 'Save Progress'}</span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
             )}
           </div>
 
@@ -1798,48 +1875,7 @@ export default function Dashboard() {
                   return (
                     <div className="bg-white rounded-3xl border border-slate-200 shadow-md p-6 sm:p-8 flex flex-col gap-5">
                       
-                      {/* Saved Draft Reminder Banner (If a draft exists in localStorage) */}
-                      {savedDraft && (
-                        <div className="p-3.5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs animate-fade-in">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-8 h-8 rounded-xl bg-blue-950 text-white flex items-center justify-center shrink-0">
-                              <Bookmark className="w-4 h-4 text-blue-200" />
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-xs font-bold text-blue-950">
-                                  {language === 'bm' ? 'Draf Permohonan Tersimpan Ditemui' : 'Saved Application Draft Found'}
-                                </span>
-                                <span className="text-[9.5px] font-extrabold bg-blue-200 text-blue-950 px-2 py-0.5 rounded-full">
-                                  RM {savedDraft.targetLoanAmount?.toLocaleString()} • {savedDraft.uploadedFiles?.length || 0} {language === 'bm' ? 'fail' : 'files'}
-                                </span>
-                              </div>
-                              <span className="text-[10.5px] text-slate-500 block mt-0.5">
-                                {language === 'bm'
-                                  ? `Disimpan pada ${new Date(savedDraft.savedAt).toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' })}`
-                                  : `Saved on ${new Date(savedDraft.savedAt).toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' })}`}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
-                            <button
-                              type="button"
-                              onClick={() => handleResumeDraft()}
-                              className="px-3.5 py-1.5 bg-blue-950 hover:bg-blue-900 text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer active:scale-95 flex items-center gap-1.5"
-                            >
-                              <span>{language === 'bm' ? 'Teruskan Draf →' : 'Resume Draft →'}</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDiscardDraftAndStartNew()}
-                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-all cursor-pointer"
-                              title={language === 'bm' ? 'Padam Draf' : 'Discard Draft'}
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </div>
-                      )}
+                      {/* STEP 1 HEADER */}
 
                       {/* Step Header */}
                       <div className="border-b border-slate-100 pb-3.5 flex items-center justify-between">
@@ -1851,15 +1887,6 @@ export default function Dashboard() {
                             {language === 'bm' ? 'Pilih Keperluan Pinjaman Anda' : 'Select Your Financing Need'}
                           </h2>
                         </div>
-                        <button
-                          type="button"
-                          onClick={handleSaveDraft}
-                          className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200/80 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition-all cursor-pointer shadow-2xs active:scale-95"
-                          title={language === 'bm' ? 'Simpan draf permohonan' : 'Save draft progress'}
-                        >
-                          <Bookmark className="w-3.5 h-3.5 text-blue-900" />
-                          <span>{language === 'bm' ? 'Simpan Draf' : 'Save Progress'}</span>
-                        </button>
                       </div>
 
                       {/* 1. Purpose Selection Grid */}
@@ -2024,17 +2051,7 @@ export default function Dashboard() {
                       </div>
 
                       {/* Action Buttons */}
-                      <div className="flex flex-col sm:flex-row items-center gap-2.5 pt-2 border-t border-slate-100">
-                        <button
-                          type="button"
-                          onClick={handleSaveDraft}
-                          className="w-full sm:w-auto py-3.5 px-4.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer order-2 sm:order-1"
-                          title={language === 'bm' ? 'Simpan kemajuan draf' : 'Save draft progress'}
-                        >
-                          <Bookmark className="w-3.5 h-3.5 text-blue-900" />
-                          <span>{language === 'bm' ? 'Simpan Draf' : 'Save Progress'}</span>
-                        </button>
-
+                      <div className="pt-2 border-t border-slate-100">
                         <button
                           onClick={() => {
                             setActiveStep(2);
@@ -2042,7 +2059,7 @@ export default function Dashboard() {
                             document.documentElement.scrollTop = 0;
                             document.body.scrollTop = 0;
                           }}
-                          className="flex-1 w-full py-4 bg-blue-950 hover:bg-blue-900 text-white font-black text-xs sm:text-sm rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer order-1 sm:order-2"
+                          className="w-full py-4 bg-blue-950 hover:bg-blue-900 text-white font-black text-xs sm:text-sm rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer"
                         >
                           <span>{language === 'bm' ? 'Teruskan ke Langkah 2: Muat Naik Dokumen →' : 'Continue to Step 2: Upload Documents →'}</span>
                         </button>
@@ -2060,27 +2077,15 @@ export default function Dashboard() {
                     <div className="premium-card p-6 sm:p-7 bg-white border border-slate-200 shadow-md flex flex-col gap-5">
                       
                       {/* Header */}
-                      <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-blue-950 text-white flex items-center justify-center shadow-xs shrink-0">
-                            <UploadCloud className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <h2 className="text-base font-bold text-slate-900">
-                              {language === 'bm' ? 'Muat Naik Dokumen' : 'Upload Documents'}
-                            </h2>
-                          </div>
+                      <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
+                        <div className="w-10 h-10 rounded-xl bg-blue-950 text-white flex items-center justify-center shadow-xs shrink-0">
+                          <UploadCloud className="w-5 h-5" />
                         </div>
-
-                        <button
-                          type="button"
-                          onClick={handleSaveDraft}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200/80 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition-all cursor-pointer shadow-2xs active:scale-95"
-                          title={language === 'bm' ? 'Simpan draf permohonan' : 'Save draft progress'}
-                        >
-                          <Bookmark className="w-3.5 h-3.5 text-blue-900" />
-                          <span>{language === 'bm' ? 'Simpan Draf' : 'Save Progress'}</span>
-                        </button>
+                        <div>
+                          <h2 className="text-base font-bold text-slate-900">
+                            {language === 'bm' ? 'Muat Naik Dokumen' : 'Upload Documents'}
+                          </h2>
+                        </div>
                       </div>
 
                       {/* STEP 2.1: CHOOSE EMPLOYMENT TYPE (CLEAR CARDS) */}
@@ -3169,19 +3174,9 @@ export default function Dashboard() {
                               document.documentElement.scrollTop = 0;
                               document.body.scrollTop = 0;
                             }}
-                            className="flex-1 w-full py-4 px-6 bg-blue-950 hover:bg-blue-900 text-white font-bold rounded-2xl text-xs sm:text-sm transition-all shadow-md hover:shadow-lg cursor-pointer active:scale-[0.99] flex items-center justify-center gap-2 order-1 sm:order-3"
+                            className="flex-1 w-full py-4 px-6 bg-blue-950 hover:bg-blue-900 text-white font-bold rounded-2xl text-xs sm:text-sm transition-all shadow-md hover:shadow-lg cursor-pointer active:scale-[0.99] flex items-center justify-center gap-2 order-1 sm:order-2"
                           >
                             <span>{language === 'bm' ? 'Teruskan ke Langkah 3: Pengesahan & Perakuan →' : 'Continue to Step 3: Review & Consent →'}</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={handleSaveDraft}
-                            className="w-full sm:w-auto py-3.5 px-4.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer order-3 sm:order-2"
-                            title={language === 'bm' ? 'Simpan kemajuan draf' : 'Save draft progress'}
-                          >
-                            <Bookmark className="w-3.5 h-3.5 text-blue-900" />
-                            <span>{language === 'bm' ? 'Simpan Draf' : 'Save Progress'}</span>
                           </button>
                         </div>
                       </div>
@@ -3210,16 +3205,6 @@ export default function Dashboard() {
                             : 'Review your uploaded financial evidence and grant AI underwriting consent under PDPA 2010 guidelines.'}
                         </p>
                       </div>
-
-                      <button
-                        type="button"
-                        onClick={handleSaveDraft}
-                        className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200/80 text-slate-700 text-xs font-bold rounded-xl border border-slate-200 transition-all cursor-pointer shadow-2xs active:scale-95"
-                        title={language === 'bm' ? 'Simpan draf permohonan' : 'Save draft progress'}
-                      >
-                        <Bookmark className="w-3.5 h-3.5 text-blue-900" />
-                        <span>{language === 'bm' ? 'Simpan Draf' : 'Save Progress'}</span>
-                      </button>
                     </div>
 
                     {/* 1. Review Summary Checklist */}
@@ -3352,16 +3337,6 @@ export default function Dashboard() {
                       </button>
 
                       <button
-                        type="button"
-                        onClick={handleSaveDraft}
-                        className="w-full sm:w-auto py-3.5 px-4.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-2xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer order-3 sm:order-2"
-                        title={language === 'bm' ? 'Simpan kemajuan draf' : 'Save draft progress'}
-                      >
-                        <Bookmark className="w-3.5 h-3.5 text-blue-900" />
-                        <span>{language === 'bm' ? 'Simpan Draf' : 'Save Progress'}</span>
-                      </button>
-
-                      <button
                         onClick={() => {
                           if (!preUploadDeclNoDefault || !preUploadDeclAuthentic || !preUploadDeclConsent || !preUploadDeclPdpa) {
                             setDeclarationError(true);
@@ -3372,7 +3347,7 @@ export default function Dashboard() {
                           runUnderwritingPipeline('real');
                         }}
                         disabled={isProcessing || !!viewingArchivedReport}
-                        className="flex-1 w-full py-4 px-6 bg-blue-950 hover:bg-blue-900 text-white font-bold rounded-2xl text-xs sm:text-sm transition-all shadow-md hover:shadow-lg disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed active:scale-[0.99] flex items-center justify-center gap-2 order-1 sm:order-3"
+                        className="flex-1 w-full py-4 px-6 bg-blue-950 hover:bg-blue-900 text-white font-bold rounded-2xl text-xs sm:text-sm transition-all shadow-md hover:shadow-lg disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed active:scale-[0.99] flex items-center justify-center gap-2 order-1 sm:order-2"
                       >
                         <Play className="w-4 h-4 fill-white text-white" />
                         <span>
