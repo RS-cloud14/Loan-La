@@ -792,7 +792,7 @@ export default function Dashboard() {
     // Automatically ensure session for tracker view
     if (!userSession) {
       setUserSession({
-        name: type === 'mock' && mockId ? (b2bApplicants.find(a => a.id === mockId)?.name || 'Verified Borrower') : 'Ahmad',
+        name: type === 'mock' && mockId ? (b2bApplicants.find(a => a.id === mockId)?.name || 'Verified Borrower') : 'Verified Applicant',
         phone: '012-***5421',
         role: 'BORROWER'
       });
@@ -867,7 +867,11 @@ export default function Dashboard() {
           targetLoanAmount,
           tenureYears: calcTenureYears || 1,
           downpaymentAmount,
-          isUnlocked: isPassportUnlocked
+          isUnlocked: isPassportUnlocked,
+          applicantName: userSession?.name,
+          applicantIc: userSession?.icNumber,
+          applicantPhone: userSession?.phone,
+          userSession: userSession
         };
       }
 
@@ -930,6 +934,18 @@ export default function Dashboard() {
           hash: successData.hash
         };
         setB2cResult(result);
+        if (successData.inputData?.name && (!userSession || userSession.name === 'Ahmad' || userSession.name === 'Verified Applicant' || userSession.name === 'Borrower' || userSession.name === 'Guest')) {
+          const updatedUser = {
+            ...(userSession || {}),
+            name: successData.inputData.name,
+            phone: userSession?.phone || '012-***5421',
+            role: 'BORROWER'
+          };
+          setUserSession(updatedUser as any);
+          try {
+            localStorage.setItem('crediflow_user_session', JSON.stringify(updatedUser));
+          } catch (e) {}
+        }
         try {
           localStorage.setItem('crediflow_latest_assessment', JSON.stringify(result));
           fetch('/api/store-assessment', {

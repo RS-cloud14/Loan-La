@@ -46,6 +46,80 @@ function getApiKeyPool(): string[] {
 // Track the current key index to avoid hammering the same exhausted key in consecutive requests
 let currentKeyIndex = 0;
 
+export const DEFAULT_GEMINI_MODELS = [
+  'gemini-2.5-flash',
+  'gemini-2.5-flash-lite',
+  'gemini-flash-latest'
+];
+
+/**
+ * Executes a Gemini API operation with key rotation AND model cascade.
+ * If a model fails with Rate Limit / Quota (HTTP 429 / RESOURCE_EXHAUSTED),
+ * it seamlessly cascades to the next candidate model (e.g. gemini-2.5-flash-lite).
+ */
+export async function callGeminiWithModelRotation<T>(
+  operation: (ai: GoogleGenAI, model: string) => Promise<T>,
+  models: string[] = DEFAULT_GEMINI_MODELS
+): Promise<T> {
+  const pool = getApiKeyPool();
+
+  if (pool.length === 0) {
+    throw new Error("No Gemini API keys are configured in the environment. Set GEMINI_API_KEYS or GEMINI_API_KEY.");
+  }
+
+  let lastError: any = null;
+  const maxKeyAttempts = Math.max(pool.length * 2, 4);
+
+  for (let keyAttempt = 0; keyAttempt < maxKeyAttempts; keyAttempt++) {
+    const activeKeyIndex = (currentKeyIndex + keyAttempt) % pool.length;
+    const activeKey = pool[activeKeyIndex];
+    const ai = new GoogleGenAI({ apiKey: activeKey });
+
+    for (const model of models) {
+      try {
+        console.log(`[ROTATOR] Running model "${model}" with key index ${activeKeyIndex} (...${activeKey.slice(-5)})`);
+        const result = await operation(ai, model);
+        currentKeyIndex = activeKeyIndex;
+        return result;
+      } catch (error: any) {
+        lastError = error;
+        const errorMsg = error?.message || "";
+        const statusCode = error?.status || error?.statusCode;
+
+        const isQuotaOrRateLimit = 
+          statusCode === 429 || 
+          errorMsg.includes('429') || 
+          errorMsg.toLowerCase().includes('quota') || 
+          errorMsg.toLowerCase().includes('resource_exhausted') || 
+          errorMsg.toLowerCase().includes('resource exhausted') ||
+          errorMsg.toLowerCase().includes('rate limit');
+
+        if (isQuotaOrRateLimit) {
+          console.warn(`[ROTATOR] Model "${model}" hit quota/rate-limit. Cascading to next model in pool...`);
+          // Try next model with the same key
+          continue;
+        }
+
+        const isKeyError = 
+          statusCode === 400 || 
+          errorMsg.toLowerCase().includes('api_key_invalid') || 
+          errorMsg.toLowerCase().includes('invalid api key');
+
+        if (isKeyError) {
+          console.warn(`[ROTATOR] Key index ${activeKeyIndex} invalid/rejected. Moving to next key...`);
+          // Break to next key
+          break;
+        }
+
+        // For other recoverable errors (e.g. 503, 500, network), try next model or next key
+        console.warn(`[ROTATOR] Error on model "${model}" (${errorMsg.slice(0, 70)}...). Trying next candidate...`);
+      }
+    }
+  }
+
+  throw new Error(`[ROTATOR] All configured Gemini models and API keys exhausted: ${lastError?.message || lastError}`);
+}
+
 /**
  * Executes a Gemini API operation using keys from the pool.
  * If a key fails with a Rate Limit or Quota error (HTTP 429 / Resource Exhausted),
