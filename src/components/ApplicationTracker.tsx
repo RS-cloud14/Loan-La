@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   FileText, CheckCircle2, Clock, Building2, AlertCircle,
   ArrowRight, ExternalLink, Shield, Plus, Download,
-  History, Eye, AlertTriangle, Activity, RefreshCw, Cpu
+  History, Eye, AlertTriangle, Activity, RefreshCw, Cpu, UploadCloud
 } from 'lucide-react';
 import BankLogo from '@/components/BankLogo';
 import { useLanguage } from '@/context/LanguageContext';
@@ -17,9 +17,15 @@ export interface ApplicationRecord {
   loanAmount: number;
   monthlyInstallment: number;
   appliedAt: string;
-  status: 'SUBMITTED' | 'UNDER_REVIEW' | 'CONDITIONALLY_APPROVED' | 'DISBURSED';
+  status: 'SUBMITTED' | 'UNDER_REVIEW' | 'CONDITIONALLY_APPROVED' | 'DISBURSED' | 'ACTION_REQUIRED';
   speed: string;
   lenderUrl: string;
+  bankQuery?: {
+    queryText: string;
+    requiredDoc: string;
+    requestedAt: string;
+    resolved: boolean;
+  };
 }
 
 export interface ActiveAssessmentTask {
@@ -79,9 +85,55 @@ export default function ApplicationTracker({
 }: ApplicationTrackerProps) {
   const { language, t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'applications' | 'history'>('applications');
+  const [localApps, setLocalApps] = useState<ApplicationRecord[]>(applications);
+
+  useEffect(() => {
+    setLocalApps(applications);
+  }, [applications]);
+
+  // Proactively announce pending bank queries
+  useEffect(() => {
+    const pendingApp = localApps.find(a => a.bankQuery && !a.bankQuery.resolved);
+    if (pendingApp && typeof window !== 'undefined' && (window as any).__loanLaSpeak) {
+      const msg = language === 'bm'
+        ? `${pendingApp.lenderName} telah menyemak permohonan anda dan meminta ${pendingApp.bankQuery?.requiredDoc || 'sijil SSM'}. Adakah anda ingin memuat naiknya sekarang?`
+        : `${pendingApp.lenderName} has reviewed your application and requested your ${pendingApp.bankQuery?.requiredDoc || 'SSM certificate'}. Would you like to upload it now?`;
+      
+      const timer = setTimeout(() => {
+        (window as any).__loanLaSpeak(msg);
+      }, 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [localApps, language]);
+
+  const handleResolveBankQuery = (appId: string) => {
+    setLocalApps(prev => prev.map(a => {
+      if (a.id === appId && a.bankQuery) {
+        return {
+          ...a,
+          status: 'UNDER_REVIEW',
+          bankQuery: { ...a.bankQuery, resolved: true }
+        };
+      }
+      return a;
+    }));
+
+    if (typeof window !== 'undefined' && (window as any).__loanLaSpeak) {
+      const confirmMsg = language === 'bm'
+        ? "Dokumen sijil SSM berjaya dimuat naik ke portal Agrobank. Pegawai pengunderait kini menyambung semakan permohonan anda."
+        : "SSM certificate uploaded successfully to Agrobank portal. Underwriting officer has resumed reviewing your application.";
+      (window as any).__loanLaSpeak(confirmMsg);
+    }
+  };
 
   const getStatusBadge = (status: ApplicationRecord['status']) => {
     switch (status) {
+      case 'ACTION_REQUIRED':
+        return (
+          <span className="px-2.5 py-1 text-[11px] font-extrabold rounded-lg bg-amber-100 text-amber-950 border border-amber-300 flex items-center gap-1.5 font-mono">
+            <AlertTriangle className="w-3.5 h-3.5 text-amber-600" /> {language === 'bm' ? 'Tindakan Diperlukan' : 'Action Required'}
+          </span>
+        );
       case 'SUBMITTED':
         return (
           <span className="px-2.5 py-1 text-[11px] font-extrabold rounded-lg bg-blue-50 text-blue-900 border border-blue-200 flex items-center gap-1.5 font-mono">
@@ -321,7 +373,7 @@ export default function ApplicationTracker({
           ) : (
             /* List of Applications */
             <div className="grid grid-cols-1 gap-4">
-              {applications.map((app) => (
+              {localApps.map((app) => (
                 <div key={app.id} className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col gap-4 hover:border-blue-300 transition-all">
                   
                   {/* Top Row: Lender & Status */}
@@ -337,6 +389,49 @@ export default function ApplicationTracker({
                       {getStatusBadge(app.status)}
                     </div>
                   </div>
+
+                  {/* Bank Action Required Alert Banner */}
+                  {app.bankQuery && !app.bankQuery.resolved && (
+                    <div className="p-4 rounded-xl bg-amber-50/95 border border-amber-300 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-fade-in">
+                      <div className="flex items-start gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center shrink-0 shadow-xs mt-0.5">
+                          <AlertTriangle className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[11px] font-black text-amber-950 uppercase tracking-wider bg-amber-200/80 px-2 py-0.5 rounded-md">
+                              {language === 'bm' ? 'Tindakan Diperlukan Oleh Bank' : 'Bank Action Required'}
+                            </span>
+                            <span className="text-[10px] text-amber-700 font-bold">
+                              {app.bankQuery.requestedAt}
+                            </span>
+                          </div>
+                          <p className="text-xs text-amber-900 font-medium mt-1 leading-relaxed">
+                            {app.bankQuery.queryText}
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleResolveBankQuery(app.id)}
+                        className="px-4 py-2.5 bg-amber-600 hover:bg-amber-700 active:scale-95 text-white font-bold text-xs rounded-xl transition-all shadow-xs shrink-0 flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <UploadCloud className="w-4 h-4" />
+                        <span>{language === 'bm' ? `Muat Naik ${app.bankQuery.requiredDoc}` : `Upload ${app.bankQuery.requiredDoc}`}</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {app.bankQuery && app.bankQuery.resolved && (
+                    <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center gap-2 text-xs text-emerald-800">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span className="font-medium">
+                        {language === 'bm'
+                          ? `Dokumen ${app.bankQuery.requiredDoc} telah disahkan dan diterima oleh Agrobank. Pengunderaitan disambung semula.`
+                          : `${app.bankQuery.requiredDoc} verified and acknowledged by Agrobank. Underwriting resumed.`}
+                      </span>
+                    </div>
+                  )}
 
                   {/* Middle Row: Metrics & Ref Code */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-100 font-mono text-xs">
@@ -373,9 +468,13 @@ export default function ApplicationTracker({
                         <CheckCircle2 className="w-4 h-4 text-blue-900 shrink-0" />
                         <span className="text-[11px]">2. Income Verified</span>
                       </div>
-                      <div className="flex items-center gap-2 text-slate-600 font-semibold">
-                        <Clock className="w-4 h-4 text-blue-900 shrink-0" />
-                        <span className="text-[11px]">3. Bank Review (Speed: {app.speed})</span>
+                      <div className={`flex items-center gap-2 font-semibold ${app.status === 'CONDITIONALLY_APPROVED' ? 'text-emerald-700 font-bold' : 'text-slate-600'}`}>
+                        {app.status === 'CONDITIONALLY_APPROVED' ? (
+                          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        ) : (
+                          <Clock className="w-4 h-4 text-blue-900 shrink-0" />
+                        )}
+                        <span className="text-[11px]">{app.status === 'CONDITIONALLY_APPROVED' ? '3. Approved / Ready' : `3. Bank Review (Speed: ${app.speed})`}</span>
                       </div>
                     </div>
                   </div>

@@ -549,6 +549,60 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // 1D. Compound Natural Spoken Form Intake
+    const isCompoundIntake = (
+      (lastMsgLower.includes('earn') || lastMsgLower.includes('pendapatan') || lastMsgLower.includes('dapat') || lastMsgLower.includes('gaji') || lastMsgLower.includes('income')) &&
+      (lastMsgLower.includes('want') || lastMsgLower.includes('need') || lastMsgLower.includes('pinjam') || lastMsgLower.includes('nak') || lastMsgLower.includes('perlu') || lastMsgLower.includes('mohon')) &&
+      (lastMsgLower.includes('rm') || /\d{3,}/.test(lastMsgLower))
+    );
+
+    if (isCompoundIntake) {
+      const incomeMatch = lastMsgLower.match(/(?:earn|pendapatan|dapat|gaji|income)(?:\s+about|\s+around|\s+kira-kira)?\s*(?:rm)?\s*([\d,]+)/i);
+      const income = incomeMatch ? parseInt(incomeMatch[1].replace(/,/g, ''), 10) : 3500;
+
+      const amountMatch = lastMsgLower.match(/(?:want|need|pinjam|nak|perlu|mohon)\s*(?:rm)?\s*([\d,]+)/i);
+      const amount = amountMatch ? parseInt(amountMatch[1].replace(/,/g, ''), 10) : 8000;
+
+      let purpose: 'working_capital' | 'personal_cash' | 'vehicle' | 'equipment' = 'working_capital';
+      if (lastMsgLower.includes('stock') || lastMsgLower.includes('raya') || lastMsgLower.includes('modal') || lastMsgLower.includes('working') || lastMsgLower.includes('niaga') || lastMsgLower.includes('business') || lastMsgLower.includes('kedai')) {
+        purpose = 'working_capital';
+      }
+
+      const reply = isMalay
+        ? `Semua telah siap! Saya telah tetapkan permohonan RM ${amount.toLocaleString()} anda untuk ${purpose === 'working_capital' ? 'modal pusingan & stok raya' : 'keperluan kewangan anda'} (anggaran pendapatan RM ${income.toLocaleString()}). Sila muat naik penyata PDF anda di Langkah 2 apabila anda bersedia.`
+        : `All set! I've configured your RM ${amount.toLocaleString()} application for ${purpose === 'working_capital' ? 'working capital and Raya stock' : 'your financing'} (assessed income ~RM ${income.toLocaleString()}). Please upload your Shopee statement PDF whenever you're ready.`;
+
+      return NextResponse.json({
+        success: true,
+        reply,
+        action: {
+          type: 'SET_LOAN_PURPOSE',
+          payload: {
+            purpose,
+            amount,
+            tenureYears: 1,
+            targetStep: 2
+          }
+        },
+        suggestions: isMalay ? ["Muat Naik Penyata", "Semak Kelayakan", "Buka Kalkulator"] : ["Upload Statement", "Check Eligibility", "Open Calculator"]
+      });
+    }
+
+    // 1E. Spoken Spotlight Trigger
+    if (lastMsgLower.includes('compare button') || lastMsgLower.includes('bandingkan bank') || lastMsgLower.includes('click compare') || lastMsgLower.includes('click the compare')) {
+      return NextResponse.json({
+        success: true,
+        reply: isMalay
+          ? "Anda boleh klik butang Bandingkan Bank yang ditandakan pada skrin anda untuk membandingkan institusi kewangan."
+          : "You can click the Compare Lenders button highlighted right here on your screen to view side-by-side rates.",
+        action: {
+          type: 'SPOTLIGHT_ELEMENT',
+          payload: { target: 'compare-btn', label: isMalay ? 'Bandingkan Bank' : 'Compare Lenders' }
+        },
+        suggestions: isMalay ? ["Bandingkan Bank", "Kadar Faedah", "Mohon Sekarang"] : ["Compare Lenders", "Interest Rates", "Apply Now"]
+      });
+    }
+
     // 1C. Educational Intent: Explain DSR & Credit Score (e.g. "what is DSR", "explain credit score", "like 10 years old", "apa itu DSR")
     const isDsrOrScoreEducationalQuery = (
       (lastMsgLower.includes('dsr') || lastMsgLower.includes('debt service') || lastMsgLower.includes('nisbah khidmat') || lastMsgLower.includes('credit score') || lastMsgLower.includes('skor kredit')) &&

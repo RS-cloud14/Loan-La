@@ -768,6 +768,8 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
           </div>
 
           <button
+            id="compare-lenders-btn"
+            data-spotlight="compare-btn"
             onClick={() => setCompareModalOpen(true)}
             className="px-5 py-3 bg-white hover:bg-blue-50 text-blue-950 text-xs font-black rounded-2xl shadow-md transition-all flex items-center gap-2 shrink-0 border border-white cursor-pointer active:scale-98"
           >
@@ -830,6 +832,7 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
             key={lender.id} 
             id={`lender-card-${lender.id}`}
             data-lender-card={lender.name}
+            data-spotlight={`lender-${lender.id.includes('maybank') ? 'maybank' : lender.id.includes('cimb') ? 'cimb' : lender.id.includes('islam') ? 'bankislam' : lender.id.includes('agro') ? 'agrobank' : lender.id}`}
             className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 flex flex-col justify-between hover:border-blue-300 hover:shadow-md transition-all group"
           >
             

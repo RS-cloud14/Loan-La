@@ -63,7 +63,7 @@ interface AICoPilotChatProps {
   onChangeLanguage?: (lang: 'en' | 'bm') => void;
   onStartAssessmentWithFile: (fileData: { fileName: string; fileType: string; fileSize: string; fileBase64: string; category: 'bank_statement' | 'platform_dashboard' | 'tax_epf' | 'mykad_id' | 'pay_slip' }) => void;
   onScrollToSection?: (sectionId: string) => void;
-  onSetLoanPurpose?: (purpose: string, amount?: number, tenureYears?: number) => void;
+  onSetLoanPurpose?: (purpose: string, amount?: number, tenureYears?: number, targetStep?: number) => void;
   onSetLoanAmount?: (amount: number) => void;
   onSetTenure?: (tenureYears: number) => void;
   onSaveDraftVoice?: () => void;
@@ -157,6 +157,72 @@ function cleanSpeechDuplicates(raw: string): string {
     .replace(/\b(?:ring\s*git|arm\s*m)\b/gi, 'RM');
 
   return text.trim();
+}
+
+export function triggerVisualSpotlight(targetQuery: string, label: string = 'Click here') {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return;
+
+  try {
+    let el: HTMLElement | null = null;
+    if (targetQuery.startsWith('#') || targetQuery.startsWith('.') || targetQuery.startsWith('[')) {
+      el = document.querySelector(targetQuery);
+    } else {
+      el = document.querySelector(`[data-spotlight="${targetQuery}"]`) ||
+           document.getElementById(targetQuery) ||
+           document.querySelector(`[data-lender-card*="${targetQuery}"]`);
+    }
+
+    if (!el && targetQuery.includes('maybank')) {
+      el = document.querySelector('[data-spotlight*="maybank"], [id*="maybank"]');
+    } else if (!el && targetQuery.includes('cimb')) {
+      el = document.querySelector('[data-spotlight*="cimb"], [id*="cimb"]');
+    } else if (!el && targetQuery.includes('islam')) {
+      el = document.querySelector('[data-spotlight*="bankislam"], [id*="bank_islam"]');
+    } else if (!el && (targetQuery.includes('compare') || targetQuery.includes('banding'))) {
+      el = document.querySelector('[data-spotlight="compare-btn"], #compare-lenders-btn');
+    } else if (!el && (targetQuery.includes('amount') || targetQuery.includes('jumlah'))) {
+      el = document.querySelector('[data-spotlight="step1-amount"], #step1-amount-container, input[type="number"]');
+    } else if (!el && (targetQuery.includes('dropzone') || targetQuery.includes('upload') || targetQuery.includes('dokumen'))) {
+      el = document.querySelector('[data-spotlight="step2-dropzone"], #box-bank-statement');
+    }
+
+    if (!el) return;
+
+    // Smooth scroll target into view center
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+    // Add glowing neon ring classes
+    const glowClasses = ['ring-4', 'ring-cyan-400', 'ring-offset-2', 'animate-pulse', 'shadow-2xl', 'shadow-cyan-400/40', 'transition-all', 'duration-300', 'z-30'];
+    el.classList.add(...glowClasses);
+
+    // Remove existing pointer badge if any
+    const existingBadge = document.getElementById('loanla-spotlight-pointer');
+    if (existingBadge) existingBadge.remove();
+
+    // Create floating pointer badge directly above/adjacent to target
+    const rect = el.getBoundingClientRect();
+    const badge = document.createElement('div');
+    badge.id = 'loanla-spotlight-pointer';
+    badge.className = 'fixed z-50 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-600 text-white font-black text-xs shadow-2xl animate-bounce pointer-events-none transition-all duration-300';
+    badge.style.top = `${Math.max(12, rect.top - 42)}px`;
+    badge.style.left = `${Math.max(12, rect.left + Math.min(60, rect.width / 2 - 40))}px`;
+    badge.innerHTML = `<span class="text-base">👆</span> <span class="drop-shadow-xs">${label}</span>`;
+    document.body.appendChild(badge);
+
+    // Auto cleanup after 3.5 seconds
+    setTimeout(() => {
+      el?.classList.remove(...glowClasses);
+      badge.style.opacity = '0';
+      badge.style.transform = 'translateY(-8px)';
+      setTimeout(() => badge.remove(), 350);
+    }, 3500);
+  } catch (err) {
+    console.warn("Spotlight error:", err);
+  }
+}
+
+if (typeof window !== 'undefined') {
+  (window as any).__loanLaSpotlight = triggerVisualSpotlight;
 }
 
 function parseSpeechRecognitionResults(results: any): string {
@@ -813,7 +879,7 @@ export default function AICoPilotChat({
       if (typeof onOpenSupportModal === 'function') onOpenSupportModal(action.payload?.id);
     } else if (action.type === 'SET_LOAN_PURPOSE') {
       if (typeof onSetLoanPurpose === 'function' && action.payload?.purpose) {
-        onSetLoanPurpose(action.payload.purpose, action.payload.amount, action.payload.tenureYears);
+        onSetLoanPurpose(action.payload.purpose, action.payload.amount, action.payload.tenureYears, action.payload.targetStep);
       } else {
         if (action.payload?.amount && typeof onSetLoanAmount === 'function') onSetLoanAmount(action.payload.amount);
         if (action.payload?.tenureYears && typeof onSetTenure === 'function') onSetTenure(action.payload.tenureYears);
@@ -834,6 +900,8 @@ export default function AICoPilotChat({
       setIsOpen(true);
     } else if (action.type === 'END_CALL') {
       handleEndCall();
+    } else if (action.type === 'SPOTLIGHT_ELEMENT' && action.payload?.target) {
+      triggerVisualSpotlight(action.payload.target, action.payload.label || 'Look here');
     } else if (action.type === 'DISPATCH_TICKET' && action.payload) {
       saveSupportTicket(action.payload);
       if (typeof onOpenSupportModal === 'function') {
@@ -995,6 +1063,76 @@ export default function AICoPilotChat({
         executeAgentAction({ type: 'NAVIGATE_SETTINGS' }, true);
         return;
       }
+    }
+
+    // A. Visual Spotlight Cues from Spoken Speech
+    if (lower.includes('compare button') || lower.includes('bandingkan bank') || lower.includes('click compare') || lower.includes('click the compare')) {
+      triggerVisualSpotlight('compare-btn', isMalay ? 'Bandingkan Bank' : 'Compare Lenders');
+    } else if (lower.includes('maybank') || lower.includes('maybank mikro')) {
+      triggerVisualSpotlight('lender-maybank', 'Maybank Mikro');
+    } else if (lower.includes('cimb') || lower.includes('cimb sme')) {
+      triggerVisualSpotlight('lender-cimb', 'CIMB SME Micro');
+    } else if (lower.includes('bank islam') || lower.includes('itekad')) {
+      triggerVisualSpotlight('lender-bankislam', 'Bank Islam iTEKAD');
+    }
+
+    // B. Dynamic Multi-Turn Spoken Form Filling
+    // e.g. "I earn about RM 3,500 doing Shopee and food delivery, and I want RM 8,000 to buy stock for Raya"
+    const isCompoundIntake = (
+      (lower.includes('earn') || lower.includes('pendapatan') || lower.includes('dapat') || lower.includes('gaji') || lower.includes('income')) &&
+      (lower.includes('want') || lower.includes('need') || lower.includes('pinjam') || lower.includes('nak') || lower.includes('perlu') || lower.includes('mohon')) &&
+      (lower.includes('rm') || /\d{3,}/.test(lower))
+    );
+
+    if (isCompoundIntake) {
+      // 1. Extract income
+      const incomeMatch = lower.match(/(?:earn|pendapatan|dapat|gaji|income)(?:\s+about|\s+around|\s+kira-kira)?\s*(?:rm)?\s*([\d,]+)/i);
+      const income = incomeMatch ? parseInt(incomeMatch[1].replace(/,/g, ''), 10) : 3500;
+
+      // 2. Extract requested loan amount
+      const amountMatch = lower.match(/(?:want|need|pinjam|nak|perlu|mohon)\s*(?:rm)?\s*([\d,]+)/i);
+      const amount = amountMatch ? parseInt(amountMatch[1].replace(/,/g, ''), 10) : 8000;
+
+      // 3. Extract purpose
+      let purpose: 'working_capital' | 'personal_cash' | 'vehicle' | 'equipment' = 'working_capital';
+      if (lower.includes('stock') || lower.includes('raya') || lower.includes('modal') || lower.includes('working') || lower.includes('niaga') || lower.includes('business') || lower.includes('kedai')) {
+        purpose = 'working_capital';
+      } else if (lower.includes('motor') || lower.includes('kereta') || lower.includes('vehicle') || lower.includes('kenderaan')) {
+        purpose = 'vehicle';
+      } else if (lower.includes('equipment') || lower.includes('alat') || lower.includes('mesin') || lower.includes('laptop')) {
+        purpose = 'equipment';
+      } else if (lower.includes('emergency') || lower.includes('personal') || lower.includes('kecemasan') || lower.includes('cash') || lower.includes('tunai')) {
+        purpose = 'personal_cash';
+      }
+
+      // 4. Configure application state and navigate straight to Step 2
+      if (typeof onSetLoanPurpose === 'function') {
+        onSetLoanPurpose(purpose, amount, 1, 2);
+      }
+      if (typeof onSetLoanAmount === 'function') {
+        onSetLoanAmount(amount);
+      }
+      if (typeof onNavigatePage === 'function') {
+        onNavigatePage('app', 2);
+      }
+
+      const replyMsg = isMalay
+        ? `Semua telah siap! Saya telah tetapkan permohonan RM ${amount.toLocaleString()} anda untuk ${purpose === 'working_capital' ? 'modal pusingan dan stok perniagaan' : 'keperluan kewangan anda'} (anggaran pendapatan RM ${income.toLocaleString()}). Sila muat naik penyata PDF anda di Langkah 2 ini apabila anda bersedia.`
+        : `All set! I've configured your RM ${amount.toLocaleString()} application for ${purpose === 'working_capital' ? 'working capital and stock' : 'your financing need'} (assessed income ~RM ${income.toLocaleString()}). Please upload your statement PDF whenever you're ready.`;
+
+      // Trigger spotlight on the upload dropzone
+      setTimeout(() => {
+        triggerVisualSpotlight('step2-dropzone', isMalay ? 'Muat Naik Penyata Di Sini' : 'Upload Statement PDF Here');
+      }, 500);
+
+      speakText(replyMsg, () => {
+        if (isCallActiveRef.current) startCallListening();
+      });
+
+      const userMsgItem: ChatMessage = { id: `user-${Date.now()}`, role: 'user', content: textToSend, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+      const botMsgItem: ChatMessage = { id: `bot-${Date.now()}`, role: 'assistant', content: replyMsg, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+      setMessages(prev => [...prev, userMsgItem, botMsgItem]);
+      return;
     }
 
     const userMsg: ChatMessage = {
