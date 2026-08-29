@@ -1656,33 +1656,31 @@ export default function Dashboard() {
                 {/* STEP 1: LOAN PURPOSE & AMOUNT SELECTOR */}
                 {activeStep === 1 && (() => {
                   const purposes = [
-                    { id: 'personal_cash', icon: Banknote, label: language === 'bm' ? 'Tunai Peribadi' : 'Personal Cash', sub: language === 'bm' ? 'Tunai kecemasan atau perbelanjaan peribadi' : 'Emergency cash or personal needs' },
-                    { id: 'working_capital', icon: Store, label: language === 'bm' ? 'Modal Pusingan' : 'Working Capital', sub: language === 'bm' ? 'Stok inventori, modal operasi harian' : 'Stock inventory, cash flow runway' },
-                    { id: 'vehicle', icon: Car, label: language === 'bm' ? 'Sewa Beli Kenderaan & Motor' : 'Vehicle & Bike (HP)', sub: language === 'bm' ? 'Sewa beli motosikal atau kereta' : 'Motorcycle or car hire-purchase' },
-                    { id: 'equipment', icon: Wrench, label: language === 'bm' ? 'Peralatan & Mesin' : 'Equipment & Tools', sub: language === 'bm' ? 'Mesin, alatan perniagaan komersial' : 'Tools, machines, commercial gear' },
+                    { id: 'personal_cash', icon: Banknote, label: language === 'bm' ? 'Tunai Peribadi' : 'Personal Cash' },
+                    { id: 'working_capital', icon: Store, label: language === 'bm' ? 'Modal Pusingan' : 'Working Capital' },
+                    { id: 'vehicle', icon: Car, label: language === 'bm' ? 'Sewa Beli Kenderaan' : 'Vehicle (HP)' },
+                    { id: 'equipment', icon: Wrench, label: language === 'bm' ? 'Peralatan & Mesin' : 'Equipment & Tools' },
                   ];
 
                   return (
-                    <div className="bg-white rounded-3xl border border-slate-200 shadow-md p-6 sm:p-8 flex flex-col gap-6">
+                    <div className="bg-white rounded-3xl border border-slate-200 shadow-md p-6 sm:p-8 flex flex-col gap-5">
                       
                       {/* Step Header */}
-                      <div className="border-b border-slate-100 pb-4">
-                        <h2 className="text-xl sm:text-2xl font-black text-blue-950 tracking-tight">
-                          {language === 'bm' ? 'Apakah jenis pinjaman yang anda perlukan?' : 'What type of loan do you need?'}
+                      <div className="border-b border-slate-100 pb-3.5">
+                        <span className="text-[11px] font-extrabold text-blue-900 uppercase tracking-wider block">
+                          {language === 'bm' ? 'Langkah 1 daripada 3' : 'Step 1 of 3'}
+                        </span>
+                        <h2 className="text-xl sm:text-2xl font-black text-blue-950 tracking-tight mt-0.5">
+                          {language === 'bm' ? 'Pilih Keperluan Pinjaman Anda' : 'Select Your Financing Need'}
                         </h2>
-                        <p className="text-xs text-slate-500 mt-1">
-                          {language === 'bm'
-                            ? 'Pilih tujuan dan jumlah pinjaman agar kami dapat memadankan anda dengan bank yang sesuai di Malaysia.'
-                            : 'Select your loan purpose and amount so we can match you with the right Malaysian lenders.'}
-                        </p>
                       </div>
 
                       {/* 1. Purpose Selection Grid */}
                       <div className="flex flex-col gap-2">
                         <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                          {language === 'bm' ? '1. Pilih Kategori Pinjaman' : '1. Select Loan Category'}
+                          {language === 'bm' ? '1. Tujuan Pinjaman' : '1. Loan Purpose'}
                         </label>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                           {purposes.map((p) => {
                             const IconComp = p.icon;
                             const isSel = targetLoanPurpose === p.id;
@@ -1691,95 +1689,59 @@ export default function Dashboard() {
                                 key={p.id}
                                 type="button"
                                 onClick={() => setTargetLoanPurpose(p.id as any)}
-                                className={`flex items-center gap-3.5 p-4 rounded-2xl border text-left transition-all cursor-pointer ${
+                                className={`flex flex-col items-center justify-center p-3.5 rounded-2xl border text-center transition-all cursor-pointer gap-2 ${
                                   isSel
                                     ? 'bg-blue-950 text-white border-blue-950 shadow-md'
                                     : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'
                                 }`}
                               >
-                                <div className={`p-3 rounded-xl ${isSel ? 'bg-blue-900 text-white' : 'bg-white text-blue-950 border border-slate-200'}`}>
+                                <div className={`p-2.5 rounded-xl ${isSel ? 'bg-blue-900 text-white' : 'bg-white text-blue-950 border border-slate-200'}`}>
                                   <IconComp className="w-5 h-5" />
                                 </div>
-                                <div className="flex-1">
-                                  <span className="text-sm font-black leading-tight block">{p.label}</span>
-                                  <span className={`text-[11px] leading-tight block mt-1 ${isSel ? 'text-blue-200' : 'text-slate-500'}`}>
-                                    {p.sub}
-                                  </span>
-                                </div>
-                                {isSel && (
-                                  <div className="w-5 h-5 rounded-full bg-white text-blue-950 flex items-center justify-center text-xs font-black shrink-0">
-                                    ✓
-                                  </div>
-                                )}
+                                <span className="text-xs font-bold leading-tight block">{p.label}</span>
                               </button>
                             );
                           })}
                         </div>
                       </div>
 
-                      {/* 2. Loan Amount Section (Direct Number Input + Presets) */}
-                      <div className="flex flex-col gap-3 pt-4 border-t border-slate-100">
-                        <div className="flex justify-between items-center">
-                          <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
-                            {language === 'bm' ? '2. Jumlah Pinjaman Diperlukan' : '2. Loan Amount Needed'}
-                          </label>
-                          <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">
-                            {language === 'bm' ? 'Taip jumlah atau pilih di bawah' : 'Type amount or choose below'}
+                      {/* 2. Loan Amount Section */}
+                      <div className="flex flex-col gap-2.5 pt-3.5 border-t border-slate-100">
+                        <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                          {language === 'bm' ? '2. Jumlah Pinjaman (RM)' : '2. Loan Amount (RM)'}
+                        </label>
+
+                        <div className="relative">
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400 select-none">
+                            RM
                           </span>
+                          <input
+                            type="number"
+                            min={1000}
+                            max={150000}
+                            step={500}
+                            value={targetLoanAmount || ''}
+                            onChange={(e) => {
+                              const val = e.target.value === '' ? 0 : Number(e.target.value);
+                              setTargetLoanAmount(val);
+                            }}
+                            onBlur={() => {
+                              if (targetLoanAmount < 1000) setTargetLoanAmount(1000);
+                              if (targetLoanAmount > 150000) setTargetLoanAmount(150000);
+                            }}
+                            className="w-full pl-12 pr-4 py-3 bg-slate-50 hover:bg-slate-100/80 focus:bg-white border border-slate-200 focus:border-blue-900 rounded-2xl text-lg font-black text-blue-950 outline-hidden transition-all text-left shadow-2xs"
+                            placeholder="5,000"
+                          />
                         </div>
 
-                        {/* Direct Editable Input + Steppers */}
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setTargetLoanAmount(prev => Math.max(1000, prev - 500))}
-                            aria-label="Decrease amount"
-                            className="w-11 h-11 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-lg rounded-xl border border-slate-200 transition-all active:scale-95 shrink-0 cursor-pointer"
-                          >
-                            −
-                          </button>
-
-                          <div className="relative flex-1">
-                            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400 select-none">
-                              RM
-                            </span>
-                            <input
-                              type="number"
-                              min={1000}
-                              max={150000}
-                              step={100}
-                              value={targetLoanAmount || ''}
-                              onChange={(e) => {
-                                const val = e.target.value === '' ? 0 : Number(e.target.value);
-                                setTargetLoanAmount(val);
-                              }}
-                              onBlur={() => {
-                                if (targetLoanAmount < 1000) setTargetLoanAmount(1000);
-                                if (targetLoanAmount > 150000) setTargetLoanAmount(150000);
-                              }}
-                              className="w-full pl-11 pr-3 py-2.5 bg-slate-50 hover:bg-slate-100/80 focus:bg-white border border-slate-200 focus:border-blue-900 rounded-xl text-lg font-black text-blue-950 outline-hidden transition-all text-right shadow-2xs"
-                              placeholder="5,000"
-                            />
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => setTargetLoanAmount(prev => Math.min(150000, prev + 500))}
-                            aria-label="Increase amount"
-                            className="w-11 h-11 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-lg rounded-xl border border-slate-200 transition-all active:scale-95 shrink-0 cursor-pointer"
-                          >
-                            +
-                          </button>
-                        </div>
-
-                        {/* Quick Preset Buttons */}
-                        <div className="grid grid-cols-4 gap-2">
-                          {[3000, 5000, 10000, 20000].map((amt) => (
+                        {/* Quick Preset Amount Chips */}
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {[3000, 5000, 10000, 20000, 50000].map((amt) => (
                             <button
                               key={amt}
                               type="button"
                               onClick={() => setTargetLoanAmount(amt)}
-                              className={`py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
+                              className={`px-3 py-1.5 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
                                 targetLoanAmount === amt
                                   ? 'bg-blue-950 text-white border-blue-950 shadow-xs'
                                   : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
@@ -1791,70 +1753,20 @@ export default function Dashboard() {
                         </div>
                       </div>
 
-                      {/* 3. Repayment Tenure Section (Direct Typeable Input + Presets) */}
-                      <div className="flex flex-col gap-3 pt-4 border-t border-slate-100">
-                        <div className="flex justify-between items-center">
-                          <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-                            <Clock className="w-3.5 h-3.5 text-blue-900" />
-                            {language === 'bm' ? '3. Tempoh Bayaran Balik (Tahun)' : '3. Repayment Tenure (Years)'}
-                          </label>
-                          <span className="text-[11px] text-slate-400 font-medium hidden sm:inline">
-                            {language === 'bm' ? 'Taip bilangan tahun atau pilih di bawah' : 'Type number of years or choose below'}
-                          </span>
-                        </div>
+                      {/* 3. Repayment Tenure Section */}
+                      <div className="flex flex-col gap-2.5 pt-3.5 border-t border-slate-100">
+                        <label className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                          <Clock className="w-3.5 h-3.5 text-blue-900" />
+                          {language === 'bm' ? '3. Tempoh Bayaran Balik' : '3. Repayment Tenure'}
+                        </label>
 
-                        {/* Direct Editable Input + Steppers */}
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setCalcTenureYears(prev => Math.max(1, prev - 1))}
-                            aria-label="Decrease tenure"
-                            className="w-11 h-11 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-lg rounded-xl border border-slate-200 transition-all active:scale-95 shrink-0 cursor-pointer"
-                          >
-                            −
-                          </button>
-
-                          <div className="relative flex-1">
-                            <input
-                              type="number"
-                              min={1}
-                              max={10}
-                              step={1}
-                              value={calcTenureYears || ''}
-                              onChange={(e) => {
-                                const val = e.target.value === '' ? 0 : Number(e.target.value);
-                                setCalcTenureYears(val);
-                              }}
-                              onBlur={() => {
-                                if (calcTenureYears < 1) setCalcTenureYears(1);
-                                if (calcTenureYears > 10) setCalcTenureYears(10);
-                              }}
-                              className="w-full pl-4 pr-24 py-2.5 bg-slate-50 hover:bg-slate-100/80 focus:bg-white border border-slate-200 focus:border-blue-900 rounded-xl text-lg font-black text-blue-950 outline-hidden transition-all text-left shadow-2xs"
-                              placeholder="1"
-                            />
-                            <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500 select-none">
-                              {language === 'bm' ? 'Tahun' : (calcTenureYears <= 1 ? 'Year' : 'Years')} ({calcTenureYears * 12} {language === 'bm' ? 'Bulan' : 'Mo'})
-                            </span>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={() => setCalcTenureYears(prev => Math.min(10, prev + 1))}
-                            aria-label="Increase tenure"
-                            className="w-11 h-11 flex items-center justify-center bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-lg rounded-xl border border-slate-200 transition-all active:scale-95 shrink-0 cursor-pointer"
-                          >
-                            +
-                          </button>
-                        </div>
-
-                        {/* Quick Preset Buttons */}
-                        <div className="grid grid-cols-5 gap-2">
+                        {/* Quick Preset Tenure Chips */}
+                        <div className="grid grid-cols-4 gap-2">
                           {[
-                            { years: 1, label: language === 'bm' ? '1 Thn' : '1 Yr' },
-                            { years: 2, label: language === 'bm' ? '2 Thn' : '2 Yrs' },
-                            { years: 3, label: language === 'bm' ? '3 Thn' : '3 Yrs' },
-                            { years: 5, label: language === 'bm' ? '5 Thn' : '5 Yrs' },
-                            { years: 7, label: language === 'bm' ? '7 Thn' : '7 Yrs' },
+                            { years: 1, label: language === 'bm' ? '1 Tahun' : '1 Year' },
+                            { years: 2, label: language === 'bm' ? '2 Tahun' : '2 Years' },
+                            { years: 3, label: language === 'bm' ? '3 Tahun' : '3 Years' },
+                            { years: 5, label: language === 'bm' ? '5 Tahun' : '5 Years' },
                           ].map((t) => {
                             const isSelected = calcTenureYears === t.years;
                             return (
@@ -1881,26 +1793,21 @@ export default function Dashboard() {
                           const totalRepay = targetLoanAmount * (1 + estRate * calcTenureYears);
                           const monthlyEst = Math.round(totalRepay / months);
                           return (
-                            <div className="p-3.5 bg-gradient-to-r from-blue-50/80 to-slate-50 border border-blue-100 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                            <div className="p-3.5 bg-blue-50/70 border border-blue-100 rounded-2xl flex items-center justify-between gap-2">
                               <div className="flex items-center gap-2">
                                 <Coins className="w-4 h-4 text-blue-900 shrink-0" />
                                 <div>
-                                  <span className="text-xs font-extrabold text-blue-950 block">
+                                  <span className="text-xs font-bold text-blue-950 block">
                                     {language === 'bm' ? 'Anggaran Ansuran Bulanan:' : 'Est. Monthly Installment:'}
                                   </span>
-                                  <span className="text-[10px] text-slate-500 block">
-                                    {language === 'bm'
-                                      ? `Berdasarkan anggaran kadar purata ~${(estRate * 100).toFixed(1)}% setahun`
-                                      : `Based on representative average rate ~${(estRate * 100).toFixed(1)}% p.a.`}
+                                  <span className="text-[10.5px] text-slate-500">
+                                    {language === 'bm' ? `Purata kadar ~${(estRate * 100).toFixed(1)}% setahun` : `Avg. rate ~${(estRate * 100).toFixed(1)}% p.a.`}
                                   </span>
                                 </div>
                               </div>
-                              <div className="text-left sm:text-right">
-                                <span className="text-sm font-black text-blue-950">
-                                  ~RM {monthlyEst.toLocaleString()}<span className="text-[11px] font-normal text-slate-500">/{language === 'bm' ? 'bln' : 'mo'}</span>
-                                </span>
-                                <span className="text-[10px] text-slate-400 block">
-                                  {language === 'bm' ? 'Jumlah Bayaran:' : 'Total Repayment:'} ~RM {Math.round(totalRepay).toLocaleString()}
+                              <div className="text-right">
+                                <span className="text-base font-black text-blue-950">
+                                  ~RM {monthlyEst.toLocaleString()}<span className="text-xs font-normal text-slate-500">/{language === 'bm' ? 'bln' : 'mo'}</span>
                                 </span>
                               </div>
                             </div>
@@ -1909,13 +1816,13 @@ export default function Dashboard() {
                       </div>
 
                       {/* 4. Shariah Option Toggle (Compact) */}
-                      <div className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200 rounded-2xl">
+                      <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-2xl">
                         <div>
                           <span className="text-xs font-bold text-slate-800 block">
                             {language === 'bm' ? 'Pembiayaan Patuh Syariah Sahaja' : 'Shariah-Compliant Financing Only'}
                           </span>
                           <span className="text-[10px] text-slate-400 block mt-0.5">
-                            {language === 'bm' ? 'Tapis kepada produk perbankan Islam (Bank Rakyat, Boost Murabahah, BSN)' : 'Filter to Islamic products (Bank Rakyat, Boost Murabahah, BSN)'}
+                            {language === 'bm' ? 'Tapis kepada produk perbankan Islam' : 'Filter to Islamic banking products'}
                           </span>
                         </div>
                         <label className="relative inline-flex items-center cursor-pointer ml-4 shrink-0">
@@ -1929,8 +1836,8 @@ export default function Dashboard() {
                         </label>
                       </div>
 
-                      {/* THE ONE PRIMARY ACTION BUTTON (HIGH VISIBILITY) */}
-                      <div className="pt-2">
+                      {/* Primary Action Button */}
+                      <div className="pt-1">
                         <button
                           onClick={() => {
                             setActiveStep(2);
@@ -1940,8 +1847,7 @@ export default function Dashboard() {
                           }}
                           className="w-full py-4 bg-blue-950 hover:bg-blue-900 text-white font-black text-sm rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2 active:scale-[0.99] cursor-pointer"
                         >
-                          <span>{language === 'bm' ? 'Teruskan ke Langkah 2: Muat Naik Dokumen & Perakuan' : 'Continue to Step 2: Document Gateway & Declarations'}</span>
-                          <ArrowRight className="w-4 h-4 text-blue-200" />
+                          <span>{language === 'bm' ? 'Teruskan ke Langkah 2: Muat Naik Dokumen →' : 'Continue to Step 2: Upload Documents →'}</span>
                         </button>
                       </div>
 
@@ -2774,151 +2680,49 @@ export default function Dashboard() {
                           </div>
                         )}
 
-                        {/* Interactive Declaration Cards */}
-                        <div className="space-y-2.5">
-                          
-                          {/* 1. No Default */}
-                          <label className={`flex items-start gap-3 p-3.5 rounded-xl border transition-all cursor-pointer ${
-                            preUploadDeclNoDefault 
-                              ? 'bg-white border-blue-950 shadow-xs ring-1 ring-blue-950/5' 
-                              : 'bg-white/80 border-slate-200 hover:border-slate-300 hover:bg-white'
-                          }`}>
-                            <input
-                              type="checkbox"
-                              checked={preUploadDeclNoDefault}
-                              onChange={(e) => {
-                                setPreUploadDeclNoDefault(e.target.checked);
-                                if (e.target.checked && preUploadDeclAuthentic && preUploadDeclConsent && preUploadDeclPdpa) setDeclarationError(false);
-                              }}
-                              className="mt-0.5 accent-blue-950 h-4.5 w-4.5 rounded shrink-0 cursor-pointer"
-                            />
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-xs font-bold text-slate-900">
-                                  {language === 'bm' ? '1. Tiada Rekod Muflis atau Pinjaman Tertunggak' : '1. No Undisclosed Defaults & Solvency Declaration'}
-                                </span>
-                                <span className="text-[9.5px] font-mono font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
-                                  Insolvency Act 1967 / CCRIS
-                                </span>
-                              </div>
-                              <span className="text-[11.5px] text-slate-500 block mt-0.5 leading-relaxed font-normal">
-                                {language === 'bm'
-                                  ? 'Saya mengisytiharkan bahawa saya bukan seorang muflis dan tiada sebarang pinjaman tertunggak, tindakan penghakiman undang-undang, atau tunggakan kritikal dalam rekod CCRIS / CTOS.'
-                                  : 'I declare that I am not an undischarged bankrupt and have no active legal judgements, defaulted credit facilities, or severe delinquency on record with CCRIS or CTOS.'}
+                        {/* Interactive Consolidated Declaration Card */}
+                        <label className={`flex items-start gap-3.5 p-4 rounded-2xl border transition-all cursor-pointer ${
+                          (preUploadDeclNoDefault && preUploadDeclAuthentic && preUploadDeclConsent && preUploadDeclPdpa)
+                            ? 'bg-blue-50/50 border-blue-950 shadow-xs ring-1 ring-blue-950/10'
+                            : 'bg-slate-50/80 border-slate-200 hover:border-slate-300 hover:bg-slate-100/60'
+                        }`}>
+                          <input
+                            type="checkbox"
+                            checked={preUploadDeclNoDefault && preUploadDeclAuthentic && preUploadDeclConsent && preUploadDeclPdpa}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              setPreUploadDeclNoDefault(checked);
+                              setPreUploadDeclAuthentic(checked);
+                              setPreUploadDeclConsent(checked);
+                              setPreUploadDeclPdpa(checked);
+                              if (checked) setDeclarationError(false);
+                            }}
+                            className="mt-0.5 accent-blue-950 h-5 w-5 rounded shrink-0 cursor-pointer"
+                          />
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                              <span className="text-xs font-bold text-slate-900">
+                                {language === 'bm' ? 'Perakuan Pemohon & Persetujuan Privasi (PDPA 2010)' : 'Applicant Declaration & PDPA Consent'}
                               </span>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  setShowPdpaModal(true);
+                                }}
+                                className="text-[11px] font-semibold text-blue-950 hover:underline cursor-pointer"
+                              >
+                                {language === 'bm' ? 'Terma Privasi PDPA →' : 'PDPA Privacy Terms →'}
+                              </button>
                             </div>
-                          </label>
-
-                          {/* 2. Authentic Documents */}
-                          <label className={`flex items-start gap-3 p-3.5 rounded-xl border transition-all cursor-pointer ${
-                            preUploadDeclAuthentic 
-                              ? 'bg-white border-blue-950 shadow-xs ring-1 ring-blue-950/5' 
-                              : 'bg-white/80 border-slate-200 hover:border-slate-300 hover:bg-white'
-                          }`}>
-                            <input
-                              type="checkbox"
-                              checked={preUploadDeclAuthentic}
-                              onChange={(e) => {
-                                setPreUploadDeclAuthentic(e.target.checked);
-                                if (preUploadDeclNoDefault && e.target.checked && preUploadDeclConsent && preUploadDeclPdpa) setDeclarationError(false);
-                              }}
-                              className="mt-0.5 accent-blue-950 h-4.5 w-4.5 rounded shrink-0 cursor-pointer"
-                            />
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-xs font-bold text-slate-900">
-                                  {language === 'bm' ? '2. Ketulenan Penyata & Dokumen Kewangan' : '2. Authenticity of Financial Records'}
-                                </span>
-                                <span className="text-[9.5px] font-mono font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
-                                  Financial Services Act 2013
-                                </span>
-                              </div>
-                              <span className="text-[11.5px] text-slate-500 block mt-0.5 leading-relaxed font-normal">
-                                {language === 'bm'
-                                  ? 'Saya mengesahkan semua penyata bank, slip gaji, dan penyata platform yang dimuat naik adalah dokumen rasmi asal yang tulen dan tidak pernah diubah suai atau dipalsukan.'
-                                  : 'I confirm all uploaded bank statements, salary slips, and platform payouts are genuine, unaltered official documents issued by licensed financial institutions and authorized employers.'}
-                              </span>
-                            </div>
-                          </label>
-
-                          {/* 3. Underwriting Consent */}
-                          <label className={`flex items-start gap-3 p-3.5 rounded-xl border transition-all cursor-pointer ${
-                            preUploadDeclConsent 
-                              ? 'bg-white border-blue-950 shadow-xs ring-1 ring-blue-950/5' 
-                              : 'bg-white/80 border-slate-200 hover:border-slate-300 hover:bg-white'
-                          }`}>
-                            <input
-                              type="checkbox"
-                              checked={preUploadDeclConsent}
-                              onChange={(e) => {
-                                setPreUploadDeclConsent(e.target.checked);
-                                if (preUploadDeclNoDefault && preUploadDeclAuthentic && e.target.checked && preUploadDeclPdpa) setDeclarationError(false);
-                              }}
-                              className="mt-0.5 accent-blue-950 h-4.5 w-4.5 rounded shrink-0 cursor-pointer"
-                            />
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-xs font-bold text-slate-900">
-                                  {language === 'bm' ? '3. Kebenaran Semakan Aliran Tunai & Pemadanan Bank' : '3. Underwriting & Product Matching Authorization'}
-                                </span>
-                                <span className="text-[9.5px] font-mono font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">
-                                  BNM Responsible Financing
-                                </span>
-                              </div>
-                              <span className="text-[11.5px] text-slate-500 block mt-0.5 leading-relaxed font-normal">
-                                {language === 'bm'
-                                  ? 'Saya memberi kebenaran penuh kepada sistem untuk mengaudit aliran tunai, mengira nisbah khidmat hutang (DSR), dan memadankan produk pembiayaan yang layak mengikut garis panduan Bank Negara Malaysia.'
-                                  : 'I authorize the automated evaluation of cash flows, calculation of Debt Service Ratios (DSR), and matching with licensed Malaysian bank financing products under Bank Negara Malaysia guidelines.'}
-                              </span>
-                            </div>
-                          </label>
-
-                          {/* 4. PDPA Consent */}
-                          <label className={`flex items-start gap-3 p-3.5 rounded-xl border transition-all cursor-pointer ${
-                            preUploadDeclPdpa 
-                              ? 'bg-white border-blue-950 shadow-xs ring-1 ring-blue-950/5' 
-                              : 'bg-white/80 border-slate-200 hover:border-slate-300 hover:bg-white'
-                          }`}>
-                            <input
-                              type="checkbox"
-                              checked={preUploadDeclPdpa}
-                              onChange={(e) => {
-                                setPreUploadDeclPdpa(e.target.checked);
-                                if (preUploadDeclNoDefault && preUploadDeclAuthentic && preUploadDeclConsent && e.target.checked) setDeclarationError(false);
-                              }}
-                              className="mt-0.5 accent-blue-950 h-4.5 w-4.5 rounded shrink-0 cursor-pointer"
-                            />
-                            <div className="flex-1">
-                              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="text-xs font-bold text-slate-900">
-                                    {language === 'bm' ? '4. Persetujuan Pemprosesan & Privasi Data Peribadi' : '4. Personal Data Protection & Privacy Consent'}
-                                  </span>
-                                  <span className="text-[10px] font-medium text-slate-500 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
-                                    PDPA 2010 (Act 709)
-                                  </span>
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    setShowPdpaModal(true);
-                                  }}
-                                  className="text-[11px] font-medium text-blue-950 hover:text-blue-800 underline underline-offset-2 cursor-pointer shrink-0"
-                                >
-                                  {language === 'bm' ? 'Lihat Jaminan Privasi Data (PDPA 2010)' : 'View Data Privacy Assurance (PDPA 2010)'}
-                                </button>
-                              </div>
-                              <span className="text-[11.5px] text-slate-500 block mt-0.5 leading-relaxed font-normal">
-                                {language === 'bm'
-                                  ? 'Saya memberi persetujuan nyata bagi pemprosesan data dan dokumen kewangan khusus untuk tujuan pra-kelayakan pinjaman mengikut peruntukan Akta Perlindungan Data Peribadi 2010 (Akta 709).'
-                                  : 'I explicitly consent to the collection, processing, and localized redaction of my personal financial records strictly for credit pre-qualification under the Personal Data Protection Act 2010 (Act 709).'}
-                              </span>
-                            </div>
-                          </label>
-
-                        </div>
+                            <span className="text-[11px] text-slate-500 block mt-1 leading-relaxed font-normal">
+                              {language === 'bm'
+                                ? 'Saya mengesahkan dokumen kewangan yang dimuat naik adalah tulen, tiada rekod kebankrapan aktif, dan bersetuju dengan semakan pra-kelayakan kredit AI mengikut peruntukan Akta Perlindungan Data Peribadi 2010 (PDPA) & garis panduan Bank Negara Malaysia.'
+                                : 'I declare that the uploaded financial documents are authentic, I have no active bankruptcy records, and I consent to automated AI credit pre-scoring under the Personal Data Protection Act 2010 (PDPA) and Bank Negara Malaysia responsible financing guidelines.'}
+                            </span>
+                          </div>
+                        </label>
                       </div>
 
                       {/* Bottom Controls & Action Button */}
