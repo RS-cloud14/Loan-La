@@ -351,7 +351,7 @@ export default function Dashboard() {
 
   // Real-time Spatial & Section Observer for Continuous Live AI Co-Pilot
   const [currentVisibleSection, setCurrentVisibleSection] = useState<string>('hero');
-  const [currentVisibleSectionLabel, setCurrentVisibleSectionLabel] = useState<string>('Main Overview');
+  const [currentVisibleSectionLabel, setCurrentVisibleSectionLabel] = useState<string>('Home Page (Main Overview)');
 
   useEffect(() => {
     // Priority 1: Page-based section context
@@ -392,7 +392,7 @@ export default function Dashboard() {
       const scrollY = window.scrollY || window.pageYOffset;
       if (scrollY < 450) {
         setCurrentVisibleSection('hero');
-        setCurrentVisibleSectionLabel(language === 'bm' ? 'Gambaran Utama Laman' : 'Main Landing & Overview');
+        setCurrentVisibleSectionLabel(language === 'bm' ? 'Laman Utama (Gambaran Keseluruhan)' : 'Home Page (Main Overview)');
       } else if (scrollY < 1200) {
         setCurrentVisibleSection('how_it_works');
         setCurrentVisibleSectionLabel(language === 'bm' ? 'Cara Kerja & Faedah Pasport Kredit' : 'How It Works & Passport Benefits');

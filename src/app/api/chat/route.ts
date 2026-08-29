@@ -1417,6 +1417,58 @@ export async function POST(request: NextRequest) {
     // 10. Intelligent Gemini 2.5 Flash Conversational Reasoning (Full Context & Knowledge)
     try {
       const targetLanguageName = isMalay ? 'Bahasa Melayu' : 'English';
+      const pageType = userContext?.currentPage || 'landing';
+      let spatialContextText = '';
+
+      if (pageType === 'landing') {
+        spatialContextText = `
+REAL-TIME SCREEN & SPATIAL VIEWPORT CONTEXT:
+- Active Screen: HOME / LANDING PAGE (Main Website Gateway of Loan - La).
+- The user is currently browsing the Home Page (They are NOT in the application form yet).
+- Currently Visible Viewport Section: "${userContext?.visibleSectionLabel || 'Home Page Hero Overview'}"
+- Available Main Actions on this Home Screen:
+  1. "Check Loan Eligibility Report" button (starts a new alternative credit underwriting assessment).
+  2. "Loan Calculator" button in top nav or hero (opens the loan installment & DSR calculator).
+  3. "Lender Directory" in top nav (opens directory of 18 Malaysian licensed banks and digital lenders).
+  4. "My Applications" (tracks submitted applications).
+- If the user asks where they are or what they are viewing, accurately explain that they are on the Loan - La Home Page!`;
+      } else if (pageType === 'calculator') {
+        spatialContextText = `
+REAL-TIME SCREEN & SPATIAL VIEWPORT CONTEXT:
+- Active Screen: LOAN REPAYMENT & DSR CALCULATOR PAGE.
+- The user is currently on the Calculator tool.
+- Currently Visible Viewport Section: "${userContext?.visibleSectionLabel || 'Loan Repayment Calculator'}"
+- In this tool, users can adjust Loan Amount (RM 1,000 - RM 250,000), Tenure (1 - 10 years), and Interest Rate (% p.a.) to see their monthly repayment and evaluate DSR capacity.`;
+      } else if (pageType === 'directory') {
+        spatialContextText = `
+REAL-TIME SCREEN & SPATIAL VIEWPORT CONTEXT:
+- Active Screen: 18 LICENSED LENDERS & DIGITAL BANKS DIRECTORY PAGE.
+- The user is browsing the Bank Directory.
+- Currently Visible Viewport Section: "${userContext?.visibleSectionLabel || '18 Licensed Banks & Lenders'}"
+- In this section, users can compare licensed digital banks (GXBank, Boost Bank, AEON Credit), traditional banks (BSN, Bank Islam, RHB, Maybank, CIMB), micro-financiers (MARA, TEKUN), and P2P platforms (Funding Societies, CapBay).`;
+      } else if (pageType === 'tracker') {
+        spatialContextText = `
+REAL-TIME SCREEN & SPATIAL VIEWPORT CONTEXT:
+- Active Screen: MY APPLICATIONS & SUPPORT INQUIRIES TRACKER.
+- The user is viewing their application tracking dashboard.
+- Currently Visible Viewport Section: "${userContext?.visibleSectionLabel || 'Application Tracker & History'}"
+- In this section, users can track submitted loan applications, download certified credit reports, and review active support tickets.`;
+      } else if (pageType === 'app') {
+        const step = userContext?.activeStep || 1;
+        const stepNames: Record<number, string> = {
+          1: 'Step 1: Loan Purpose & Target Amount Selection',
+          2: 'Step 2: Document Workspace (Upload 3-6 Months Bank Statements / Gig Inflow PDF)',
+          3: 'Step 3: PDPA Consent & Legal Declarations',
+          4: 'Step 4: AI Underwritten Credit Passport & Matched Bank Pre-Approvals'
+        };
+        spatialContextText = `
+REAL-TIME SCREEN & SPATIAL VIEWPORT CONTEXT:
+- Active Screen: CREDIT ASSESSMENT APPLICATION PIPELINE (${stepNames[step] || `Step ${step} of 4`}).
+- Currently Visible Viewport Section: "${userContext?.visibleSectionLabel || stepNames[step]}"
+- User Configuration: Selected loan need of RM ${(userContext?.targetLoanAmount || 5000).toLocaleString()} for ${(userContext?.targetLoanPurpose || 'personal_cash').replace('_', ' ')} (Tenure: ${userContext?.calcTenureYears || 1} years).
+- Uploaded Documents: ${userContext?.uploadedFilesCount || 0} file(s) attached ${userContext?.uploadedFilesSummary?.length ? `(${userContext.uploadedFilesSummary.join(', ')})` : ''}.`;
+      }
+
       const systemInstruction = `You are the intelligent, highly knowledgeable AI Live Co-Pilot & Concierge for Loan - La.
 About Loan - La: Malaysia's premier AI alternative credit underwriting and financing intelligence platform built for Gig Workers, Freelancers, and MSMEs.
 
@@ -1426,17 +1478,12 @@ You MUST formulate and write 100% of your answer in ${targetLanguageName}.
 DO NOT respond in ${isMalay ? 'English' : 'Bahasa Melayu'}, even if previous messages in the conversation history were in that language.
 Always write in ${targetLanguageName}.
 
-REAL-TIME SPATIAL & SCREEN VIEWPORT CONTEXT:
-- Active Web Page: ${userContext?.currentPage || 'landing'} (Options: 'landing', 'calculator', 'directory', 'tracker', 'app')
-- Application Flow Step: Step ${userContext?.activeStep || 1} of 4 (Step 1: Need Setup, Step 2: Upload Documents, Step 3: Consent & Declarations, Step 4: Credit Passport & Bank Matches)
-- Currently Visible Screen Section: "${userContext?.visibleSectionLabel || userContext?.visibleSection || 'Main Overview'}"
-- Selected Financing Need: RM ${(userContext?.targetLoanAmount || 5000).toLocaleString()} for ${userContext?.targetLoanPurpose || 'personal_cash'} (Tenure: ${userContext?.calcTenureYears || 1} years, Interest: ${userContext?.calcInterestRate || 6.0}%)
-- Uploaded Files Attached: ${userContext?.uploadedFilesCount || 0} file(s) ${userContext?.uploadedFilesSummary?.length ? `(${userContext.uploadedFilesSummary.join(', ')})` : ''}
+${spatialContextText}
 
 LIVE GUIDE & ACCESSIBILITY PERSONA:
 - You are a warm, helpful, human-like guide walking the borrower through the website step-by-step.
 - If the user is visually impaired, has difficulty reading small text, or has a motor disability, explain the screen layout clearly and offer to scroll or adjust numbers for them.
-- When the user asks "what am I looking at?", "explain this", or asks questions about the current page, seamlessly reference their currently visible section ("${userContext?.visibleSectionLabel || 'current view'}").
+- When the user asks "what am I looking at?", "explain this", or asks questions about the current page, seamlessly reference their active screen and visible section.
 
 Active Applicant Financial Profile:
 - Authentication Status: ${isUserLoggedIn ? 'Logged In Borrower' : 'Guest (Unauthenticated)'}
