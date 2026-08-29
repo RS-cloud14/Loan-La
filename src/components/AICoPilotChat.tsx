@@ -8,7 +8,7 @@ import {
   Mic, MicOff, Calculator, Layers, Clock, Target, Settings,
   Phone, PhoneOff, PhoneCall, Radio, Activity, User, Check,
   Languages, FileBarChart, Globe, Bot, Trash2, Pause, Square,
-  Headphones, ShieldCheck
+  Headphones, ShieldCheck, Minimize2, Maximize2, Eye, Compass as CompassIcon
 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { UserProfileData } from './UserSettingsModal';
@@ -21,7 +21,7 @@ export interface ChatMessage {
   timestamp: string;
   suggestions?: string[];
   action?: {
-    type: 'NAVIGATE_LOAN_NEED' | 'NAVIGATE_UPLOAD' | 'SET_CALCULATOR' | 'NAVIGATE_CALCULATOR' | 'NAVIGATE_DIRECTORY' | 'NAVIGATE_TRACKER' | 'NAVIGATE_SETTINGS' | 'NAVIGATE_REPORT' | 'DOWNLOAD_REPORT' | 'CHANGE_LANGUAGE' | 'START_ASSESSMENT' | 'PROMPT_CREATE_TICKET' | 'DISPATCH_TICKET' | 'NAVIGATE_SUPPORT';
+    type: 'NAVIGATE_LOAN_NEED' | 'NAVIGATE_UPLOAD' | 'SET_CALCULATOR' | 'NAVIGATE_CALCULATOR' | 'NAVIGATE_DIRECTORY' | 'NAVIGATE_TRACKER' | 'NAVIGATE_SETTINGS' | 'NAVIGATE_REPORT' | 'DOWNLOAD_REPORT' | 'CHANGE_LANGUAGE' | 'START_ASSESSMENT' | 'PROMPT_CREATE_TICKET' | 'DISPATCH_TICKET' | 'NAVIGATE_SUPPORT' | 'SAVE_DRAFT' | 'SCROLL_TO_SECTION' | 'SET_LOAN_AMOUNT' | 'SET_TENURE' | 'NAVIGATE_PAGE';
     payload?: any;
   };
   attachedFile?: {
@@ -42,8 +42,15 @@ interface AICoPilotChatProps {
   maxSafeMonthlyPay?: number;
   targetLoanAmount?: number;
   targetLoanPurpose?: string;
+  calcTenureYears?: number;
+  calcInterestRate?: number;
   activeStep?: number;
+  currentPage?: 'landing' | 'calculator' | 'directory' | 'tracker' | 'app';
+  visibleSection?: string;
+  visibleSectionLabel?: string;
   hasUploadedFiles?: boolean;
+  uploadedFilesCount?: number;
+  uploadedFilesSummary?: string[];
   onNavigateToLoanNeed: () => void;
   onNavigateToUpload: () => void;
   onNavigateToReport?: () => void;
@@ -55,6 +62,11 @@ interface AICoPilotChatProps {
   onOpenSupportModal?: (initialTicketId?: string) => void;
   onChangeLanguage?: (lang: 'en' | 'bm') => void;
   onStartAssessmentWithFile: (fileData: { fileName: string; fileType: string; fileSize: string; fileBase64: string; category: 'bank_statement' | 'platform_dashboard' | 'tax_epf' | 'mykad_id' | 'pay_slip' }) => void;
+  onScrollToSection?: (sectionId: string) => void;
+  onSetLoanAmount?: (amount: number) => void;
+  onSetTenure?: (tenureYears: number) => void;
+  onSaveDraftVoice?: () => void;
+  onNavigatePage?: (page: 'landing' | 'calculator' | 'directory' | 'tracker' | 'app', step?: number) => void;
 }
 
 function cleanSpeechDuplicates(raw: string): string {
@@ -345,8 +357,15 @@ export default function AICoPilotChat({
   maxSafeMonthlyPay,
   targetLoanAmount = 5000,
   targetLoanPurpose = 'personal_cash',
+  calcTenureYears = 1,
+  calcInterestRate = 6.0,
   activeStep = 1,
+  currentPage = 'landing',
+  visibleSection = 'hero',
+  visibleSectionLabel = 'Main Overview',
   hasUploadedFiles = false,
+  uploadedFilesCount = 0,
+  uploadedFilesSummary = [],
   onNavigateToLoanNeed,
   onNavigateToUpload,
   onNavigateToReport,
@@ -357,7 +376,12 @@ export default function AICoPilotChat({
   onOpenSettings,
   onOpenSupportModal,
   onChangeLanguage,
-  onStartAssessmentWithFile
+  onStartAssessmentWithFile,
+  onScrollToSection,
+  onSetLoanAmount,
+  onSetTenure,
+  onSaveDraftVoice,
+  onNavigatePage
 }: AICoPilotChatProps) {
   const { language, setLanguage } = useLanguage();
   const isMalay = language === 'bm';
@@ -649,14 +673,35 @@ export default function AICoPilotChat({
       return;
     }
 
-    // Stop speaking and close call/chat window so user can see target page
+    // Stop speaking and close full modal if requested so user can see target section on page
     stopSpeaking();
     if (shouldCloseChat) {
-      if (callRecognitionRef.current) {
-        try { callRecognitionRef.current.stop(); } catch(e){}
-      }
-      setIsCallActive(false);
       setIsOpen(false);
+    }
+
+    if (action.type === 'SAVE_DRAFT') {
+      if (typeof onSaveDraftVoice === 'function') onSaveDraftVoice();
+      return;
+    }
+
+    if (action.type === 'SCROLL_TO_SECTION' && action.payload?.sectionId) {
+      if (typeof onScrollToSection === 'function') onScrollToSection(action.payload.sectionId);
+      return;
+    }
+
+    if (action.type === 'SET_LOAN_AMOUNT' && action.payload?.amount) {
+      if (typeof onSetLoanAmount === 'function') onSetLoanAmount(action.payload.amount);
+      return;
+    }
+
+    if (action.type === 'SET_TENURE' && action.payload?.tenureYears) {
+      if (typeof onSetTenure === 'function') onSetTenure(action.payload.tenureYears);
+      return;
+    }
+
+    if (action.type === 'NAVIGATE_PAGE' && action.payload?.page) {
+      if (typeof onNavigatePage === 'function') onNavigatePage(action.payload.page, action.payload.step);
+      return;
     }
 
     if (action.type === 'DOWNLOAD_REPORT') {
@@ -762,6 +807,14 @@ export default function AICoPilotChat({
       maxSafeMonthlyPay: isLoggedIn ? (maxSafeMonthlyPay || 1750) : 0,
       targetLoanAmount: targetLoanAmount,
       targetLoanPurpose: targetLoanPurpose,
+      calcTenureYears: calcTenureYears,
+      calcInterestRate: calcInterestRate,
+      currentPage: currentPage,
+      activeStep: activeStep,
+      visibleSection: visibleSection,
+      visibleSectionLabel: visibleSectionLabel,
+      uploadedFilesCount: uploadedFilesCount || (hasUploadedFiles ? 1 : 0),
+      uploadedFilesSummary: uploadedFilesSummary || [],
       activeTickets: liveTickets
     };
 
@@ -1247,9 +1300,8 @@ export default function AICoPilotChat({
       />
 
       <div className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-50 flex flex-col items-end pointer-events-auto">
-        
-        {/* Single Clean Trigger: "Ask AI" */}
-        {!isOpen ? (
+        {/* 1. Normal State: "Ask AI" Trigger button (when call is not active and modal is closed) */}
+        {!isOpen && !isCallActive && (
           <button
             onClick={() => setIsOpen(true)}
             className="flex items-center gap-2.5 px-4 py-3 sm:py-3.5 bg-blue-950 hover:bg-blue-900 text-white rounded-full shadow-2xl border border-blue-800 shrink-0 transition-all hover:scale-105 active:scale-95 group cursor-pointer"
@@ -1263,12 +1315,99 @@ export default function AICoPilotChat({
               Ask AI
             </span>
           </button>
-        ) : (
-          /* Open Chat / Voice Call Window */
+        )}
+
+        {/* 2. Floating Live Audio Island: Active voice session when modal is minimized */}
+        {!isOpen && isCallActive && (
+          <div className="w-[calc(100vw-2rem)] sm:w-[420px] bg-slate-950/95 backdrop-blur-xl border border-blue-500/50 shadow-2xl rounded-2xl p-3.5 text-white flex flex-col gap-2.5 animate-slide-up">
+            {/* Top Bar: Pulse Status & Live Section Viewing Badge */}
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="relative flex h-2.5 w-2.5 shrink-0">
+                  <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${callStatus === 'speaking' ? 'bg-cyan-400 opacity-75' : 'bg-emerald-400 opacity-75'}`}></span>
+                  <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${callStatus === 'speaking' ? 'bg-cyan-500' : 'bg-emerald-500'}`}></span>
+                </span>
+                <span className="text-xs font-bold text-slate-100 truncate">
+                  {callStatus === 'speaking' ? (isMalay ? 'AI Bercakap...' : 'AI Speaking...') : callStatus === 'thinking' ? (isMalay ? 'AI Memproses...' : 'AI Thinking...') : (isMalay ? 'Mendengar...' : 'Listening...')}
+                </span>
+                <span className="text-[10px] font-mono text-cyan-300 font-bold bg-blue-900/60 px-1.5 py-0.5 rounded-md shrink-0">
+                  {formatCallTime(callDuration)}
+                </span>
+              </div>
+
+              {/* Real-time Viewing Badge */}
+              <div className="flex items-center gap-1 bg-slate-800/80 border border-slate-700/80 px-2 py-0.5 rounded-lg text-[10px] text-slate-200 font-semibold max-w-[170px] truncate shrink-0">
+                <Eye className="w-3 h-3 text-cyan-400 shrink-0" />
+                <span className="truncate">{visibleSectionLabel || visibleSection || 'Overview'}</span>
+              </div>
+            </div>
+
+            {/* Subtitle Ticker of AI Speech */}
+            <div className="bg-slate-900/80 border border-slate-800/80 rounded-xl p-2 max-h-[56px] overflow-y-auto custom-scrollbar text-[11px] text-slate-200 leading-snug">
+              <FormattedMessage 
+                text={lastAgentReply || (isMalay ? "Saya sedia membimbing sambil anda skrol laman ini..." : "I'm listening and guiding you as you scroll...")} 
+                isDark={true}
+              />
+            </div>
+
+            {/* Bottom Floating Island Controls */}
+            <div className="flex items-center justify-between pt-1 border-t border-slate-800/80">
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsMuted(prev => !prev)}
+                  className={`px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
+                    isMuted 
+                      ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40' 
+                      : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
+                  }`}
+                  title={isMuted ? "Unmute" : "Mute"}
+                >
+                  {isMuted ? <MicOff className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
+                  <span className="text-[10px]">{isMuted ? (isMalay ? 'Buka Suara' : 'Unmute') : (isMalay ? 'Bisu' : 'Mute')}</span>
+                </button>
+
+                {callStatus === 'speaking' && (
+                  <button
+                    type="button"
+                    onClick={handleInterruptAndSpeak}
+                    className="px-2.5 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 rounded-xl text-[10px] font-bold flex items-center gap-1 transition-all cursor-pointer"
+                  >
+                    <Pause className="w-3 h-3" />
+                    <span>{isMalay ? 'Sampuk' : 'Interrupt'}</span>
+                  </button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsOpen(true)}
+                  className="px-2.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-[10px] font-bold flex items-center gap-1 shadow-xs transition-all cursor-pointer"
+                  title={isMalay ? "Buka Tetingkap Penuh" : "Expand Full View"}
+                >
+                  <Maximize2 className="w-3 h-3" />
+                  <span>{isMalay ? 'Buka Penuh' : 'Expand'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleEndCall}
+                  className="p-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl shadow-xs transition-transform active:scale-95 cursor-pointer"
+                  title={isMalay ? "Tamatkan Panggilan" : "End Call"}
+                >
+                  <PhoneOff className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 3. Open Full Chat / Voice Call Window */}
+        {isOpen && (
           <div className="w-[calc(100vw-2rem)] sm:w-[390px] h-[75vh] sm:h-[530px] max-h-[560px] bg-white border border-slate-200 shadow-2xl flex flex-col overflow-hidden rounded-3xl animate-fade-in fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50">
             
             {/* Header (Clean & Sleek) */}
-            {/* Header */}
             <div className="bg-blue-950 text-white px-4 py-3 flex justify-between items-center border-b border-blue-900/80">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-full bg-white/95 border border-blue-400/40 flex items-center justify-center shadow-xs p-1">
@@ -1321,6 +1460,17 @@ export default function AICoPilotChat({
                   >
                     <PhoneCall className="w-3 h-3" />
                     <span>{isMalay ? 'Panggil' : 'Call'}</span>
+                  </button>
+                )}
+
+                {isCallActive && (
+                  <button
+                    type="button"
+                    onClick={() => setIsOpen(false)}
+                    className="p-1 hover:bg-blue-900 text-blue-300 hover:text-white rounded-lg transition-all cursor-pointer"
+                    title={isMalay ? "Kecilkan (Panggilan diteruskan di latar belakang)" : "Minimize (Call continues in background)"}
+                  >
+                    <Minimize2 className="w-4 h-4" />
                   </button>
                 )}
 

@@ -349,6 +349,97 @@ export default function Dashboard() {
   const [showResumeDraftModal, setShowResumeDraftModal] = useState<boolean>(false);
   const [draftSavedToast, setDraftSavedToast] = useState<string | null>(null);
 
+  // Real-time Spatial & Section Observer for Continuous Live AI Co-Pilot
+  const [currentVisibleSection, setCurrentVisibleSection] = useState<string>('hero');
+  const [currentVisibleSectionLabel, setCurrentVisibleSectionLabel] = useState<string>('Main Overview');
+
+  useEffect(() => {
+    // Priority 1: Page-based section context
+    if (currentPage === 'calculator') {
+      setCurrentVisibleSection('repayment_calculator');
+      setCurrentVisibleSectionLabel(language === 'bm' ? 'Kalkulator Ansuran & DSR' : 'Repayment & DSR Calculator');
+      return;
+    }
+    if (currentPage === 'directory') {
+      setCurrentVisibleSection('lender_directory');
+      setCurrentVisibleSectionLabel(language === 'bm' ? 'Direktori 18 Bank & Pemberi Pinjaman' : '18 Licensed Lenders Directory');
+      return;
+    }
+    if (currentPage === 'tracker') {
+      setCurrentVisibleSection('application_tracker');
+      setCurrentVisibleSectionLabel(language === 'bm' ? 'Penjejak Permohonan & Khidmat Pelanggan' : 'Application Tracker & Support');
+      return;
+    }
+    if (currentPage === 'app') {
+      if (activeStep === 1) {
+        setCurrentVisibleSection('loan_purpose_step1');
+        setCurrentVisibleSectionLabel(language === 'bm' ? 'Langkah 1: Keperluan & Tujuan Pinjaman' : 'Step 1: Loan Purpose & Need');
+      } else if (activeStep === 2) {
+        setCurrentVisibleSection('doc_upload_step2');
+        setCurrentVisibleSectionLabel(language === 'bm' ? 'Langkah 2: Ruang Kerja Dokumen' : 'Step 2: Document Upload Workspace');
+      } else if (activeStep === 3) {
+        setCurrentVisibleSection('declarations_step3');
+        setCurrentVisibleSectionLabel(language === 'bm' ? 'Langkah 3: Pengesahan & Perakuan PDPA' : 'Step 3: PDPA Consent & Review');
+      } else if (activeStep === 4) {
+        setCurrentVisibleSection('underwriting_result_step4');
+        setCurrentVisibleSectionLabel(language === 'bm' ? 'Langkah 4: Pasport Kredit & Padanan Bank' : 'Step 4: Credit Passport & Bank Matches');
+      }
+      return;
+    }
+
+    // When on landing page, observe scroll position dynamically
+    const handleScroll = () => {
+      const scrollY = window.scrollY || window.pageYOffset;
+      if (scrollY < 450) {
+        setCurrentVisibleSection('hero');
+        setCurrentVisibleSectionLabel(language === 'bm' ? 'Gambaran Utama Laman' : 'Main Landing & Overview');
+      } else if (scrollY < 1200) {
+        setCurrentVisibleSection('how_it_works');
+        setCurrentVisibleSectionLabel(language === 'bm' ? 'Cara Kerja & Faedah Pasport Kredit' : 'How It Works & Passport Benefits');
+      } else {
+        setCurrentVisibleSection('comparison_features');
+        setCurrentVisibleSectionLabel(language === 'bm' ? 'Perbandingan Bank & Ciri AI' : 'Bank Comparisons & AI Underwriting');
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [currentPage, activeStep, language]);
+
+  const handleScrollToSection = (sectionId: string) => {
+    const s = sectionId.toLowerCase();
+    if (s.includes('calc') || s.includes('kalkulator')) {
+      setCurrentPage('calculator');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (s.includes('dir') || s.includes('bank') || s.includes('lender')) {
+      setCurrentPage('directory');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (s.includes('track') || s.includes('status') || s.includes('permohonan')) {
+      setCurrentPage('tracker');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (s.includes('step1') || s.includes('need') || s.includes('tujuan')) {
+      setCurrentPage('app');
+      setActiveStep(1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (s.includes('step2') || s.includes('upload') || s.includes('dokumen')) {
+      setCurrentPage('app');
+      setActiveStep(2);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (s.includes('step3') || s.includes('consent') || s.includes('akuan')) {
+      setCurrentPage('app');
+      setActiveStep(3);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (s.includes('step4') || s.includes('report') || s.includes('laporan') || s.includes('pasport')) {
+      setCurrentPage('app');
+      setActiveStep(4);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (s.includes('hero') || s.includes('top') || s.includes('home')) {
+      setCurrentPage('landing');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
   // Load existing draft on initial mount
   useEffect(() => {
     try {
@@ -5945,8 +6036,24 @@ export default function Dashboard() {
         maxSafeMonthlyPay={b2cResult?.inputData?.averageMonthlyNetIncome ? Math.round(b2cResult.inputData.averageMonthlyNetIncome * 0.35) : 1750}
         targetLoanAmount={targetLoanAmount}
         targetLoanPurpose={targetLoanPurpose}
+        calcTenureYears={calcTenureYears}
+        calcInterestRate={calcInterestRate}
         activeStep={activeStep}
+        currentPage={currentPage}
+        visibleSection={currentVisibleSection}
+        visibleSectionLabel={currentVisibleSectionLabel}
         hasUploadedFiles={uploadedFiles.length > 0}
+        uploadedFilesCount={uploadedFiles.length}
+        uploadedFilesSummary={uploadedFiles.map(f => `${f.fileName} (${f.category})`)}
+        onScrollToSection={handleScrollToSection}
+        onSetLoanAmount={(amt) => setTargetLoanAmount(amt)}
+        onSetTenure={(yrs) => setCalcTenureYears(yrs)}
+        onSaveDraftVoice={() => handleSaveDraft(false)}
+        onNavigatePage={(page, step) => {
+          setCurrentPage(page);
+          if (step) setActiveStep(step);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }}
         onNavigateToReport={() => {
           setPerspective('B2C');
           setCurrentPage('app');
