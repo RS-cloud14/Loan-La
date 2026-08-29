@@ -1391,13 +1391,19 @@ REAL-TIME SCREEN & ON-SCREEN VIEWPORT CONTEXT:
 - Active Screen: HOME / LANDING PAGE (Main Website Gateway of Loan - La).
 - The user is currently browsing the Home Page (They are NOT in the application form yet).
 - Currently Visible Viewport Section: "${userContext?.visibleSectionLabel || 'Home Page Hero Overview'}"
-- On-Screen Elements & Features Displayed:
-  1. Hero Header & Headline: "AI-Powered Financing for Malaysia's Gig Workers & MSMEs".
-  2. "Check Loan Eligibility Report" CTA button (starts a new alternative credit underwriting assessment).
-  3. "Pre-Qualification Calculator" card (interactive repayment and DSR estimator).
-  4. "18 Licensed Lenders Directory" preview (comparing digital banks, commercial banks, and micro-financiers).
+- Available Sections & On-Screen Elements on Home Page:
+  1. Hero Section (ID: landing-hero):
+     • Dynamic Rotating Headline (Gig Workers & MSME Alternative Financing).
+     • Action Buttons: "Check Loan Eligibility Report" (Starts new assessment) and "Loan Repayment Calculator".
+     • 3 Customer Situation Cards: Bank rejection help, Income proof without payslips, Loan suitability check.
+  2. How It Works Section (ID: landing-how-it-works):
+     • 3 Simple Steps: 1. Select Loan & Amount -> 2. Upload Statement PDF -> 3. Bank Matching & Payout.
+  3. Who Can Apply Section (ID: landing-who-can-apply):
+     • 4 Category Cards: 1. Grab & Food Delivery Drivers, 2. Shopee & Online Sellers, 3. Freelancers & Self-Employed, 4. Hawkers & Micro-Shops.
+  4. Bottom Action Banner (ID: landing-cta):
+     • "Start Free Eligibility Check" CTA button.
   5. Top Navigation Bar: Links to Home, Loan Calculator, Lender Directory, and My Applications Tracker.
-- If the user asks where they are or what is shown on their screen, clearly describe the Home Page and highlight what they can explore next.`;
+- If the user asks where they are or what is shown on their screen, accurately describe their currently visible section and provide direct, helpful guidance.`;
       } else if (pageType === 'calculator') {
         spatialContextText = `
 REAL-TIME SCREEN & ON-SCREEN VIEWPORT CONTEXT:

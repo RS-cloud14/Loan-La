@@ -387,18 +387,31 @@ export default function Dashboard() {
       return;
     }
 
-    // When on landing page, observe scroll position dynamically
+    // When on landing page, observe active viewport section dynamically
     const handleScroll = () => {
-      const scrollY = window.scrollY || window.pageYOffset;
-      if (scrollY < 450) {
-        setCurrentVisibleSection('hero');
-        setCurrentVisibleSectionLabel(language === 'bm' ? 'Laman Utama (Gambaran Keseluruhan)' : 'Home Page (Main Overview)');
-      } else if (scrollY < 1200) {
+      const whoEl = document.getElementById('landing-who-can-apply');
+      const howEl = document.getElementById('landing-how-it-works');
+      const ctaEl = document.getElementById('landing-cta');
+
+      const isElementInViewport = (el: HTMLElement | null) => {
+        if (!el) return false;
+        const rect = el.getBoundingClientRect();
+        const vHeight = window.innerHeight || document.documentElement.clientHeight;
+        return rect.top < vHeight * 0.65 && rect.bottom > vHeight * 0.25;
+      };
+
+      if (isElementInViewport(whoEl)) {
+        setCurrentVisibleSection('who_can_apply');
+        setCurrentVisibleSectionLabel(language === 'bm' ? 'Siapa Yang Boleh Memohon? (4 Kategori Pekerja Gig)' : 'Who Can Apply? (4 Gig & MSME Categories)');
+      } else if (isElementInViewport(howEl)) {
         setCurrentVisibleSection('how_it_works');
-        setCurrentVisibleSectionLabel(language === 'bm' ? 'Cara Kerja & Faedah Pasport Kredit' : 'How It Works & Passport Benefits');
+        setCurrentVisibleSectionLabel(language === 'bm' ? 'Bagaimana Sistem Berfungsi (3 Langkah Mudah)' : 'How the System Works (3 Simple Steps)');
+      } else if (isElementInViewport(ctaEl)) {
+        setCurrentVisibleSection('bottom_cta');
+        setCurrentVisibleSectionLabel(language === 'bm' ? 'Semak Had Kelayakan Pinjaman' : 'Check Loan Limit CTA');
       } else {
-        setCurrentVisibleSection('comparison_features');
-        setCurrentVisibleSectionLabel(language === 'bm' ? 'Perbandingan Bank & Ciri AI' : 'Bank Comparisons & AI Underwriting');
+        setCurrentVisibleSection('hero');
+        setCurrentVisibleSectionLabel(language === 'bm' ? 'Laman Utama (Gambaran Keseluruhan & Situasi Pelanggan)' : 'Home Page (Hero & Quick Actions)');
       }
     };
 
@@ -1572,7 +1585,7 @@ export default function Dashboard() {
           {/* ========================================================= */}
           {/* 1. HERO SECTION: DIRECT ANSWERS TO CUSTOMER SITUATIONS     */}
           {/* ========================================================= */}
-          <div className="flex flex-col items-center text-center gap-5 pt-2 sm:pt-4">
+          <div id="landing-hero" className="flex flex-col items-center text-center gap-5 pt-2 sm:pt-4">
             
 
 
@@ -1700,7 +1713,7 @@ export default function Dashboard() {
           {/* ========================================================= */}
           {/* 3. 3 EASY STEPS TO GET CASH (LARGE & SPACIOUS CARDS)      */}
           {/* ========================================================= */}
-          <div className="flex flex-col gap-6">
+          <div id="landing-how-it-works" className="flex flex-col gap-6">
             <div className="text-center max-w-md mx-auto">
               <h2 className="text-2xl sm:text-3xl font-black text-blue-950">
                 {language === 'bm' ? 'Bagaimana Sistem Berfungsi' : 'How the System Works'}
@@ -1763,7 +1776,7 @@ export default function Dashboard() {
           {/* ========================================================= */}
           {/* 4. WHO CAN APPLY? (4 CLEAR TARGET CARDS WITH DIRECT START) */}
           {/* ========================================================= */}
-          <div className="flex flex-col gap-6">
+          <div id="landing-who-can-apply" className="flex flex-col gap-6">
             <div className="text-center max-w-md mx-auto">
               <h2 className="text-2xl sm:text-3xl font-black text-blue-950">
                 {language === 'bm' ? 'Siapa Yang Boleh Memohon?' : 'Who Can Apply?'}
@@ -1864,7 +1877,7 @@ export default function Dashboard() {
           {/* ========================================================= */}
           {/* 5. BOTTOM CONVERSION ACTION BANNER                        */}
           {/* ========================================================= */}
-          <div className="bg-gradient-to-br from-blue-950 via-blue-900 to-blue-950 text-white rounded-3xl p-6 sm:p-10 shadow-xl flex flex-col items-center text-center gap-4">
+          <div id="landing-cta" className="bg-gradient-to-br from-blue-950 via-blue-900 to-blue-950 text-white rounded-3xl p-6 sm:p-10 shadow-xl flex flex-col items-center text-center gap-4">
             <h3 className="text-xl sm:text-2xl font-black">
               {language === 'bm' ? 'Sedia Untuk Semak Had Kelayakan Pinjaman Anda?' : 'Ready to Check Your Loan Limit?'}
             </h3>
