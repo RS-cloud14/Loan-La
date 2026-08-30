@@ -762,8 +762,8 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
             </h2>
             <p className="text-xs text-blue-100 mt-1 max-w-2xl leading-relaxed">
               {language === 'bm'
-                ? 'Bandingkan pelbagai skim pembiayaan mikro daripada bank perdagangan, institusi kerajaan, dan platform P2P yang tersedia di Malaysia. Loan-La membantu anda memilih skim yang paling sesuai dengan profil kewangan anda.'
-                : 'Compare micro-financing schemes from commercial banks, government institutions, and P2P platforms available in Malaysia. Loan-La helps you identify the best-fit scheme based on your financial profile.'}
+                ? 'Bandingkan skim pembiayaan mikro berlesen di Malaysia untuk mencari pinjaman terbaik anda.'
+                : 'Compare licensed micro-financing schemes in Malaysia to find your best-fit loan.'}
             </p>
           </div>
 
@@ -798,10 +798,10 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
         <div className="flex items-center gap-1.5 flex-wrap w-full lg:w-auto">
           {[
             { id: 'all', label: language === 'bm' ? 'Semua Institusi' : 'All Lenders', count: lenders.length },
-            { id: 'traditional_bank', label: language === 'bm' ? '🏦 Bank Perdagangan' : '🏦 Commercial Banks', count: lenders.filter(l => l.category === 'traditional_bank').length },
-            { id: 'government_fund', label: language === 'bm' ? '🏛️ Dana & Koperasi Kerajaan' : '🏛️ Gov Funds & Coops', count: lenders.filter(l => l.category === 'government_fund').length },
-            { id: 'micro_credit', label: language === 'bm' ? '💳 Kredit Bukan Bank' : '💳 Non-Bank Credit', count: lenders.filter(l => l.category === 'micro_credit').length },
-            { id: 'p2p', label: '🤝 P2P Crowdfunding', count: lenders.filter(l => l.category === 'p2p').length },
+            { id: 'traditional_bank', label: language === 'bm' ? 'Bank Perdagangan' : 'Commercial Banks', count: lenders.filter(l => l.category === 'traditional_bank').length },
+            { id: 'government_fund', label: language === 'bm' ? 'Dana & Koperasi Kerajaan' : 'Gov Funds & Coops', count: lenders.filter(l => l.category === 'government_fund').length },
+            { id: 'micro_credit', label: language === 'bm' ? 'Kredit Bukan Bank' : 'Non-Bank Credit', count: lenders.filter(l => l.category === 'micro_credit').length },
+            { id: 'p2p', label: 'P2P Crowdfunding', count: lenders.filter(l => l.category === 'p2p').length },
             { id: 'shariah', label: language === 'bm' ? 'Patuh Syariah' : 'Islamic (Shariah)', count: lenders.filter(l => l.shariah).length },
           ].map((cat) => (
             <button
@@ -857,14 +857,9 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
 
                 <div className="flex items-center gap-3 mt-1 mb-1">
                   <BankLogo bankId={lender.id} bankName={lender.name} size="md" />
-                  <div>
-                    <h3 className="text-base font-black text-blue-950 group-hover:text-blue-900 transition-colors">
-                      {lender.name}
-                    </h3>
-                    <span className="text-xs text-slate-500 font-medium block mt-0.5">
-                      {lender.institution} · <span className="text-blue-900 font-semibold">{lender.regulator}</span>
-                    </span>
-                  </div>
+                  <h3 className="text-base font-black text-blue-950 group-hover:text-blue-900 transition-colors">
+                    {lender.name}
+                  </h3>
                 </div>
               </div>
 
@@ -1062,7 +1057,7 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
                             >
                               {lenders.map(opt => (
                                 <option key={opt.id} value={opt.id}>
-                                  {opt.name} ({opt.shortName || opt.institution})
+                                  {opt.name}
                                 </option>
                               ))}
                             </select>
@@ -1072,16 +1067,13 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
                           </div>
                         </div>
 
-                        {/* Logo & Institution Detail */}
+                        {/* Logo & Bank Name */}
                         <div className="flex items-center gap-2.5 pt-0.5">
                           <BankLogo bankId={l.id} bankName={l.name} size="sm" />
                           <div className="min-w-0">
                             <h4 className="text-xs font-bold text-blue-950 truncate leading-tight">
-                              {l.institution}
+                              {l.name}
                             </h4>
-                            <span className="text-[10px] text-slate-500 font-medium block truncate">
-                              {l.regulator}
-                            </span>
                           </div>
                         </div>
                       </div>
