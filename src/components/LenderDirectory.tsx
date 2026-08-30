@@ -944,7 +944,7 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
       {/* PROFESSIONAL NO-SCROLL SIDE-BY-SIDE LENDER COMPARISON                      */}
       {/* ========================================================================= */}
       {compareModalOpen && (() => {
-        const selectedLenderObjects = lenders.filter(l => selectedCompareIds.includes(l.id));
+        const selectedLenderObjects = selectedCompareIds.map(id => lenders.find(item => item.id === id) || lenders[0]);
 
         return (
           <div className="fixed inset-0 z-[100] bg-blue-950/80 backdrop-blur-sm p-2 sm:p-4 overflow-y-auto animate-fade-in flex flex-col justify-start sm:justify-center items-center">
@@ -960,9 +960,6 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
                     <h3 className="text-sm font-bold tracking-wide uppercase">
                       {language === 'bm' ? 'Perbandingan Institusi Perbankan' : 'Bank & Lender Comparison'}
                     </h3>
-                    <span className="text-xs text-blue-200">
-                      {language === 'bm' ? 'Pilih institusi untuk perbandingan bersebelahan' : 'Select lenders to compare side-by-side'}
-                    </span>
                   </div>
                 </div>
                 
@@ -975,40 +972,38 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
                 </button>
               </div>
 
-              {/* 2. Sleek Quick Filter Presets Bar */}
-              <div className="px-5 py-2.5 bg-slate-50 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2 shrink-0">
-                <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-[10px] font-bold text-slate-500 font-mono uppercase tracking-wider mr-1">
-                    {language === 'bm' ? 'Tapis Cepat:' : 'Quick Presets:'}
-                  </span>
-                  {[
-                    { id: 'rate', label: language === 'bm' ? 'Kadar Terendah' : 'Lowest Rate', bankIds: ['bsn', 'tekun', 'sme_bank_mikro'] },
-                    { id: 'speed', label: language === 'bm' ? 'Kelulusan Pantas' : 'Fastest Speed', bankIds: ['alliance_mikro', 'aeon', 'fundingsocieties'] },
-                    { id: 'shariah', label: language === 'bm' ? 'Patuh Syariah' : 'Shariah Only', bankIds: ['bank_islam_mikro', 'agrobank_mikro', 'bank_rakyat'] },
-                    { id: 'low_income', label: language === 'bm' ? 'Gaji Min. Rendah' : 'Lowest Min. Income', bankIds: ['aim', 'tekun', 'bsn'] },
-                  ].map((preset) => {
-                    const isPresetActive = selectedCompareIds.length === preset.bankIds.length && 
-                      preset.bankIds.every(id => selectedCompareIds.includes(id));
-
-                    return (
-                      <button
-                        key={preset.id}
-                        onClick={() => setSelectedCompareIds(preset.bankIds)}
-                        className={`px-2.5 py-1 text-[11px] rounded-lg font-semibold transition-all border cursor-pointer ${
-                          isPresetActive
-                            ? 'bg-blue-900 text-white border-blue-900 font-bold shadow-2xs'
-                            : 'bg-white hover:bg-slate-100 text-slate-700 border-slate-200'
-                        }`}
-                      >
-                        {preset.label}
-                      </button>
-                    );
-                  })}
-                </div>
-
-                <span className="text-[10px] text-slate-500 font-medium">
-                  {language === 'bm' ? 'Tukar bank di bawah untuk perbandingan' : 'Select or swap any bank in the slots below'}
+              {/* 2. Clean Filter Bar */}
+              <div className="px-5 py-2.5 bg-slate-50 border-b border-slate-200 flex items-center gap-1.5 overflow-x-auto shrink-0 scrollbar-none">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5 mr-1 shrink-0">
+                  <Filter className="w-3.5 h-3.5 text-blue-900" />
+                  {language === 'bm' ? 'Tapis:' : 'Filter:'}
                 </span>
+                {[
+                  { id: 'all', label: language === 'bm' ? 'Semua / Utama' : 'All Lenders', bankIds: ['maybank_mikro', 'cimb_mikro', 'bsn'] },
+                  { id: 'traditional_bank', label: language === 'bm' ? 'Bank Perdagangan' : 'Commercial Banks', bankIds: ['maybank_mikro', 'cimb_mikro', 'alliance_mikro'] },
+                  { id: 'government_fund', label: language === 'bm' ? 'Dana Kerajaan' : 'Gov Funds & Coops', bankIds: ['tekun', 'bsn', 'sme_bank_mikro'] },
+                  { id: 'micro_credit', label: language === 'bm' ? 'Kredit & P2P' : 'Non-Bank & P2P', bankIds: ['fundingsocieties', 'aeon', 'capbay'] },
+                  { id: 'shariah', label: language === 'bm' ? 'Patuh Syariah' : 'Shariah Only', bankIds: ['bank_islam_mikro', 'agrobank_mikro', 'bank_rakyat'] },
+                  { id: 'rate', label: language === 'bm' ? 'Kadar Terendah' : 'Lowest Rate', bankIds: ['bsn', 'tekun', 'sme_bank_mikro'] },
+                  { id: 'speed', label: language === 'bm' ? 'Kelulusan Pantas' : 'Fastest Speed', bankIds: ['alliance_mikro', 'aeon', 'fundingsocieties'] },
+                ].map((filterItem) => {
+                  const isPresetActive = selectedCompareIds.length === filterItem.bankIds.length && 
+                    filterItem.bankIds.every((id, i) => selectedCompareIds[i] === id);
+
+                  return (
+                    <button
+                      key={filterItem.id}
+                      onClick={() => setSelectedCompareIds(filterItem.bankIds)}
+                      className={`px-3 py-1.5 text-xs rounded-xl font-bold transition-all border shrink-0 cursor-pointer ${
+                        isPresetActive
+                          ? 'bg-blue-950 text-white border-blue-950 shadow-xs'
+                          : 'bg-white hover:bg-slate-100 text-slate-600 border-slate-200'
+                      }`}
+                    >
+                      {filterItem.label}
+                    </button>
+                  );
+                })}
               </div>
 
               {/* 3. Professional Side-by-Side Comparison Grid (Scrollable Body) */}
@@ -1016,7 +1011,7 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
                 <div className={`grid gap-4 ${selectedLenderObjects.length === 2 ? 'grid-cols-2' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}>
                   {selectedLenderObjects.map((l, idx) => (
                     <div 
-                      key={l.id} 
+                      key={`compare-slot-${idx}`} 
                       className={`border rounded-xl p-4 flex flex-col justify-between gap-4 transition-all ${
                         idx === 0 ? 'border-blue-900/40 bg-blue-50/20' : 'border-slate-200 bg-white'
                       }`}
@@ -1026,15 +1021,10 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
                         
                         {/* Slot Header & Dropdown */}
                         <div className="mb-2.5">
-                          <div className="flex items-center justify-between gap-2 mb-1.5">
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <span className="bg-blue-950 text-white font-bold px-2 py-0.5 rounded-md text-[10px] tracking-wide shrink-0">
-                                {language === 'bm' ? `SLOT ${idx + 1}` : `SLOT ${idx + 1}`}
-                              </span>
-                              <span className="text-slate-500 font-medium text-[11px] truncate">
-                                {language === 'bm' ? 'Tukar Bank' : 'Change Bank'}
-                              </span>
-                            </div>
+                          <div className="flex items-center justify-between gap-2 mb-2">
+                            <span className="bg-blue-950 text-white font-bold px-2 py-0.5 rounded-md text-[10px] tracking-wide shrink-0">
+                              {`SLOT ${idx + 1}`}
+                            </span>
                             <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 ${
                               l.shariah 
                                 ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' 
@@ -1049,17 +1039,42 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
                               value={l.id}
                               onChange={(e) => {
                                 const newId = e.target.value;
-                                const updated = [...selectedCompareIds];
-                                updated[idx] = newId;
-                                setSelectedCompareIds(updated);
+                                setSelectedCompareIds(prev => {
+                                  const updated = [...prev];
+                                  updated[idx] = newId;
+                                  return updated;
+                                });
                               }}
                               className="w-full appearance-none bg-blue-50/30 hover:bg-blue-50/70 focus:bg-white border border-blue-900/25 hover:border-blue-900 focus:border-blue-950 text-blue-950 font-bold text-xs py-2 pl-3 pr-8 rounded-xl transition-all outline-hidden cursor-pointer shadow-2xs truncate"
                             >
-                              {lenders.map(opt => (
-                                <option key={opt.id} value={opt.id}>
-                                  {opt.name}
-                                </option>
-                              ))}
+                              <optgroup label={language === 'bm' ? 'Bank Perdagangan' : 'Commercial Banks'}>
+                                {lenders.filter(item => item.category === 'traditional_bank').map(opt => (
+                                  <option key={opt.id} value={opt.id}>
+                                    {opt.name}
+                                  </option>
+                                ))}
+                              </optgroup>
+                              <optgroup label={language === 'bm' ? 'Dana & Koperasi Kerajaan' : 'Gov Funds & Coops'}>
+                                {lenders.filter(item => item.category === 'government_fund').map(opt => (
+                                  <option key={opt.id} value={opt.id}>
+                                    {opt.name}
+                                  </option>
+                                ))}
+                              </optgroup>
+                              <optgroup label={language === 'bm' ? 'Kredit Bukan Bank' : 'Non-Bank Credit'}>
+                                {lenders.filter(item => item.category === 'micro_credit').map(opt => (
+                                  <option key={opt.id} value={opt.id}>
+                                    {opt.name}
+                                  </option>
+                                ))}
+                              </optgroup>
+                              <optgroup label="P2P Crowdfunding">
+                                {lenders.filter(item => item.category === 'p2p').map(opt => (
+                                  <option key={opt.id} value={opt.id}>
+                                    {opt.name}
+                                  </option>
+                                ))}
+                              </optgroup>
                             </select>
                             <div className="absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none text-blue-900 flex items-center">
                               <ChevronDown className="w-4 h-4" />
@@ -1161,12 +1176,7 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
               </div>
 
               {/* 4. Professional Footer */}
-              <div className="px-6 py-3 bg-slate-50 border-t border-slate-200 flex justify-between items-center text-xs text-slate-500 shrink-0">
-                <span className="text-[11px]">
-                  {language === 'bm' 
-                    ? 'Kadar faedah dan had pembiayaan adalah anggaran indikatif tertakluk kepada semakan kredit rasmi.' 
-                    : 'Indicative financing terms subject to official regulatory guidelines and institutional credit assessment.'}
-                </span>
+              <div className="px-6 py-3 bg-slate-50 border-t border-slate-200 flex justify-end items-center text-xs text-slate-500 shrink-0">
                 <button
                   onClick={() => setCompareModalOpen(false)}
                   className="px-4 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold rounded-lg transition-all cursor-pointer text-xs"
