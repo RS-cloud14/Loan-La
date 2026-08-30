@@ -1661,6 +1661,101 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // 9C-1. Step 1 Loan Application Form Filling (Purpose, Amount, Tenure)
+    // Distinguish between APPLYING (Step 1 form filling) vs CALCULATING (interactive calculator)
+    const isExplicitCalculatorAsk = (
+      lastMsgLower.includes('calculate') ||
+      lastMsgLower.includes('calculator') ||
+      lastMsgLower.includes('kalkulator') ||
+      lastMsgLower.includes('compute') ||
+      lastMsgLower.includes('kira untuk') ||
+      lastMsgLower.includes('kirakan untuk') ||
+      lastMsgLower.includes('how much is the installment') ||
+      lastMsgLower.includes('how much per month') ||
+      lastMsgLower.includes('berapa sebulan') ||
+      lastMsgLower.includes('berapa ansuran') ||
+      lastMsgLower.includes('simulation') ||
+      lastMsgLower.includes('simulasi')
+    );
+
+    const isApplicationContext = userContext?.currentPage === 'app';
+    const isApplicationFormFilling = (
+      (isApplicationContext && (userContext?.activeStep === 1 || !userContext?.activeStep)) ||
+      lastMsgLower.includes('loan amount') ||
+      lastMsgLower.includes('the loan amount') ||
+      lastMsgLower.includes('jumlah pinjaman') ||
+      lastMsgLower.includes('loan purpose') ||
+      lastMsgLower.includes('tujuan pinjaman') ||
+      lastMsgLower.includes('choose vehicle') ||
+      lastMsgLower.includes('pilih kenderaan') ||
+      lastMsgLower.includes('apply for') ||
+      lastMsgLower.includes('mohon pinjaman') ||
+      lastMsgLower.includes('nak pinjam')
+    ) && !isExplicitCalculatorAsk;
+
+    if (isApplicationFormFilling) {
+      const parsedAmount = parseSpokenAmount(lastUserMessage);
+      const parsedTenure = parseSpokenTenure(lastUserMessage);
+
+      // Detect purpose if mentioned
+      let detectedPurpose: 'working_capital' | 'personal_cash' | 'equipment' | 'vehicle' | 'invoice_financing' | 'education' | undefined = undefined;
+      if (lastMsgLower.includes('vehicle') || lastMsgLower.includes('kenderaan') || lastMsgLower.includes('kereta') || lastMsgLower.includes('motor')) {
+        detectedPurpose = 'vehicle';
+      } else if (lastMsgLower.includes('working') || lastMsgLower.includes('modal') || lastMsgLower.includes('stock') || lastMsgLower.includes('stok') || lastMsgLower.includes('raya') || lastMsgLower.includes('niaga')) {
+        detectedPurpose = 'working_capital';
+      } else if (lastMsgLower.includes('personal') || lastMsgLower.includes('cash') || lastMsgLower.includes('tunai') || lastMsgLower.includes('kecemasan')) {
+        detectedPurpose = 'personal_cash';
+      } else if (lastMsgLower.includes('equipment') || lastMsgLower.includes('alat') || lastMsgLower.includes('mesin') || lastMsgLower.includes('laptop')) {
+        detectedPurpose = 'equipment';
+      } else if (lastMsgLower.includes('invoice') || lastMsgLower.includes('invois')) {
+        detectedPurpose = 'invoice_financing';
+      } else if (lastMsgLower.includes('education') || lastMsgLower.includes('belajar') || lastMsgLower.includes('pendidikan')) {
+        detectedPurpose = 'education';
+      }
+
+      if (parsedAmount || parsedTenure || detectedPurpose) {
+        const amt = parsedAmount || userContext?.targetLoanAmount || 5000;
+        const yrs = parsedTenure || userContext?.calcTenureYears || 1;
+        const purpose = detectedPurpose || userContext?.targetLoanPurpose || 'personal_cash';
+
+        const purposeLabelsEn: Record<string, string> = {
+          personal_cash: 'Personal Cash Buffer',
+          working_capital: 'Working Capital & Stock',
+          equipment: 'Machinery & Equipment',
+          vehicle: 'Vehicle Financing',
+          invoice_financing: 'Invoice Financing',
+          education: 'Skill & Education'
+        };
+        const purposeLabelsBm: Record<string, string> = {
+          personal_cash: 'Tunai Kecemasan Peribadi',
+          working_capital: 'Modal Pusingan & Stok',
+          equipment: 'Mesin & Peralatan',
+          vehicle: 'Pembiayaan Kenderaan',
+          invoice_financing: 'Pembiayaan Invois',
+          education: 'Pendidikan & Kemahiran'
+        };
+
+        const reply = isMalay
+          ? `✓ Saya telah tetapkan permohonan pembiayaan anda: **RM ${amt.toLocaleString('en-MY')}** selama **${yrs} tahun** untuk tujuan **${purposeLabelsBm[purpose] || purpose}** pada borang Langkah 1. Sila teruskan ke Langkah 2 untuk memuat naik penyata bank anda apabila bersedia!`
+          : `✓ I've configured your loan application for **RM ${amt.toLocaleString('en-MY')}** over **${yrs} year${yrs > 1 ? 's' : ''}** for **${purposeLabelsEn[purpose] || purpose}** on Step 1. Please proceed to Step 2 to upload your bank statements whenever you're ready!`;
+
+        return NextResponse.json({
+          success: true,
+          reply,
+          action: {
+            type: 'SET_LOAN_PURPOSE',
+            payload: {
+              purpose,
+              amount: amt,
+              tenureYears: yrs,
+              targetStep: 1
+            }
+          },
+          suggestions: isMalay ? ["Teruskan Langkah 2", "Tukar Jumlah"] : ["Continue to Step 2", "Change Amount"]
+        });
+      }
+    }
+
     // 9C. Spoken Loan Calculation Handler — Parse numbers, do math, emit SET_CALCULATOR action
     // Triggers: "calculate 4527 at 4.5% for 2 years", "kira pinjaman 20000 kadar 6% tempoh 3 tahun", etc.
     const isCalcIntent = (
@@ -1680,7 +1775,7 @@ export async function POST(request: NextRequest) {
       lastMsgLower.includes('simulasi') ||
       lastMsgLower.includes('estimate') ||
       lastMsgLower.includes('anggaran')
-    );
+    ) && (!isApplicationContext || isExplicitCalculatorAsk);
 
     if (isCalcIntent) {
       const parsedAmount = parseSpokenAmount(lastUserMessage);
@@ -2086,11 +2181,19 @@ Pricing, Packages & Plan Benefits Knowledge Base:
    - Live Application Tracker with real-time bank status sync & priority underwriting queue routing.
    - Dedicated 30-day AI Financing CoPilot with continuous debt restructuring counseling.
 
-When the user asks to configure or perform actions on screen:
-- To choose or set loan purpose, amount, or tenure in Step 1 (e.g. "I want to choose working capital for RM 6,000 and 2 years"): append [ACTION:SET_LOAN_PURPOSE:{"purpose":"working_capital"|"personal_cash"|"equipment"|"vehicle"|"invoice_financing"|"education","amount":6000,"tenureYears":2}].
-- To adjust loan amount: append [ACTION:SET_LOAN_AMOUNT:{"amount":10000}].
-- To adjust loan tenure: append [ACTION:SET_TENURE:{"tenureYears":3}].
-- CRITICAL — To calculate a loan repayment AND update the calculator UI with those exact values: always append [ACTION:SET_CALCULATOR:{"loanAmount":4527,"tenureYears":2,"interestRate":4.5}]. You MUST do this whenever the user mentions any specific loan amount, rate, or tenure in a calculation request (e.g. "calculate 4,527 at 4.5% for 2 years"). This automatically pre-fills the calculator page with the exact values the user just spoke.
+STRICT PROTOCOL — LOAN APPLICATION (APPLY) VS. LOAN CALCULATOR:
+1. LOAN APPLICATION / APPLYING (Step 1 Form Filling):
+- When the user is configuring or filling in their loan application (e.g. active screen is Step 1, currentPage === 'app', or phrases like "the loan amount is like 8000 for 5 year", "loan amount 8000", "i want 8000 for 5 years", "set amount to 8000", "choose vehicle as loan purpose", "tujuan pinjaman kenderaan"):
+  * THIS IS FOR THE APPLICATION FORM, NOT THE CALCULATOR!
+  * To choose loan purpose and set parameters in Step 1: append [ACTION:SET_LOAN_PURPOSE:{"purpose":"working_capital"|"personal_cash"|"equipment"|"vehicle"|"invoice_financing"|"education","amount":8000,"tenureYears":5}].
+  * To set loan amount: append [ACTION:SET_LOAN_AMOUNT:{"amount":8000,"tenureYears":5}].
+  * To adjust loan tenure: append [ACTION:SET_TENURE:{"tenureYears":5}].
+  * NEVER emit [ACTION:SET_CALCULATOR] and NEVER emit [ACTION:NAVIGATE_CALCULATOR] when the user is applying or setting their application parameters. Keep the user on Step 1 of the application and confirm the amount/tenure entered.
+2. LOAN CALCULATOR:
+- ONLY emit [ACTION:SET_CALCULATOR:{"loanAmount":4527,"tenureYears":2,"interestRate":4.5}] or [ACTION:NAVIGATE_CALCULATOR] when the user EXPLICITLY asks to calculate or simulate repayments, or asks to open/go to the calculator (e.g. "calculate 4,527 at 4.5% for 2 years", "how much is the monthly repayment", "bring me to calculator", "buka kalkulator", "kira untuk saya").
+- NEVER navigate the user away from their loan application to the calculator unless they explicitly asked to open the calculator.
+
+Additional Screen Actions:
 - To minimize call window to the floating ball: append [ACTION:MINIMIZE_CALL].
 - To open or expand the call window: append [ACTION:EXPAND_CALL].
 - To close or end the call: append [ACTION:END_CALL].

@@ -21,7 +21,7 @@ export interface ChatMessage {
   timestamp: string;
   suggestions?: string[];
   action?: {
-    type: 'NAVIGATE_LOAN_NEED' | 'NAVIGATE_UPLOAD' | 'SET_CALCULATOR' | 'NAVIGATE_CALCULATOR' | 'NAVIGATE_DIRECTORY' | 'NAVIGATE_TRACKER' | 'NAVIGATE_SETTINGS' | 'NAVIGATE_REPORT' | 'DOWNLOAD_REPORT' | 'CHANGE_LANGUAGE' | 'START_ASSESSMENT' | 'PROMPT_CREATE_TICKET' | 'DISPATCH_TICKET' | 'NAVIGATE_SUPPORT' | 'SAVE_DRAFT' | 'SCROLL_TO_SECTION' | 'SET_LOAN_AMOUNT' | 'SET_TENURE' | 'NAVIGATE_PAGE';
+    type: 'NAVIGATE_LOAN_NEED' | 'NAVIGATE_UPLOAD' | 'SET_CALCULATOR' | 'NAVIGATE_CALCULATOR' | 'NAVIGATE_DIRECTORY' | 'NAVIGATE_TRACKER' | 'NAVIGATE_SETTINGS' | 'NAVIGATE_REPORT' | 'DOWNLOAD_REPORT' | 'CHANGE_LANGUAGE' | 'START_ASSESSMENT' | 'PROMPT_CREATE_TICKET' | 'DISPATCH_TICKET' | 'NAVIGATE_SUPPORT' | 'SAVE_DRAFT' | 'SCROLL_TO_SECTION' | 'SET_LOAN_AMOUNT' | 'SET_TENURE' | 'NAVIGATE_PAGE' | 'SET_LOAN_PURPOSE' | 'SPOTLIGHT_ELEMENT' | 'MINIMIZE_CALL' | 'EXPAND_CALL' | 'END_CALL';
     payload?: any;
   };
   attachedFile?: {
@@ -858,11 +858,14 @@ export default function AICoPilotChat({
 
     if (action.type === 'SET_LOAN_AMOUNT' && action.payload?.amount) {
       if (typeof onSetLoanAmount === 'function') onSetLoanAmount(action.payload.amount);
+      if (action.payload?.tenureYears && typeof onSetTenure === 'function') onSetTenure(action.payload.tenureYears);
+      triggerVisualSpotlight('step1-amount', 'Loan Amount');
       return;
     }
 
     if (action.type === 'SET_TENURE' && action.payload?.tenureYears) {
       if (typeof onSetTenure === 'function') onSetTenure(action.payload.tenureYears);
+      triggerVisualSpotlight('step1-amount', 'Repayment Tenure');
       return;
     }
 
@@ -888,8 +891,21 @@ export default function AICoPilotChat({
       if (typeof onNavigateToUpload === 'function') onNavigateToUpload();
     } else if (action.type === 'NAVIGATE_REPORT') {
       if (typeof onNavigateToReport === 'function') onNavigateToReport();
-    } else if (action.type === 'SET_CALCULATOR' || action.type === 'NAVIGATE_CALCULATOR') {
+    } else if (action.type === 'NAVIGATE_CALCULATOR') {
       if (typeof onNavigateToCalculator === 'function') onNavigateToCalculator(action.payload);
+    } else if (action.type === 'SET_CALCULATOR') {
+      if (currentPage === 'app') {
+        // When user is currently applying, update Step 1 form fields directly without navigating away!
+        if (action.payload?.loanAmount && typeof onSetLoanAmount === 'function') {
+          onSetLoanAmount(action.payload.loanAmount);
+        }
+        if (action.payload?.tenureYears && typeof onSetTenure === 'function') {
+          onSetTenure(action.payload.tenureYears);
+        }
+        triggerVisualSpotlight('step1-amount', 'Loan Amount');
+      } else {
+        if (typeof onNavigateToCalculator === 'function') onNavigateToCalculator(action.payload);
+      }
     } else if (action.type === 'NAVIGATE_DIRECTORY') {
       if (typeof onNavigateToDirectory === 'function') onNavigateToDirectory();
     } else if (action.type === 'NAVIGATE_SETTINGS') {
@@ -898,15 +914,12 @@ export default function AICoPilotChat({
       if (typeof onOpenSupportModal === 'function') onOpenSupportModal(action.payload?.id);
     } else if (action.type === 'SET_LOAN_PURPOSE') {
       if (typeof onSetLoanPurpose === 'function' && action.payload?.purpose) {
-        onSetLoanPurpose(action.payload.purpose, action.payload.amount, action.payload.tenureYears, action.payload.targetStep);
+        onSetLoanPurpose(action.payload.purpose, action.payload.amount, action.payload.tenureYears, action.payload.targetStep || 1);
       } else {
         if (action.payload?.amount && typeof onSetLoanAmount === 'function') onSetLoanAmount(action.payload.amount);
         if (action.payload?.tenureYears && typeof onSetTenure === 'function') onSetTenure(action.payload.tenureYears);
       }
-    } else if (action.type === 'SET_LOAN_AMOUNT' && action.payload?.amount) {
-      if (typeof onSetLoanAmount === 'function') onSetLoanAmount(action.payload.amount);
-    } else if (action.type === 'SET_TENURE' && action.payload?.tenureYears) {
-      if (typeof onSetTenure === 'function') onSetTenure(action.payload.tenureYears);
+      triggerVisualSpotlight('step1-amount', 'Loan Purpose & Amount');
     } else if (action.type === 'SCROLL_TO_SECTION' && action.payload?.sectionId) {
       if (typeof onScrollToSection === 'function') onScrollToSection(action.payload.sectionId);
     } else if (action.type === 'SAVE_DRAFT') {
@@ -1350,6 +1363,172 @@ export default function AICoPilotChat({
       return;
     }
 
+    // C. Step 1 Loan Application Spoken Form Filling (Purpose, Amount & Tenure)
+    // Handles natural inputs: "i choose vehicle as loan purpose", "the loan amount is like 8000 for 5 year"
+    const isExplicitCalculatorNavOrCalc = (
+      (lower.includes('bring') || lower.includes('take') || lower.includes('go to') || lower.includes('open') || lower.includes('buka')) &&
+      (lower.includes('calculator') || lower.includes('kalkulator'))
+    ) || (
+      (lower.startsWith('calculate') || lower.startsWith('kira') || lower.startsWith('kirakan') || lower.startsWith('compute')) &&
+      (lower.includes('at') || lower.includes('kadar') || lower.includes('%') || lower.includes('rate'))
+    );
+
+    const isStep1Context = (currentPage === 'app' && (activeStep === 1 || !activeStep));
+    const isLoanPurposeMention = (
+      lower.includes('loan purpose') ||
+      lower.includes('tujuan pinjaman') ||
+      lower.includes('choose vehicle') ||
+      lower.includes('pilih kenderaan') ||
+      lower.includes('purpose is') ||
+      lower.includes('tujuan adalah') ||
+      (isStep1Context && (
+        lower.includes('vehicle') || lower.includes('kenderaan') || lower.includes('kereta') || lower.includes('motor') ||
+        lower.includes('working capital') || lower.includes('modal kerja') || lower.includes('modal pusingan') ||
+        lower.includes('personal cash') || lower.includes('tunai peribadi') ||
+        lower.includes('equipment') || lower.includes('mesin') || lower.includes('alat') ||
+        lower.includes('invoice') || lower.includes('invois') ||
+        lower.includes('education') || lower.includes('belajar') || lower.includes('pendidikan')
+      ))
+    ) && !isExplicitCalculatorNavOrCalc;
+
+    const isLoanAmountOrTenureMention = (
+      isStep1Context ||
+      lower.includes('loan amount') ||
+      lower.includes('the loan amount') ||
+      lower.includes('jumlah pinjaman') ||
+      lower.includes('pinjam') ||
+      lower.includes('mohon') ||
+      lower.includes('apply for') ||
+      lower.includes('nak pinjam')
+    ) && (
+      /\b\d{3,6}\b/.test(lower) || /\b\d+\s*k\b/.test(lower) || lower.includes('ribu') || lower.includes('thousand') ||
+      /\b\d+\s*(?:year|years|yr|yrs|tahun)\b/.test(lower)
+    ) && !isExplicitCalculatorNavOrCalc;
+
+    if ((isLoanPurposeMention || isLoanAmountOrTenureMention) && !isExplicitCalculatorNavOrCalc) {
+      let detectedPurpose: 'personal_cash' | 'working_capital' | 'equipment' | 'vehicle' | 'invoice_financing' | 'education' | undefined = undefined;
+      if (lower.includes('vehicle') || lower.includes('kenderaan') || lower.includes('kereta') || lower.includes('motor')) {
+        detectedPurpose = 'vehicle';
+      } else if (lower.includes('working') || lower.includes('modal') || lower.includes('stock') || lower.includes('stok') || lower.includes('raya') || lower.includes('business')) {
+        detectedPurpose = 'working_capital';
+      } else if (lower.includes('emergency') || lower.includes('personal') || lower.includes('kecemasan') || lower.includes('cash') || lower.includes('tunai')) {
+        detectedPurpose = 'personal_cash';
+      } else if (lower.includes('equipment') || lower.includes('alat') || lower.includes('mesin') || lower.includes('laptop')) {
+        detectedPurpose = 'equipment';
+      } else if (lower.includes('invoice') || lower.includes('invois')) {
+        detectedPurpose = 'invoice_financing';
+      } else if (lower.includes('education') || lower.includes('belajar') || lower.includes('pendidikan')) {
+        detectedPurpose = 'education';
+      }
+
+      let parsedAmount: number | undefined = undefined;
+      const kMatch = lower.match(/(?:rm\s*)?(\d+)\s*(?:k|ribu|thousand)/i);
+      if (kMatch) {
+        parsedAmount = parseInt(kMatch[1], 10) * 1000;
+      } else {
+        const amtMatch = lower.match(/(?:rm\s*)?(\d{1,3}(?:,\d{3})+|\d{3,6})/i);
+        if (amtMatch) {
+          const rawNum = parseInt(amtMatch[1].replace(/,/g, ''), 10);
+          if (rawNum >= 500 && rawNum <= 150000) {
+            parsedAmount = rawNum;
+          }
+        }
+      }
+
+      let parsedTenure: number | undefined = undefined;
+      const tenureMatch = lower.match(/(?:for|selama|tempoh|tenure)?\s*(\d{1,2})\s*(?:year|years|yr|yrs|tahun)/i);
+      if (tenureMatch) {
+        const t = parseInt(tenureMatch[1], 10);
+        if (t >= 1 && t <= 7) {
+          parsedTenure = t;
+        }
+      }
+
+      if (detectedPurpose || parsedAmount || parsedTenure) {
+        const finalPurpose = detectedPurpose || (targetLoanPurpose as any) || 'personal_cash';
+        const finalAmount = parsedAmount || targetLoanAmount || 5000;
+        const finalTenure = parsedTenure || calcTenureYears || 1;
+
+        if (processingWatchdogRef.current) clearTimeout(processingWatchdogRef.current);
+        setIsSending(false);
+        isProcessingRef.current = false;
+
+        if (typeof onSetLoanPurpose === 'function') {
+          onSetLoanPurpose(finalPurpose, finalAmount, finalTenure, 1);
+        }
+        if (parsedAmount && typeof onSetLoanAmount === 'function') {
+          onSetLoanAmount(finalAmount);
+        }
+        if (parsedTenure && typeof onSetTenure === 'function') {
+          onSetTenure(finalTenure);
+        }
+        if (currentPage !== 'app' && typeof onNavigatePage === 'function') {
+          onNavigatePage('app', 1);
+        }
+
+        const purposeLabelsEn: Record<string, string> = {
+          personal_cash: 'Personal Cash Buffer',
+          working_capital: 'Working Capital & Stock',
+          equipment: 'Machinery & Equipment',
+          vehicle: 'Vehicle Financing',
+          invoice_financing: 'Invoice Financing',
+          education: 'Skill & Education'
+        };
+        const purposeLabelsBm: Record<string, string> = {
+          personal_cash: 'Tunai Kecemasan Peribadi',
+          working_capital: 'Modal Pusingan & Stok',
+          equipment: 'Mesin & Peralatan',
+          vehicle: 'Pembiayaan Kenderaan',
+          invoice_financing: 'Pembiayaan Invois',
+          education: 'Pendidikan & Kemahiran'
+        };
+
+        const rate = finalPurpose === 'vehicle' ? 0.055 : 0.065;
+        const monthlyEst = Math.round((finalAmount * (1 + rate * finalTenure)) / (finalTenure * 12));
+
+        let replyMsg = '';
+        if (parsedAmount || parsedTenure) {
+          replyMsg = isMalay
+            ? `✓ Saya telah tetapkan permohonan pembiayaan anda: **RM ${finalAmount.toLocaleString('en-MY')}** selama **${finalTenure} tahun** (${purposeLabelsBm[finalPurpose] || finalPurpose}) pada Langkah 1. Anggaran ansuran bulanan adalah ~RM ${monthlyEst.toLocaleString('en-MY')}/bulan. Sila klik Seterusnya atau muat naik dokumen di Langkah 2 apabila anda bersedia!`
+            : `✓ I've configured your loan application for **RM ${finalAmount.toLocaleString('en-MY')}** over **${finalTenure} year${finalTenure > 1 ? 's' : ''}** (${purposeLabelsEn[finalPurpose] || finalPurpose}) on Step 1. Estimated monthly installment is ~RM ${monthlyEst.toLocaleString('en-MY')}/mo. Click Continue or proceed to Step 2 to upload your bank statements whenever you're ready!`;
+        } else {
+          replyMsg = isMalay
+            ? `✓ Saya telah memilih **${purposeLabelsBm[finalPurpose] || finalPurpose}** sebagai tujuan pinjaman anda pada Langkah 1. Berapakah jumlah pinjaman dan tempoh bayaran balik yang anda perlukan? (Contoh: "RM 8,000 selama 5 tahun")`
+            : `✓ I've selected **${purposeLabelsEn[finalPurpose] || finalPurpose}** as your loan purpose on Step 1. What loan amount and repayment tenure would you like? (e.g. "RM 8,000 for 5 years")`;
+        }
+
+        setTimeout(() => {
+          triggerVisualSpotlight('step1-amount', isMalay ? 'Borang Langkah 1' : 'Step 1 Application');
+        }, 400);
+
+        if (isCallActiveRef.current) {
+          setLastAgentReply(replyMsg);
+          setLastCallAction({
+            type: 'SET_LOAN_PURPOSE',
+            payload: { purpose: finalPurpose, amount: finalAmount, tenureYears: finalTenure, targetStep: 1 }
+          });
+          speakText(replyMsg, () => {
+            if (isCallActiveRef.current) startCallListening();
+          });
+        }
+
+        const userMsgItem: ChatMessage = { id: `user-${Date.now()}`, role: 'user', content: textToSend, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+        const botMsgItem: ChatMessage = {
+          id: `bot-${Date.now()}`,
+          role: 'assistant',
+          content: replyMsg,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          action: {
+            type: 'SET_LOAN_PURPOSE',
+            payload: { purpose: finalPurpose, amount: finalAmount, tenureYears: finalTenure, targetStep: 1 }
+          },
+          suggestions: isMalay ? ["Teruskan Langkah 2", "Tukar Jumlah", "Lihat Direktori Bank"] : ["Continue to Step 2", "Change Amount", "View Bank Directory"]
+        };
+        setMessages(prev => [...prev, userMsgItem, botMsgItem]);
+        return;
+      }
+    }
+
     const userMsg: ChatMessage = {
       id: `user-${Date.now()}`,
       role: 'user',
@@ -1548,7 +1727,7 @@ export default function AICoPilotChat({
           executeAgentAction(data.action, false);
 
           let speechToRead = replyContent;
-          if (data.action.type === 'SET_CALCULATOR' && data.action.payload) {
+          if (data.action.type === 'SET_CALCULATOR' && data.action.payload && currentPage !== 'app') {
             const p = data.action.payload;
             const estMth = Math.round((p.loanAmount * (1 + (p.interestRate / 100) * p.tenureYears)) / (p.tenureYears * 12) * 100) / 100;
             speechToRead = isMalay
