@@ -519,6 +519,7 @@ export default function AICoPilotChat({
   const isAgentSpeakingRef = useRef(false);
   const isRecognitionRunningRef = useRef(false);
   const isProcessingRef = useRef(false);
+  const processingWatchdogRef = useRef<any>(null);
   const currentAccumulatedSpeechRef = useRef('');
   const persistedTurnSpeechRef = useRef('');
   const lastSpeechActivityTimestampRef = useRef<number>(0);
@@ -679,8 +680,14 @@ export default function AICoPilotChat({
   // Text-to-speech engine with barge-in voice interrupt and watchdog auto-recovery
   const speakText = useCallback((text: string, onFinish?: () => void) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      if (processingWatchdogRef.current) clearTimeout(processingWatchdogRef.current);
+      isProcessingRef.current = false;
+      setIsSending(false);
       setCallStatus('listening');
       if (onFinish) onFinish();
+      if (isCallActiveRef.current && !isRecognitionRunningRef.current && !isMutedRef.current) {
+        startCallListeningRef.current();
+      }
       return;
     }
 
@@ -706,8 +713,14 @@ export default function AICoPilotChat({
     if (!cleanText) {
       isAgentSpeakingRef.current = false;
       isBargeInListeningRef.current = false;
+      if (processingWatchdogRef.current) clearTimeout(processingWatchdogRef.current);
+      isProcessingRef.current = false;
+      setIsSending(false);
       setCallStatus('listening');
       if (onFinish) onFinish();
+      if (isCallActiveRef.current && !isRecognitionRunningRef.current && !isMutedRef.current) {
+        startCallListeningRef.current();
+      }
       return;
     }
 
@@ -728,15 +741,18 @@ export default function AICoPilotChat({
       speechEnded = true;
       if (speechIntervalRef.current) clearInterval(speechIntervalRef.current);
       if (speechWatchdogRef.current) clearTimeout(speechWatchdogRef.current);
+      if (processingWatchdogRef.current) clearTimeout(processingWatchdogRef.current);
       activeUtteranceRef.current = null;
       setSpokenCharIndex(cleanText.length);
       isAgentSpeakingRef.current = false;
       isBargeInListeningRef.current = false;
+      isProcessingRef.current = false;
+      setIsSending(false);
       setCallStatus('listening');
-      if (isCallActiveRef.current && !isRecognitionRunningRef.current) {
+      if (onFinish) onFinish();
+      if (isCallActiveRef.current && !isRecognitionRunningRef.current && !isMutedRef.current) {
         startCallListeningRef.current();
       }
-      if (onFinish) onFinish();
     };
 
     utterance.onstart = () => {
@@ -788,9 +804,12 @@ export default function AICoPilotChat({
   const stopSpeaking = () => {
     if (speechWatchdogRef.current) clearTimeout(speechWatchdogRef.current);
     if (speechIntervalRef.current) clearInterval(speechIntervalRef.current);
+    if (processingWatchdogRef.current) clearTimeout(processingWatchdogRef.current);
     activeUtteranceRef.current = null;
     isAgentSpeakingRef.current = false;
     isBargeInListeningRef.current = false;
+    isProcessingRef.current = false;
+    setIsSending(false);
     setCallStatus('listening');
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       try {
@@ -822,8 +841,8 @@ export default function AICoPilotChat({
     }
 
     // Stop speaking and close full modal if requested so user can see target section on page
-    stopSpeaking();
     if (shouldCloseChat) {
+      stopSpeaking();
       setIsOpen(false);
     }
 
@@ -927,6 +946,22 @@ export default function AICoPilotChat({
         try { callRecognitionRef.current.stop(); } catch(e){}
       }
       isRecognitionRunningRef.current = false;
+      setLiveTranscript('');
+      currentAccumulatedSpeechRef.current = '';
+      persistedTurnSpeechRef.current = '';
+      setLastUserSpeech(textToSend);
+
+      // Auto-releasing safety watchdog: Guarantee isProcessingRef is NEVER permanently stuck
+      if (processingWatchdogRef.current) clearTimeout(processingWatchdogRef.current);
+      processingWatchdogRef.current = setTimeout(() => {
+        if (isProcessingRef.current) {
+          isProcessingRef.current = false;
+          setIsSending(false);
+          if (isCallActiveRef.current && !isAgentSpeakingRef.current && !isMutedRef.current) {
+            startCallListening();
+          }
+        }
+      }, 7000);
     }
 
     const lower = textToSend.toLowerCase();
@@ -1019,26 +1054,41 @@ export default function AICoPilotChat({
     );
 
     if (isMinimizeVoice) {
+      if (processingWatchdogRef.current) clearTimeout(processingWatchdogRef.current);
       setIsOpen(false);
+      setIsSending(false);
+      isProcessingRef.current = false;
       if (isCallActiveRef.current) {
-        speakText(isMalay ? "Mengecilkan tetingkap sembang. Saya masih mendengar di bebola terapung ini." : "Minimizing chat window. I am still listening right here in the floating orb.", () => {
+        const replyText = isMalay ? "Mengecilkan tetingkap sembang. Saya masih mendengar di bebola terapung ini." : "Minimizing chat window. I am still listening right here in the floating orb.";
+        setLastAgentReply(replyText);
+        speakText(replyText, () => {
           if (isCallActiveRef.current) startCallListening();
         });
       }
       return;
     }
     if (isExpandVoice) {
+      if (processingWatchdogRef.current) clearTimeout(processingWatchdogRef.current);
       setIsOpen(true);
+      setIsSending(false);
+      isProcessingRef.current = false;
       if (isCallActiveRef.current) {
-        speakText(isMalay ? "Membuka tetingkap sembang penuh." : "Expanding full chat window.", () => {
+        const replyText = isMalay ? "Membuka tetingkap sembang penuh." : "Expanding full chat window.";
+        setLastAgentReply(replyText);
+        speakText(replyText, () => {
           if (isCallActiveRef.current) startCallListening();
         });
       }
       return;
     }
     if (isEndOrCloseVoice) {
+      if (processingWatchdogRef.current) clearTimeout(processingWatchdogRef.current);
+      setIsSending(false);
+      isProcessingRef.current = false;
       if (isCallActiveRef.current) {
-        speakText(isMalay ? "Menamatkan panggilan dan menutup tetingkap. Terima kasih dan semoga berjaya!" : "Ending call and closing chat. Thank you and have a great day!", () => {
+        const replyText = isMalay ? "Menamatkan panggilan dan menutup tetingkap. Terima kasih dan semoga berjaya!" : "Ending call and closing chat. Thank you and have a great day!";
+        setLastAgentReply(replyText);
+        speakText(replyText, () => {
           handleEndCall();
           setIsOpen(false);
         });
@@ -1066,9 +1116,14 @@ export default function AICoPilotChat({
           const replyText = isMalay 
             ? "Membuka Kalkulator Ansuran Pinjaman & DSR untuk anda sekarang!"
             : "Opening the interactive Loan Repayment & DSR Calculator for you now!";
+          if (processingWatchdogRef.current) clearTimeout(processingWatchdogRef.current);
+          setIsSending(false);
+          isProcessingRef.current = false;
           if (isCallActiveRef.current) {
+            setLastAgentReply(replyText);
+            setLastCallAction({ type: 'NAVIGATE_CALCULATOR' });
+            executeAgentAction({ type: 'NAVIGATE_CALCULATOR' }, false);
             speakText(replyText, () => {
-              executeAgentAction({ type: 'NAVIGATE_CALCULATOR' }, false);
               if (isCallActiveRef.current) startCallListening();
             });
           } else {
@@ -1093,9 +1148,14 @@ export default function AICoPilotChat({
           const replyText = isMalay
             ? "Membuka senarai direktori 11 bank berlesen dan bank digital untuk anda sekarang!"
             : "Opening the licensed bank and digital lender directory for you now!";
+          if (processingWatchdogRef.current) clearTimeout(processingWatchdogRef.current);
+          setIsSending(false);
+          isProcessingRef.current = false;
           if (isCallActiveRef.current) {
+            setLastAgentReply(replyText);
+            setLastCallAction({ type: 'NAVIGATE_DIRECTORY' });
+            executeAgentAction({ type: 'NAVIGATE_DIRECTORY' }, false);
             speakText(replyText, () => {
-              executeAgentAction({ type: 'NAVIGATE_DIRECTORY' }, false);
               if (isCallActiveRef.current) startCallListening();
             });
           } else {
@@ -1120,9 +1180,14 @@ export default function AICoPilotChat({
           const replyText = isMalay
             ? "Membuka Penjejak Status Permohonan untuk menyemak permohonan pembiayaan anda."
             : "Opening your Application Tracker to check the live status of your loan submissions.";
+          if (processingWatchdogRef.current) clearTimeout(processingWatchdogRef.current);
+          setIsSending(false);
+          isProcessingRef.current = false;
           if (isCallActiveRef.current) {
+            setLastAgentReply(replyText);
+            setLastCallAction({ type: 'NAVIGATE_TRACKER' });
+            executeAgentAction({ type: 'NAVIGATE_TRACKER' }, false);
             speakText(replyText, () => {
-              executeAgentAction({ type: 'NAVIGATE_TRACKER' }, false);
               if (isCallActiveRef.current) startCallListening();
             });
           } else {
@@ -1148,9 +1213,14 @@ export default function AICoPilotChat({
           const replyText = isMalay
             ? "Membuka Tetapan Profil Pengguna untuk anda."
             : "Opening your Profile and Account Settings for you now.";
+          if (processingWatchdogRef.current) clearTimeout(processingWatchdogRef.current);
+          setIsSending(false);
+          isProcessingRef.current = false;
           if (isCallActiveRef.current) {
+            setLastAgentReply(replyText);
+            setLastCallAction({ type: 'NAVIGATE_SETTINGS' });
+            executeAgentAction({ type: 'NAVIGATE_SETTINGS' }, false);
             speakText(replyText, () => {
-              executeAgentAction({ type: 'NAVIGATE_SETTINGS' }, false);
               if (isCallActiveRef.current) startCallListening();
             });
           } else {
@@ -1175,9 +1245,14 @@ export default function AICoPilotChat({
           const replyText = isMalay
             ? "Membuka Pusat Bantuan & Sokongan Pelanggan untuk anda."
             : "Opening Customer Support and Help Center for you now.";
+          if (processingWatchdogRef.current) clearTimeout(processingWatchdogRef.current);
+          setIsSending(false);
+          isProcessingRef.current = false;
           if (isCallActiveRef.current) {
+            setLastAgentReply(replyText);
+            setLastCallAction({ type: 'NAVIGATE_SUPPORT' });
+            executeAgentAction({ type: 'NAVIGATE_SUPPORT' }, false);
             speakText(replyText, () => {
-              executeAgentAction({ type: 'NAVIGATE_SUPPORT' }, false);
               if (isCallActiveRef.current) startCallListening();
             });
           } else {
@@ -1191,6 +1266,9 @@ export default function AICoPilotChat({
       }
 
       if (!isReportInquiry && lower.includes('check') && (lower.includes('application') || lower.includes('status'))) {
+        if (processingWatchdogRef.current) clearTimeout(processingWatchdogRef.current);
+        setIsSending(false);
+        isProcessingRef.current = false;
         executeAgentAction({ type: 'NAVIGATE_TRACKER' }, true);
         return;
       }
@@ -1237,6 +1315,9 @@ export default function AICoPilotChat({
       }
 
       // 4. Configure application state and navigate straight to Step 2
+      if (processingWatchdogRef.current) clearTimeout(processingWatchdogRef.current);
+      setIsSending(false);
+      isProcessingRef.current = false;
       if (typeof onSetLoanPurpose === 'function') {
         onSetLoanPurpose(purpose, amount, 1, 2);
       }
@@ -1256,9 +1337,12 @@ export default function AICoPilotChat({
         triggerVisualSpotlight('step2-dropzone', isMalay ? 'Muat Naik Penyata Di Sini' : 'Upload Statement PDF Here');
       }, 500);
 
-      speakText(replyMsg, () => {
-        if (isCallActiveRef.current) startCallListening();
-      });
+      if (isCallActiveRef.current) {
+        setLastAgentReply(replyMsg);
+        speakText(replyMsg, () => {
+          if (isCallActiveRef.current) startCallListening();
+        });
+      }
 
       const userMsgItem: ChatMessage = { id: `user-${Date.now()}`, role: 'user', content: textToSend, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
       const botMsgItem: ChatMessage = { id: `bot-${Date.now()}`, role: 'assistant', content: replyMsg, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
@@ -1517,6 +1601,7 @@ export default function AICoPilotChat({
         });
       }
     } finally {
+      if (processingWatchdogRef.current) clearTimeout(processingWatchdogRef.current);
       setIsSending(false);
       isProcessingRef.current = false;
     }
@@ -1565,6 +1650,7 @@ export default function AICoPilotChat({
           if (speechToSubmit && isCallActiveRef.current && !isAgentSpeakingRef.current && !isProcessingRef.current) {
             currentAccumulatedSpeechRef.current = '';
             persistedTurnSpeechRef.current = '';
+            setLiveTranscript('');
             try { recog.stop(); } catch(e){}
             processQuery(speechToSubmit, true);
           }
@@ -1637,14 +1723,16 @@ export default function AICoPilotChat({
       };
 
       recog.onerror = (e: any) => {
-        // 'no-speech' and 'aborted' are normal browser events fired when user is silent; no need to flood console
-        if (e.error === 'no-speech' || e.error === 'aborted') {
+        // 'no-speech' is normal browser event fired when user is silent; no need to flood console
+        if (e.error === 'no-speech') {
+          return;
+        }
+        if (e.error === 'aborted') {
+          isRecognitionRunningRef.current = false;
           return;
         }
         console.warn("Call speech recog notice:", e.error);
-        if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
-          isRecognitionRunningRef.current = false;
-        }
+        isRecognitionRunningRef.current = false;
       };
 
       recog.onend = () => {
@@ -1729,6 +1817,22 @@ export default function AICoPilotChat({
     };
   }, [startCallListening]);
 
+  // Mute state synchronization: instantly start or stop speech recognition
+  useEffect(() => {
+    isMutedRef.current = isMuted;
+    if (isMuted) {
+      if (callRecognitionRef.current) {
+        try { callRecognitionRef.current.stop(); } catch(e){}
+      }
+      isRecognitionRunningRef.current = false;
+      setCallStatus('thinking');
+    } else {
+      if (isCallActiveRef.current && !isProcessingRef.current && !isAgentSpeakingRef.current) {
+        startCallListening();
+      }
+    }
+  }, [isMuted, startCallListening]);
+
   // Submit speech immediately
   const handleCommitCurrentSpeech = () => {
     if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
@@ -1736,6 +1840,7 @@ export default function AICoPilotChat({
     if (speech && speech.trim()) {
       currentAccumulatedSpeechRef.current = '';
       persistedTurnSpeechRef.current = '';
+      setLiveTranscript('');
       if (callRecognitionRef.current) {
         try { callRecognitionRef.current.stop(); } catch(e){}
       }
