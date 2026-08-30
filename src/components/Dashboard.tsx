@@ -23,6 +23,7 @@ import AuthModal from './AuthModal';
 import ApplicationTracker, { ApplicationRecord, ReportHistoryItem, ActiveAssessmentTask } from './ApplicationTracker';
 import UserSettingsModal, { UserProfileData } from './UserSettingsModal';
 import BankLogo from './BankLogo';
+import { getLenderOfficialPortalUrl } from '@/lib/lenders';
 import AICoPilotChat from './AICoPilotChat';
 import CreditPassportPaywallModal from './CreditPassportPaywallModal';
 import SupportTicketsModal from './SupportTicketsModal';
@@ -216,11 +217,22 @@ export default function Dashboard() {
       const savedApps = localStorage.getItem('crediflow_submitted_apps');
       if (savedApps) setSubmittedApplications(JSON.parse(savedApps));
       const savedReports = localStorage.getItem('crediflow_report_history');
-      if (savedReports) setReportHistory(JSON.parse(savedReports));
+      if (savedReports) {
+        const parsed = JSON.parse(savedReports);
+        setReportHistory(parsed);
+        if (parsed.length > 0 && parsed[0].result) {
+          setB2cResult(parsed[0].result);
+          setIsCurrentResultDemo(parsed[0].isDemo || false);
+          if (parsed[0].loanAmount) setTargetLoanAmount(parsed[0].loanAmount);
+          if (parsed[0].loanPurpose) setTargetLoanPurpose(parsed[0].loanPurpose);
+        }
+      }
       const savedUser = localStorage.getItem('crediflow_user_session');
       if (savedUser) setUserSession(JSON.parse(savedUser));
       const savedAssessment = localStorage.getItem('crediflow_latest_assessment');
-      if (savedAssessment) setB2cResult(JSON.parse(savedAssessment));
+      if (savedAssessment && (!savedReports || JSON.parse(savedReports).length === 0)) {
+        setB2cResult(JSON.parse(savedAssessment));
+      }
     } catch (e) {}
 
     // Synchronize with persistent JSON file on disk
@@ -228,7 +240,7 @@ export default function Dashboard() {
       .then(res => res.json())
       .then(res => {
         if (res.success && res.data && res.data.report && res.data.inputData) {
-          setB2cResult({
+          setB2cResult(prev => prev ? prev : {
             hash: res.data.hash || 'stored-hash',
             inputData: res.data.inputData,
             report: res.data.report
@@ -1533,10 +1545,13 @@ export default function Dashboard() {
               generateCreditPassportPdf({ inputData: rep.result.inputData, report: rep.result.report, documentHash: rep.result.hash });
             }}
             onViewCertifiedPassport={() => {
-              if (!b2cResult && reportHistory.length > 0) {
+              if (reportHistory.length > 0) {
                 const latest = reportHistory[0];
+                setViewingArchivedReport(latest);
                 setB2cResult(latest.result);
                 setIsCurrentResultDemo(latest.isDemo);
+                if (latest.loanAmount) setTargetLoanAmount(latest.loanAmount);
+                if (latest.loanPurpose) setTargetLoanPurpose(latest.loanPurpose as any);
               }
               setPerspective('B2C');
               setActiveStep(4);
@@ -3947,7 +3962,7 @@ export default function Dashboard() {
                               warning: targetLoanPurpose === 'working_capital' && uploadedFiles.filter(f => f.category === 'business_proposal').length === 0
                                 ? (language === 'bm' ? 'Sertakan kertas kerja ringkas untuk mempercepatkan kelulusan 4%' : 'Include brief business proposal to accelerate 4% subsidized approval')
                                 : '',
-                              url: '#',
+                              url: getLenderOfficialPortalUrl(lenderPurposeMap[targetLoanPurpose]?.[0] ?? 'TEKUN Nasional'),
                               isTop: true,
                             },
                             {
@@ -3958,7 +3973,7 @@ export default function Dashboard() {
                               speed: loanTier === 3 ? (language === 'bm' ? '5–10 hari bekerja' : '5–10 business days') : loanTier === 1 ? (language === 'bm' ? '2–3 hari bekerja' : '2–3 business days') : (language === 'bm' ? '3–5 hari bekerja' : '3–5 business days'),
                               reasons: ['Government development institution with zero-collateral micro facility', 'Alternative gig/business cash flow accepted'],
                               warning: targetLoanAmount > 30000 ? (language === 'bm' ? 'Lawatan tapak / gambar premis diperlukan untuk jumlah melebihi RM 30,000' : 'Premise photos required for amounts above RM 30,000') : '',
-                              url: '#',
+                              url: getLenderOfficialPortalUrl(lenderPurposeMap[targetLoanPurpose]?.[1] ?? 'SME Bank (SPUM)'),
                               isTop: false,
                             },
                             {
@@ -3969,7 +3984,7 @@ export default function Dashboard() {
                               speed: (language === 'bm' ? 'Dalam 24–48 jam (Digital)' : 'Within 24–48 hours (Digital)'),
                               reasons: ['Top tier-1 commercial bank facility with automated digital screening', 'No collateral needed for eligible SSM businesses'],
                               warning: (language === 'bm' ? 'Memerlukan penyata bank 6 bulan format PDF rasmi' : 'Requires official 6-month bank statement in PDF format'),
-                              url: '#',
+                              url: getLenderOfficialPortalUrl(lenderPurposeMap[targetLoanPurpose]?.[2] ?? 'Maybank SME Digital Financing'),
                               isTop: false,
                             },
                           ];
@@ -6505,7 +6520,7 @@ export default function Dashboard() {
                       {cols.map((c, i) => (
                         <td key={i} className="py-3 px-3 text-center">
                           <button
-                            onClick={() => { setApplyTarget({ lenderName: c.name, lenderUrl: '#', productName: purposeLabel[targetLoanPurpose] + ' Loan' }); setApplySubmitted(false); setApplyModalOpen(true); setCompareOpen(false); }}
+                            onClick={() => { setApplyTarget({ lenderName: c.name, lenderUrl: getLenderOfficialPortalUrl(c.name), productName: purposeLabel[targetLoanPurpose] + ' Loan' }); setApplySubmitted(false); setApplyModalOpen(true); setCompareOpen(false); }}
                             className={`w-full py-2 text-xs font-extrabold rounded-xl ${i === 0 ? 'bg-blue-950 text-white' : 'bg-blue-900 text-white hover:bg-blue-950'} transition-all flex items-center justify-center gap-1`}
                           ><ArrowRight className="w-3.5 h-3.5" /> Apply</button>
                         </td>
@@ -6538,7 +6553,7 @@ export default function Dashboard() {
                     </div>
                   ))}
                   <button
-                    onClick={() => { setApplyTarget({ lenderName: current.name, lenderUrl: '#', productName: purposeLabel[targetLoanPurpose] + ' Loan' }); setApplySubmitted(false); setApplyModalOpen(true); setCompareOpen(false); }}
+                    onClick={() => { setApplyTarget({ lenderName: current.name, lenderUrl: getLenderOfficialPortalUrl(current.name), productName: purposeLabel[targetLoanPurpose] + ' Loan' }); setApplySubmitted(false); setApplyModalOpen(true); setCompareOpen(false); }}
                     className="w-full py-3 bg-blue-950 hover:bg-blue-900 text-white font-extrabold rounded-xl text-sm mt-2 flex items-center justify-center gap-1.5"
                   ><ArrowRight className="w-4 h-4" /> Apply Now</button>
                 </div>
@@ -6684,7 +6699,7 @@ export default function Dashboard() {
                               appliedAt: `Today, ${timestamp}`,
                               status: 'SUBMITTED',
                               speed: applyTarget.speed || (targetLoanAmount < 5000 ? '2–4 Hours' : 'Same business day'),
-                              lenderUrl: applyTarget.lenderUrl || 'https://gxbank.my'
+                              lenderUrl: getLenderOfficialPortalUrl(applyTarget.lenderName, applyTarget.lenderUrl)
                             };
                             setSubmittedApplications(prev => {
                               const updated = [newAppRecord, ...prev.filter(a => a.lenderName !== applyTarget.lenderName)];

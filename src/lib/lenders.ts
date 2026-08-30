@@ -997,3 +997,40 @@ export const LENDERS: Lender[] = [
     ],
   },
 ];
+
+/**
+ * Returns the verified direct application/portal URL for a lender.
+ * If existingUrl is already valid and not '#' or placeholder, it is returned.
+ * Otherwise, resolves against official Malaysian banks and government micro-funds.
+ */
+export function getLenderOfficialPortalUrl(lenderName?: string, existingUrl?: string): string {
+  if (existingUrl && existingUrl.startsWith('http') && !existingUrl.includes('localhost') && existingUrl !== '#' && existingUrl !== 'https://gxbank.my') {
+    return existingUrl;
+  }
+  const name = (lenderName || '').toLowerCase();
+  if (name.includes('maybank')) return 'https://www.maybank2u.com.my/maybank2u/malaysia/en/personal/loans/business/sme_clean_loan.page';
+  if (name.includes('gxbank') || name.includes('gx bank')) return 'https://gxbank.my';
+  if (name.includes('boost')) return 'https://myboost.co';
+  if (name.includes('agrobank') || name.includes('agro')) return 'https://www.agrobank.com.my';
+  if (name.includes('tekun')) return 'https://www.tekun.gov.my/ms/skm-tekun-niaga/';
+  if (name.includes('bsn') || name.includes('simpanan nasional')) return 'https://www.bsn.com.my/page/bsn-micro-semarak';
+  if (name.includes('alliance')) return 'https://www.alliancebank.com.my/business/business-financing/digital-sme.aspx';
+  if (name.includes('bank islam') || name.includes('islam')) return 'https://www.bankislam.com/business-banking/sme-banking/';
+  if (name.includes('bank rakyat') || name.includes('rakyat')) return 'https://www.bankrakyat.com.my/c/business/financing-i/micro-financing-i';
+  if (name.includes('sme bank')) return 'https://www.smebank.com.my';
+  if (name.includes('funding societies')) return 'https://fundingsocieties.com.my';
+  if (name.includes('aeon')) return 'https://www.aeoncredit.com.my/personal-financing';
+  if (name.includes('mara')) return 'https://www.mara.gov.my/en/pembiayaan-perniagaan/';
+  if (name.includes('rhb')) return 'https://www.rhbgroup.com/sme/financing/index.html';
+  if (name.includes('cimb')) return 'https://www.cimb.com.my/en/business/financing.html';
+  if (name.includes('hong leong') || name.includes('hlb')) return 'https://www.hlb.com.my/en/business-banking.html';
+  if (name.includes('public bank') || name.includes('pbb')) return 'https://www.pbebank.com/Business-Banking.aspx';
+  if (name.includes('capbay')) return 'https://capbay.com/p2p-financing';
+  if (name.includes('amfinance') || name.includes('ambank')) return 'https://www.ambank.com.my/eng/business';
+  
+  if (existingUrl && existingUrl.startsWith('http') && existingUrl !== '#') {
+    return existingUrl;
+  }
+  return 'https://gxbank.my';
+}
+

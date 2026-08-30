@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getLenderOfficialPortalUrl } from '@/lib/lenders';
 
 export interface DispatchApplicationPayload {
   applicantName: string;
@@ -71,7 +72,7 @@ export async function POST(request: NextRequest) {
         appliedAt: `${dateStr} · Today`,
         status,
         speed,
-        lenderUrl: lenderName.includes('GXBank') ? 'https://gxbank.my' : lenderName.includes('Boost') ? 'https://myboost.co' : 'https://agrobank.com.my',
+        lenderUrl: getLenderOfficialPortalUrl(lenderName),
         bankQuery
       };
     });

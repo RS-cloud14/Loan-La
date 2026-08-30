@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import BankLogo from '@/components/BankLogo';
 import { useLanguage } from '@/context/LanguageContext';
+import { getLenderOfficialPortalUrl } from '@/lib/lenders';
 
 export interface ApplicationRecord {
   id: string;
@@ -487,7 +488,7 @@ export default function ApplicationTracker({
                     
                     <div className="flex items-center gap-2">
                       <a
-                        href={app.lenderUrl}
+                        href={getLenderOfficialPortalUrl(app.lenderName, app.lenderUrl)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="px-3.5 py-1.5 text-xs font-bold text-blue-900 bg-white border border-slate-300 hover:bg-slate-50 rounded-xl transition-all flex items-center gap-1"

@@ -923,13 +923,10 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
             </div>
 
             {/* Card Footer */}
-            <div className="pt-4 mt-5 border-t border-slate-100 flex items-center justify-between gap-3">
-              <span className="text-[11px] font-bold text-blue-900 bg-blue-50/80 px-2.5 py-1 rounded-lg border border-blue-200">
-                ✓ Gig Friendly
-              </span>
+            <div className="pt-4 mt-5 border-t border-slate-100 flex items-center justify-end gap-3">
               <button
                 onClick={() => onApplyLender ? onApplyLender(lender.name) : null}
-                className="px-4 py-2.5 bg-blue-950 hover:bg-blue-900 text-white text-xs font-black rounded-xl transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                className="w-full sm:w-auto px-4 py-2.5 bg-blue-950 hover:bg-blue-900 text-white text-xs font-black rounded-xl transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <span>Check Match</span>
                 <ArrowRight className="w-3.5 h-3.5" />
