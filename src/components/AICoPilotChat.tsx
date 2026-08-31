@@ -752,21 +752,39 @@ export default function AICoPilotChat({
       setIsSending(false);
       setCallStatus('listening');
       if (onFinish) onFinish();
-      if (isCallActiveRef.current && !isRecognitionRunningRef.current && !isMutedRef.current) {
-        startCallListeningRef.current();
-      }
+
+      // Guard period (400ms) after speaker audio stops before opening mic to prevent echo
+      setTimeout(() => {
+        if (isCallActiveRef.current && !isAgentSpeakingRef.current && !isRecognitionRunningRef.current && !isMutedRef.current) {
+          currentAccumulatedSpeechRef.current = '';
+          persistedTurnSpeechRef.current = '';
+          setLiveTranscript('');
+          startCallListeningRef.current();
+        }
+      }, 400);
     };
 
     utterance.onstart = () => {
       setCallStatus('speaking');
       isAgentSpeakingRef.current = true;
-      isBargeInListeningRef.current = true;
+      isBargeInListeningRef.current = false;
       setSpokenCharIndex(0);
 
-      // Keep speech recognition listening for barge-in while AI speaks
-      if (isCallActiveRef.current && !isRecognitionRunningRef.current && !isMutedRef.current) {
-        startCallListeningRef.current();
+      // Stop speech recognition completely while AI is speaking to prevent mic picking up speaker output!
+      if (callRecognitionRef.current) {
+        try {
+          callRecognitionRef.current.onresult = null;
+          callRecognitionRef.current.onend = null;
+          callRecognitionRef.current.onerror = null;
+          callRecognitionRef.current.stop();
+        } catch(e){}
+        callRecognitionRef.current = null;
+        isRecognitionRunningRef.current = false;
       }
+
+      currentAccumulatedSpeechRef.current = '';
+      persistedTurnSpeechRef.current = '';
+      setLiveTranscript('');
 
       // Smooth progress fallback timer across word count
       const wordCount = cleanText.split(/\s+/).length;
@@ -1879,24 +1897,13 @@ export default function AICoPilotChat({
       };
 
       recog.onresult = (event: any) => {
+        // Completely discard any incoming audio while AI is outputting voice
+        if (isAgentSpeakingRef.current) {
+          return;
+        }
+
         const currentSegment = parseSpeechRecognitionResults(event.results);
         if (!currentSegment || currentSegment.trim().length < 2) return;
-
-        // INSTANT VOICE BARGE-IN: User spoke while AI was speaking!
-        if (isAgentSpeakingRef.current) {
-          // Interrupt TTS immediately
-          if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-            try { window.speechSynthesis.cancel(); } catch(e){}
-          }
-          if (speechWatchdogRef.current) clearTimeout(speechWatchdogRef.current);
-          if (speechIntervalRef.current) clearInterval(speechIntervalRef.current);
-          activeUtteranceRef.current = null;
-          isAgentSpeakingRef.current = false;
-          isBargeInListeningRef.current = false;
-          setCallStatus('listening');
-          setBargeInFlash(true);
-          setTimeout(() => setBargeInFlash(false), 1400);
-        }
 
         // Merge with previously persisted speech from earlier in this user turn so pausing doesn't wipe previous words
         let fullText = currentSegment;
@@ -2002,7 +2009,7 @@ export default function AICoPilotChat({
   // Tab Visibility & Focus Auto-Healer: Re-engage microphone when switching back to tab
   useEffect(() => {
     const handleReviveOnFocus = () => {
-      if (document.visibilityState === 'visible' && isCallActiveRef.current && !isMutedRef.current && !isProcessingRef.current) {
+      if (document.visibilityState === 'visible' && isCallActiveRef.current && !isMutedRef.current && !isProcessingRef.current && !isAgentSpeakingRef.current) {
         if (!isRecognitionRunningRef.current) {
           startCallListening();
         }
@@ -2012,9 +2019,9 @@ export default function AICoPilotChat({
     document.addEventListener('visibilitychange', handleReviveOnFocus);
     window.addEventListener('focus', handleReviveOnFocus);
 
-    // Keep-alive Heartbeat Watchdog every 750ms (ultra-reliable mic retention)
+    // Keep-alive Heartbeat Watchdog every 750ms (only when AI is not speaking)
     const heartbeatInterval = setInterval(() => {
-      if (isCallActiveRef.current && !isMutedRef.current && !isProcessingRef.current) {
+      if (isCallActiveRef.current && !isMutedRef.current && !isProcessingRef.current && !isAgentSpeakingRef.current) {
         if (!isRecognitionRunningRef.current) {
           startCallListening();
         }
