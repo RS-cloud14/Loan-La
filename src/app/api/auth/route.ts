@@ -157,6 +157,51 @@ export async function POST(request: NextRequest) {
     const { action } = payload;
     const users = await loadUsersStore();
 
+    // 0. ACTION: GOOGLE AUTH (1-CLICK SIGN IN / SIGN UP)
+    if (action === 'google') {
+      const { email, name, avatar } = payload;
+      const cleanEmail = normalizeEmail(email || 'borrower.google@gmail.com');
+      const cleanName = name || (cleanEmail ? cleanEmail.split('@')[0].toUpperCase() : 'Google User');
+
+      let foundUser = Object.values(users).find(u => normalizeEmail(u.email) === cleanEmail);
+
+      if (!foundUser) {
+        const newId = `usr_g_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 6)}`;
+        foundUser = {
+          id: newId,
+          profileId: newId,
+          name: cleanName,
+          phone: '+60 12-888 9911',
+          email: cleanEmail,
+          avatar: avatar || null,
+          role: 'Google Verified Borrower',
+          workCategory: 'gig',
+          platformName: 'Grab / Shopee',
+          platformId: `ID-${Math.floor(100000 + Math.random() * 900000)}`,
+          icNumber: '910815-10-6622',
+          bankName: 'Maybank (Malayan Banking Berhad)',
+          bankAccountNumber: '114012849201',
+          bankAccountHolder: cleanName,
+          bankAccountType: 'savings',
+          estimatedMonthlyIncome: 3800,
+          epfStatus: 'i-saraan',
+          createdAt: new Date().toISOString(),
+          applications: [],
+          reports: []
+        };
+        users[newId] = foundUser;
+        await persistUsersStore(users);
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: 'Google Sign In successful.',
+        user: { ...foundUser, password: undefined },
+        applications: foundUser.applications || [],
+        reports: foundUser.reports || []
+      });
+    }
+
     // 1. ACTION: SIGN UP (CREATE NEW ACCOUNT)
     if (action === 'signup') {
       const { name, phone, email, password, workCategory, platformName, icNumber, role } = payload;
