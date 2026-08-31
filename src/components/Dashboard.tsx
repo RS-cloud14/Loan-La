@@ -4200,47 +4200,60 @@ export default function Dashboard() {
                           const bsnInstallment = Math.round((targetLoanAmount * (1 + 0.04 * effectiveTenure)) / effectiveMonths);
                           const aeonInstallment = Math.round((targetLoanAmount * (1 + 0.065 * effectiveTenure)) / effectiveMonths);
 
-                          const mockLenderCards = [
-                            {
-                              id: 'best', rankTag: 'Top Lender Match', name: lenderPurposeMap[targetLoanPurpose]?.[0] ?? 'TEKUN Nasional', score: 95,
-                              rate: topRateLabel,
-                              installment: `RM ${topInstallment.toLocaleString()}/mo`,
-                              tenure: `${effectiveTenure} ${effectiveTenure === 1 ? 'Year' : 'Years'} (${effectiveMonths} Mo)`,
-                              speed: loanTier === 3 ? (language === 'bm' ? '5–7 hari bekerja' : '5–7 business days') : loanTier === 1 ? (language === 'bm' ? '2–3 hari bekerja' : '2–3 business days') : (language === 'bm' ? '3–5 hari bekerja' : '3–5 business days'),
-                              reasons: [
-                                targetLoanPurpose === 'working_capital' ? 'Lowest 4.0% subsidized rate under KUSKOP scheme' : 'Optimal product match for selected financing category',
-                                `Income RM ${((b2cResult.inputData.averageMonthlyNetIncome ?? 3500)).toFixed(0)}/mo qualifies with strong margin`,
-                                b2cResult.report.dsr <= 50 ? `Clean DSR ratio: ${b2cResult.report.dsr.toFixed(0)}%` : 'Lenient debt service assessment'
-                              ],
-                              warning: targetLoanPurpose === 'working_capital' && uploadedFiles.filter(f => f.category === 'business_proposal').length === 0
-                                ? (language === 'bm' ? 'Sertakan kertas kerja ringkas untuk mempercepatkan kelulusan 4%' : 'Include brief business proposal to accelerate 4% subsidized approval')
-                                : '',
-                              url: getLenderOfficialPortalUrl(lenderPurposeMap[targetLoanPurpose]?.[0] ?? 'TEKUN Nasional'),
-                              isTop: true,
-                            },
-                            {
-                              id: 'second', rankTag: '2nd Ranked Fit', name: lenderPurposeMap[targetLoanPurpose]?.[1] ?? 'SME Bank (SPUM)', score: 84,
-                              rate: targetLoanPurpose === 'working_capital' ? '4.0% – 5.0% flat p.a.' : '5.5% – 7.5% p.a.',
-                              installment: `RM ${bsnInstallment.toLocaleString()}/mo`,
-                              tenure: `${effectiveTenure} ${effectiveTenure === 1 ? 'Year' : 'Years'} (${effectiveMonths} Mo)`,
-                              speed: loanTier === 3 ? (language === 'bm' ? '5–10 hari bekerja' : '5–10 business days') : loanTier === 1 ? (language === 'bm' ? '2–3 hari bekerja' : '2–3 business days') : (language === 'bm' ? '3–5 hari bekerja' : '3–5 business days'),
-                              reasons: ['Government development institution with zero-collateral micro facility', 'Alternative gig/business cash flow accepted'],
-                              warning: targetLoanAmount > 30000 ? (language === 'bm' ? 'Lawatan tapak / gambar premis diperlukan untuk jumlah melebihi RM 30,000' : 'Premise photos required for amounts above RM 30,000') : '',
-                              url: getLenderOfficialPortalUrl(lenderPurposeMap[targetLoanPurpose]?.[1] ?? 'SME Bank (SPUM)'),
-                              isTop: false,
-                            },
-                            {
-                              id: 'third', rankTag: '3rd Ranked Fit', name: lenderPurposeMap[targetLoanPurpose]?.[2] ?? 'Maybank SME Digital Financing', score: 76,
-                              rate: targetLoanPurpose === 'working_capital' ? '4.8% – 9.8% reducing' : '2.8% – 4.2% flat',
-                              installment: `RM ${aeonInstallment.toLocaleString()}/mo`,
-                              tenure: `${effectiveTenure} ${effectiveTenure === 1 ? 'Year' : 'Years'} (${effectiveMonths} Mo)`,
-                              speed: (language === 'bm' ? 'Dalam 24–48 jam (Digital)' : 'Within 24–48 hours (Digital)'),
-                              reasons: ['Top tier-1 commercial bank facility with automated digital screening', 'No collateral needed for eligible SSM businesses'],
-                              warning: (language === 'bm' ? 'Memerlukan penyata bank 6 bulan format PDF rasmi' : 'Requires official 6-month bank statement in PDF format'),
-                              url: getLenderOfficialPortalUrl(lenderPurposeMap[targetLoanPurpose]?.[2] ?? 'Maybank SME Digital Financing'),
-                              isTop: false,
-                            },
-                          ];
+                           const has6MonthStatement = uploadedFiles.filter(f => f.category === 'bank_statement').length >= 3 || 
+                             (b2cResult?.inputData?.fileChecklist && b2cResult.inputData.fileChecklist.filter(f => f.documentType === 'bank_statement').length >= 3) ||
+                             uploadedFiles.some(f => /6[\s_-]?month/i.test(f.fileName)) ||
+                             uploadedFiles.length >= 3;
+
+                           const maybankReasons = [
+                             'Top tier-1 commercial bank facility with automated digital screening',
+                             'No collateral needed for eligible SSM businesses'
+                           ];
+                           if (has6MonthStatement) {
+                             maybankReasons.push(language === 'bm' ? 'Penyata bank lengkap telah dimuat naik & disahkan' : 'Verified 6-month bank statements fulfilled');
+                           }
+
+                           const mockLenderCards = [
+                             {
+                               id: 'best', rankTag: 'Top Lender Match', name: lenderPurposeMap[targetLoanPurpose]?.[0] ?? 'TEKUN Nasional', score: 95,
+                               rate: topRateLabel,
+                               installment: `RM ${topInstallment.toLocaleString()}/mo`,
+                               tenure: `${effectiveTenure} ${effectiveTenure === 1 ? 'Year' : 'Years'} (${effectiveMonths} Mo)`,
+                               speed: loanTier === 3 ? (language === 'bm' ? '5–7 hari bekerja' : '5–7 business days') : loanTier === 1 ? (language === 'bm' ? '2–3 hari bekerja' : '2–3 business days') : (language === 'bm' ? '3–5 hari bekerja' : '3–5 business days'),
+                               reasons: [
+                                 targetLoanPurpose === 'working_capital' ? 'Lowest 4.0% subsidized rate under KUSKOP scheme' : 'Optimal product match for selected financing category',
+                                 `Income RM ${((b2cResult.inputData.averageMonthlyNetIncome ?? 3500)).toFixed(0)}/mo qualifies with strong margin`,
+                                 b2cResult.report.dsr <= 50 ? `Clean DSR ratio: ${b2cResult.report.dsr.toFixed(0)}%` : 'Lenient debt service assessment'
+                               ],
+                               warning: targetLoanPurpose === 'working_capital' && uploadedFiles.filter(f => f.category === 'business_proposal').length === 0
+                                 ? (language === 'bm' ? 'Sertakan kertas kerja ringkas untuk mempercepatkan kelulusan 4%' : 'Include brief business proposal to accelerate 4% subsidized approval')
+                                 : '',
+                               url: getLenderOfficialPortalUrl(lenderPurposeMap[targetLoanPurpose]?.[0] ?? 'TEKUN Nasional'),
+                               isTop: true,
+                             },
+                             {
+                               id: 'second', rankTag: '2nd Ranked Fit', name: lenderPurposeMap[targetLoanPurpose]?.[1] ?? 'SME Bank (SPUM)', score: 84,
+                               rate: targetLoanPurpose === 'working_capital' ? '4.0% – 5.0% flat p.a.' : '5.5% – 7.5% p.a.',
+                               installment: `RM ${bsnInstallment.toLocaleString()}/mo`,
+                               tenure: `${effectiveTenure} ${effectiveTenure === 1 ? 'Year' : 'Years'} (${effectiveMonths} Mo)`,
+                               speed: loanTier === 3 ? (language === 'bm' ? '5–10 hari bekerja' : '5–10 business days') : loanTier === 1 ? (language === 'bm' ? '2–3 hari bekerja' : '2–3 business days') : (language === 'bm' ? '3–5 hari bekerja' : '3–5 business days'),
+                               reasons: ['Government development institution with zero-collateral micro facility', 'Alternative gig/business cash flow accepted'],
+                               warning: targetLoanAmount > 30000 && uploadedFiles.filter(f => f.category === 'premise_photos').length === 0 ? (language === 'bm' ? 'Lawatan tapak / gambar premis diperlukan untuk jumlah melebihi RM 30,000' : 'Premise photos required for amounts above RM 30,000') : '',
+                               url: getLenderOfficialPortalUrl(lenderPurposeMap[targetLoanPurpose]?.[1] ?? 'SME Bank (SPUM)'),
+                               isTop: false,
+                             },
+                             {
+                               id: 'third', rankTag: '3rd Ranked Fit', name: lenderPurposeMap[targetLoanPurpose]?.[2] ?? 'Maybank SME Digital Financing', score: 76,
+                               rate: targetLoanPurpose === 'working_capital' ? '4.8% – 9.8% reducing' : '2.8% – 4.2% flat',
+                               installment: `RM ${aeonInstallment.toLocaleString()}/mo`,
+                               tenure: `${effectiveTenure} ${effectiveTenure === 1 ? 'Year' : 'Years'} (${effectiveMonths} Mo)`,
+                               speed: (language === 'bm' ? 'Dalam 24–48 jam (Digital)' : 'Within 24–48 hours (Digital)'),
+                               reasons: maybankReasons,
+                               warning: has6MonthStatement ? '' : (language === 'bm' ? 'Memerlukan penyata bank 6 bulan format PDF rasmi' : 'Requires official 6-month bank statement in PDF format'),
+                               url: getLenderOfficialPortalUrl(lenderPurposeMap[targetLoanPurpose]?.[2] ?? 'Maybank SME Digital Financing'),
+                               isTop: false,
+                             },
+                           ];
 
                           const allNames = mockLenderCards.map(l => l.name);
                           const appliedCount = allNames.filter(n => appliedLenders[n]).length;
@@ -7693,12 +7706,6 @@ export default function Dashboard() {
               localStorage.setItem('creditflow_unlocked_doc_hash', currentHash);
               localStorage.removeItem('creditflow_passport_unlocked');
             } catch (e) {}
-          }
-
-          if (uploadedFiles.length > 1) {
-            setTimeout(() => {
-              runUnderwritingPipeline('real');
-            }, 300);
           }
         }}
         applicantName={b2cResult?.inputData?.name || userSession?.name || 'Borrower'}
