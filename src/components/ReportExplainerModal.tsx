@@ -233,6 +233,9 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
     window.speechSynthesis.speak(utterance);
   };
 
+  const transcriptBufferRef = useRef<string>('');
+  const speechDebounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   // Start voice recognition
   const startListening = () => {
     if (typeof window === 'undefined') return;
@@ -244,18 +247,43 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
         try { recognitionRef.current.stop(); } catch (e) {}
       }
 
+      if (speechDebounceTimerRef.current) {
+        clearTimeout(speechDebounceTimerRef.current);
+      }
+
       const recognition = new SpeechRecognition();
       recognition.lang = language === 'bm' ? 'ms-MY' : 'en-US';
-      recognition.continuous = false;
-      recognition.interimResults = false;
+      recognition.continuous = true;
+      recognition.interimResults = true;
 
       recognition.onstart = () => setIsVoiceListening(true);
       recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        if (transcript) {
-          handleSendMessage(transcript);
+        let fullTranscript = '';
+        for (let i = 0; i < event.results.length; i++) {
+          fullTranscript += event.results[i][0].transcript + ' ';
         }
+        fullTranscript = fullTranscript.trim();
+        if (!fullTranscript) return;
+
+        transcriptBufferRef.current = fullTranscript;
+        setChatInput(fullTranscript);
+
+        // Reset silence timer - wait 1800ms after user pauses speaking
+        if (speechDebounceTimerRef.current) {
+          clearTimeout(speechDebounceTimerRef.current);
+        }
+
+        speechDebounceTimerRef.current = setTimeout(() => {
+          const finalQuery = transcriptBufferRef.current.trim();
+          if (finalQuery.length > 1) {
+            transcriptBufferRef.current = '';
+            setChatInput('');
+            try { recognition.stop(); } catch (e) {}
+            handleSendMessage(finalQuery);
+          }
+        }, 1800);
       };
+
       recognition.onerror = () => {
         setIsVoiceListening(false);
         // If live call active, re-listen after 1s
@@ -267,6 +295,7 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
           }, 1200);
         }
       };
+
       recognition.onend = () => {
         setIsVoiceListening(false);
       };
@@ -426,26 +455,18 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
         {/* Clean Top White Header */}
         <div className="flex items-center justify-between gap-3 px-3 sm:px-5 py-2.5 border-b border-slate-200 bg-white shrink-0">
           
-          {/* Left: Branding & Core Applicant Info */}
+          {/* Left: Clean Minimal Header */}
           <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             <div className="w-8 h-8 rounded-xl bg-blue-950 text-white flex items-center justify-center shadow-xs shrink-0 font-bold">
               <FileText className="w-4 h-4 text-blue-200" />
             </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-xs sm:text-sm font-black text-slate-950 tracking-tight truncate">
-                  Alternative Credit Passport
-                </h2>
-                <span className="text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 shrink-0">
-                  FRI {friScore} · {riskGrade}
-                </span>
-                <span className="text-[10px] text-slate-400 font-mono hidden md:inline">
-                  Ref: LL-{documentHash.slice(0, 8).toUpperCase()}
-                </span>
-              </div>
-              <p className="text-[11px] text-slate-500 truncate mt-0.5">
-                {applicantName} · {platformName} · Verified Cashflow
-              </p>
+            <div className="min-w-0 flex items-center gap-2 flex-wrap">
+              <h2 className="text-xs sm:text-sm font-bold text-slate-950 tracking-tight truncate">
+                {language === 'bm' ? 'Pasport Kredit Alternatif' : 'Alternative Credit Passport'}
+              </h2>
+              <span className="text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 shrink-0">
+                FRI {friScore} · {riskGrade}
+              </span>
             </div>
           </div>
 
