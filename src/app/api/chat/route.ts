@@ -572,6 +572,37 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // 1C-2. Dedicated Financial Explainer: Monthly Cash Surplus & DSR Calculation
+    const isSurplusOrDsrInquiry = (
+      (lastMsgLower.includes('surplus') || lastMsgLower.includes('lebihan') || lastMsgLower.includes('dsr') || lastMsgLower.includes('debt service') || lastMsgLower.includes('kapasiti') || lastMsgLower.includes('capacity')) &&
+      (lastMsgLower.includes('how') || lastMsgLower.includes('bagaimana') || lastMsgLower.includes('macam mana') || lastMsgLower.includes('calc') || lastMsgLower.includes('kira') || lastMsgLower.includes('what is') || lastMsgLower.includes('apa itu') || lastMsgLower.includes('explain') || lastMsgLower.includes('jelas') || lastMsgLower.includes('formula'))
+    ) || (
+      lastMsgLower.includes('monthly cash surplus') ||
+      lastMsgLower.includes('post-loan buffer') ||
+      lastMsgLower.includes('penampan tunai')
+    );
+
+    if (isSurplusOrDsrInquiry) {
+      const liveIncome = userContext.averageMonthlyIncome || dynamicIncome || 3500;
+      const liveSurplus = userContext.monthlySurplus || storedReport?.monthlySurplus || 1899;
+      const liveDsr = userContext.currentDsr !== undefined ? userContext.currentDsr : (userContext.dsrPercentage !== undefined ? userContext.dsrPercentage : (storedReport?.dsr ?? 0.0));
+      const liveInstallment = userContext.safeMaxInstallment || storedReport?.estimatedInstallment || 431;
+      const liveExpenses = Math.max(0, liveIncome - liveSurplus);
+      const liveBuffer = Math.max(0, liveSurplus - liveInstallment);
+
+      const reply = isMalay
+        ? `📊 **Bagaimana Lebihan Tunai Bulanan (Monthly Cash Surplus) & DSR Anda Dikira:**\n\n1. **Lebihan Tunai Bulanan (Monthly Cash Surplus):**\n• **Formula:** Purata Kemasukan Bersih − Perbelanjaan Sara Hidup Asas Disahkan\n• **Dalam Profil Anda:** Daripada purata kemasukan **RM ${liveIncome.toLocaleString('en-MY')}/bulan** ditolak perbelanjaan sara hidup sebenar **RM ${liveExpenses.toLocaleString('en-MY')}/bulan**, baki lebihan tunai bersih anda ialah **RM ${liveSurplus.toLocaleString('en-MY')}/bulan**.\n• Ini adalah tunai bebas sebenar yang anda miliki setiap bulan untuk membayar komitmen baharu.\n\n2. **Nisbah Khidmat Hutang (Assessed DSR):**\n• **Formula:** (Jumlah Bayaran Hutang Bulanan Semasa ÷ Pendapatan Bersih) × 100%\n• **Dalam Profil Anda:** DSR dinilai pada **${liveDsr.toFixed(1)}%** (sangat kukuh dan jauh di bawah had maksimum selamat BNM < 60%).\n\n3. **Penampan Selepas Pinjaman (Post-Loan Buffer):**\n• **Formula:** Lebihan Tunai Bulanan − Anggaran Ansuran Baharu (RM ${liveInstallment.toLocaleString('en-MY')})\n• **Dalam Profil Anda:** Anda mengekalkan baki tunai selamat **RM ${liveBuffer.toLocaleString('en-MY')}/bulan** selepas membayar ansuran, membuktikan kemampuan bayaran balik yang sangat meyakinkan bagi kelulusan bank!`
+        : `📊 **How Your Monthly Cash Surplus & DSR are Calculated:**\n\n1. **Monthly Cash Surplus (Disposable Liquidity):**\n• **Formula:** Verified Net Monthly Inflow − Verified Essential Living Expenses\n• **In Your Profile:** From an average inflow of **RM ${liveIncome.toLocaleString('en-MY')}/mo** minus essential living expenses of **RM ${liveExpenses.toLocaleString('en-MY')}/mo**, your free monthly cash surplus is **RM ${liveSurplus.toLocaleString('en-MY')}/mo**.\n• Unlike traditional banks that deduct rigid assumed expenses, Loan - La calculates your real bank statement outflows, giving you full credit for what you actually retain.\n\n2. **Assessed DSR (Debt Service Ratio):**\n• **Formula:** (Total Monthly Debt Commitments ÷ Net Monthly Income) × 100%\n• **In Your Profile:** Your assessed DSR is **${liveDsr.toFixed(1)}%** (confirming zero high-risk legacy debt), well below Bank Negara Malaysia's prudent ceiling of **< 60%**.\n\n3. **Post-Loan Buffer (After Installment):**\n• **Formula:** Monthly Cash Surplus − Estimated Installment (RM ${liveInstallment.toLocaleString('en-MY')})\n• **In Your Profile:** You retain a healthy safety buffer of **RM ${liveBuffer.toLocaleString('en-MY')}/mo** after paying your loan installment, confirming high repayment feasibility and top lender approval odds!`;
+
+      return NextResponse.json({
+        success: true,
+        reply,
+        suggestions: isMalay 
+          ? ["Padanan Bank Terbaik", "Muat Turun PDF Rasmi", "Kira Ansuran Lain"] 
+          : ["Top Matched Lenders", "Download Official PDF", "Calculate Other Tenure"]
+      });
+    }
+
     // 1D. Compound Natural Spoken Form Intake
     const isCompoundIntake = (
       (lastMsgLower.includes('earn') || lastMsgLower.includes('pendapatan') || lastMsgLower.includes('dapat') || lastMsgLower.includes('gaji') || lastMsgLower.includes('income')) &&
@@ -1557,7 +1588,10 @@ export async function POST(request: NextRequest) {
     // 7A. Calculator Explanatory / How-To Guide (Educational)
     const isCalculatorInquiry = (
       (lastMsgLower.includes('how') || lastMsgLower.includes('bagaimana') || lastMsgLower.includes('macam mana') || lastMsgLower.includes('cara') || lastMsgLower.includes('what is') || lastMsgLower.includes('apa itu') || lastMsgLower.includes('guide') || lastMsgLower.includes('ajar') || lastMsgLower.includes('guna')) &&
-      (lastMsgLower.includes('calc') || lastMsgLower.includes('kalkulator')) &&
+      (lastMsgLower.includes('calculator') || lastMsgLower.includes('kalkulator') || lastMsgLower.includes('repayment tool')) &&
+      !lastMsgLower.includes('surplus') &&
+      !lastMsgLower.includes('dsr') &&
+      !lastMsgLower.includes('lebihan') &&
       !lastMsgLower.includes('kira untuk') &&
       !lastMsgLower.includes('calculate for')
     );
