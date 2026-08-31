@@ -2047,37 +2047,44 @@ export default function Dashboard() {
                     { step: 2, label: language === 'bm' ? '2. Dokumen' : '2. Documents' },
                     { step: 3, label: language === 'bm' ? '3. Pengesahan' : '3. Review & Consent' },
                     { step: 4, label: language === 'bm' ? '4. Laporan' : '4. Report' }
-                  ].map((s, idx) => (
-                    <React.Fragment key={s.step}>
-                      <button
-                        disabled={s.step === 4 && !b2cResult}
-                        onClick={() => {
-                          if (s.step === 4 && !b2cResult) return;
-                          setActiveStep(s.step);
-                          window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-                          document.documentElement.scrollTop = 0;
-                          document.body.scrollTop = 0;
-                        }}
-                        className={`flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-xl border transition-all ${
-                          s.step === 4 && !b2cResult
-                            ? 'opacity-40 cursor-not-allowed bg-slate-50 text-slate-400 border-slate-200'
-                            : activeStep === s.step
-                              ? 'bg-blue-950 text-white border-blue-950 shadow-xs cursor-pointer'
-                              : s.step < activeStep
-                                ? 'bg-blue-50 text-blue-900 border-blue-200 cursor-pointer'
-                                : 'bg-slate-50 text-slate-400 border-slate-200 cursor-pointer'
-                        }`}
-                      >
-                        <span className={`w-4.5 h-4.5 rounded-full flex items-center justify-center text-[9.5px] font-bold ${
-                          activeStep === s.step ? 'bg-white text-blue-950' : 'bg-slate-200 text-slate-700'
-                        }`}>
-                          {s.step < activeStep ? '✓' : s.step}
-                        </span>
-                        <span className="hidden sm:inline">{s.label}</span>
-                      </button>
-                      {idx < 3 && <span className="text-slate-300 text-xs hidden sm:inline">→</span>}
-                    </React.Fragment>
-                  ))}
+                  ].map((s, idx) => {
+                    const isStepDisabled = (
+                      (s.step === 4 && !b2cResult) ||
+                      (s.step === 3 && uploadedFiles.length === 0 && !b2cResult && activeStep < 3)
+                    );
+
+                    return (
+                      <React.Fragment key={s.step}>
+                        <button
+                          disabled={isStepDisabled}
+                          onClick={() => {
+                            if (isStepDisabled) return;
+                            setActiveStep(s.step);
+                            window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                            document.documentElement.scrollTop = 0;
+                            document.body.scrollTop = 0;
+                          }}
+                          className={`flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-xl border transition-all ${
+                            isStepDisabled
+                              ? 'opacity-40 cursor-not-allowed bg-slate-50 text-slate-400 border-slate-200'
+                              : activeStep === s.step
+                                ? 'bg-blue-950 text-white border-blue-950 shadow-xs cursor-pointer'
+                                : s.step < activeStep
+                                  ? 'bg-blue-50 text-blue-900 border-blue-200 cursor-pointer'
+                                  : 'bg-slate-50 text-slate-600 border-slate-200 cursor-pointer'
+                          }`}
+                        >
+                          <span className={`w-4.5 h-4.5 rounded-full flex items-center justify-center text-[9.5px] font-bold ${
+                            activeStep === s.step ? 'bg-white text-blue-950' : 'bg-slate-200 text-slate-700'
+                          }`}>
+                            {s.step < activeStep ? '✓' : s.step}
+                          </span>
+                          <span className="hidden sm:inline">{s.label}</span>
+                        </button>
+                        {idx < 3 && <span className="text-slate-300 text-xs hidden sm:inline">→</span>}
+                      </React.Fragment>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -6568,17 +6575,17 @@ export default function Dashboard() {
         ];
         const current = cols[compareSwipeIndex];
         return (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fade-in">
-          <div className="w-full max-w-4xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200">
-            {/* Header (Clean & Light) */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-blue-950 text-white flex items-center justify-center shadow-xs">
-                  <BarChart3 className="w-4.5 h-4.5 text-blue-200" />
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4 sm:p-6 animate-fade-in">
+          <div className="w-full max-w-5xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200 flex flex-col max-h-[92vh]">
+            {/* Header (Clean, Light & Professional) */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white shrink-0">
+              <div className="flex items-center gap-3.5">
+                <div className="w-10 h-10 rounded-2xl bg-blue-950 text-white flex items-center justify-center shadow-xs">
+                  <BarChart3 className="w-5 h-5 text-blue-200" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-slate-900">
-                    {language === 'bm' ? 'Bandingkan Pemberi Pinjaman' : 'Compare Matched Lenders'}
+                  <h3 className="text-base font-extrabold text-slate-900 tracking-tight">
+                    {language === 'bm' ? 'Perbandingan Institusi Kewangan' : 'Compare Matched Lenders'}
                   </h3>
                   <span className="text-xs text-slate-500 font-medium">
                     {purposeLabel[targetLoanPurpose]} · RM {targetLoanAmount.toLocaleString()}
@@ -6587,7 +6594,7 @@ export default function Dashboard() {
               </div>
               <button 
                 onClick={() => setCompareOpen(false)} 
-                className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-xl transition-all cursor-pointer"
+                className="p-2 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-xl transition-all cursor-pointer"
                 title={language === 'bm' ? 'Tutup' : 'Close'}
               >
                 <X className="w-5 h-5" />
@@ -6595,65 +6602,79 @@ export default function Dashboard() {
             </div>
 
             {/* Comparison Cards Grid */}
-            <div className="p-5 sm:p-6 bg-slate-50/50">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-6 bg-slate-50/60 overflow-y-auto custom-scrollbar">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-stretch">
                 {cols.map((c, i) => {
                   const isTop = i === 0;
                   return (
                     <div 
                       key={i}
-                      className={`p-4 sm:p-5 rounded-2xl border transition-all flex flex-col justify-between ${
+                      className={`p-5 rounded-2xl border transition-all flex flex-col justify-between ${
                         isTop 
-                          ? 'border-blue-200 bg-white shadow-md ring-1 ring-blue-900/10' 
-                          : 'border-slate-200 bg-white shadow-2xs'
+                          ? 'border-blue-300 bg-white shadow-lg ring-2 ring-blue-900/10' 
+                          : 'border-slate-200 bg-white shadow-xs'
                       }`}
                     >
-                      <div>
-                        {/* Card Top: Rank Badge & Match Score */}
-                        <div className="flex items-center justify-between gap-2 mb-3">
+                      <div className="flex flex-col">
+                        {/* 1. Card Top: Rank Badge & Match Score (Fixed Height: h-7) */}
+                        <div className="h-7 flex items-center justify-between gap-2 mb-3">
                           {isTop ? (
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
-                              {language === 'bm' ? 'Padanan Terbaik' : 'Top Match'}
+                            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300">
+                              {language === 'bm' ? '★ Padanan Utama' : '★ Top Match'}
                             </span>
                           ) : (
-                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700">
                               #{i + 1} {language === 'bm' ? 'Pilihan' : 'Rank'}
                             </span>
                           )}
-                          <span className="text-xs font-bold text-blue-950 font-mono">
+                          <span className="text-sm font-extrabold text-blue-950 font-mono">
                             {c.score}% Match
                           </span>
                         </div>
 
-                        {/* Bank Logo & Name */}
-                        <div className="flex items-center gap-2.5 mb-4 pb-3 border-b border-slate-100">
-                          <BankLogo bankName={c.name} size="sm" />
-                          <span className="text-xs font-bold text-slate-900 line-clamp-2 leading-tight">
-                            {c.name}
-                          </span>
+                        {/* 2. Bank Logo & Name (Fixed Height: h-14) */}
+                        <div className="h-14 flex items-center gap-3 mb-4 pb-3 border-b border-slate-100">
+                          <BankLogo bankName={c.name} size="md" />
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-sm font-bold text-slate-900 line-clamp-2 leading-snug">
+                              {c.name}
+                            </h4>
+                          </div>
                         </div>
 
-                        {/* Key Metrics */}
-                        <div className="flex flex-col gap-2.5 text-xs">
-                          <div className="flex justify-between items-baseline">
-                            <span className="text-slate-500 font-medium">{language === 'bm' ? 'Anggaran Ansuran' : 'Est. Installment'}</span>
-                            <span className="text-sm font-black text-blue-950">RM {c.installment.toLocaleString()}<span className="text-[10px] text-slate-400 font-normal">/mo</span></span>
+                        {/* 3. Structured Key Metrics with Fixed Row Heights */}
+                        <div className="flex flex-col gap-2">
+                          {/* Installment Highlight */}
+                          <div className="h-12 px-3.5 bg-blue-50/70 border border-blue-100 rounded-xl flex items-center justify-between">
+                            <span className="text-xs text-slate-600 font-semibold">{language === 'bm' ? 'Anggaran Ansuran' : 'Est. Installment'}</span>
+                            <div className="text-right">
+                              <span className="text-base font-black text-blue-950">RM {c.installment.toLocaleString()}</span>
+                              <span className="text-[11px] text-slate-500 font-normal">/mo</span>
+                            </div>
                           </div>
-                          <div className="flex justify-between items-center">
+
+                          {/* Interest Rate */}
+                          <div className="h-10 px-3 flex items-center justify-between border-b border-slate-100 text-xs">
                             <span className="text-slate-500 font-medium">{language === 'bm' ? 'Kadar Faedah' : 'Interest Rate'}</span>
-                            <span className="font-bold text-slate-800">{c.rate}</span>
+                            <span className="font-bold text-slate-900 text-xs">{c.rate}</span>
                           </div>
-                          <div className="flex justify-between items-center">
+
+                          {/* Tenure */}
+                          <div className="h-10 px-3 flex items-center justify-between border-b border-slate-100 text-xs">
                             <span className="text-slate-500 font-medium">{language === 'bm' ? 'Tempoh Pinjaman' : 'Tenure'}</span>
-                            <span className="font-semibold text-slate-700">{c.tenure}</span>
+                            <span className="font-bold text-slate-800 text-xs">{c.tenure}</span>
                           </div>
-                          <div className="flex justify-between items-center">
+
+                          {/* Approval SLA */}
+                          <div className="h-10 px-3 flex items-center justify-between border-b border-slate-100 text-xs">
                             <span className="text-slate-500 font-medium">{language === 'bm' ? 'Kelajuan SLA' : 'Approval SLA'}</span>
-                            <span className="font-semibold text-slate-700">{c.speed}</span>
+                            <span className="font-bold text-slate-800 text-xs">{c.speed}</span>
                           </div>
-                          <div className="flex justify-between items-center">
+
+                          {/* Collateral */}
+                          <div className="h-10 px-3 flex items-center justify-between text-xs">
                             <span className="text-slate-500 font-medium">{language === 'bm' ? 'Cagaran' : 'Collateral'}</span>
-                            <span className="font-semibold text-emerald-700">{c.collateral}</span>
+                            <span className="font-bold text-emerald-700 text-xs">{c.collateral}</span>
                           </div>
                         </div>
                       </div>
@@ -6666,13 +6687,13 @@ export default function Dashboard() {
                           setApplyModalOpen(true); 
                           setCompareOpen(false); 
                         }}
-                        className={`w-full mt-4 py-2.5 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-98 ${
+                        className={`w-full mt-5 py-3 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-98 shadow-xs ${
                           isTop 
-                            ? 'bg-blue-950 hover:bg-blue-900 text-white shadow-xs' 
+                            ? 'bg-blue-950 hover:bg-blue-900 text-white' 
                             : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200'
                         }`}
                       >
-                        <ArrowRight className="w-3.5 h-3.5" />
+                        <ArrowRight className="w-4 h-4" />
                         <span>{language === 'bm' ? 'Pilih & Mohon' : 'Apply Now'}</span>
                       </button>
                     </div>
