@@ -2274,22 +2274,24 @@ export default function AICoPilotChat({
           </button>
         )}
 
-        {/* 2. Floating Live Audio Ball: Ultra-sleek minimalist floating glowing AI Ball / Orb */}
+        {/* 2. Floating Live Audio Ball: Ultra-sleek minimalist white floating AI Call Orb */}
         {!isOpen && isCallActive && (
           <button
             type="button"
             onClick={() => setIsOpen(true)}
-            className="relative w-14 h-14 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer bg-gradient-to-tr from-slate-950 via-blue-950 to-indigo-900 border-2 border-cyan-400/90 shadow-cyan-500/30 group select-none animate-slide-up"
-            title={isMalay ? "Klik untuk buka panggilan penuh (atau sebut 'buka panggilan')" : "Click to expand full call screen (or say 'open the call')"}
+            className="relative w-14 h-14 rounded-full flex items-center justify-center bg-white hover:bg-slate-50 border border-slate-200 shadow-[0_8px_30px_rgba(0,0,0,0.12)] transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer group select-none animate-slide-up"
+            title={isMalay ? "Klik untuk buka panggilan penuh" : "Click to expand call screen"}
           >
-            {/* Outer Pulsing Soundwave Waveform Rings */}
-            <span className={`absolute inset-0 rounded-full border-2 border-cyan-400/60 ${callStatus === 'speaking' ? 'animate-ping duration-1000' : 'animate-pulse'}`} />
-            <span className={`absolute -inset-1.5 rounded-full bg-cyan-500/25 blur-sm ${callStatus === 'speaking' ? 'animate-pulse' : ''}`} />
-
-            {/* Inner Glowing Core with AI Logo and Call Timer */}
+            {/* Outer Subtle Soundwave Pulse */}
+            <span className={`absolute inset-0 rounded-full border-2 border-blue-400/40 ${callStatus === 'speaking' ? 'animate-ping duration-1000' : 'animate-pulse'}`} />
+            
+            {/* Inner Core with Sparkles and Call Timer */}
             <div className="relative z-10 flex flex-col items-center justify-center">
-              <AILogoIcon className={`w-5 h-5 text-white ${callStatus === 'speaking' ? 'animate-bounce' : ''}`} />
-              <span className="text-[8px] font-black text-cyan-300 font-mono tracking-tighter mt-0.5">
+              <div className="relative flex items-center justify-center">
+                <Sparkles className={`w-4.5 h-4.5 text-blue-600 ${callStatus === 'speaking' ? 'animate-bounce' : ''}`} />
+                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white"></span>
+              </div>
+              <span className="text-[9px] font-extrabold text-slate-800 font-mono tracking-tight mt-0.5">
                 {formatCallTime(callDuration)}
               </span>
             </div>
