@@ -755,144 +755,6 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Explainer Active Direct Query Handler (when inside ReportExplainerModal or asking about specific metrics)
-    if (userContext.currentPage === 'report_explainer' || userContext.activeReportSection) {
-      const activeSec = userContext.activeReportSection;
-      const friScore = userContext.friScore || 710;
-      const dsrPercentage = userContext.dsrPercentage !== undefined ? Number(userContext.dsrPercentage.toFixed(1)) : (userContext.currentDsr !== undefined ? Number(userContext.currentDsr.toFixed(1)) : 11.4);
-      const assessedInflow = Math.round(userContext.averageMonthlyIncome || (userContext.assessedInflow || 3500));
-      const monthlySurplus = Math.round(userContext.monthlySurplus || Math.round(assessedInflow * 0.65));
-      const safeMaxInstallment = Math.round(userContext.safeMaxInstallment || (userContext.maxSafeMonthlyPay || Math.round(assessedInflow * 0.35)));
-      const safeMaxLoan = Math.round(userContext.safeMaxLoan || (userContext.maxSafeLoan || Math.round(safeMaxInstallment * 36 * 0.85)));
-      const docHash = userContext.documentHash || '661e6600ecd3371b59a091a0a08e2d4e24217164044f0b4d8784b1be7d2b37ee';
-      const applicantName = userContext.userName || userContext.name || 'Borrower';
-      const grade = userContext.latestGrade || 'Grade A';
-
-      // Dynamic Lenders list from directory
-      const lenders = userContext.matchedLenders && userContext.matchedLenders.length > 0
-        ? userContext.matchedLenders
-        : [
-            { name: 'BSN MicroKredit Madani', matchScore: 95, eligibilityLabel: 'Top Lender Match' },
-            { name: 'Bank Rakyat Pembiayaan Mikro-i', matchScore: 84, eligibilityLabel: '2nd Ranked Fit' },
-            { name: 'AEON i-Cash Personal', matchScore: 76, eligibilityLabel: '3rd Ranked Fit' }
-          ];
-
-      const lenderTextEn = lenders.slice(0, 3).map((l, i) => `${i + 1}. **${l.name}** (${l.matchScore}% Match · ${l.eligibilityLabel || 'Eligible'})`).join('\n');
-      const lenderTextBm = lenders.slice(0, 3).map((l, i) => `${i + 1}. **${l.name}** (${l.matchScore}% Padanan · ${l.eligibilityLabel || 'Layak'})`).join('\n');
-
-      // 0. Excerpt / Sentence Meaning Explanation (when user asks "what meaning", "what does this mean", or quotes report text)
-      const isExplanationOfSentence = (
-        lastMsgLower.includes('what meaning') || 
-        lastMsgLower.includes('apa maksud') || 
-        lastMsgLower.includes('terangkan ayat') || 
-        lastMsgLower.includes('explain this') ||
-        lastMsgLower.includes('affordability') ||
-        (lastMsgLower.includes('installment of') && lastMsgLower.includes('dsr')) ||
-        (lastMsgLower.includes('macroprudential') || lastMsgLower.includes('60%'))
-      );
-
-      if (isExplanationOfSentence) {
-        const reply = isMalay
-          ? `💡 **Penerangan Maksud Penyata Pengunderaitan DSR Ini:**\n\nAyat laporan ini mengesahkan **tahap kesihatan kewangan dan kemampuan pembayaran balik anda yang sangat kukuh** mengikut 4 fakta utama:\n\n1. **Anggaran Ansuran (RM ${safeMaxInstallment.toLocaleString('en-MY')}/bulan):**\n• Jumlah anggaran bayaran bulanan yang dicadangkan untuk pinjaman sasaran anda.\n\n2. **Lebihan Tunai Bersih (RM ${monthlySurplus.toLocaleString('en-MY')}/bulan):**\n• Anda mempunyai lebihan tunai bulanan bebas yang jauh lebih besar berbanding ansuran (penampan kecairan lebih 10x ganda!).\n\n3. **DSR Dinilai pada 0.0% (Nisbah Khidmat Hutang):**\n• Ini bermaksud anda **tiada rekod hutang komitmen bank sedia ada** dalam penyata bank anda. Ruang kapasiti pinjaman anda terbuka 100%.\n\n4. **Di bawah Siling Makroprudensial BNM 60%:**\n• Bank Negara Malaysia membenarkan komitmen hutang sehingga 60% daripada pendapatan. Pada 0.0% (dan hanya ~8% selepas ansuran baharu), profil anda berada dalam **kategori risiko paling selamat (Prime Tier)** untuk kelulusan bank segera.`
-          : `💡 **Plain Meaning of this DSR Affordability Statement:**\n\nThis statement is an **official underwriter confirmation that your loan repayment capacity is exceptionally safe and strong**. Here is the exact breakdown:\n\n1. **Estimated Installment (RM ${safeMaxInstallment.toLocaleString('en-MY')}/mo):**\n• The projected monthly payment for your requested financing facility.\n\n2. **Verified Cash Surplus (RM ${monthlySurplus.toLocaleString('en-MY')}/mo):**\n• Your verified disposable income after expenses is **RM ${monthlySurplus.toLocaleString('en-MY')}/mo** — which is more than 10x your required monthly payment!\n\n3. **DSR Assessed at 0.0%:**\n• Debt Service Ratio measures your existing bank debt against income. **0.0% means you have zero existing debt burdens**, leaving your full borrowing capacity completely intact.\n\n4. **Well below the BNM 60% Macroprudential Limit:**\n• Bank Negara Malaysia allows up to 60% of income for debt. Since your commitment is 0.0% (and only ~8% even after taking this loan), you are categorized as a **Prime Low-Risk borrower with high approval probability**.`;
-
-        return NextResponse.json({
-          success: true,
-          reply,
-          suggestions: isMalay ? ["Padanan Bank Direktori", "Had Pinjaman Selamat", "Cara Tingkatkan Skor"] : ["Matched Lenders", "Safe Borrowing Limit", "How to Boost Score?"]
-        });
-      }
-
-      // 1. Free Surplus Explanation Query
-      if (lastMsgLower.includes('surplus') || lastMsgLower.includes('lebihan') || lastMsgLower.includes('free cash') || lastMsgLower.includes('disposable')) {
-        const reply = isMalay
-          ? `💰 **Maksud Lebihan Tunai Bebas (Free Monthly Surplus):**\n\n• **Definisi:** Lebihan Tunai Bebas adalah baki wang sebenar daripada pendapatan bulanan anda selepas menolak semua kos sara hidup asas dan komitmen bulanan sedia ada.\n• **Status Anda:** Daripada purata pendapatan **RM ${assessedInflow.toLocaleString('en-MY')}/bulan**, lebihan bebas anda ialah **RM ${monthlySurplus.toLocaleString('en-MY')}/bulan**.\n• **Fungsi:** Ini adalah penampan keselamatan tunai yang dilihat oleh bank bagi memastikan anda mampu membayar ansuran bulanan selamat (cth: **RM ${safeMaxInstallment.toLocaleString('en-MY')}/bulan**) tanpa menghadapi kesempitan hidup.`
-          : `💰 **What is Free Monthly Cash Surplus?**\n\n• **Definition:** Free Monthly Surplus is your verified disposable income remaining after deducting essential living expenses and existing commitments from your monthly inflow.\n• **Your Numbers:** From an assessed inflow of **RM ${assessedInflow.toLocaleString('en-MY')}/mo**, your verified free surplus is **RM ${monthlySurplus.toLocaleString('en-MY')}/mo**.\n• **Underwriting Role:** Bank underwriters evaluate this safety buffer to confirm that you can comfortably service a new monthly repayment (e.g. **RM ${safeMaxInstallment.toLocaleString('en-MY')}/mo**) with zero cashflow strain.`;
-
-        return NextResponse.json({
-          success: true,
-          reply,
-          suggestions: isMalay ? ["Had Pinjaman Selamat", "Padanan Bank Direktori", "Ringkasan Laporan"] : ["Safe Borrowing Limit", "Matched Lenders", "Summarize Report"]
-        });
-      }
-
-      // 2. Overall Summary / Synthesis
-      if (lastMsgLower.includes('summar') || lastMsgLower.includes('ringkas') || lastMsgLower.includes('overview') || lastMsgLower.includes('tentang laporan') || lastMsgLower.includes('about this report')) {
-        const reply = isMalay
-          ? `📋 **Rumusan Pasport Kredit Rasmi (${applicantName}):**\n\n🎯 **1. Skor & Kelayakan:**\n• **Skor FRI:** **${friScore}/850 (${grade})** · Tahap Risiko Rendah (Default Risk < 1.8%).\n• **Kebarangkalian Lulus:** **88% – 94% (Prime Tier)**.\n\n💰 **2. Aliran Tunai & Kapasiti:**\n• **Purata Kemasukan Bersih:** **RM ${assessedInflow.toLocaleString('en-MY')}/bulan** dengan lebihan bebas **RM ${monthlySurplus.toLocaleString('en-MY')}/bulan**.\n• **DSR:** **${dsrPercentage}%** (jauh di bawah had siling BNM 60%).\n• **Had Ansuran Selamat:** **RM ${safeMaxInstallment.toLocaleString('en-MY')}/bulan** (Kapasiti Pinjaman: **RM ${safeMaxLoan.toLocaleString('en-MY')}**).\n\n🏦 **3. Padanan Bank Mengikut Direktori:**\n${lenderTextBm}\n\n🔒 **4. Forensik:** Disahkan kalis usikan di bawah piawaian BNM FTFC & RMiT (SHA-256: \`${docHash.slice(0, 16)}...\`).`
-          : `📋 **Official Credit Passport Synthesis (${applicantName}):**\n\n🎯 **1. Score & Standing:**\n• **FRI Score:** **${friScore}/850 (${grade})** · Low Default Risk (< 1.8%).\n• **Approval Likelihood:** **88% – 94% (Prime Tier)**.\n\n💰 **2. Cashflow & Capacity:**\n• **Assessed Net Inflow:** **RM ${assessedInflow.toLocaleString('en-MY')}/mo** with verified free surplus of **RM ${monthlySurplus.toLocaleString('en-MY')}/mo**.\n• **Debt Service Ratio (DSR):** **${dsrPercentage}%** (well within BNM 60% macroprudential limit).\n• **Recommended Safe Installment:** **RM ${safeMaxInstallment.toLocaleString('en-MY')}/mo** (Supporting up to **RM ${safeMaxLoan.toLocaleString('en-MY')}**).\n\n🏦 **3. Top Matched Lenders from Directory:**\n${lenderTextEn}\n\n🔒 **4. Integrity:** Digitally sealed under BNM FTFC & RMiT guidelines (SHA-256: \`${docHash.slice(0, 16)}...\`).`;
-
-        return NextResponse.json({
-          success: true,
-          reply,
-          suggestions: isMalay ? ["Had Pinjaman Selamat", "Apa Itu Lebihan Bebas?", "Padanan Bank Direktori"] : ["Safe Borrowing Limit", "What is Free Surplus?", "Matched Lenders"]
-        });
-      }
-
-      // 3. Safe Capacity & DSR
-      if (activeSec === 'dsr_capacity' || lastMsgLower.includes('borrow') || lastMsgLower.includes('capacity') || lastMsgLower.includes('pinjam') || lastMsgLower.includes('dsr') || lastMsgLower.includes('ansuran') || lastMsgLower.includes('installment') || lastMsgLower.includes('limit') || lastMsgLower.includes('had')) {
-        const reply = isMalay
-          ? `💳 **Analisis Kapasiti Pinjaman & DSR Selamat:**\n\n• **Nisbah Khidmat Hutang (DSR):** **${dsrPercentage}%** (Siling berhemah Bank Negara Malaysia ialah 60%).\n• **Had Ansuran Bulanan Selamat:** **RM ${safeMaxInstallment.toLocaleString('en-MY')}/bulan**.\n• **Jumlah Pembiayaan Selamat Maksimum:** Anggaran **RM ${safeMaxLoan.toLocaleString('en-MY')}** (tenur 3 tahun).\n• **Baki Wang Sara Hidup:** Selepas membayar ansuran ini, anda masih mempunyai lebihan tunai penampan sekurang-kurangnya **RM ${(monthlySurplus - safeMaxInstallment > 0 ? monthlySurplus - safeMaxInstallment : Math.round(assessedInflow * 0.3)).toLocaleString('en-MY')}/bulan** untuk makanan, simpanan, dan kecemasan.`
-          : `💳 **Safe Borrowing Capacity & DSR Analysis:**\n\n• **Debt Service Ratio (DSR):** **${dsrPercentage}%** (Bank Negara Malaysia maximum prudent limit is 60%).\n• **Safe Monthly Installment Limit:** **RM ${safeMaxInstallment.toLocaleString('en-MY')}/month**.\n• **Maximum Safe Loan Quantum:** Estimated **RM ${safeMaxLoan.toLocaleString('en-MY')}** (3-year tenure).\n• **Living Buffer Margin:** Even after servicing this monthly repayment, you retain a comfortable cash surplus of ~**RM ${(monthlySurplus - safeMaxInstallment > 0 ? monthlySurplus - safeMaxInstallment : Math.round(assessedInflow * 0.3)).toLocaleString('en-MY')}/mo** for living expenses and emergencies.`;
-
-        return NextResponse.json({
-          success: true,
-          reply,
-          suggestions: isMalay ? ["Padanan Bank Direktori", "Apa Itu Lebihan Bebas?", "Cara Tingkatkan Skor"] : ["Matched Lenders", "What is Free Surplus?", "How to Boost Score?"]
-        });
-      }
-
-      // 4. Bank Matching & Lender Matrix
-      if (activeSec === 'bank_match' || lastMsgLower.includes('bank') || lastMsgLower.includes('lender') || lastMsgLower.includes('direktori') || lastMsgLower.includes('directory') || lastMsgLower.includes('approve') || lastMsgLower.includes('lulus') || lastMsgLower.includes('padanan')) {
-        const reply = isMalay
-          ? `🏦 **Padanan Bank Berlesen Mengikut Direktori Pembiaya Kami:**\n\n${lenderTextBm}\n\n💡 **Nota Penaja Jamin:** Peringkat skor FRI **${friScore}/850** dan DSR **${dsrPercentage}%** meletakkan profil anda dalam kategori kelulusan pantas tanpa memerlukan cagaran atau penjamin.`
-          : `🏦 **Matched Licensed Lenders from our Directory:**\n\n${lenderTextEn}\n\n💡 **Underwriter Note:** Your FRI score of **${friScore}/850** combined with a healthy DSR of **${dsrPercentage}%** qualifies you for streamlined digital approval without collateral or guarantor requirements.`;
-
-        return NextResponse.json({
-          success: true,
-          reply,
-          suggestions: isMalay ? ["Had Pinjaman Selamat", "Cara Tingkatkan Skor", "Apa Itu Lebihan Bebas?"] : ["Safe Borrowing Limit", "How to Boost Score?", "What is Free Surplus?"]
-        });
-      }
-
-      // 5. Score Boost Roadmap
-      if (lastMsgLower.includes('boost') || lastMsgLower.includes('tingkat') || lastMsgLower.includes('roadmap') || lastMsgLower.includes('lower interest') || lastMsgLower.includes('kadar lebih murah') || lastMsgLower.includes('epf') || lastMsgLower.includes('kwsp')) {
-        const reply = isMalay
-          ? `📈 **Pelan Tindakan Tingkatkan Skor (Roadmap Penurunan Kadar Faedah):**\n\n1. **Tindakan 1: Caruman Sukarela KWSP (i-Saraan) [+35 Mata → Gred A+]**\n• Buat caruman RM 150/bulan ke akaun KWSP i-Saraan. Ini membuktikan disiplin simpanan statutori kepada pihak bank.\n\n2. **Tindakan 2: Kekalkan Baki Penampan Tunai [+25 Mata]**\n• Kekalkan baki akaun bank minimum RM 1,000 secara konsisten selama 30 hari berturut-turut.\n\n3. **Tindakan 3: Penyelarasan Aliran Tunai [+20 Mata]**\n• Kekalkan pengeluaran pendapatan mingguan aktif tanpa tempoh selang melebihi 10 hari.`
-          : `📈 **Score Boost Roadmap (Unlock Lower Interest Rates):**\n\n1. **Action 1: Voluntary EPF Contribution (i-Saraan) [+35 Points → Grade A+]**\n• Contribute RM 150/month into KWSP i-Saraan. Signals strong statutory savings discipline to bank underwriters.\n\n2. **Action 2: Cashflow Buffer Stability [+25 Points]**\n• Maintain a minimum rolling bank balance of RM 1,000 for 30 consecutive days.\n\n3. **Action 3: Active Payout Smoothing [+20 Points]**\n• Maintain regular weekly earnings settlements without gaps greater than 10 days.`;
-
-        return NextResponse.json({
-          success: true,
-          reply,
-          suggestions: isMalay ? ["Ringkasan Laporan", "Had Pinjaman Selamat", "Padanan Bank Direktori"] : ["Summarize Report", "Safe Borrowing Limit", "Matched Lenders"]
-        });
-      }
-
-      // 6. Audit, SHA-256 & Forensic Integrity
-      if (activeSec === 'audit_trail' || lastMsgLower.includes('sha') || lastMsgLower.includes('hash') || lastMsgLower.includes('ftfc') || lastMsgLower.includes('audit') || lastMsgLower.includes('encrypt') || lastMsgLower.includes('keselamatan') || lastMsgLower.includes('tamper')) {
-        const reply = isMalay
-          ? `🔒 **Pengesahan Forensik & Audit Kriptografi SHA-256:**\n\n• **Meterai Kriptografi:** \`${docHash.slice(0, 32)}...\`\n• **Integriti Forensik:** Analisis imbasan mengesahkan tiada manipulasi metadata, pemalsuan lapisan PDF, atau pengubahsuaian baki penyata bank (Forensic Check: PASS).\n• **Pematuhan BNM:** Mematuhi sepenuhnya rangka kerja Bank Negara Malaysia bagi Layanan Adil Terhadap Pengguna Kewangan (FTFC) dan Pengurusan Risiko Teknologi (RMiT).\n• **Keselamatan Data:** Dokumen ini dikunci dengan tandatangan digital yang diiktiraf oleh institusi perbankan berlesen.`
-          : `🔒 **Forensic Verification & SHA-256 Cryptographic Audit:**\n\n• **Digital Hash Digest:** \`${docHash.slice(0, 32)}...\`\n• **Forensic Document Integrity:** Multi-layer digital verification confirms zero tampering, no metadata alteration, and verified font layer authenticity (Forensic Check: PASS).\n• **Regulatory Compliance:** Fully certified under Bank Negara Malaysia Fair Treatment of Financial Consumers (FTFC) and Risk Management in Technology (RMiT) standards.\n• **Institutional Acceptance:** Tamper-evident digital seal allows instant direct underwriting by partner digital banks.`;
-
-        return NextResponse.json({
-          success: true,
-          reply,
-          suggestions: isMalay ? ["Ringkasan Laporan", "Had Pinjaman Selamat", "Padanan Bank Direktori"] : ["Summarize Report", "Safe Borrowing Limit", "Matched Lenders"]
-        });
-      }
-
-      // 7. Inflow & Volatility / Default Fallback
-      const reply = isMalay
-        ? `📊 **Kestabilan Pendapatan & Skor FRI (${applicantName}):**\n• Skor FRI anda ialah **${friScore}/850 (${grade})** dengan purata kemasukan **RM ${assessedInflow.toLocaleString('en-MY')}/bulan**.\n• Lebihan tunai bulanan bebas anda adalah **RM ${monthlySurplus.toLocaleString('en-MY')}/bulan**, membolehkan ansuran selamat sehingga **RM ${safeMaxInstallment.toLocaleString('en-MY')}/bulan**.\n• Padanan bank utama anda: **${lenders[0]?.name || 'GXBank'}** (${lenders[0]?.matchScore || 94}%) dan **${lenders[1]?.name || 'Boost Bank'}** (${lenders[1]?.matchScore || 88}%).`
-        : `📊 **Income Stability & FRI Score Breakdown (${applicantName}):**\n• Your Financial Resilience Index is scored at **${friScore}/850 (${grade})** with verified average net inflow of **RM ${assessedInflow.toLocaleString('en-MY')}/mo**.\n• Verified free cash surplus of **RM ${monthlySurplus.toLocaleString('en-MY')}/mo** safely supports repayments of up to **RM ${safeMaxInstallment.toLocaleString('en-MY')}/mo**.\n• Top matched lenders: **${lenders[0]?.name || 'GXBank'}** (${lenders[0]?.matchScore || 94}%) and **${lenders[1]?.name || 'Boost Bank'}** (${lenders[1]?.matchScore || 88}%).`;
-
-      return NextResponse.json({
-        success: true,
-        reply,
-        suggestions: isMalay ? ["Had Pinjaman Selamat", "Apa Itu Lebihan Bebas?", "Padanan Bank Direktori"] : ["Safe Borrowing Limit", "What is Free Surplus?", "Matched Lenders"]
-      });
-    }
-
     // 1C. Educational Intent: Explain DSR & Credit Score (e.g. "what is DSR", "explain credit score", "like 10 years old", "apa itu DSR")
     const isDsrOrScoreEducationalQuery = (
       (lastMsgLower.includes('dsr') || lastMsgLower.includes('debt service') || lastMsgLower.includes('nisbah khidmat') || lastMsgLower.includes('credit score') || lastMsgLower.includes('skor kredit')) &&
@@ -2281,6 +2143,49 @@ REAL-TIME SCREEN & ON-SCREEN VIEWPORT CONTEXT:
   • Matched Lenders Pre-Approval Cards (GXBank, Boost Bank, AEON Credit, Maybank).
   • "Download Certified Credit Passport PDF" button.` : ''}
 - If the user asks what is on screen, explain the active step, their current form parameters, and guide them on what to do next.`;
+      } else if (pageType === 'report_explainer') {
+        const friScore = userContext?.friScore || userContext?.latestScore || 710;
+        const riskGrade = userContext?.latestGrade || 'Grade A';
+        const assessedInflow = userContext?.averageMonthlyIncome || userContext?.assessedInflow || 1345;
+        const monthlySurplus = userContext?.monthlySurplus || 2965;
+        const dsrPercentage = userContext?.dsrPercentage !== undefined ? userContext.dsrPercentage : (userContext?.currentDsr !== undefined ? userContext.currentDsr : 0.0);
+        const safeMaxInstallment = userContext?.safeMaxInstallment || 249;
+        const safeMaxLoan = userContext?.safeMaxLoan || userContext?.maxSafeLoan || 7620;
+        const applicantName = userContext?.userName || userContext?.name || 'Applicant';
+        const matchedLenders = (userContext?.matchedLenders && userContext.matchedLenders.length > 0)
+          ? userContext.matchedLenders
+          : [
+              { name: 'BSN MicroKredit Madani', matchScore: 95, eligibilityLabel: 'Top Lender Match' },
+              { name: 'Bank Rakyat Pembiayaan Mikro-i', matchScore: 84, eligibilityLabel: '2nd Ranked Fit' },
+              { name: 'AEON i-Cash Personal', matchScore: 76, eligibilityLabel: '3rd Ranked Fit' }
+            ];
+
+        spatialContextText = `
+REAL-TIME SCREEN & ON-SCREEN VIEWPORT CONTEXT:
+- Active Screen: INTERACTIVE IN-APP CREDIT PASSPORT PDF & AI DOSSIER EXPLAINER MODAL.
+- The user is currently inspecting their official certified Alternative Credit Passport PDF side-by-side with you.
+- Complete Verified Credit Report & Underwriting Dossier for this borrower:
+  • Applicant Name: ${applicantName}
+  • Primary Platform / Work Sector: ${userContext?.platform || 'Gig Worker / Food Delivery'}
+  • Verified Net Monthly Inflow: RM ${assessedInflow.toLocaleString('en-MY')}/mo
+  • Verified Free Monthly Cash Surplus: RM ${monthlySurplus.toLocaleString('en-MY')}/mo
+  • Financial Resilience Index (FRI): ${friScore} / 850 (${riskGrade} - Prime Tier, Estimated Default Probability < 1.8%)
+  • Debt Service Ratio (DSR): ${dsrPercentage.toFixed(1)}% (Clean 0.0% existing bank debt commitments detected in bank statements)
+  • Safe Monthly Repayment Capacity: RM ${safeMaxInstallment.toLocaleString('en-MY')}/mo (supports up to RM ${safeMaxLoan.toLocaleString('en-MY')} loan quantum safely)
+  • Top Matched Lenders from Step 4 Directory:
+${matchedLenders.slice(0, 4).map((l: any, i: number) => `    ${i + 1}. ${l.name} (${l.matchScore}% Match · ${l.eligibilityLabel || 'Eligible'})`).join('\n')}
+  • Cryptographic Forensic Hash: SHA-256 (${userContext?.documentHash || '661e6600ecd3371b59a091a0a08e2d4e24217164044f0b4d8784b1be7d2b37ee'}) — Verified Tamper-Proof under Bank Negara Malaysia FTFC & RMiT standards.
+
+CRITICAL UNDERWRITING INSTRUCTIONS FOR REPORT EXPLAINER:
+- You are acting as Loan - La's Senior AI Underwriting Specialist & Credit Analyst directly conversing with the borrower.
+- When the borrower asks "Why can this person apply for a loan?", "Why can I apply?", "Why am I approved?", or similar:
+  * Do NOT give vague generic statements. Detail the exact, verified underwriter qualifications for this specific applicant:
+    1. Zero Existing Debt Burden (DSR 0.0%): Bank statements show no existing loan deductions, meaning 100% of their borrowing capacity is free under Bank Negara Malaysia's 60% macroprudential limit.
+    2. Over 10× Repayment Coverage: With verified free surplus of RM ${monthlySurplus.toLocaleString('en-MY')}/mo against an estimated installment of only RM ${safeMaxInstallment.toLocaleString('en-MY')}/mo, the applicant possesses exceptional liquidity safety margins.
+    3. Strong Credit Score (FRI ${friScore}/850, ${riskGrade}): Their income consistency and zero overdrafts place them into the Prime Low-Risk tier.
+    4. Target Government & Micro-Finance Programs: Institutions like BSN MicroKredit Madani (95% match) and Bank Rakyat specifically offer zero-collateral micro-financing for alternative income earners without conventional payslips.
+- When the borrower asks what a specific excerpt, sentence, or metric in the report means (e.g. DSR affordability, cash surplus buffer, BNM limit), break down every number and term in clear, plain language.
+- Provide intelligent, natural, custom reasoning for all new questions without using hardcoded boilerplate responses.`;
       }
 
       const systemInstruction = `You are the intelligent, highly knowledgeable AI Live Co-Pilot & Concierge for Loan - La.
@@ -2300,8 +2205,8 @@ LIVE GUIDE & ACCESSIBILITY PERSONA:
 - When the user asks "what am I looking at?", "explain this", or asks questions about the current page, seamlessly reference their active screen and visible section.
 
 Active Applicant Financial Profile:
-- Authentication Status: ${isUserLoggedIn ? 'Logged In Borrower' : 'Guest (Unauthenticated)'}
-${isUserLoggedIn ? `
+- Authentication Status: ${isUserLoggedIn || userContext?.currentPage === 'report_explainer' ? 'Verified Borrower Profile' : 'Guest (Unauthenticated)'}
+${(isUserLoggedIn || userContext?.currentPage === 'report_explainer') ? `
 - Name: ${dynamicName}
 - Credit Score: ${dynamicScore} / 1000 (Grade ${dynamicGrade})
 - Verified Inflow: RM ${dynamicIncome.toLocaleString()} / month (${dynamicPlatform})
@@ -2466,6 +2371,48 @@ Guidelines:
     }
 
     // Intelligent Context-Aware Fallback
+    if (userContext?.currentPage === 'report_explainer') {
+      const friScore = userContext?.friScore || userContext?.latestScore || 710;
+      const riskGrade = userContext?.latestGrade || 'Grade A';
+      const assessedInflow = userContext?.averageMonthlyIncome || userContext?.assessedInflow || 1345;
+      const monthlySurplus = userContext?.monthlySurplus || 2965;
+      const safeMaxInstallment = userContext?.safeMaxInstallment || 249;
+      const safeMaxLoan = userContext?.safeMaxLoan || userContext?.maxSafeLoan || 7620;
+      const dsrVal = userContext?.dsrPercentage !== undefined ? userContext.dsrPercentage : (userContext?.currentDsr !== undefined ? userContext.currentDsr : 0.0);
+      const applicantName = userContext?.userName || userContext?.name || 'Applicant';
+      const matchedLenders = (userContext?.matchedLenders && userContext.matchedLenders.length > 0)
+        ? userContext.matchedLenders
+        : [
+            { name: 'BSN MicroKredit Madani', matchScore: 95 },
+            { name: 'Bank Rakyat Pembiayaan Mikro-i', matchScore: 84 },
+            { name: 'AEON i-Cash Personal', matchScore: 76 }
+          ];
+
+      if (lastMsgLower.includes('why') && (lastMsgLower.includes('apply') || lastMsgLower.includes('loan') || lastMsgLower.includes('can') || lastMsgLower.includes('eligible') || lastMsgLower.includes('approved') || lastMsgLower.includes('boleh') || lastMsgLower.includes('layak') || lastMsgLower.includes('kenapa'))) {
+        const reply = isMalay
+          ? `💡 Mengapa Pemohon (${applicantName}) Layak Memohon & Lulus Pinjaman:\n\nBerdasarkan pengunderaitan rasmi dalam Pasport Kredit anda, pemohon layak atas 4 faktor utama:\n\n1. Tiada Komitmen Hutang Sedia Ada (DSR 0.0%):\nPenyata bank mengesahkan tiada bayaran pinjaman aktif lain. Ini bermakna 100% kapasiti pinjaman di bawah had siling BNM 60% masih bebas.\n\n2. Lebihan Tunai Bersih Lebih 10x Ganda Ansuran:\nDengan lebihan tunai bulanan RM ${monthlySurplus.toLocaleString('en-MY')}/bulan, ia menampung ansuran sasaran RM ${safeMaxInstallment.toLocaleString('en-MY')}/bulan dengan mudah tanpa tekanan kewangan.\n\n3. Skor Ketahanan Kewangan Tinggi (FRI ${friScore}/850 - ${riskGrade}):\nRekod kemasukan gig yang konsisten dan tiada rekod cek tendang/overdraft meletakkan pemohon dalam kategori risiko rendah (Prime Tier, kebarangkalian default < 1.8%).\n\n4. Padanan Skim Pembiayaan Mikro Tanpa Slip Gaji:\nInstitusi seperti BSN MicroKredit Madani (95% padanan) dan Bank Rakyat (84% padanan) menyediakan skim khas untuk pekerja gig dan peniaga tanpa slip gaji konvensional.`
+          : `💡 Why this Applicant (${applicantName}) Qualifies to Apply and Receive Loan Approval:\n\nBased on the certified underwriting analysis in your Credit Passport, you qualify due to 4 decisive financial strengths:\n\n1. Zero Existing Debt Burden (DSR 0.0%):\nYour bank statements show no active loan commitments, leaving 100% of your borrowing room open under Bank Negara Malaysia's 60% macroprudential limit.\n\n2. Over 10× Cashflow Coverage Ratio:\nYour verified free monthly cash surplus of RM ${monthlySurplus.toLocaleString('en-MY')}/mo is more than 10 times the estimated repayment of RM ${safeMaxInstallment.toLocaleString('en-MY')}/mo, providing massive liquidity safety buffer.\n\n3. High Credit Resilience (FRI ${friScore}/850 - ${riskGrade}):\nConsistent gig inflows and zero overdrafts place your profile into the Prime Low-Risk tier (< 1.8% estimated default probability).\n\n4. Direct Eligibility for Non-Payslip Micro Schemes:\nInstitutions like BSN MicroKredit Madani (95% match) and Bank Rakyat (84% match) specifically accept verified alternative gig cashflow in place of conventional salary slips.`;
+
+        return NextResponse.json({
+          success: true,
+          reply,
+          suggestions: isMalay ? ["Had Pinjaman Selamat", "Padanan Bank Direktori", "Cara Tingkatkan Skor"] : ["Safe Borrowing Limit", "Matched Lenders", "How to Boost Score?"]
+        });
+      }
+
+      if (lastMsgLower.includes('meaning') || lastMsgLower.includes('maksud') || lastMsgLower.includes('affordability') || lastMsgLower.includes('dsr')) {
+        const reply = isMalay
+          ? `💡 Penerangan Analisis DSR & Maksud Penyata Laporan:\n\n1. Anggaran Ansuran (RM ${safeMaxInstallment.toLocaleString('en-MY')}/bulan): Anggaran bayaran bulanan pinjaman sasaran anda.\n2. Lebihan Tunai Bebas (RM ${monthlySurplus.toLocaleString('en-MY')}/bulan): Baki tunai bulanan bersih anda selepas menolak belanja sara hidup.\n3. DSR Dinilai pada ${dsrVal.toFixed(1)}%: Anda tiada bebanan hutang bank sedia ada, membuktikan kapasiti pinjaman penuh.\n4. Had Makroprudensial BNM 60%: Bank Negara Malaysia membenarkan komitmen sehingga 60%. Pada ${dsrVal.toFixed(1)}%, anda berada dalam profil paling selamat untuk kelulusan segera.`
+          : `💡 Explanation of DSR Affordability Statement:\n\n1. Estimated Installment (RM ${safeMaxInstallment.toLocaleString('en-MY')}/mo): Projected monthly payment for your financing facility.\n2. Free Cash Surplus (RM ${monthlySurplus.toLocaleString('en-MY')}/mo): Verified disposable cash remaining after living expenses.\n3. DSR Assessed at ${dsrVal.toFixed(1)}%: Zero active debt commitments detected, confirming 100% available capacity.\n4. Below BNM 60% Limit: Bank Negara Malaysia guideline allows up to 60% debt. Your ratio is exceptionally safe.`;
+
+        return NextResponse.json({
+          success: true,
+          reply,
+          suggestions: isMalay ? ["Had Pinjaman Selamat", "Padanan Bank Direktori", "Cara Tingkatkan Skor"] : ["Safe Borrowing Limit", "Matched Lenders", "How to Boost Score?"]
+        });
+      }
+    }
+
     let reply = isMalay
       ? "Bagaimanakah saya boleh membantu permohonan pembiayaan anda?"
       : "How may I assist you with your financing today?";
