@@ -76,7 +76,7 @@ const BANK_LOGO_MAP: Record<string, string> = {
   gxbank: '/banks/gxbank.png',
   hong_leong: '/banks/hong_leong.png',
   hong_leong_finance: '/banks/hong_leong_finance.png',
-  mara: '/banks/default.svg',
+  mara: '/banks/mara.png',
   maybank: '/banks/maybank.png',
   modalku: '/banks/modalku.png',
   public_bank: '/banks/public_bank.png',

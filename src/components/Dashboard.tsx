@@ -6568,95 +6568,116 @@ export default function Dashboard() {
         ];
         const current = cols[compareSwipeIndex];
         return (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-blue-950/60 backdrop-blur-sm p-4">
-          <div className="w-full max-w-3xl bg-white rounded-2xl shadow-2xl overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-blue-950 text-white">
-              <div>
-                <h3 className="text-sm font-extrabold uppercase tracking-widest flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4 text-blue-300" /> Compare Matched Lenders
-                </h3>
-                <span className="text-xs text-blue-200">{purposeLabel[targetLoanPurpose]} · RM {targetLoanAmount.toLocaleString()}</span>
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4 animate-fade-in">
+          <div className="w-full max-w-4xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200">
+            {/* Header (Clean & Light) */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-blue-950 text-white flex items-center justify-center shadow-xs">
+                  <BarChart3 className="w-4.5 h-4.5 text-blue-200" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">
+                    {language === 'bm' ? 'Bandingkan Pemberi Pinjaman' : 'Compare Matched Lenders'}
+                  </h3>
+                  <span className="text-xs text-slate-500 font-medium">
+                    {purposeLabel[targetLoanPurpose]} · RM {targetLoanAmount.toLocaleString()}
+                  </span>
+                </div>
               </div>
-              <button onClick={() => setCompareOpen(false)} className="p-2 hover:bg-blue-900 rounded-xl transition-all">
+              <button 
+                onClick={() => setCompareOpen(false)} 
+                className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-xl transition-all cursor-pointer"
+                title={language === 'bm' ? 'Tutup' : 'Close'}
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Desktop: Table / Mobile: Swipe cards */}
-            <div className="p-6">
-              {/* Desktop table */}
-              <div className="hidden md:block overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="border-b border-slate-200">
-                      <td className="py-2 font-bold text-slate-500 uppercase tracking-wider w-32">Feature</td>
-                      {cols.map((c, i) => (
-                        <td key={i} className={`py-2 px-3 font-extrabold text-center ${i === 0 ? 'text-blue-900' : 'text-slate-700'}`}>
-                          {i === 0 && <span className="text-[9px] text-blue-900 bg-blue-50 border border-blue-200 px-2 py-0.5 rounded block mb-1 font-extrabold">TOP MATCH</span>}
-                          {c.name}
-                        </td>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {[
-                      { label: 'Match Score', vals: cols.map(c => `${c.score}/100`) },
-                      { label: 'Interest Rate', vals: cols.map(c => c.rate) },
-                      { label: 'Est. Installment', vals: cols.map(c => `RM ${c.installment.toLocaleString()}/mo`) },
-                      { label: 'Tenure', vals: cols.map(c => c.tenure) },
-                      { label: 'Approval Speed', vals: cols.map(c => c.speed) },
-                      { label: 'Collateral', vals: cols.map(c => c.collateral) },
-                    ].map((row, ri) => (
-                      <tr key={ri} className={`border-b border-slate-100 ${ri % 2 === 0 ? 'bg-slate-50/50' : 'bg-white'}`}>
-                        <td className="py-2.5 font-bold text-slate-500 uppercase tracking-wider">{row.label}</td>
-                        {row.vals.map((v, vi) => (
-                          <td key={vi} className={`py-2.5 px-3 text-center font-semibold ${vi === 0 ? 'text-blue-900 font-bold' : 'text-slate-700'}`}>{v}</td>
-                        ))}
-                      </tr>
-                    ))}
-                    <tr>
-                      <td></td>
-                      {cols.map((c, i) => (
-                        <td key={i} className="py-3 px-3 text-center">
-                          <button
-                            onClick={() => { setApplyTarget({ lenderName: c.name, lenderUrl: getLenderOfficialPortalUrl(c.name), productName: purposeLabel[targetLoanPurpose] + ' Loan' }); setApplySubmitted(false); setApplyModalOpen(true); setCompareOpen(false); }}
-                            className={`w-full py-2 text-xs font-extrabold rounded-xl ${i === 0 ? 'bg-blue-950 text-white' : 'bg-blue-900 text-white hover:bg-blue-950'} transition-all flex items-center justify-center gap-1`}
-                          ><ArrowRight className="w-3.5 h-3.5" /> Apply</button>
-                        </td>
-                      ))}
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+            {/* Comparison Cards Grid */}
+            <div className="p-5 sm:p-6 bg-slate-50/50">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {cols.map((c, i) => {
+                  const isTop = i === 0;
+                  return (
+                    <div 
+                      key={i}
+                      className={`p-4 sm:p-5 rounded-2xl border transition-all flex flex-col justify-between ${
+                        isTop 
+                          ? 'border-blue-200 bg-white shadow-md ring-1 ring-blue-900/10' 
+                          : 'border-slate-200 bg-white shadow-2xs'
+                      }`}
+                    >
+                      <div>
+                        {/* Card Top: Rank Badge & Match Score */}
+                        <div className="flex items-center justify-between gap-2 mb-3">
+                          {isTop ? (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                              {language === 'bm' ? 'Padanan Terbaik' : 'Top Match'}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
+                              #{i + 1} {language === 'bm' ? 'Pilihan' : 'Rank'}
+                            </span>
+                          )}
+                          <span className="text-xs font-bold text-blue-950 font-mono">
+                            {c.score}% Match
+                          </span>
+                        </div>
 
-              {/* Mobile swipe card */}
-              <div className="md:hidden flex flex-col gap-4">
-                <div className="flex items-center justify-between">
-                  <button onClick={() => setCompareSwipeIndex(Math.max(0, compareSwipeIndex - 1))} disabled={compareSwipeIndex === 0} className="p-2 border border-slate-200 rounded-xl disabled:opacity-30 flex items-center gap-1 text-xs font-bold"><ArrowLeft className="w-3.5 h-3.5" /> Prev</button>
-                  <span className="text-xs font-bold text-slate-600">{compareSwipeIndex + 1} of {cols.length}</span>
-                  <button onClick={() => setCompareSwipeIndex(Math.min(cols.length - 1, compareSwipeIndex + 1))} disabled={compareSwipeIndex === cols.length - 1} className="p-2 border border-slate-200 rounded-xl disabled:opacity-30 flex items-center gap-1 text-xs font-bold">Next <ArrowRight className="w-3.5 h-3.5" /></button>
-                </div>
-                <div className="border border-slate-200 rounded-xl p-5 flex flex-col gap-3">
-                  {compareSwipeIndex === 0 && <span className="text-[10px] bg-blue-50 text-blue-900 border border-blue-200 font-bold px-2 py-0.5 rounded w-fit">Top Match</span>}
-                  <span className="text-base font-extrabold text-blue-950">{current.name}</span>
-                  {[
-                    { label: 'Match Score', val: `${current.score}/100` },
-                    { label: 'Interest Rate', val: current.rate },
-                    { label: 'Est. Installment', val: `RM ${current.installment.toLocaleString()}/mo` },
-                    { label: 'Tenure', val: current.tenure },
-                    { label: 'Approval Speed', val: current.speed },
-                  ].map((r, i) => (
-                    <div key={i} className="flex justify-between border-b border-slate-100 pb-2 text-xs">
-                      <span className="text-slate-500 font-bold">{r.label}</span>
-                      <span className="font-bold text-slate-800">{r.val}</span>
+                        {/* Bank Logo & Name */}
+                        <div className="flex items-center gap-2.5 mb-4 pb-3 border-b border-slate-100">
+                          <BankLogo bankName={c.name} size="sm" />
+                          <span className="text-xs font-bold text-slate-900 line-clamp-2 leading-tight">
+                            {c.name}
+                          </span>
+                        </div>
+
+                        {/* Key Metrics */}
+                        <div className="flex flex-col gap-2.5 text-xs">
+                          <div className="flex justify-between items-baseline">
+                            <span className="text-slate-500 font-medium">{language === 'bm' ? 'Anggaran Ansuran' : 'Est. Installment'}</span>
+                            <span className="text-sm font-black text-blue-950">RM {c.installment.toLocaleString()}<span className="text-[10px] text-slate-400 font-normal">/mo</span></span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-slate-500 font-medium">{language === 'bm' ? 'Kadar Faedah' : 'Interest Rate'}</span>
+                            <span className="font-bold text-slate-800">{c.rate}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-slate-500 font-medium">{language === 'bm' ? 'Tempoh Pinjaman' : 'Tenure'}</span>
+                            <span className="font-semibold text-slate-700">{c.tenure}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-slate-500 font-medium">{language === 'bm' ? 'Kelajuan SLA' : 'Approval SLA'}</span>
+                            <span className="font-semibold text-slate-700">{c.speed}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-slate-500 font-medium">{language === 'bm' ? 'Cagaran' : 'Collateral'}</span>
+                            <span className="font-semibold text-emerald-700">{c.collateral}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Action Button */}
+                      <button
+                        onClick={() => { 
+                          setApplyTarget({ lenderName: c.name, lenderUrl: getLenderOfficialPortalUrl(c.name), productName: purposeLabel[targetLoanPurpose] + ' Loan' }); 
+                          setApplySubmitted(false); 
+                          setApplyModalOpen(true); 
+                          setCompareOpen(false); 
+                        }}
+                        className={`w-full mt-4 py-2.5 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-98 ${
+                          isTop 
+                            ? 'bg-blue-950 hover:bg-blue-900 text-white shadow-xs' 
+                            : 'bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200'
+                        }`}
+                      >
+                        <ArrowRight className="w-3.5 h-3.5" />
+                        <span>{language === 'bm' ? 'Pilih & Mohon' : 'Apply Now'}</span>
+                      </button>
                     </div>
-                  ))}
-                  <button
-                    onClick={() => { setApplyTarget({ lenderName: current.name, lenderUrl: getLenderOfficialPortalUrl(current.name), productName: purposeLabel[targetLoanPurpose] + ' Loan' }); setApplySubmitted(false); setApplyModalOpen(true); setCompareOpen(false); }}
-                    className="w-full py-3 bg-blue-950 hover:bg-blue-900 text-white font-extrabold rounded-xl text-sm mt-2 flex items-center justify-center gap-1.5"
-                  ><ArrowRight className="w-4 h-4" /> Apply Now</button>
-                </div>
+                  );
+                })}
               </div>
             </div>
           </div>
