@@ -2079,22 +2079,33 @@ export default function Dashboard() {
                     </React.Fragment>
                   ))}
                 </div>
-
-                {/* Single Unified Save Progress Action */}
-                {activeStep < 4 && (
-                  <button
-                    type="button"
-                    onClick={() => handleSaveDraft(false)}
-                    className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-blue-950 border border-slate-200 transition-all shadow-2xs active:scale-95 cursor-pointer"
-                    title={language === 'bm' ? 'Simpan kemajuan permohonan' : 'Save application progress'}
-                  >
-                    <Bookmark className="w-3.5 h-3.5 text-blue-900" />
-                    <span>{language === 'bm' ? 'Simpan Draf' : 'Save Progress'}</span>
-                  </button>
-                )}
               </div>
             )}
           </div>
+
+          {/* FLOATING SAVE PROGRESS COMPANION (Follows user throughout application steps on the right side) */}
+          {perspective === 'B2C' && activeStep < 4 && (
+            <div className="fixed right-3 sm:right-6 md:right-8 top-1/2 -translate-y-1/2 z-40 flex flex-col items-end animate-fade-in pointer-events-auto">
+              <button
+                type="button"
+                onClick={() => handleSaveDraft(false)}
+                className="group flex items-center gap-2.5 px-3 py-2.5 sm:px-4 sm:py-3 bg-white/95 hover:bg-blue-950 text-slate-800 hover:text-white rounded-2xl border border-slate-200 hover:border-blue-900 shadow-xl hover:shadow-2xl backdrop-blur-md transition-all duration-300 cursor-pointer active:scale-95 hover:-translate-x-1"
+                title={language === 'bm' ? 'Simpan kemajuan permohonan anda pada bila-bila masa' : 'Save your application progress at any time'}
+              >
+                <div className="w-8 h-8 rounded-xl bg-blue-50 group-hover:bg-blue-900 flex items-center justify-center text-blue-950 group-hover:text-white transition-colors shrink-0 shadow-2xs">
+                  <Bookmark className="w-4 h-4" />
+                </div>
+                <div className="text-left hidden sm:block">
+                  <span className="text-xs font-black block leading-tight">
+                    {language === 'bm' ? 'Simpan Kemajuan' : 'Save Progress'}
+                  </span>
+                  <span className="text-[10px] text-slate-400 group-hover:text-blue-200 block font-medium">
+                    {language === 'bm' ? 'Simpan bila-bila masa' : 'Click to save anytime'}
+                  </span>
+                </div>
+              </button>
+            </div>
+          )}
 
           {/* PERSPECTIVE 1: B2C GIG WORKER */}
           {perspective === 'B2C' && (
@@ -3685,24 +3696,7 @@ export default function Dashboard() {
                           <ArrowRight className="w-3.5 h-3.5" />
                         </button>
                       </div>
-                    ) : (
-                      <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-between text-xs text-emerald-950">
-                        <div className="flex items-center gap-2.5">
-                          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-                          <div>
-                            <span className="font-extrabold text-emerald-950 block">
-                              {language === 'bm' ? '✓ Laporan Pengunderaitan Rasmi Penuh Aktif' : '✓ Full Certified Underwriting Report Active'}
-                            </span>
-                            <span className="text-[11px] text-emerald-800">
-                              {language === 'bm' ? 'Semua dokumen telah disatukan sepenuhnya & sedia untuk dihantar ke bank.' : 'Multi-document underwriting unlocked & authorized for direct bank submissions.'}
-                            </span>
-                          </div>
-                        </div>
-                        <span className="text-[10px] font-black uppercase bg-emerald-100 text-emerald-800 border border-emerald-300 px-2.5 py-1 rounded-lg">
-                          {language === 'bm' ? 'STATUS: DIIKTIRAF' : 'STATUS: CERTIFIED'}
-                        </span>
-                      </div>
-                    )}
+                    ) : null}
 
                     {/* Master Passport Layout */}
                     <div className="premium-card p-6 bg-white relative overflow-hidden shadow-md">
