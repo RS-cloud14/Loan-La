@@ -81,7 +81,7 @@ While generative AI parses unstructured visual PDFs, all final credit score calc
 <div align="center">
 
 ### 1. Borrower Credit Passport & Risk Profile
-*Dynamic Financial Readiness Index (FRI 740), Monthly Cash Surplus (RM 1,899), and Smart Lender Matching.*
+*Dynamic Financial Readiness Index (FRI 655), Monthly Cash Surplus (RM 3,720), and Smart Lender Matching.*
 
 ![Borrower Credit Passport](https://raw.githubusercontent.com/RS-cloud14/Loan-La/main/docs/screenshots/borrower_report.png)
 
