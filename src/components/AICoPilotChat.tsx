@@ -2294,38 +2294,27 @@ export default function AICoPilotChat({
         {isOpen && (
           <div className="w-[calc(100vw-2rem)] sm:w-[390px] h-[75vh] sm:h-[530px] max-h-[560px] bg-white border border-slate-200 shadow-2xl flex flex-col overflow-hidden rounded-3xl animate-fade-in fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-50">
             
-            {/* Header (Clean & Sleek) */}
-            <div className="bg-blue-950 text-white px-4 py-3 flex justify-between items-center border-b border-blue-900/80">
+            {/* Header (Clean, Light & Modern) */}
+            <div className="bg-white px-4 py-3 flex justify-between items-center border-b border-slate-100 shrink-0">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-white/95 border border-blue-400/40 flex items-center justify-center shadow-xs p-1">
-                  <AILogoIcon className="w-5 h-5" />
+                <div className="w-8 h-8 rounded-xl bg-blue-950 text-white flex items-center justify-center shadow-xs">
+                  <AILogoIcon className="w-4 h-4 text-blue-200" />
                 </div>
                 <div>
-                  <h3 className="text-xs font-bold text-white tracking-wide">
-                    {isCallActive ? (isMalay ? 'Panggilan Suara AI' : 'Live Voice Call') : (isMalay ? 'Ejen & Pembantu AI' : 'AI Agent & Assistant')}
+                  <h3 className="text-xs font-bold text-slate-900 tracking-tight">
+                    {isCallActive ? (isMalay ? 'Panggilan Suara AI' : 'Live Voice Call') : (isMalay ? 'Pembantu Pintar AI' : 'AI Assistant')}
                   </h3>
-                  {isCallActive && (
-                    <span className="text-[10px] text-blue-300 flex items-center gap-1 font-mono font-medium">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                      {formatCallTime(callDuration)}
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span className="text-[10px] text-slate-400 font-medium">
+                      {isCallActive ? formatCallTime(callDuration) : (isMalay ? 'Dalam talian' : 'Online')}
                     </span>
-                  )}
+                  </div>
                 </div>
               </div>
 
               {/* Controls: Clean Header */}
               <div className="flex items-center gap-1.5">
-                {!isCallActive && (
-                  <button
-                    type="button"
-                    onClick={handleClearChat}
-                    className="p-1.5 bg-blue-900/60 hover:bg-slate-800 text-blue-200 hover:text-white rounded-lg text-[10px] border border-blue-800/80 transition-all cursor-pointer"
-                    title={isMalay ? "Kosongkan Sembang" : "Clear Chat"}
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                )}
-
                 <button
                   type="button"
                   onClick={() => {
@@ -2333,7 +2322,7 @@ export default function AICoPilotChat({
                     setLanguage(nextLang);
                     if (typeof onChangeLanguage === 'function') onChangeLanguage(nextLang);
                   }}
-                  className="px-2 py-1 bg-blue-900/60 hover:bg-blue-800 text-white rounded-lg text-[10px] font-bold border border-blue-800/80 transition-all cursor-pointer"
+                  className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[10px] font-bold border border-slate-200 transition-all cursor-pointer"
                   title="Switch Language"
                 >
                   {isMalay ? 'BM' : 'EN'}
@@ -2343,9 +2332,9 @@ export default function AICoPilotChat({
                   <button
                     type="button"
                     onClick={handleStartCall}
-                    className="flex items-center gap-1 px-2.5 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-[11px] font-bold transition-all shadow-xs cursor-pointer active:scale-95"
+                    className="flex items-center gap-1 px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-lg text-[11px] font-bold transition-all shadow-2xs cursor-pointer active:scale-95"
                   >
-                    <PhoneCall className="w-3 h-3" />
+                    <PhoneCall className="w-3 h-3 text-emerald-700" />
                     <span>{isMalay ? 'Panggil' : 'Call'}</span>
                   </button>
                 )}
@@ -2354,10 +2343,21 @@ export default function AICoPilotChat({
                   <button
                     type="button"
                     onClick={() => setIsOpen(false)}
-                    className="p-1 hover:bg-blue-900 text-blue-300 hover:text-white rounded-lg transition-all cursor-pointer"
-                    title={isMalay ? "Kecilkan (Panggilan diteruskan di latar belakang)" : "Minimize (Call continues in background)"}
+                    className="p-1.5 hover:bg-slate-100 text-slate-500 hover:text-slate-900 rounded-lg transition-all cursor-pointer"
+                    title={isMalay ? "Kecilkan" : "Minimize"}
                   >
                     <Minimize2 className="w-4 h-4" />
+                  </button>
+                )}
+
+                {!isCallActive && (
+                  <button
+                    type="button"
+                    onClick={handleClearChat}
+                    className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-lg text-[10px] transition-all cursor-pointer"
+                    title={isMalay ? "Kosongkan Sembang" : "Clear Chat"}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 )}
 
@@ -2366,7 +2366,7 @@ export default function AICoPilotChat({
                     if (isCallActive) handleEndCall();
                     setIsOpen(false);
                   }}
-                  className="p-1 hover:bg-blue-900 text-blue-300 hover:text-white rounded-lg transition-all cursor-pointer"
+                  className="p-1.5 hover:bg-slate-100 text-slate-400 hover:text-slate-700 rounded-lg transition-all cursor-pointer"
                   title={isMalay ? "Tutup" : "Close"}
                 >
                   <X className="w-4 h-4" />
@@ -2901,63 +2901,46 @@ export default function AICoPilotChat({
                   <div ref={chatEndRef} />
                 </div>
 
-                {/* Input Bar */}
-                <div className="p-2.5 bg-white border-t border-slate-200">
-                  <div className="flex items-center gap-1.5 pb-2 overflow-x-auto no-scrollbar text-xs">
-                    <button
-                      type="button"
-                      onClick={() => handleSendMessage(isMalay ? "Semak status permohonan terkini" : "Check latest application status")}
-                      className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[10px] font-bold shrink-0 cursor-pointer"
-                    >
-                      {isMalay ? 'Status Permohonan' : 'Application Status'}
-                    </button>
+                {/* Input Bar (Clean & Modern) */}
+                <div className="p-3 bg-white border-t border-slate-100 shrink-0">
+                  <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200/90 rounded-2xl p-1.5 focus-within:border-blue-950 focus-within:bg-white transition-all shadow-2xs">
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[10px] font-bold shrink-0 flex items-center gap-1 cursor-pointer"
+                      className="p-2 text-slate-400 hover:text-slate-700 rounded-xl hover:bg-slate-100 transition-colors flex items-center justify-center shrink-0 cursor-pointer"
+                      title={isMalay ? 'Lampirkan fail' : 'Attach file'}
                     >
-                      <Paperclip className="w-3 h-3 text-slate-600" />
-                      <span>{isMalay ? 'Lampir Penyata' : 'Attach'}</span>
-                    </button>
-                  </div>
-
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="p-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg border border-slate-200 flex items-center justify-center shrink-0 cursor-pointer"
-                    >
-                      <Paperclip className="w-3.5 h-3.5 text-slate-600" />
+                      <Paperclip className="w-4 h-4" />
                     </button>
 
-                    {/* Voice to Text Dictation */}
+                    {/* Voice Dictation */}
                     <button
                       type="button"
                       onClick={toggleVoiceToText}
-                      className={`p-2 rounded-lg border flex items-center justify-center shrink-0 transition-all cursor-pointer ${
+                      className={`p-2 rounded-xl flex items-center justify-center shrink-0 transition-all cursor-pointer ${
                         isDictating
-                          ? 'bg-rose-100 text-rose-700 border-rose-300 animate-pulse'
-                          : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'
+                          ? 'bg-rose-100 text-rose-700 border border-rose-300 animate-pulse'
+                          : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
                       }`}
-                      title={isDictating ? (isMalay ? "Berhenti Merakam" : "Stop Recording") : (isMalay ? "Rakam Suara ke Teks" : "Voice to Text")}
+                      title={isDictating ? (isMalay ? "Berhenti Merakam" : "Stop Recording") : (isMalay ? "Rakam Suara" : "Voice to Text")}
                     >
-                      <Mic className="w-3.5 h-3.5" />
+                      <Mic className="w-4 h-4" />
                     </button>
 
                     <input
                       type="text"
-                      placeholder={isMalay ? "Taip atau cakap arahan..." : "Type or speak request..."}
+                      placeholder={isMalay ? "Tanya apa-apa soalan..." : "Ask anything or type request..."}
                       value={inputMessage}
                       onChange={(e) => setInputMessage(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                      className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 focus:border-blue-900 focus:bg-white rounded-lg text-xs text-slate-800 outline-hidden font-medium"
+                      className="flex-1 bg-transparent px-2 py-1 text-xs text-slate-900 placeholder-slate-400 outline-none font-medium"
                     />
 
                     <button
                       type="button"
                       onClick={() => handleSendMessage()}
                       disabled={isSending || !inputMessage.trim()}
-                      className="p-2 bg-blue-950 hover:bg-blue-900 disabled:opacity-40 text-white rounded-lg flex items-center justify-center shrink-0 cursor-pointer"
+                      className="p-2 bg-blue-950 hover:bg-blue-900 disabled:opacity-30 text-white rounded-xl flex items-center justify-center shrink-0 transition-all cursor-pointer active:scale-95 shadow-2xs"
                     >
                       <Send className="w-3.5 h-3.5" />
                     </button>
