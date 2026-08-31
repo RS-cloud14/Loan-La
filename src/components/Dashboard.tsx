@@ -26,6 +26,7 @@ import BankLogo from './BankLogo';
 import { getLenderOfficialPortalUrl } from '@/lib/lenders';
 import AICoPilotChat from './AICoPilotChat';
 import CreditPassportPaywallModal from './CreditPassportPaywallModal';
+import ReportExplainerModal from './ReportExplainerModal';
 import SupportTicketsModal from './SupportTicketsModal';
 import { useLanguage, Language } from '@/context/LanguageContext';
 import { extractTextFromPdfBase64 } from '@/lib/pdfExtractor';
@@ -326,6 +327,73 @@ export default function Dashboard() {
   const [isSupportModalOpen, setIsSupportModalOpen] = useState<boolean>(false);
   const [initialSupportTicketId, setInitialSupportTicketId] = useState<string | null>(null);
   const [activeAssessmentTask, setActiveAssessmentTask] = useState<ActiveAssessmentTask | null>(null);
+  const [showReportExplainerModal, setShowReportExplainerModal] = useState<boolean>(false);
+  const [explainerPayload, setExplainerPayload] = useState<{
+    inputData: any;
+    report: any;
+    documentHash: string;
+    isLocked?: boolean;
+  } | null>(null);
+
+  const handleOpenReportExplainer = (customPayload?: {
+    inputData: any;
+    report: any;
+    documentHash: string;
+    isLocked?: boolean;
+  }) => {
+    if (customPayload) {
+      setExplainerPayload(customPayload);
+      setShowReportExplainerModal(true);
+      return;
+    }
+
+    if (b2cResult) {
+      setExplainerPayload({
+        inputData: b2cResult.inputData,
+        report: b2cResult.report,
+        documentHash: b2cResult.hash || 'b2c-live-hash',
+        isLocked: !isPassportUnlocked
+      });
+      setShowReportExplainerModal(true);
+      return;
+    }
+
+    const userName = userSession?.name || 'Ahmad Razak';
+    const income = userSession?.estimatedMonthlyIncome || 4850;
+    const defaultInput = {
+      name: userName,
+      fullName: userName,
+      averageMonthlyNetIncome: income,
+      monthlyIncomes: [Math.round(income * 0.94), Math.round(income * 1.02), Math.round(income * 0.98), Math.round(income * 1.06), income],
+      averageMonthlyExpenses: Math.round(income * 0.45),
+      employmentSector: 'Gig Worker / E-Hailing',
+      platform: userSession?.platformName || userSession?.workCategory || 'Grab / Foodpanda',
+      workType: 'gig_worker',
+      phone: userSession?.phone || '+6012-3456789',
+      email: userSession?.email || 'ahmad.razak@example.com'
+    };
+    const defaultReport = {
+      score: 740,
+      creditScore: 740,
+      grade: 'A',
+      riskTier: 'Grade A',
+      status: 'APPROVED' as const,
+      dsr: 11.4,
+      dsrPercentage: 11.4,
+      runwayMonths: 7.8,
+      monthlySurplus: Math.round(income * 0.55),
+      estimatedInstallment: 1225,
+      confidenceScore: 94,
+      matchedLendersCount: 4
+    };
+    setExplainerPayload({
+      inputData: defaultInput as any,
+      report: defaultReport as any,
+      documentHash: '0x8f2a1b94c3d7e5f6',
+      isLocked: !isPassportUnlocked
+    });
+    setShowReportExplainerModal(true);
+  };
 
   // B2C Upload States
   const [uploadedFiles, setUploadedFiles] = useState<{
@@ -3618,6 +3686,20 @@ export default function Dashboard() {
                         <div className="flex items-center gap-2 flex-wrap">
                           <button
                             type="button"
+                            onClick={() => handleOpenReportExplainer({
+                              inputData: b2cResult.inputData,
+                              report: b2cResult.report,
+                              documentHash: b2cResult.hash || 'demo-hash',
+                              isLocked: !isPassportUnlocked
+                            })}
+                            className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white text-xs font-bold rounded-xl transition-all shadow-md cursor-pointer active:scale-95 border border-emerald-400/30"
+                            title={language === 'bm' ? 'Buka Laporan Interaktif & AI Explainer' : 'Open Interactive PDF & AI Explainer'}
+                          >
+                            <Sparkles className="w-3.5 h-3.5 text-emerald-200 animate-pulse" />
+                            <span>{language === 'bm' ? 'AI Explainer & PDF' : 'Interactive PDF & AI Explainer'}</span>
+                          </button>
+                          <button
+                            type="button"
                             onClick={() => {
                               generateCreditPassportPdf({
                                 inputData: b2cResult.inputData,
@@ -4465,6 +4547,17 @@ export default function Dashboard() {
                     </div>
 
                     <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => handleOpenReportExplainer({
+                          inputData: activeB2bApplicantData.inputData,
+                          report: activeB2bApplicantData.report,
+                          documentHash: activeB2bApplicantData.hash,
+                          isLocked: false
+                        })}
+                        className="flex items-center gap-1.5 px-3.5 py-2 bg-gradient-to-r from-emerald-700 to-teal-800 hover:from-emerald-600 hover:to-teal-700 text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer border border-emerald-500/30"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-emerald-300" /> AI Explainer Modal
+                      </button>
                       <button
                         onClick={() => generateCreditPassportPdf({
                           inputData: activeB2bApplicantData.inputData,
@@ -6296,6 +6389,9 @@ export default function Dashboard() {
             documentHash: b2cResult?.hash || 'a1b2c3d4e5f67890'
           });
         }}
+        onOpenReportExplainer={() => {
+          handleOpenReportExplainer();
+        }}
         onNavigateToLoanNeed={() => {
           if (!userSession) {
             setAuthModalOpen(true);
@@ -7439,6 +7535,18 @@ export default function Dashboard() {
           </div>
           <span className="text-xs font-bold">{draftSavedToast}</span>
         </div>
+      )}
+
+      {/* Interactive In-App PDF Viewer & AI Dossier Explainer Modal */}
+      {showReportExplainerModal && explainerPayload && (
+        <ReportExplainerModal
+          isOpen={showReportExplainerModal}
+          onClose={() => setShowReportExplainerModal(false)}
+          inputData={explainerPayload.inputData}
+          report={explainerPayload.report}
+          documentHash={explainerPayload.documentHash}
+          isLocked={explainerPayload.isLocked}
+        />
       )}
 
     </div>

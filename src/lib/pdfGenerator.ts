@@ -63,11 +63,10 @@ function drawFrostedBlur(
 }
 
 /**
- * Generates an executive, institutional-grade Alternative Credit Passport PDF.
+ * Builds the jsPDF instance for an executive, institutional-grade Alternative Credit Passport PDF.
  * Formatted to central banking standards (Bank Negara Malaysia CRM, FTFC, RMiT, AMLA 2001, PDPA 2010).
- * In preview mode (isLocked = true), preliminary Month 1 info is clear while full score & bank keys are visually blurred.
  */
-export function generateCreditPassportPdf({ inputData, report, documentHash, isLocked = false }: PdfGeneratorProps) {
+export function buildCreditPassportPdfDoc({ inputData, report, documentHash, isLocked = false }: PdfGeneratorProps): jsPDF {
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -790,12 +789,28 @@ export function generateCreditPassportPdf({ inputData, report, documentHash, isL
     doc.text('Page 2 of 2', pageWidth - 26, pageHeight - 5.5);
   }
 
-  // Trigger browser download of PDF
-  const safeName = (inputData.name || 'Borrower').replace(/\s+/g, '_');
-  const filename = isLocked 
+  return doc;
+}
+
+/**
+ * Generates and downloads the executive Alternative Credit Passport PDF.
+ */
+export function generateCreditPassportPdf(props: PdfGeneratorProps) {
+  const doc = buildCreditPassportPdfDoc(props);
+  const safeName = (props.inputData.name || 'Borrower').replace(/\s+/g, '_');
+  const filename = props.isLocked 
     ? `Loan_La_Credit_Report_${safeName}_Preview.pdf`
     : `Loan_La_Credit_Report_${safeName}_Official.pdf`;
   doc.save(filename);
+}
+
+/**
+ * Generates an in-memory blob URL for the Credit Passport PDF for previewing in iframe / modal.
+ */
+export function getCreditPassportPdfBlobUrl(props: PdfGeneratorProps): string {
+  const doc = buildCreditPassportPdfDoc(props);
+  const blob = doc.output('blob');
+  return URL.createObjectURL(blob);
 }
 
 export default generateCreditPassportPdf;

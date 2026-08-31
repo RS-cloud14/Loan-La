@@ -21,7 +21,7 @@ export interface ChatMessage {
   timestamp: string;
   suggestions?: string[];
   action?: {
-    type: 'NAVIGATE_LOAN_NEED' | 'NAVIGATE_UPLOAD' | 'SET_CALCULATOR' | 'NAVIGATE_CALCULATOR' | 'NAVIGATE_DIRECTORY' | 'NAVIGATE_TRACKER' | 'NAVIGATE_SETTINGS' | 'NAVIGATE_REPORT' | 'DOWNLOAD_REPORT' | 'CHANGE_LANGUAGE' | 'START_ASSESSMENT' | 'PROMPT_CREATE_TICKET' | 'DISPATCH_TICKET' | 'NAVIGATE_SUPPORT' | 'SAVE_DRAFT' | 'SCROLL_TO_SECTION' | 'SET_LOAN_AMOUNT' | 'SET_TENURE' | 'NAVIGATE_PAGE' | 'SET_LOAN_PURPOSE' | 'SPOTLIGHT_ELEMENT' | 'MINIMIZE_CALL' | 'EXPAND_CALL' | 'END_CALL';
+    type: 'NAVIGATE_LOAN_NEED' | 'NAVIGATE_UPLOAD' | 'SET_CALCULATOR' | 'NAVIGATE_CALCULATOR' | 'NAVIGATE_DIRECTORY' | 'NAVIGATE_TRACKER' | 'NAVIGATE_SETTINGS' | 'NAVIGATE_REPORT' | 'DOWNLOAD_REPORT' | 'OPEN_REPORT_EXPLAINER' | 'CHANGE_LANGUAGE' | 'START_ASSESSMENT' | 'PROMPT_CREATE_TICKET' | 'DISPATCH_TICKET' | 'NAVIGATE_SUPPORT' | 'SAVE_DRAFT' | 'SCROLL_TO_SECTION' | 'SET_LOAN_AMOUNT' | 'SET_TENURE' | 'NAVIGATE_PAGE' | 'SET_LOAN_PURPOSE' | 'SPOTLIGHT_ELEMENT' | 'MINIMIZE_CALL' | 'EXPAND_CALL' | 'END_CALL';
     payload?: any;
   };
   attachedFile?: {
@@ -55,6 +55,7 @@ interface AICoPilotChatProps {
   onNavigateToUpload: () => void;
   onNavigateToReport?: () => void;
   onDownloadReportPdf?: () => void;
+  onOpenReportExplainer?: () => void;
   onNavigateToCalculator: (params?: { loanAmount?: number; tenureYears?: number; interestRate?: number }) => void;
   onNavigateToDirectory: () => void;
   onNavigateToTracker: () => void;
@@ -470,6 +471,7 @@ export default function AICoPilotChat({
   onNavigateToUpload,
   onNavigateToReport,
   onDownloadReportPdf,
+  onOpenReportExplainer,
   onNavigateToCalculator,
   onNavigateToDirectory,
   onNavigateToTracker,
@@ -912,6 +914,8 @@ export default function AICoPilotChat({
       if (typeof onOpenSettings === 'function') onOpenSettings();
     } else if (action.type === 'NAVIGATE_SUPPORT') {
       if (typeof onOpenSupportModal === 'function') onOpenSupportModal(action.payload?.id);
+    } else if (action.type === 'OPEN_REPORT_EXPLAINER') {
+      if (typeof onOpenReportExplainer === 'function') onOpenReportExplainer();
     } else if (action.type === 'SET_LOAN_PURPOSE') {
       if (typeof onSetLoanPurpose === 'function' && action.payload?.purpose) {
         onSetLoanPurpose(action.payload.purpose, action.payload.amount, action.payload.tenureYears, action.payload.targetStep || 1);
@@ -1276,6 +1280,37 @@ export default function AICoPilotChat({
           setMessages(prev => [...prev, userMsgItem, botMsgItem]);
           return;
         }
+      }
+
+      // Interactive Report & Dossier Explainer Navigation
+      if (
+        lower.includes('explain report') || lower.includes('explain my report') || 
+        lower.includes('open pdf') || lower.includes('view report') || 
+        lower.includes('interactive pdf') || lower.includes('dossier explainer') || 
+        lower.includes('show dossier') || lower.includes('terangkan laporan') || 
+        lower.includes('buka laporan') || lower.includes('lihat pdf') || 
+        lower.includes('tunjuk pasport') || lower.includes('explain credit passport')
+      ) {
+        const replyText = isMalay
+          ? "Membuka Penjelas Laporan Kredit Interaktif & Pratonton PDF dengan Pembantu Suara AI untuk anda!"
+          : "Opening the Interactive Credit Dossier & PDF Explainer Modal with synchronized AI Companion for you!";
+        if (processingWatchdogRef.current) clearTimeout(processingWatchdogRef.current);
+        setIsSending(false);
+        isProcessingRef.current = false;
+        if (isCallActiveRef.current) {
+          setLastAgentReply(replyText);
+          setLastCallAction({ type: 'OPEN_REPORT_EXPLAINER' });
+          executeAgentAction({ type: 'OPEN_REPORT_EXPLAINER' }, false);
+          speakText(replyText, () => {
+            if (isCallActiveRef.current) startCallListening();
+          });
+        } else {
+          executeAgentAction({ type: 'OPEN_REPORT_EXPLAINER' }, true);
+        }
+        const userMsgItem: ChatMessage = { id: `user-${Date.now()}`, role: 'user', content: textToSend, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+        const botMsgItem: ChatMessage = { id: `bot-${Date.now()}`, role: 'assistant', content: replyText, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), action: { type: 'OPEN_REPORT_EXPLAINER' } };
+        setMessages(prev => [...prev, userMsgItem, botMsgItem]);
+        return;
       }
 
       if (!isReportInquiry && lower.includes('check') && (lower.includes('application') || lower.includes('status'))) {
@@ -2834,6 +2869,8 @@ export default function AICoPilotChat({
                                   executeAgentAction({ type: 'NAVIGATE_DIRECTORY' });
                                 } else if (lower.includes('kalkulator') || lower.includes('calculator')) {
                                   executeAgentAction({ type: 'NAVIGATE_CALCULATOR' });
+                                } else if (lower.includes('laporan') || lower.includes('report') || lower.includes('explainer') || lower.includes('pdf') || lower.includes('terangkan')) {
+                                  executeAgentAction({ type: 'OPEN_REPORT_EXPLAINER' });
                                 } else {
                                   handleSendMessage(sug);
                                 }
