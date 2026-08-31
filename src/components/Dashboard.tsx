@@ -1278,8 +1278,8 @@ export default function Dashboard() {
       sub: t.headline2Sub
     },
     {
-      top: language === 'bm' ? "Perlu Tunai Mikro Pantas?" : "Need Fast Micro-Cash?",
-      highlight: language === 'bm' ? "Pindahan Bank 2–4 Jam." : "2–4 Hour Bank Payout.",
+      top: language === 'bm' ? "Perlu Pembiayaan Alternatif?" : "Need Alternative Financing?",
+      highlight: language === 'bm' ? "Bimbingan Permohonan Terus." : "Guided Bank Application.",
       sub: t.headline3Sub
     },
     {
@@ -1728,21 +1728,27 @@ export default function Dashboard() {
               </button>
             </div>
 
-            {/* 3 Relatable Customer Situation Cards */}
+            {/* 3 Clear Capability Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 w-full mt-3 text-left">
               
               <div
                 onClick={() => setCurrentPage('directory')}
-                className="p-4 bg-white border border-slate-200/90 rounded-2xl shadow-xs flex flex-col gap-1.5 hover:border-blue-300 transition-all cursor-pointer"
+                className="p-4 sm:p-4.5 bg-white border border-slate-200/90 rounded-2xl shadow-2xs flex flex-col justify-between gap-2 hover:border-blue-300 transition-all cursor-pointer group"
               >
-                <div className="flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-blue-900 shrink-0" />
-                  <span className="text-xs font-black text-blue-950">&quot;{t.situation1Title}&quot;</span>
+                <div>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-900 flex items-center justify-center shrink-0">
+                      <Building2 className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="text-xs font-bold text-slate-900 group-hover:text-blue-950">
+                      {t.situation1Title}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed font-normal">
+                    {t.situation1Desc}
+                  </p>
                 </div>
-                <p className="text-[11.5px] text-slate-600 leading-relaxed font-normal">
-                  {t.situation1Desc}
-                </p>
-                <span className="text-[11px] font-extrabold text-blue-900 mt-1 flex items-center gap-1">
+                <span className="text-[11px] font-bold text-blue-950 mt-1 flex items-center gap-1">
                   {t.situation1Btn}
                 </span>
               </div>
@@ -1752,16 +1758,22 @@ export default function Dashboard() {
                   if (!userSession) setAuthModalOpen(true);
                   else triggerNewApplicationFlow();
                 }}
-                className="p-4 bg-white border border-slate-200/90 rounded-2xl shadow-xs flex flex-col gap-1.5 hover:border-blue-300 transition-all cursor-pointer"
+                className="p-4 sm:p-4.5 bg-white border border-slate-200/90 rounded-2xl shadow-2xs flex flex-col justify-between gap-2 hover:border-blue-300 transition-all cursor-pointer group"
               >
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4 text-blue-900 shrink-0" />
-                  <span className="text-xs font-black text-blue-950">&quot;{t.situation2Title}&quot;</span>
+                <div>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-800 flex items-center justify-center shrink-0">
+                      <CheckCircle2 className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="text-xs font-bold text-slate-900 group-hover:text-blue-950">
+                      {t.situation2Title}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed font-normal">
+                    {t.situation2Desc}
+                  </p>
                 </div>
-                <p className="text-[11.5px] text-slate-600 leading-relaxed font-normal">
-                  {t.situation2Desc}
-                </p>
-                <span className="text-[11px] font-extrabold text-blue-900 mt-1 flex items-center gap-1">
+                <span className="text-[11px] font-bold text-blue-950 mt-1 flex items-center gap-1">
                   {t.situation2Btn}
                 </span>
               </div>
@@ -1771,24 +1783,30 @@ export default function Dashboard() {
                   if (!userSession) setAuthModalOpen(true);
                   else triggerNewApplicationFlow();
                 }}
-                className="p-4 bg-white border border-slate-200/90 rounded-2xl shadow-xs flex flex-col gap-1.5 hover:border-blue-300 transition-all cursor-pointer"
+                className="p-4 sm:p-4.5 bg-white border border-slate-200/90 rounded-2xl shadow-2xs flex flex-col justify-between gap-2 hover:border-blue-300 transition-all cursor-pointer group"
               >
-                <div className="flex items-center gap-2">
-                  <HelpCircle className="w-4 h-4 text-blue-900 shrink-0" />
-                  <span className="text-xs font-black text-blue-950">&quot;{t.situation3Title}&quot;</span>
+                <div>
+                  <div className="flex items-center gap-2 mb-1.5">
+                    <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-900 flex items-center justify-center shrink-0">
+                      <HelpCircle className="w-3.5 h-3.5" />
+                    </div>
+                    <span className="text-xs font-bold text-slate-900 group-hover:text-blue-950">
+                      {t.situation3Title}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed font-normal">
+                    {t.situation3Desc}
+                  </p>
                 </div>
-                <p className="text-[11.5px] text-slate-600 leading-relaxed font-normal">
-                  {t.situation3Desc}
-                </p>
-                <span className="text-[11px] font-extrabold text-blue-900 mt-1 flex items-center gap-1">
+                <span className="text-[11px] font-bold text-blue-950 mt-1 flex items-center gap-1">
                   {t.situation3Btn}
                 </span>
               </div>
 
             </div>
 
-            {/* Clear Non-Lender Notice */}
-            <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl text-[11px] text-slate-600 max-w-2xl mt-1 text-center leading-relaxed">
+            {/* Clear Role & Purpose Explanation Notice */}
+            <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs text-slate-600 max-w-2xl mt-1 text-center leading-relaxed font-medium">
               {t.partnershipNotice}
             </div>
           </div>
