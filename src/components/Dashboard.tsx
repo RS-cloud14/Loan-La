@@ -1294,7 +1294,7 @@ export default function Dashboard() {
   useEffect(() => {
     const timer = setInterval(() => {
       setHeadlineIdx((prev) => (prev + 1) % 4);
-    }, 3000);
+    }, 4000);
     return () => clearInterval(timer);
   }, []);
 
@@ -1877,15 +1877,17 @@ export default function Dashboard() {
           </div>
 
           {/* ========================================================= */}
-          {/* 4. WHO CAN APPLY? (4 CLEAR TARGET CARDS WITH DIRECT START) */}
+          {/* 4. WHO CAN APPLY? (INCLUSIVE FOR ALL MALAYSIANS & GIG WORKERS) */}
           {/* ========================================================= */}
           <div id="landing-who-can-apply" className="flex flex-col gap-6">
-            <div className="text-center max-w-md mx-auto">
+            <div className="text-center max-w-lg mx-auto">
               <h2 className="text-2xl sm:text-3xl font-black text-blue-950">
                 {language === 'bm' ? 'Siapa Yang Boleh Memohon?' : 'Who Can Apply?'}
               </h2>
               <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                {language === 'bm' ? 'Pilih kategori anda untuk melihat anggaran jumlah pinjaman yang layak.' : 'Choose your category to see how much you can borrow.'}
+                {language === 'bm' 
+                  ? 'Terbuka untuk semua — pekerja bergaji tetap, mahupun pekerja gig & peniaga tanpa slip gaji.' 
+                  : 'Open to all — salaried employees, as well as gig workers & businesses without traditional payslips.'}
               </p>
             </div>
 
@@ -1895,9 +1897,9 @@ export default function Dashboard() {
                   id: 'personal_cash',
                   title: language === 'bm' ? 'Pemandu Grab & Penghantar Makanan' : 'Grab & Food Delivery Drivers',
                   defaultAmount: 5000,
-                  speed: language === 'bm' ? '2–4 Jam' : '2–4 Hours',
+                  speed: language === 'bm' ? 'Pra-Semakan Pantas' : 'Fast Pre-Check',
                   incomeType: language === 'bm' ? 'Penyata Aplikasi Gig' : 'Gig Inflow Auditing',
-                  desc: language === 'bm' ? 'Gunakan pendapatan mingguan penghantaran anda untuk layak pinjaman tunai kecemasan pantas.' : 'Use your weekly gig delivery earnings to qualify for fast emergency cash loans.',
+                  desc: language === 'bm' ? 'Gunakan pendapatan mingguan penghantaran anda untuk memohon pembiayaan berlesen tanpa slip gaji konvensional.' : 'Use your weekly gig delivery earnings to pre-check licensed financing options without conventional payslips.',
                   icon: Car,
                   requiredDocs: language === 'bm'
                     ? ['Penyata Bank 3 Bulan (PDF)', 'Penyata Grab / Foodpanda', 'MyKad (Privasi Terkawal)']
@@ -1921,7 +1923,7 @@ export default function Dashboard() {
                   id: 'vehicle',
                   title: language === 'bm' ? 'Pekerja Bebas (Freelancer) & Bekerja Sendiri' : 'Freelancers & Self-Employed',
                   defaultAmount: 10000,
-                  speed: language === 'bm' ? '2–6 Jam' : '2–6 Hours',
+                  speed: language === 'bm' ? 'Pra-Semakan Pantas' : 'Fast Pre-Check',
                   incomeType: language === 'bm' ? 'Invois Pelanggan & Projek' : 'Client Invoices & Deposits',
                   desc: language === 'bm' ? 'Layak menggunakan sejarah deposit pelanggan tetap selama 3 hingga 6 bulan dalam penyata bank anda.' : 'Qualify using 3 to 6 months of regular client deposit history in your bank statements.',
                   icon: Laptop,
