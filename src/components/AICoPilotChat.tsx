@@ -2254,19 +2254,21 @@ export default function AICoPilotChat({
         onChange={handleFileUpload}
       />
 
-      <div className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-50 flex flex-col items-end pointer-events-auto">
+      <div className="fixed bottom-24 right-5 sm:bottom-10 sm:right-8 z-50 flex flex-col items-end pointer-events-auto">
         {/* 1. Normal State: "Ask AI" Trigger button (when call is not active and modal is closed) */}
         {!isOpen && !isCallActive && (
           <button
             onClick={() => setIsOpen(true)}
-            className="flex items-center gap-2 px-3.5 py-2.5 bg-blue-950 hover:bg-blue-900 text-white rounded-full shadow-lg border border-blue-800/80 shrink-0 transition-all hover:scale-105 active:scale-95 group cursor-pointer select-none"
+            className="flex items-center gap-2.5 px-4.5 py-3 sm:px-5 sm:py-3.5 bg-white hover:bg-slate-50 text-slate-900 rounded-full shadow-[0_8px_25px_rgba(0,0,0,0.12)] border border-slate-200/90 shrink-0 transition-all hover:scale-105 active:scale-95 group cursor-pointer select-none hover:border-blue-300"
             title={isMalay ? "Tanya Ejen AI" : "Ask AI Assistant"}
           >
             <div className="relative flex items-center justify-center">
-              <Sparkles className="w-3.5 h-3.5 text-blue-300 group-hover:text-cyan-300 transition-colors" />
-              <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+              <div className="w-6 h-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                <Sparkles className="w-3.5 h-3.5 text-blue-600 group-hover:rotate-12 transition-transform" />
+              </div>
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white animate-pulse"></span>
             </div>
-            <span className="text-xs font-bold tracking-tight text-white pr-0.5">
+            <span className="text-sm font-extrabold tracking-tight text-slate-900 pr-1">
               Ask AI
             </span>
           </button>
