@@ -1,6 +1,7 @@
 # 🇲🇾 Loan - La (CreditFlow AI)
 ### *AI-Powered Alternative Credit Underwriting Engine & Smart Loan Matcher for Malaysia's Gig Economy*
 
+[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-loan--la.vercel.app-7C3AED?style=for-the-badge)](https://loan-la.vercel.app/)
 [![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
 [![React](https://img.shields.io/badge/React-19.0-blue?style=for-the-badge&logo=react)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
@@ -141,46 +142,15 @@ graph TD
 
 ---
 
-## 🚀 Getting Started
+## 🌐 Live Application & Demo
 
-### Prerequisites
-* **Node.js**: `v18.18.0` or higher
-* **npm**: `v9.0.0` or higher
-* **Google Gemini API Key**: Obtainable from [Google AI Studio](https://aistudio.google.com/)
+Experience the full live platform directly in your browser:
 
-### 1. Clone the Repository
-```bash
-git clone https://github.com/RS-cloud14/Loan-La.git
-cd Loan-La
-```
+👉 **[https://loan-la.vercel.app/](https://loan-la.vercel.app/)**
 
-### 2. Install Dependencies
-```bash
-npm install
-```
-
-### 3. Configure Environment Variables
-Create a `.env.local` file in the project root:
-```env
-# Primary Google Gemini API Key
-GEMINI_API_KEY=your_gemini_api_key_here
-
-# Optional: Secondary Keys for Automatic Key Rotation & Failover Cascade
-GEMINI_API_KEY_SECONDARY=your_secondary_key_here
-GEMINI_API_KEY_TERTIARY=your_tertiary_key_here
-```
-
-### 4. Start Development Server
-```bash
-npm run dev
-```
-Open [http://localhost:3000](http://localhost:3000) in your browser.
-
-### 5. Production Build
-```bash
-npm run build
-npm run start
-```
+* 🚀 **Instant Eligibility Audit**: Upload sample gig statements or bank statements to generate an instant Alternative Credit Passport.
+* 🎙️ **Real-Time AI Voice Advisor**: Interact with our conversational loan officer in English or Bahasa Melayu.
+* 🏦 **Smart Lender Matching**: Explore live financing matches for TEKUN Nasional, SME Bank, Maybank, and Digital Banks.
 
 ---
 
