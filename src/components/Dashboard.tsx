@@ -1265,35 +1265,27 @@ export default function Dashboard() {
 
   const uniqueDocCategories = countUniqueDocCategories();
 
-  // Dynamic rotating headlines (Explains exactly who it's for, what we do, and what we provide)
+  // Dynamic rotating headlines (Changes every 3 seconds to explain functions clearly)
   const rotatingHeadlines = [
     {
-      top: language === 'bm' ? "Tiada Slip Gaji Konvensional?" : "No Traditional Payslip?",
-      highlight: language === 'bm' ? "Dapatkan Padanan 18+ Bank Berlesen." : "Get Matched with 18+ Licensed Banks.",
-      sub: language === 'bm'
-        ? "Tukarkan penyata Grab, Shopee, Touch 'n Go, dan bank kepada bukti pendapatan rasmi."
-        : "Turn Grab, Shopee, eWallet, and bank statements into certified proof of income."
+      top: language === 'bm' ? "Tiada Slip Gaji?" : "No Payslip?",
+      highlight: language === 'bm' ? "Cari Bank Yang Sesuai." : "Find Your Bank Match.",
+      sub: t.headline1Sub
     },
     {
       top: language === 'bm' ? "Pemandu Grab, Shopee atau Freelance?" : "Grab, Shopee or Freelance?",
-      highlight: language === 'bm' ? "Skor Kredit Pintar Sedia-Bank." : "Instant Bank-Ready Credit Scoring.",
-      sub: language === 'bm'
-        ? "Kira Nisbah Khidmat Hutang (DSR) & Indeks Ketahanan Kewangan anda dalam 60 saat."
-        : "Calculate your verified Debt Service Ratio (DSR) & Financial Resilience Index in 60 seconds."
+      highlight: language === 'bm' ? "Semak Kelayakan Segera." : "Get Instant Pre-Approval.",
+      sub: t.headline2Sub
     },
     {
-      top: language === 'bm' ? "Perlu Modal Perniagaan atau Tunai?" : "Need Business or Personal Cash?",
-      highlight: language === 'bm' ? "Pra-Kelulusan Selaras Piawaian BNM." : "Instant BNM-Aligned Pre-Approval.",
-      sub: language === 'bm'
-        ? "Padanan skim pembiayaan mikro tanpa cagaran bersama BSN, Bank Rakyat, GXBank, & Agrobank."
-        : "Find zero-collateral micro-financing with BSN, Bank Rakyat, GXBank, Agrobank, and regulated lenders."
+      top: language === 'bm' ? "Perlu Tunai Mikro Pantas?" : "Need Fast Micro-Cash?",
+      highlight: language === 'bm' ? "Pindahan Bank 2–4 Jam." : "2–4 Hour Bank Payout.",
+      sub: t.headline3Sub
     },
     {
-      top: language === 'bm' ? "Penat Beratur di Cawangan Bank?" : "Tired of Queuing at Bank Branches?",
-      highlight: language === 'bm' ? "Bandingkan Kadar & Mohon Dalam Talian." : "Compare Best Rates & Apply Online.",
-      sub: language === 'bm'
-        ? "Semak kelayakan anda secara percuma sebelum memohon tanpa menjejaskan rekod kredit."
-        : "Pre-screen your financing eligibility before applying with zero impact to credit score."
+      top: language === 'bm' ? "Tidak Tahu Di Mana Nak Mohon?" : "Don't Know Where to Apply?",
+      highlight: language === 'bm' ? "Bandingkan Kadar Terbaik." : "Compare Best Bank Rates.",
+      sub: t.headline4Sub
     }
   ];
 
@@ -1682,33 +1674,27 @@ export default function Dashboard() {
             
 
 
-            {/* Top Identity Badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200/80 text-blue-950 text-xs font-bold shadow-2xs mb-1">
-              <ShieldCheck className="w-4 h-4 text-blue-800 shrink-0" />
-              <span>{language === 'bm' ? 'Platform Penilaian Kredit Alternatif & Padanan Bank Berlesen' : 'AI Alternative Credit Scoring & Licensed Lender Matcher'}</span>
-            </div>
-
-            {/* Dynamic Rotating Headline (Spacious min-height - No Overlapping) */}
-            <div className="min-h-[200px] sm:min-h-[170px] flex flex-col items-center justify-center w-full">
+            {/* Dynamic Rotating Headline (Changes every 3s with smooth transition) */}
+            <div className="min-h-[145px] sm:min-h-[160px] flex flex-col items-center justify-center">
               <div key={headlineIdx} className="animate-fade-in flex flex-col items-center">
-                <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight max-w-3xl">
+                <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-blue-950 tracking-tight leading-tight max-w-2xl">
                   {rotatingHeadlines[headlineIdx].top} <br className="hidden sm:inline" />
                   <span className="text-blue-900">{rotatingHeadlines[headlineIdx].highlight}</span>
                 </h1>
 
                 {/* Dynamic Explanatory Subtitle */}
-                <p className="text-sm sm:text-base text-slate-600 max-w-2xl leading-relaxed font-medium mt-3">
+                <p className="text-sm sm:text-base text-slate-600 max-w-xl leading-relaxed font-medium mt-2.5">
                   {rotatingHeadlines[headlineIdx].sub}
                 </p>
               </div>
 
               {/* 4 Interactive Progress Dots */}
-              <div className="flex items-center gap-1.5 mt-4">
+              <div className="flex items-center gap-1.5 mt-3.5">
                 {rotatingHeadlines.map((_, idx) => (
                   <button
                     key={idx}
                     onClick={() => setHeadlineIdx(idx)}
-                    className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                    className={`h-1.5 rounded-full transition-all duration-300 ${
                       headlineIdx === idx ? 'w-6 bg-blue-950' : 'w-2 bg-slate-300 hover:bg-slate-400'
                     }`}
                     aria-label={`Show slide ${idx + 1}`}
@@ -1727,111 +1713,83 @@ export default function Dashboard() {
                     triggerNewApplicationFlow();
                   }
                 }}
-                className="w-full sm:w-auto px-8 py-4 bg-blue-950 hover:bg-blue-900 text-white font-black text-sm rounded-2xl shadow-lg transition-all flex items-center justify-center gap-2.5 active:scale-98 cursor-pointer"
+                className="w-full sm:w-auto px-8 py-4 bg-blue-950 hover:bg-blue-900 text-white font-black text-sm rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2.5 active:scale-98 cursor-pointer"
               >
-                <span>{language === 'bm' ? 'Semak Kelayakan Pinjaman (Percuma) →' : 'Check Loan Eligibility (Free) →'}</span>
+                <span>{t.startAssessmentBtn}</span>
+                <ArrowRight className="w-4 h-4 text-blue-200" />
               </button>
 
               <button
                 onClick={() => setCurrentPage('calculator')}
-                className="w-full sm:w-auto px-7 py-4 bg-white hover:bg-slate-50 text-slate-800 font-bold text-sm rounded-2xl border border-slate-200 shadow-2xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full sm:w-auto px-7 py-4 bg-white hover:bg-slate-50 text-blue-950 font-bold text-sm rounded-2xl border border-slate-200 shadow-xs transition-all flex items-center justify-center gap-2"
               >
                 <DollarSign className="w-4 h-4 text-blue-900" />
                 <span>{t.navCalculator}</span>
               </button>
             </div>
 
-            {/* 3 Clear "What We Provide" Value Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full mt-4 text-left">
+            {/* 3 Relatable Customer Situation Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 w-full mt-3 text-left">
               
               <div
-                onClick={() => {
-                  if (!userSession) setAuthModalOpen(true);
-                  else triggerNewApplicationFlow();
-                }}
-                className="p-5 bg-white border border-slate-200/90 rounded-2xl shadow-xs flex flex-col justify-between hover:border-blue-300 hover:shadow-md transition-all cursor-pointer group"
-              >
-                <div>
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-900 flex items-center justify-center mb-3 group-hover:bg-blue-950 group-hover:text-white transition-colors">
-                    <FileSpreadsheet className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-sm font-bold text-slate-900 mb-1.5">
-                    {language === 'bm' ? '1. Bukti Pendapatan Alternatif' : '1. Alternative Income Proof'}
-                  </h3>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    {language === 'bm'
-                      ? 'Tukarkan transaksi Grab, Shopee, Touch \'n Go & penyata bank kepada pengesahan pendapatan rasmi tanpa slip gaji.'
-                      : 'Convert Grab, Shopee, eWallet & bank PDF statements into verified proof of income accepted by banks without salary slips.'}
-                  </p>
-                </div>
-                <span className="text-xs font-bold text-blue-900 mt-3 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
-                  {language === 'bm' ? 'Mula Pengesahan →' : 'Start Verification →'}
-                </span>
-              </div>
-
-              <div
-                onClick={() => {
-                  if (!userSession) setAuthModalOpen(true);
-                  else triggerNewApplicationFlow();
-                }}
-                className="p-5 bg-white border border-slate-200/90 rounded-2xl shadow-xs flex flex-col justify-between hover:border-blue-300 hover:shadow-md transition-all cursor-pointer group"
-              >
-                <div>
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-900 flex items-center justify-center mb-3 group-hover:bg-blue-950 group-hover:text-white transition-colors">
-                    <ShieldCheck className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-sm font-bold text-slate-900 mb-1.5">
-                    {language === 'bm' ? '2. Pasport Kredit Selaras BNM' : '2. BNM-Aligned Credit Score'}
-                  </h3>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    {language === 'bm'
-                      ? 'Pengiraan AI segera untuk Nisbah Khidmat Hutang (DSR) & Indeks Ketahanan Kewangan (FRI) berpiawaian Bank Negara Malaysia.'
-                      : 'Instant AI calculation of Debt Service Ratio (DSR) & Financial Resilience Index (FRI) aligned with Bank Negara Malaysia framework.'}
-                  </p>
-                </div>
-                <span className="text-xs font-bold text-blue-900 mt-3 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
-                  {language === 'bm' ? 'Kira Skor Kredit →' : 'Calculate Credit Score →'}
-                </span>
-              </div>
-
-              <div
                 onClick={() => setCurrentPage('directory')}
-                className="p-5 bg-white border border-slate-200/90 rounded-2xl shadow-xs flex flex-col justify-between hover:border-blue-300 hover:shadow-md transition-all cursor-pointer group"
+                className="p-4 bg-white border border-slate-200/90 rounded-2xl shadow-xs flex flex-col gap-1.5 hover:border-blue-300 transition-all cursor-pointer"
               >
-                <div>
-                  <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-900 flex items-center justify-center mb-3 group-hover:bg-blue-950 group-hover:text-white transition-colors">
-                    <Building2 className="w-5 h-5" />
-                  </div>
-                  <h3 className="text-sm font-bold text-slate-900 mb-1.5">
-                    {language === 'bm' ? '3. Padanan 18+ Bank Berlesen' : '3. 18+ Licensed Bank Match'}
-                  </h3>
-                  <p className="text-xs text-slate-600 leading-relaxed">
-                    {language === 'bm'
-                      ? 'Pra-saringan pintar & padanan tepat ke skim pembiayaan BSN, Bank Rakyat, GXBank, Agrobank, dan institusi terkawal.'
-                      : 'Pre-screen your profile and match directly with financing schemes at BSN, Bank Rakyat, GXBank, Agrobank, and regulated lenders.'}
-                  </p>
+                <div className="flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-blue-900 shrink-0" />
+                  <span className="text-xs font-black text-blue-950">&quot;{t.situation1Title}&quot;</span>
                 </div>
-                <span className="text-xs font-bold text-blue-900 mt-3 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
-                  {language === 'bm' ? 'Lihat Direktori Bank →' : 'Explore Bank Directory →'}
+                <p className="text-[11.5px] text-slate-600 leading-relaxed font-normal">
+                  {t.situation1Desc}
+                </p>
+                <span className="text-[11px] font-extrabold text-blue-900 mt-1 flex items-center gap-1">
+                  {t.situation1Btn}
+                </span>
+              </div>
+
+              <div
+                onClick={() => {
+                  if (!userSession) setAuthModalOpen(true);
+                  else triggerNewApplicationFlow();
+                }}
+                className="p-4 bg-white border border-slate-200/90 rounded-2xl shadow-xs flex flex-col gap-1.5 hover:border-blue-300 transition-all cursor-pointer"
+              >
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-blue-900 shrink-0" />
+                  <span className="text-xs font-black text-blue-950">&quot;{t.situation2Title}&quot;</span>
+                </div>
+                <p className="text-[11.5px] text-slate-600 leading-relaxed font-normal">
+                  {t.situation2Desc}
+                </p>
+                <span className="text-[11px] font-extrabold text-blue-900 mt-1 flex items-center gap-1">
+                  {t.situation2Btn}
+                </span>
+              </div>
+
+              <div
+                onClick={() => {
+                  if (!userSession) setAuthModalOpen(true);
+                  else triggerNewApplicationFlow();
+                }}
+                className="p-4 bg-white border border-slate-200/90 rounded-2xl shadow-xs flex flex-col gap-1.5 hover:border-blue-300 transition-all cursor-pointer"
+              >
+                <div className="flex items-center gap-2">
+                  <HelpCircle className="w-4 h-4 text-blue-900 shrink-0" />
+                  <span className="text-xs font-black text-blue-950">&quot;{t.situation3Title}&quot;</span>
+                </div>
+                <p className="text-[11.5px] text-slate-600 leading-relaxed font-normal">
+                  {t.situation3Desc}
+                </p>
+                <span className="text-[11px] font-extrabold text-blue-900 mt-1 flex items-center gap-1">
+                  {t.situation3Btn}
                 </span>
               </div>
 
             </div>
 
-            {/* Clean Trust Strip */}
-            <div className="py-2.5 px-4 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 max-w-2xl mt-1 text-center flex items-center justify-center gap-3 sm:gap-6 flex-wrap font-medium">
-              <span className="flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                {language === 'bm' ? '100% Pra-Semakan Percuma' : '100% Free Pre-Check'}
-              </span>
-              <span className="flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                {language === 'bm' ? 'Tiada Rekod Negatif Kredit' : 'Zero Credit Score Impact'}
-              </span>
-              <span className="flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                {language === 'bm' ? 'Selaras Garis Panduan BNM' : 'BNM Guidelines Aligned'}
-              </span>
+            {/* Clear Non-Lender Notice */}
+            <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl text-[11px] text-slate-600 max-w-2xl mt-1 text-center leading-relaxed">
+              {t.partnershipNotice}
             </div>
           </div>
 
