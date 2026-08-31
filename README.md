@@ -60,6 +60,49 @@ Over **4.8 million gig workers** (Grab, Foodpanda, Shopee, Lalamove) and micro-S
 
 ---
 
+## 🚀 Key Innovative AI Functions
+
+### 1. 🧠 Multimodal Vision OCR & Forensic RMiT Inspector
+Unlike basic OCR that only extracts plain text, Loan-La uses **Google Gemini 2.5 Flash** with custom vision prompting to analyze bank statement table layouts, detect clone-stamp manipulation around account balances, and flag suspicious font anomalies in compliance with Bank Negara Malaysia's **RMiT (Risk Management in Technology)** guidelines.
+
+### 2. 📞 Live AI Voice Call (Multilingual Audio Agent)
+Borrowers can tap the **Live Voice Call** button to speak naturally with their AI financial coach. The engine combines browser-native **Web Speech Recognition (STT)** with server-side Gemini conversational intelligence and localized **Speech Synthesis (TTS)** in Malaysian English and Bahasa Melayu, breaking down complex banking jargon into friendly advice.
+
+### 3. 📑 Interactive PDF & AI Underwriting Explainer
+Users can open an interactive modal with their generated Credit Passport PDF and chat directly with an AI underwriter. Asking questions like *"How is my Monthly Cash Surplus and DSR calculated?"* produces real-time mathematical breakdowns directly referenced from their verified statement ledgers.
+
+### 4. 🔒 Zero-Hallucination Hybrid Architecture
+While generative AI parses unstructured visual PDFs, all final credit score calculations (FRI 300–850), Monthly Cash Surplus, and BNM-mandated DSR percentages are computed via a **deterministic mathematical TypeScript rule engine** (`scoring.ts`), guaranteeing 100% accuracy, reproducibility, and auditability.
+
+---
+
+## 📸 Platform Interface & Screenshots
+
+<div align="center">
+
+### 1. Borrower Credit Passport & Risk Profile
+*Dynamic Financial Readiness Index (FRI 740), Monthly Cash Surplus (RM 1,899), and Smart Lender Matching.*
+
+![Borrower Credit Passport](https://raw.githubusercontent.com/RS-cloud14/Loan-La/main/docs/screenshots/borrower_report.png)
+
+---
+
+### 2. Interactive PDF & Real-Time AI Voice Call
+*Live conversational financial coaching and interactive credit report breakdown.*
+
+![AI Voice Call & Explainer](https://raw.githubusercontent.com/RS-cloud14/Loan-La/main/docs/screenshots/ai_voice_explainer.png)
+
+---
+
+### 3. Institutional Banker View & Anti-Tamper Forensics
+*RMiT image tamper heatmap, metadata inspection, and Grab payout-to-ledger reconciliation.*
+
+![Banker Forensics](https://raw.githubusercontent.com/RS-cloud14/Loan-La/main/docs/screenshots/banker_forensics.png)
+
+</div>
+
+---
+
 ## 🏛️ System Architecture
 
 ```mermaid
