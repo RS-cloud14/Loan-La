@@ -1732,13 +1732,16 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 w-full mt-3 text-left">
               
               <div
-                onClick={() => setCurrentPage('directory')}
+                onClick={() => {
+                  if (!userSession) setAuthModalOpen(true);
+                  else triggerNewApplicationFlow();
+                }}
                 className="p-4 sm:p-4.5 bg-white border border-slate-200/90 rounded-2xl shadow-2xs flex flex-col justify-between gap-2 hover:border-blue-300 transition-all cursor-pointer group"
               >
                 <div>
                   <div className="flex items-center gap-2 mb-1.5">
                     <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-900 flex items-center justify-center shrink-0">
-                      <Building2 className="w-3.5 h-3.5" />
+                      <FileCheck className="w-3.5 h-3.5" />
                     </div>
                     <span className="text-xs font-bold text-slate-900 group-hover:text-blue-950">
                       {t.situation1Title}
@@ -1754,16 +1757,13 @@ export default function Dashboard() {
               </div>
 
               <div
-                onClick={() => {
-                  if (!userSession) setAuthModalOpen(true);
-                  else triggerNewApplicationFlow();
-                }}
+                onClick={() => setCurrentPage('directory')}
                 className="p-4 sm:p-4.5 bg-white border border-slate-200/90 rounded-2xl shadow-2xs flex flex-col justify-between gap-2 hover:border-blue-300 transition-all cursor-pointer group"
               >
                 <div>
                   <div className="flex items-center gap-2 mb-1.5">
                     <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-800 flex items-center justify-center shrink-0">
-                      <CheckCircle2 className="w-3.5 h-3.5" />
+                      <Building2 className="w-3.5 h-3.5" />
                     </div>
                     <span className="text-xs font-bold text-slate-900 group-hover:text-blue-950">
                       {t.situation2Title}
@@ -1788,7 +1788,7 @@ export default function Dashboard() {
                 <div>
                   <div className="flex items-center gap-2 mb-1.5">
                     <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-900 flex items-center justify-center shrink-0">
-                      <HelpCircle className="w-3.5 h-3.5" />
+                      <FileText className="w-3.5 h-3.5" />
                     </div>
                     <span className="text-xs font-bold text-slate-900 group-hover:text-blue-950">
                       {t.situation3Title}
