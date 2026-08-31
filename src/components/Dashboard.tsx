@@ -212,43 +212,33 @@ export default function Dashboard() {
   const [isCurrentResultDemo, setIsCurrentResultDemo] = useState<boolean>(false);
   const [isDispatchingApplications, setIsDispatchingApplications] = useState<boolean>(false);
 
-  // Load persisted records, profile, and stored assessment JSON from server & localStorage
+  // Load persisted records and profile from localStorage (only for active user)
   useEffect(() => {
     try {
+      const savedUser = localStorage.getItem('crediflow_user_session');
+      const userObj = savedUser ? JSON.parse(savedUser) : null;
+      if (userObj) {
+        setUserSession(userObj);
+      }
+
       const savedApps = localStorage.getItem('crediflow_submitted_apps');
       if (savedApps) setSubmittedApplications(JSON.parse(savedApps));
+
       const savedReports = localStorage.getItem('crediflow_report_history');
       if (savedReports) {
         const parsed = JSON.parse(savedReports);
-        setReportHistory(parsed);
-        if (parsed.length > 0 && parsed[0].result) {
-          setB2cResult(parsed[0].result);
-          setIsCurrentResultDemo(parsed[0].isDemo || false);
-          if (parsed[0].loanAmount) setTargetLoanAmount(parsed[0].loanAmount);
-          if (parsed[0].loanPurpose) setTargetLoanPurpose(parsed[0].loanPurpose);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setReportHistory(parsed);
+          // Only restore result if it matches current user session and is non-demo
+          if (userObj && parsed[0]?.result && !parsed[0].isDemo) {
+            setB2cResult(parsed[0].result);
+            setIsCurrentResultDemo(false);
+            if (parsed[0].loanAmount) setTargetLoanAmount(parsed[0].loanAmount);
+            if (parsed[0].loanPurpose) setTargetLoanPurpose(parsed[0].loanPurpose);
+          }
         }
-      }
-      const savedUser = localStorage.getItem('crediflow_user_session');
-      if (savedUser) setUserSession(JSON.parse(savedUser));
-      const savedAssessment = localStorage.getItem('crediflow_latest_assessment');
-      if (savedAssessment && (!savedReports || JSON.parse(savedReports).length === 0)) {
-        setB2cResult(JSON.parse(savedAssessment));
       }
     } catch (e) {}
-
-    // Synchronize with persistent JSON file on disk
-    fetch('/api/store-assessment')
-      .then(res => res.json())
-      .then(res => {
-        if (res.success && res.data && res.data.report && res.data.inputData) {
-          setB2cResult(prev => prev ? prev : {
-            hash: res.data.hash || 'stored-hash',
-            inputData: res.data.inputData,
-            report: res.data.report
-          });
-        }
-      })
-      .catch(() => {});
 
     try {
       if (typeof window !== 'undefined') {
@@ -7248,26 +7238,33 @@ export default function Dashboard() {
           }
           if (serverReports && serverReports.length > 0) {
             setReportHistory(serverReports);
-            if (serverReports[0].result) {
+            if (serverReports[0].result && !serverReports[0].isDemo) {
               setB2cResult(serverReports[0].result);
-              setIsCurrentResultDemo(serverReports[0].isDemo || false);
+              setIsCurrentResultDemo(false);
               if (serverReports[0].loanAmount) setTargetLoanAmount(serverReports[0].loanAmount);
               if (serverReports[0].loanPurpose) setTargetLoanPurpose(serverReports[0].loanPurpose);
+            } else {
+              setB2cResult(null);
             }
             try {
               localStorage.setItem('crediflow_report_history', JSON.stringify(serverReports));
             } catch (e) {}
+          } else {
+            setB2cResult(null);
           }
 
           try {
             localStorage.setItem('crediflow_user_session', JSON.stringify(fullUser));
             localStorage.removeItem('creditflow_passport_unlocked');
+            localStorage.removeItem('crediflow_latest_assessment');
           } catch (e) {}
 
           setPdpaConsent(true);
           setPerspective('B2C');
-          setCurrentPage('app');
-          setActiveStep(1);
+          // Stay on current page on simple login so user is not unexpectedly forced into the application form
+          if (currentPage !== 'app' && currentPage !== 'calculator' && currentPage !== 'directory' && currentPage !== 'tracker') {
+            setCurrentPage('landing');
+          }
         }}
       />
 

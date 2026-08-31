@@ -21,8 +21,8 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
   const [authMode, setAuthMode] = useState<'signin' | 'signup'>('signin');
   
   // Sign In Form States (Identifier + Password)
-  const [signInIdentifier, setSignInIdentifier] = useState('12-482 9182');
-  const [signInPassword, setSignInPassword] = useState('password123');
+  const [signInIdentifier, setSignInIdentifier] = useState('');
+  const [signInPassword, setSignInPassword] = useState('');
   const [showSignInPassword, setShowSignInPassword] = useState(false);
 
   // Sign Up Form States (Name, Phone, Email, Password)
@@ -43,14 +43,29 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
     setErrorMessage(null);
     setIsGoogleLoading(true);
 
+    const userGoogleEmail = prompt(
+      language === 'bm' 
+        ? 'Sila masukkan emel Google anda:' 
+        : 'Please enter your Google account email:',
+      'borrower.user@gmail.com'
+    );
+
+    if (!userGoogleEmail || !userGoogleEmail.trim()) {
+      setIsGoogleLoading(false);
+      return;
+    }
+
+    const cleanEmail = userGoogleEmail.trim().toLowerCase();
+    const derivedName = cleanEmail.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
     try {
       const res = await fetch('/api/auth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'google',
-          email: 'borrower.google@gmail.com',
-          name: 'Ahmad Razak'
+          email: cleanEmail,
+          name: derivedName
         })
       });
 
@@ -66,12 +81,12 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
     } catch {
       setIsGoogleLoading(false);
       const googleUser: UserProfileData = {
-        name: 'Ahmad Razak',
-        phone: '+60 12-482 9182',
-        email: 'ahmad.razak@gmail.com',
+        name: derivedName,
+        phone: '+60 12-000 0000',
+        email: cleanEmail,
         role: 'Google Verified Borrower',
         workCategory: 'gig',
-        profileId: 'usr_google_ahmad'
+        profileId: `usr_g_${cleanEmail.replace(/[^a-z0-9]/g, '')}`
       };
       onLoginSuccess(googleUser, [], []);
       onClose();
@@ -119,13 +134,17 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
       }
     } catch {
       setIsLoading(false);
+      const fallbackName = isEmail 
+        ? signInIdentifier.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+        : 'Verified Borrower';
+
       const fallbackUser: UserProfileData = {
-        name: isEmail ? signInIdentifier.split('@')[0].toUpperCase() : 'Ahmad Bin Razak',
-        phone: isEmail ? '+60 12-482 9182' : (signInIdentifier.startsWith('+60') ? signInIdentifier : `+60 ${signInIdentifier.replace(/^0/, '')}`),
-        email: isEmail ? signInIdentifier : 'borrower@loan-la.my',
+        name: fallbackName,
+        phone: isEmail ? '+60 12-000 0000' : (signInIdentifier.startsWith('+60') ? signInIdentifier : `+60 ${signInIdentifier.replace(/^0/, '')}`),
+        email: isEmail ? signInIdentifier : `${signInIdentifier.replace(/[^0-9]/g, '')}@borrower.loan-la.my`,
         role: 'Verified Borrower',
         workCategory: 'gig',
-        profileId: 'usr_ahmad'
+        profileId: `usr_${signInIdentifier.replace(/[^a-zA-Z0-9]/g, '')}`
       };
       onLoginSuccess(fallbackUser, [], []);
       onClose();
