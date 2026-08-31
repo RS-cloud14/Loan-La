@@ -1,11 +1,11 @@
 #  Loan - La 
 ### *AI-Powered Alternative Credit Underwriting Engine & Smart Loan Matcher for Malaysia's Gig Economy*
-
-Link to website: https://loan-la.vercel.app/
+**Team**: Oversized Minions
+**Link to website**: https://loan-la.vercel.app/
 
 ---
 
-## 📌 Executive Overview
+##  Executive Overview
 
 **Loan-La** is a high-performance **B2B2C alternative credit intelligence and loan routing engine** built specifically for Malaysia's unbanked and underserved gig workforce. 
 
@@ -15,7 +15,7 @@ Over **4.8 million gig workers** (Grab, Foodpanda, Shopee, Lalamove) and micro-S
 
 ---
 
-## 🌟 Core Pillars & Capabilities
+##  Core Pillars & Capabilities
 
 ```
                   ┌─────────────────────────────────────────────────────────┐
@@ -35,43 +35,43 @@ Over **4.8 million gig workers** (Grab, Foodpanda, Shopee, Lalamove) and micro-S
 └─────────────────┘ └─────────────────┘                 └─────────────────┘ └─────────────────┘
 ```
 
-### 1. 🛡️ Zero-Trust Client-Side PII Masking (PDPA & BNM RMiT)
+### 1.  Zero-Trust Client-Side PII Masking (PDPA & BNM RMiT)
 * Automatically redacts sensitive Personally Identifiable Information (MyKad IC numbers, residential addresses, raw account credentials) directly in the browser's memory using the Web Crypto API before any data is transmitted to serverless execution environments.
 
-### 2. ⚡ Multimodal AI Document Extraction (Google Gemini 2.5 Flash)
+### 2.  Multimodal AI Document Extraction (Google Gemini 2.5 Flash)
 * Ingests multi-page bank statements, gig income summaries, and identity documents.
 * Extracts verbatim transaction rows, dates, inflows, and categorized essential expenses using strict JSON schema enforcement (`temperature: 0`, `topP: 0.1`) with model cascade failovers.
 * Implements SHA-256 document fingerprinting (`UNDERWRITE_CACHE`) ensuring 100% deterministic, reproducible assessments on identical uploads.
 
-### 3. 📊 Explainable Financial Readiness Index (FRI: 300–850)
+### 3.  Explainable Financial Readiness Index (FRI: 300–850)
 * **Cashflow Stability (250 pts)**: Inflow consistency & variance coefficient.
 * **Earnings Frequency (200 pts)**: Active earning days and weekly payout continuity.
 * **Income Diversification (150 pts)**: Herfindahl-Hirschman Index (HHI) across gig platforms.
 * **Cash Reserve Runway (150 pts)**: Ending bank liquidity vs. verified living expenses.
 * **Debt Service Ratio (100 pts)**: BNM-compliant debt commitments vs. verified income.
 
-### 4. 🔍 Institutional Forensics & Payout Reconciliation
+### 4.  Institutional Forensics & Payout Reconciliation
 * **RMiT Image Forensics**: Detects clone-stamp artifacts, font weight inconsistencies, and pixel-level document tampering.
 * **Payout-to-Ledger Reconciliation**: Cross-matches third-party platform disbursements (e.g. Grab weekly transfers) against bank deposit credits with 99.4% precision.
 
-### 5. 🎙️ Real-Time Conversational AI Voice Coach & PDF Explainer
+### 5.  Real-Time Conversational AI Voice Coach & PDF Explainer
 * Native Web Speech API integration (Speech-to-Text and Text-to-Speech).
 * Real-time Interactive PDF Explainer and Live Voice Call allowing borrowers to ask questions conversationally in **English** and **Bahasa Melayu**.
 
 ---
 
-## 🚀 Key Innovative AI Functions
+##  Key Innovative AI Functions
 
-### 1. 🧠 Multimodal Vision OCR & Forensic RMiT Inspector
+### 1.  Multimodal Vision OCR & Forensic RMiT Inspector
 Unlike basic OCR that only extracts plain text, Loan-La uses **Google Gemini 2.5 Flash** with custom vision prompting to analyze bank statement table layouts, detect clone-stamp manipulation around account balances, and flag suspicious font anomalies in compliance with Bank Negara Malaysia's **RMiT (Risk Management in Technology)** guidelines.
 
-### 2. 📞 Live AI Voice Call (Multilingual Audio Agent)
+### 2.  Live AI Voice Call (Multilingual Audio Agent)
 Borrowers can tap the **Live Voice Call** button to speak naturally with their AI financial coach. The engine combines browser-native **Web Speech Recognition (STT)** with server-side Gemini conversational intelligence and localized **Speech Synthesis (TTS)** in Malaysian English and Bahasa Melayu, breaking down complex banking jargon into friendly advice.
 
-### 3. 📑 Interactive PDF & AI Underwriting Explainer
+### 3.  Interactive PDF & AI Underwriting Explainer
 Users can open an interactive modal with their generated Credit Passport PDF and chat directly with an AI underwriter. Asking questions like *"How is my Monthly Cash Surplus and DSR calculated?"* produces real-time mathematical breakdowns directly referenced from their verified statement ledgers.
 
-### 4. 🔒 Zero-Hallucination Hybrid Architecture
+### 4.  Zero-Hallucination Hybrid Architecture
 While generative AI parses unstructured visual PDFs, all final credit score calculations (FRI 300–850), Monthly Cash Surplus, and BNM-mandated DSR percentages are computed via a **deterministic mathematical TypeScript rule engine** (`scoring.ts`), guaranteeing 100% accuracy, reproducibility, and auditability.
 
 ---
@@ -103,7 +103,7 @@ While generative AI parses unstructured visual PDFs, all final credit score calc
 
 ---
 
-## 🏛️ System Architecture
+##  System Architecture
 
 ```mermaid
 graph TD
@@ -159,7 +159,7 @@ graph TD
 
 ---
 
-## 💻 Tech Stack
+##  Tech Stack
 
 | Domain | Technology | Purpose |
 | :--- | :--- | :--- |
@@ -174,15 +174,15 @@ graph TD
 
 ---
 
-## 🌐 Live Application & Demo
+##  Live Application & Demo
 
 Experience the full live platform directly in your browser:
 
-👉 **[https://loan-la.vercel.app/](https://loan-la.vercel.app/)**
+ **[https://loan-la.vercel.app/](https://loan-la.vercel.app/)**
 
-* 🚀 **Instant Eligibility Audit**: Upload sample gig statements or bank statements to generate an instant Alternative Credit Passport.
-* 🎙️ **Real-Time AI Voice Advisor**: Interact with our conversational loan officer in English or Bahasa Melayu.
-* 🏦 **Smart Lender Matching**: Explore live financing matches for TEKUN Nasional, SME Bank, Maybank, and Digital Banks.
+*  **Instant Eligibility Audit**: Upload sample gig statements or bank statements to generate an instant Alternative Credit Passport.
+*  **Real-Time AI Voice Advisor**: Interact with our conversational loan officer in English or Bahasa Melayu.
+*  **Smart Lender Matching**: Explore live financing matches for TEKUN Nasional, SME Bank, Maybank, and Digital Banks.
 
 ---
 
