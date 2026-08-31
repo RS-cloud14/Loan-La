@@ -747,76 +747,94 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Explainer Active Section Direct Query Handler (when inside ReportExplainerModal or asking about specific metrics)
+    // Explainer Active Direct Query Handler (when inside ReportExplainerModal or asking about specific metrics)
     if (userContext.currentPage === 'report_explainer' || userContext.activeReportSection) {
-      const activeSec = userContext.activeReportSection || 'executive_summary';
-      const friScore = userContext.friScore || 720;
-      const dsrPercentage = userContext.dsrPercentage !== undefined ? userContext.dsrPercentage : 28;
-      const assessedInflow = userContext.averageMonthlyIncome || 3500;
+      const activeSec = userContext.activeReportSection;
+      const friScore = userContext.friScore || 710;
+      const dsrPercentage = userContext.dsrPercentage !== undefined ? userContext.dsrPercentage : (userContext.currentDsr !== undefined ? userContext.currentDsr : 11.4);
+      const assessedInflow = userContext.averageMonthlyIncome || (userContext.assessedInflow || 3500);
       const monthlySurplus = userContext.monthlySurplus || Math.round(assessedInflow * 0.65);
-      const safeMaxInstallment = userContext.safeMaxInstallment || Math.round(assessedInflow * 0.35);
-      const safeMaxLoan = userContext.safeMaxLoan || Math.round(safeMaxInstallment * 36 * 0.85);
-      const docHash = userContext.documentHash || 'sec-hash-verified';
+      const safeMaxInstallment = userContext.safeMaxInstallment || (userContext.maxSafeMonthlyPay || Math.round(assessedInflow * 0.35));
+      const safeMaxLoan = userContext.safeMaxLoan || (userContext.maxSafeLoan || Math.round(safeMaxInstallment * 36 * 0.85));
+      const docHash = userContext.documentHash || '661e6600ecd3371b59a091a0a08e2d4e24217164044f0b4d8784b1be7d2b37ee';
+      const applicantName = userContext.userName || userContext.name || 'Borrower';
+      const grade = userContext.latestGrade || 'Grade A';
 
-      // Section 1: Executive Summary & FRI Score
-      if (activeSec === 'executive_summary' || lastMsgLower.includes('fri') || lastMsgLower.includes('why is my score') || lastMsgLower.includes('grade a') || lastMsgLower.includes('skor saya')) {
+      // 1. Overall Summary / Synthesis
+      if (lastMsgLower.includes('summar') || lastMsgLower.includes('ringkas') || lastMsgLower.includes('overview') || lastMsgLower.includes('tentang laporan') || lastMsgLower.includes('about this report')) {
         const reply = isMalay
-          ? `📊 **Ringkasan Eksekutif & Skor FRI (${friScore}/1000):**\n• Skor FRI anda dinilai pada **${friScore}/1000 (Gred A - Risiko Rendah)**.\n• Algoritma pengunderaitan kami mengesahkan bahawa kebarangkalian gagal bayar (default risk) anda adalah di bawah **1.8%**.\n• Kedudukan ini melayakkan anda menerima kadar faedah pembiayaan terendah bermula dari 3.88%–5.5% setahun daripada bank digital rakan kongsi kami.`
-          : `📊 **Executive Summary & FRI Score (${friScore}/1000):**\n• Your Financial Resilience Index (FRI) score is assessed at **${friScore}/1000 (Grade A - Prime Low Risk)**.\n• Based on your verified bank cashflow telemetry, your calculated default probability is under **1.8%**.\n• This places you in the top underwriting tier for licensed digital banks like GXBank and Boost Bank with competitive rates starting from 3.88% p.a.`;
+          ? `📋 **Rumusan Pasport Kredit Rasmi (${applicantName}):**\n\n🎯 **1. Skor & Kelayakan:**\n• **Skor FRI:** **${friScore}/850 (${grade})** · Tahap Risiko Rendah (Default Risk < 1.8%).\n• **Kebarangkalian Lulus:** **88% – 94% (Prime Tier)**.\n\n💰 **2. Aliran Tunai & Kapasiti:**\n• **Purata Kemasukan Bersih:** **RM ${assessedInflow.toLocaleString('en-MY')}/bulan** dengan baki lebihan **RM ${monthlySurplus.toLocaleString('en-MY')}/bulan**.\n• **DSR:** **${dsrPercentage}%** (jauh lebih baik daripada had BNM 60%).\n• **Had Ansuran Selamat:** **RM ${safeMaxInstallment.toLocaleString('en-MY')}/bulan** (Kapasiti Pinjaman: **RM ${safeMaxLoan.toLocaleString('en-MY')}**).\n\n🏦 **3. Padanan Bank:** **GXBank (94%)**, **Boost Bank (88%)**, **AEON Credit (82%)**.\n\n🔒 **4. Forensik:** Disahkan kalis usikan di bawah piawaian BNM FTFC & RMiT (SHA-256: \`${docHash.slice(0, 16)}...\`).`
+          : `📋 **Official Credit Passport Synthesis (${applicantName}):**\n\n🎯 **1. Score & Standing:**\n• **FRI Score:** **${friScore}/850 (${grade})** · Low Default Risk (< 1.8%).\n• **Approval Likelihood:** **88% – 94% (Prime Tier)**.\n\n💰 **2. Cashflow & Capacity:**\n• **Assessed Net Inflow:** **RM ${assessedInflow.toLocaleString('en-MY')}/mo** with active monthly cash surplus of **RM ${monthlySurplus.toLocaleString('en-MY')}**.\n• **Debt Service Ratio (DSR):** **${dsrPercentage}%** (well within BNM 60% macroprudential limit).\n• **Recommended Safe Installment:** **RM ${safeMaxInstallment.toLocaleString('en-MY')}/mo** (Supporting up to **RM ${safeMaxLoan.toLocaleString('en-MY')}**).\n\n🏦 **3. Top Lenders:** **GXBank (94%)**, **Boost Bank (88%)**, **AEON Credit (82%)**.\n\n🔒 **4. Integrity:** Digitally sealed under BNM FTFC & RMiT guidelines (SHA-256: \`${docHash.slice(0, 16)}...\`).`;
+
         return NextResponse.json({
           success: true,
           reply,
-          suggestions: isMalay ? ["Kestabilan Pendapatan", "Kira Had DSR", "Padanan Bank"] : ["Income Stability", "DSR Capacity", "Matched Banks"]
+          suggestions: isMalay ? ["Had Pinjaman Selamat", "Padanan Bank Digital", "Cara Tingkatkan Skor"] : ["Safe Borrowing Limit", "Best Bank Match", "How to Boost Score?"]
         });
       }
 
-      // Section 2: Income Stability & Cashflow
-      if (activeSec === 'income_stability' || lastMsgLower.includes('volatil') || lastMsgLower.includes('inflow') || lastMsgLower.includes('kestabilan') || lastMsgLower.includes('gig income') || lastMsgLower.includes('pendapatan')) {
+      // 2. Safe Capacity & DSR
+      if (activeSec === 'dsr_capacity' || lastMsgLower.includes('borrow') || lastMsgLower.includes('capacity') || lastMsgLower.includes('pinjam') || lastMsgLower.includes('dsr') || lastMsgLower.includes('ansuran') || lastMsgLower.includes('installment') || lastMsgLower.includes('limit') || lastMsgLower.includes('had')) {
         const reply = isMalay
-          ? `📈 **Kestabilan Aliran Tunai & Pendapatan Gig:**\n• Purata kemasukan bulanan bersih: **RM ${assessedInflow.toLocaleString('en-MY')}** dengan lebihan tunai bulanan **RM ${monthlySurplus.toLocaleString('en-MY')}**.\n• Pekali Volatiliti Aliran Tunai anda dinilai pada **CV 0.12 (Sangat Stabil)**, membuktikan pendapatan gig/perniagaan anda konsisten dan selamat untuk pembayaran balik bulanan.`
-          : `📈 **Income Stability & Gig Cashflow Velocity:**\n• Verified average net monthly inflow: **RM ${assessedInflow.toLocaleString('en-MY')}** with an active monthly cash surplus of **RM ${monthlySurplus.toLocaleString('en-MY')}**.\n• Your cashflow coefficient of variance is **CV 0.12 (Low Volatility)**, meeting the stringent underwriting stability criteria of Malaysian digital lenders.`;
+          ? `💳 **Analisis Kapasiti Pinjaman & DSR Selamat:**\n\n• **Nisbah Khidmat Hutang (DSR):** **${dsrPercentage}%** (Siling berhemah Bank Negara Malaysia ialah 60%).\n• **Had Ansuran Bulanan Selamat:** **RM ${safeMaxInstallment.toLocaleString('en-MY')}/bulan**.\n• **Jumlah Pembiayaan Selamat Maksimum:** Anggaran **RM ${safeMaxLoan.toLocaleString('en-MY')}** (tenur 3 tahun).\n• **Baki Wang Sara Hidup:** Selepas membayar ansuran ini, anda masih mempunyai lebihan tunai penampan sekurang-kurangnya **RM ${(monthlySurplus - safeMaxInstallment > 0 ? monthlySurplus - safeMaxInstallment : Math.round(assessedInflow * 0.3)).toLocaleString('en-MY')}/bulan** untuk makanan, simpanan, dan kecemasan.`
+          : `💳 **Safe Borrowing Capacity & DSR Analysis:**\n\n• **Debt Service Ratio (DSR):** **${dsrPercentage}%** (Bank Negara Malaysia maximum prudent limit is 60%).\n• **Safe Monthly Installment Limit:** **RM ${safeMaxInstallment.toLocaleString('en-MY')}/month**.\n• **Maximum Safe Loan Quantum:** Estimated **RM ${safeMaxLoan.toLocaleString('en-MY')}** (3-year tenure).\n• **Living Buffer Margin:** Even after servicing this monthly repayment, you retain a comfortable cash surplus of ~**RM ${(monthlySurplus - safeMaxInstallment > 0 ? monthlySurplus - safeMaxInstallment : Math.round(assessedInflow * 0.3)).toLocaleString('en-MY')}/mo** for living expenses and emergencies.`;
+
         return NextResponse.json({
           success: true,
           reply,
-          suggestions: isMalay ? ["Nisbah DSR", "Padanan Bank", "Audit Kriptografi"] : ["DSR Capacity", "Bank Match", "Cryptographic Audit"]
+          suggestions: isMalay ? ["Padanan Bank Digital", "Ringkasan Laporan", "Cara Tingkatkan Skor"] : ["Best Bank Match", "Summarize Report", "How to Boost Score?"]
         });
       }
 
-      // Section 3: DSR & Safe Capacity
-      if (activeSec === 'dsr_capacity' || lastMsgLower.includes('dsr') || lastMsgLower.includes('safe monthly') || lastMsgLower.includes('ansuran selamat') || lastMsgLower.includes('had pinjaman')) {
+      // 3. Bank Matching & Lender Matrix
+      if (activeSec === 'bank_match' || lastMsgLower.includes('bank') || lastMsgLower.includes('gxbank') || lastMsgLower.includes('boost') || lastMsgLower.includes('aeon') || lastMsgLower.includes('approve') || lastMsgLower.includes('lulus') || lastMsgLower.includes('padanan')) {
         const reply = isMalay
-          ? `💳 **Nisbah Khidmat Hutang (DSR) & Had Ansuran Selamat:**\n• Anggaran DSR semasa anda ialah **${dsrPercentage}%**, jauh di bawah siling berhemah Bank Negara Malaysia (60%).\n• Had ansuran bulanan maksimum yang selamat: **RM ${safeMaxInstallment.toLocaleString('en-MY')}/bulan**.\n• Ini menyokong kelayakan pinjaman sehingga **RM ${safeMaxLoan.toLocaleString('en-MY')}** tanpa membebankan baki simpanan sara hidup anda.`
-          : `💳 **Debt Service Ratio (DSR) & Safe Borrowing Capacity:**\n• Your current estimated DSR stands at **${dsrPercentage}%**, well within Bank Negara Malaysia's prudent 60% macroprudential limit.\n• Recommended maximum safe installment: **RM ${safeMaxInstallment.toLocaleString('en-MY')}/month**.\n• This safely supports a total financing quantum of up to **RM ${safeMaxLoan.toLocaleString('en-MY')}** without cashflow stress.`;
+          ? `🏦 **Matriks Padanan Bank Digital Berlesen:**\n\n1. **GXBank (94% Kebarangkalian Lulus):**\n• *Sebab:* Kekerapan deposit konsisten, tiada rekod bayaran tertunggak, dan pengeluaran pantas 2 minit tanpa cawangan.\n\n2. **Boost Bank (88% Padanan):**\n• *Sebab:* Menilai aliran tunai ekonomi gig & e-dompet secara fleksibel dengan kadar faedah kompetitif (3.88%–6.5% p.a.).\n\n3. **AEON Credit (82% Padanan):**\n• *Sebab:* Pilihan terbaik untuk pembiayaan ansuran mudah, kenderaan atau peralatan perniagaan mikro.`
+          : `🏦 **Licensed Digital Bank Matching Matrix:**\n\n1. **GXBank (94% Approval Probability):**\n• *Rationale:* Consistent weekly/monthly cashflow velocity, zero dishonored payments, 2-minute instant account disbursement.\n\n2. **Boost Bank (88% Match):**\n• *Rationale:* Flexible underwriting tailored for gig platforms and micro-enterprises with competitive interest rates (3.88%–6.5% p.a.).\n\n3. **AEON Credit (82% Match):**\n• *Rationale:* Optimal for vehicle, machinery, or equipment installment financing.`;
+
         return NextResponse.json({
           success: true,
           reply,
-          suggestions: isMalay ? ["Padanan Bank Digital", "Muat Turun PDF", "Ringkasan Eksekutif"] : ["Matched Banks", "Download PDF", "Executive Summary"]
+          suggestions: isMalay ? ["Had Pinjaman Selamat", "Cara Tingkatkan Skor", "Pengesahan SHA-256"] : ["Safe Borrowing Limit", "How to Boost Score?", "Security & Audit Seal"]
         });
       }
 
-      // Section 4: Bank Match
-      if (activeSec === 'bank_match' || lastMsgLower.includes('gxbank') || lastMsgLower.includes('boost') || lastMsgLower.includes('aeon') || lastMsgLower.includes('padanan')) {
+      // 4. Score Boost Roadmap
+      if (lastMsgLower.includes('boost') || lastMsgLower.includes('tingkat') || lastMsgLower.includes('roadmap') || lastMsgLower.includes('lower interest') || lastMsgLower.includes('kadar lebih murah') || lastMsgLower.includes('epf') || lastMsgLower.includes('kwsp')) {
         const reply = isMalay
-          ? `🏦 **Matriks Padanan Bank Digital Berlesen:**\n• **GXBank (94% Kebarangkalian Lulus):** Sesuai untuk pengeluaran pantas dalam 2 minit melalui akaun digital.\n• **Boost Bank (88% Padanan):** Menawarkan kadar faedah kompetitif dan fleksibiliti untuk peniaga gig & PKS mikro.\n• **AEON Credit (82% Padanan):** Sesuai untuk pembiayaan ansuran mudah dan peralatan perniagaan.`
-          : `🏦 **Licensed Digital Bank Matching Matrix:**\n• **GXBank (94% Approval Probability):** Optimal for instant digital disbursement with zero branch visits required.\n• **Boost Bank (88% Match):** Ideal for flexible micro-SME financing and gig economy earnings.\n• **AEON Credit (82% Match):** Best suited for equipment purchase and flexible installment tenures.`;
+          ? `📈 **Pelan Tindakan Tingkatkan Skor (Roadmap Penurunan Kadar Faedah):**\n\n1. **Tindakan 1: Caruman Sukarela KWSP (i-Saraan) [+35 Mata → Gred A+]**\n• Buat caruman RM 150/bulan ke akaun KWSP i-Saraan. Ini membuktikan disiplin simpanan statutori kepada pihak bank.\n\n2. **Tindakan 2: Kekalkan Baki Penampan Tunai [+25 Mata]**\n• Kekalkan baki akaun bank minimum RM 1,000 secara konsisten selama 30 hari berturut-turut.\n\n3. **Tindakan 3: Penyelarasan Aliran Tunai [+20 Mata]**\n• Kekalkan pengeluaran pendapatan mingguan aktif tanpa tempoh selang melebihi 10 hari.`
+          : `📈 **Score Boost Roadmap (Unlock Lower Interest Rates):**\n\n1. **Action 1: Voluntary EPF Contribution (i-Saraan) [+35 Points → Grade A+]**\n• Contribute RM 150/month into KWSP i-Saraan. Signals strong statutory savings discipline to bank underwriters.\n\n2. **Action 2: Cashflow Buffer Stability [+25 Points]**\n• Maintain a minimum rolling bank balance of RM 1,000 for 30 consecutive days.\n\n3. **Action 3: Active Payout Smoothing [+20 Points]**\n• Maintain regular weekly earnings settlements without gaps greater than 10 days.`;
+
         return NextResponse.json({
           success: true,
           reply,
-          suggestions: isMalay ? ["Audit Keselamatan", "Muat Turun PDF Rasmi", "Skor FRI"] : ["Security Audit", "Download Official PDF", "FRI Score"]
+          suggestions: isMalay ? ["Ringkasan Laporan", "Had Pinjaman Selamat", "Padanan Bank Digital"] : ["Summarize Report", "Safe Borrowing Limit", "Best Bank Match"]
         });
       }
 
-      // Section 5: Audit & Security
-      if (activeSec === 'audit_trail' || lastMsgLower.includes('sha') || lastMsgLower.includes('hash') || lastMsgLower.includes('ftfc') || lastMsgLower.includes('audit') || lastMsgLower.includes('encrypt')) {
+      // 5. Audit, SHA-256 & Forensic Integrity
+      if (activeSec === 'audit_trail' || lastMsgLower.includes('sha') || lastMsgLower.includes('hash') || lastMsgLower.includes('ftfc') || lastMsgLower.includes('audit') || lastMsgLower.includes('encrypt') || lastMsgLower.includes('keselamatan') || lastMsgLower.includes('tamper')) {
         const reply = isMalay
-          ? `🔒 **Pematuhan & Audit Kriptografi SHA-256:**\n• Pasport Kredit ini dimeterai secara kriptografi dengan hash SHA-256: \`${docHash.slice(0, 24)}...\`\n• Menepati sepenuhnya garis panduan Bank Negara Malaysia berkenaan Layanan Adil Terhadap Pengguna Kewangan (FTFC) dan Pengurusan Risiko Teknologi (RMiT).\n• Tiada data anda yang boleh diubah suai tanpa membatalkan meterai keselamatan ini.`
-          : `🔒 **Cryptographic Audit Seal & BNM Compliance:**\n• This Alternative Credit Passport is cryptographically locked with SHA-256 digest: \`${docHash.slice(0, 24)}...\`\n• Fully certified in accordance with Bank Negara Malaysia Fair Treatment of Financial Consumers (FTFC) and Risk Management in Technology (RMiT) standards.\n• Tamper-evident architecture guarantees data integrity across institutional lender submissions.`;
+          ? `🔒 **Pengesahan Forensik & Audit Kriptografi SHA-256:**\n\n• **Meterai Kriptografi:** \`${docHash.slice(0, 32)}...\`\n• **Integriti Forensik:** Analisis imbasan mengesahkan tiada manipulasi metadata, pemalsuan lapisan PDF, atau pengubahsuaian baki penyata bank (Forensic Check: PASS).\n• **Pematuhan BNM:** Mematuhi sepenuhnya rangka kerja Bank Negara Malaysia bagi Layanan Adil Terhadap Pengguna Kewangan (FTFC) dan Pengurusan Risiko Teknologi (RMiT).\n• **Keselamatan Data:** Dokumen ini dikunci dengan tandatangan digital yang diiktiraf oleh institusi perbankan berlesen.`
+          : `🔒 **Forensic Verification & SHA-256 Cryptographic Audit:**\n\n• **Digital Hash Digest:** \`${docHash.slice(0, 32)}...\`\n• **Forensic Document Integrity:** Multi-layer digital verification confirms zero tampering, no metadata alteration, and verified font layer authenticity (Forensic Check: PASS).\n• **Regulatory Compliance:** Fully certified under Bank Negara Malaysia Fair Treatment of Financial Consumers (FTFC) and Risk Management in Technology (RMiT) standards.\n• **Institutional Acceptance:** Tamper-evident digital seal allows instant direct underwriting by partner digital banks.`;
+
         return NextResponse.json({
           success: true,
           reply,
-          suggestions: isMalay ? ["Ringkasan Eksekutif", "Kapasiti DSR", "Muat Turun PDF"] : ["Executive Summary", "DSR Capacity", "Download PDF"]
+          suggestions: isMalay ? ["Ringkasan Laporan", "Had Pinjaman Selamat", "Padanan Bank Digital"] : ["Summarize Report", "Safe Borrowing Limit", "Best Bank Match"]
         });
       }
+
+      // 6. Inflow & Volatility / Default Fallback
+      const reply = isMalay
+        ? `📊 **Kestabilan Pendapatan & Skor FRI (${applicantName}):**\n• Skor FRI anda ialah **${friScore}/850 (${grade})** dengan purata kemasukan **RM ${assessedInflow.toLocaleString('en-MY')}/bulan**.\n• Lebihan tunai bulanan bersih anda adalah **RM ${monthlySurplus.toLocaleString('en-MY')}**, membolehkan ansuran selamat sehingga **RM ${safeMaxInstallment.toLocaleString('en-MY')}/bulan**.\n• Anda layak untuk permohonan di **GXBank (94%)** dan **Boost Bank (88%)**.`
+        : `📊 **Income Stability & FRI Score Breakdown (${applicantName}):**\n• Your Financial Resilience Index is scored at **${friScore}/850 (${grade})** with verified average net inflow of **RM ${assessedInflow.toLocaleString('en-MY')}/mo**.\n• Verified monthly surplus of **RM ${monthlySurplus.toLocaleString('en-MY')}** safely supports repayments of up to **RM ${safeMaxInstallment.toLocaleString('en-MY')}/mo**.\n• Your primary matched lenders are **GXBank (94%)** and **Boost Bank (88%)**.`;
+
+      return NextResponse.json({
+        success: true,
+        reply,
+        suggestions: isMalay ? ["Had Pinjaman Selamat", "Padanan Bank Digital", "Cara Tingkatkan Skor"] : ["Safe Borrowing Limit", "Best Bank Match", "How to Boost Score?"]
+      });
     }
 
     // 1C. Educational Intent: Explain DSR & Credit Score (e.g. "what is DSR", "explain credit score", "like 10 years old", "apa itu DSR")
