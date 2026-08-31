@@ -1,13 +1,7 @@
-# 🇲🇾 Loan - La (CreditFlow AI)
+#  Loan - La 
 ### *AI-Powered Alternative Credit Underwriting Engine & Smart Loan Matcher for Malaysia's Gig Economy*
 
-[![Live Demo](https://img.shields.io/badge/🌐_Live_Demo-loan--la.vercel.app-7C3AED?style=for-the-badge)](https://loan-la.vercel.app/)
-[![Next.js](https://img.shields.io/badge/Next.js-16.2-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
-[![React](https://img.shields.io/badge/React-19.0-blue?style=for-the-badge&logo=react)](https://react.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
-[![Google Gemini](https://img.shields.io/badge/Google_Gemini-2.5_Flash-orange?style=for-the-badge&logo=google)](https://deepmind.google/technologies/gemini/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4.0-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
-[![Compliance](https://img.shields.io/badge/BNM_RMiT-Aligned-emerald?style=for-the-badge)](https://www.bnm.gov.my/)
+Link to website: https://loan-la.vercel.app/
 
 ---
 
