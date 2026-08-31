@@ -1,6 +1,7 @@
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { UnderwritingInput, CreditProfileReport } from './scoring';
+import { matchLenders } from './lenderMatcher';
 
 interface PdfGeneratorProps {
   inputData: UnderwritingInput;
@@ -408,16 +409,25 @@ export function buildCreditPassportPdfDoc({ inputData, report, documentHash, isL
   doc.setFontSize(9.5);
   doc.text('4. Matched Digital Lenders & Pre-Approval Odds (BNM Licensed)', 14, sec4Y);
 
+  const dynamicMatches = matchLenders(report, inputData);
+  const topLenders = dynamicMatches.slice(0, 4);
+
   const lenderMatchData = isLocked ? [
     ['Top-Tier Licensed Digital Bank (Match #1)', 'Direct Gig Financing Facility', 'High Odds (Pre-Qualified)', 'RM 1,000 - RM 20,000', '••••••', '••••••'],
     ['Government-Subsidized Bank (Match #2)', 'Micro-Financing Assistance Direct', 'High Odds (Pre-Qualified)', 'RM 1,000 - RM 15,000', '••••••', '••••••'],
     ['Licensed Alternative Credit (Match #3)', 'Alternative Capital Care Loan', 'Approved Tier', 'RM 2,000 - RM 30,000', '••••••', '••••••']
-  ] : [
-    ['GXBank Berhad (Digital Bank)', 'GX Flexi-Loan (Gig & Freelance)', '92% (High Approval)', 'RM 1,000 - RM 20,000', '4.88% - 6.50% p.a.', '1 - 2 Hours'],
-    ['Boost Bank (RHB Digital Partner)', 'Boost Micro-Financing Direct', '88% (High Approval)', 'RM 1,000 - RM 15,000', '5.50% - 7.20% p.a.', '2 - 4 Hours'],
-    ['AEON Credit Service Berhad', 'i-Cash Micro Capital Care', '85% (Approved Tier)', 'RM 2,000 - RM 30,000', '6.88% - 8.99% p.a.', '24 Hours'],
-    ['CIMB Bank Berhad', 'Cash Plus / Gig Working Capital', '76% (Moderate Odds)', 'RM 5,000 - RM 50,000', '5.99% - 8.50% p.a.', '1 - 3 Days']
-  ];
+  ] : (topLenders.length > 0 ? topLenders.map(m => [
+    `${m.lender.name}`,
+    `${m.product.name}`,
+    `${m.matchScore}% (${m.eligibilityLabel})`,
+    `RM ${m.product.minAmountRM.toLocaleString()} - RM ${m.product.maxAmountRM.toLocaleString()}`,
+    `${m.product.rateFromPercent}% - ${m.product.rateToPercent}% p.a.`,
+    `${m.lender.gigFriendly ? '1 - 2 Hours' : '1 - 3 Days'}`
+  ]) : [
+    ['GXBank Berhad (Digital Bank)', 'GX Flexi-Loan (Gig & Freelance)', '92% (Strong Match)', 'RM 1,000 - RM 20,000', '4.88% - 6.50% p.a.', '1 - 2 Hours'],
+    ['Boost Bank (RHB Digital Partner)', 'Boost Micro-Financing Direct', '88% (Strong Match)', 'RM 1,000 - RM 15,000', '5.50% - 7.20% p.a.', '2 - 4 Hours'],
+    ['AEON Credit Service Berhad', 'i-Cash Micro Capital Care', '85% (Good Fit)', 'RM 2,000 - RM 30,000', '6.88% - 8.99% p.a.', '24 Hours']
+  ]);
 
   autoTable(doc, {
     startY: sec4Y + 4,
