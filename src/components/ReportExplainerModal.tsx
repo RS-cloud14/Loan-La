@@ -338,16 +338,10 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
 
   const quickActionChips = language === 'bm' ? [
     { label: '🎯 Ringkasan Laporan', prompt: 'Ringkaskan laporan kredit saya secara padat.' },
-    { label: '💰 Apa Itu Lebihan Bebas?', prompt: 'Apakah maksud lebihan tunai bebas (free monthly surplus) dan kiraan saya?' },
-    { label: '💳 Had Pinjaman Selamat', prompt: 'Berapa had pinjaman dan ansuran bulanan selamat saya?' },
-    { label: '🏦 Padanan Bank Direktori', prompt: 'Bank mana dalam direktori yang sepadan dengan profil saya?' },
-    { label: '📈 Cara Tingkatkan Skor', prompt: 'Bagaimana cara meningkatkan skor kredit saya untuk dapat kadar faedah lebih murah?' }
+    { label: '💰 Apa Itu Lebihan Bebas?', prompt: 'Apakah maksud lebihan tunai bebas (free monthly surplus) dan kiraan saya?' }
   ] : [
     { label: '🎯 Summarize Report', prompt: 'Summarize my credit passport and underwriter findings.' },
-    { label: '💰 What is Free Surplus?', prompt: 'What is free monthly cash surplus and what is my calculation?' },
-    { label: '💳 Safe Borrowing Limit', prompt: 'What is my safe monthly installment capacity and maximum loan?' },
-    { label: '🏦 Matched Lenders', prompt: 'Which lenders from the directory match my profile and what are my approval odds?' },
-    { label: '📈 How to Boost Score?', prompt: 'What specific steps can I take to boost my score and lower interest rates?' }
+    { label: '💰 What is Free Surplus?', prompt: 'What is free monthly cash surplus and what is my calculation?' }
   ];
 
   return (
@@ -473,15 +467,15 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
           </button>
         </div>
 
-        {/* Main Body: Desktop 75/25 Split Screen or 100% Maximized PDF View */}
+        {/* Main Body: Desktop 65/35 Split Screen or 100% Maximized PDF View */}
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-0 overflow-hidden min-h-0 bg-slate-50 relative">
           
-          {/* Left Panel: Maximized PDF Viewer Canvas */}
-          <div className={`${mobileTab === 'pdf' ? 'flex' : 'hidden'} lg:flex ${isPdfMaximized ? 'lg:col-span-12' : 'lg:col-span-8 xl:col-span-9'} border-r border-slate-200 bg-slate-100 flex-col min-h-0 overflow-hidden p-1 sm:p-2 relative`}>
+          {/* Left Panel: Zoomed-in PDF Viewer Canvas (65% width / 100% when maximized) */}
+          <div className={`${mobileTab === 'pdf' ? 'flex' : 'hidden'} lg:flex ${isPdfMaximized ? 'lg:col-span-12' : 'lg:col-span-8'} border-r border-slate-200 bg-slate-100 flex-col min-h-0 overflow-hidden p-1 sm:p-2 relative`}>
             {pdfBlobUrl ? (
               <div className="w-full h-full rounded-xl sm:rounded-2xl overflow-hidden border border-slate-300 bg-white shadow-md relative">
                 <iframe
-                  src={`${pdfBlobUrl}#toolbar=0&navpanes=0&scrollbar=1`}
+                  src={`${pdfBlobUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH&zoom=115`}
                   className="w-full h-full border-0 block"
                   title="Credit Passport PDF"
                 />
@@ -507,8 +501,8 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
             )}
           </div>
 
-          {/* Right Panel: Synchronized AI Underwriting Assistant */}
-          <div className={`${mobileTab === 'chat' ? 'flex' : 'hidden'} ${isPdfMaximized ? 'lg:hidden' : 'lg:flex lg:col-span-4 xl:col-span-3'} flex-col bg-white min-h-0 overflow-hidden`}>
+          {/* Right Panel: Synchronized AI Underwriting Assistant (35% width) */}
+          <div className={`${mobileTab === 'chat' ? 'flex' : 'hidden'} ${isPdfMaximized ? 'lg:hidden' : 'lg:flex lg:col-span-4'} flex-col bg-white min-h-0 overflow-hidden`}>
             
             {/* Quick Metrics Bar (Clickable) */}
             <div className="p-3 border-b border-slate-200 bg-slate-50 grid grid-cols-3 gap-2 shrink-0">

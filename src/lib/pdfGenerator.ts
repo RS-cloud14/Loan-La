@@ -119,11 +119,11 @@ export function buildCreditPassportPdfDoc({ inputData, report, documentHash, isL
   // Main Header Title
   doc.setTextColor(15, 23, 42);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(14);
-  doc.text('Loan - La Alternative Credit & Underwriting Report', 30, 17);
+  doc.setFontSize(11.5);
+  doc.text('Loan - La Alternative Credit Passport', 30, 16.5);
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7.5);
+  doc.setFontSize(7.2);
   doc.setTextColor(100, 116, 139);
   doc.text(
     isLocked 
