@@ -1857,7 +1857,7 @@ export default function AICoPilotChat({
         }
       };
 
-      const scheduleAutoSubmit = (delayMs: number = 1600) => {
+      const scheduleAutoSubmit = (delayMs: number = 2500) => {
         if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
         silenceTimerRef.current = setTimeout(() => {
           const speechToSubmit = cleanSpeechDuplicates(currentAccumulatedSpeechRef.current || persistedTurnSpeechRef.current);
@@ -1872,9 +1872,9 @@ export default function AICoPilotChat({
       };
 
       recog.onspeechend = () => {
-        // User stopped vocalizing -> fast auto-submit
+        // User stopped vocalizing -> wait 2.5s before auto-submit so user isn't interrupted
         if (currentAccumulatedSpeechRef.current || persistedTurnSpeechRef.current) {
-          scheduleAutoSubmit(1600);
+          scheduleAutoSubmit(2500);
         }
       };
 
@@ -1927,11 +1927,8 @@ export default function AICoPilotChat({
 
           const isThinkingOrConnecting = thinkingSounds.includes(lastWord) || trailingConnectives.includes(lastWord);
 
-          // Fast path: if the latest result is marked final, submit even faster
-          const latestResult = event.results[event.results.length - 1];
-          const hasFinal = latestResult && latestResult.isFinal;
-
-          let waitTimeout = isThinkingOrConnecting ? 2600 : (hasFinal ? 1100 : 1600);
+          // Wait 2.5s (2500ms) of user silence before sending message
+          let waitTimeout = isThinkingOrConnecting ? 3200 : 2500;
           scheduleAutoSubmit(waitTimeout);
         }
       };
@@ -1954,9 +1951,9 @@ export default function AICoPilotChat({
         // Save current speech so user pausing doesn't wipe previous words when new utterance begins
         if (currentAccumulatedSpeechRef.current) {
           persistedTurnSpeechRef.current = currentAccumulatedSpeechRef.current;
-          // Ensure auto-submit is scheduled if user is quiet
+          // Ensure auto-submit is scheduled if user is quiet (2.5s wait)
           if (!silenceTimerRef.current && isCallActiveRef.current && !isAgentSpeakingRef.current && !isProcessingRef.current) {
-            scheduleAutoSubmit(1600);
+            scheduleAutoSubmit(2500);
           }
         }
         // Ultra-low latency auto-restart (40ms) to keep mic live seamlessly
@@ -2375,19 +2372,19 @@ export default function AICoPilotChat({
             </div>
 
             {/* ========================================================================= */}
-            {/* VIEW A: MINIMALIST & PROFESSIONAL VOICE CALL SCREEN                       */}
+            {/* VIEW A: MINIMALIST & PROFESSIONAL VOICE CALL SCREEN (CLEAN WHITE)       */}
             {/* ========================================================================= */}
             {isCallActive ? (
-              <div className="flex-1 bg-gradient-to-b from-blue-950 via-slate-900 to-slate-950 p-4.5 flex flex-col justify-between text-white animate-fade-in relative overflow-hidden">
+              <div className="flex-1 bg-white p-4.5 flex flex-col justify-between text-slate-900 animate-fade-in relative overflow-hidden">
                 
-                {/* Subtle Ambient background */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-blue-600/10 rounded-full blur-3xl pointer-events-none" />
+                {/* Subtle Ambient light background */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-blue-50/80 rounded-full blur-3xl pointer-events-none" />
 
                 {/* Center Sleek Voice Orb & Equalizer */}
                 <div className="flex flex-col items-center justify-center gap-2.5 z-10 my-2">
                   <div className="relative flex items-center justify-center">
-                    <div className={`absolute w-24 h-24 rounded-full border border-blue-500/20 ${callStatus === 'speaking' ? 'animate-ping' : ''}`} />
-                    <div className={`absolute w-20 h-20 rounded-full bg-blue-600/20 blur-md ${callStatus === 'speaking' ? 'animate-pulse' : ''}`} />
+                    <div className={`absolute w-24 h-24 rounded-full border border-blue-200 ${callStatus === 'speaking' ? 'animate-ping' : ''}`} />
+                    <div className={`absolute w-20 h-20 rounded-full bg-blue-50 blur-md ${callStatus === 'speaking' ? 'animate-pulse' : ''}`} />
                     
                     <button
                       type="button"
@@ -2397,17 +2394,17 @@ export default function AICoPilotChat({
                       }}
                       className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 cursor-pointer ${
                         callStatus === 'speaking' 
-                          ? 'bg-blue-600 hover:bg-blue-500 scale-105 shadow-blue-500/30 ring-4 ring-blue-500/20' 
+                          ? 'bg-blue-950 hover:bg-blue-900 scale-105 shadow-blue-950/20 ring-4 ring-blue-100' 
                           : callStatus === 'thinking'
-                          ? 'bg-blue-800 animate-pulse shadow-cyan-500/30 ring-4 ring-cyan-500/30'
-                          : 'bg-blue-600 hover:bg-blue-500 shadow-blue-500/30 ring-4 ring-blue-500/20'
+                          ? 'bg-blue-900 animate-pulse shadow-blue-900/20 ring-4 ring-blue-100'
+                          : 'bg-blue-950 hover:bg-blue-900 shadow-blue-950/20 ring-4 ring-blue-100'
                       }`}
                       title={callStatus === 'speaking' ? (isMalay ? "Sentuh untuk Sampuk & Cakap" : "Tap to Interrupt & Speak") : undefined}
                     >
                       {callStatus === 'speaking' ? (
                         <Activity className="w-7 h-7 text-white animate-pulse" />
                       ) : callStatus === 'thinking' ? (
-                        <Sparkles className="w-7 h-7 text-cyan-300 animate-spin" />
+                        <Sparkles className="w-7 h-7 text-blue-200 animate-spin" />
                       ) : (
                         <Mic className="w-7 h-7 text-white" />
                       )}
@@ -2416,21 +2413,21 @@ export default function AICoPilotChat({
 
                   {/* Equalizer Sound Wave Bars */}
                   <div className="flex items-center gap-1 h-3.5">
-                    <span className={`w-1 bg-blue-400 rounded-full transition-all duration-200 ${callStatus === 'speaking' ? 'h-3 animate-pulse' : callStatus === 'listening' ? 'h-1.5' : 'h-1 opacity-40'}`}></span>
-                    <span className={`w-1 bg-blue-300 rounded-full transition-all duration-200 ${callStatus === 'speaking' ? 'h-3.5 animate-pulse [animation-duration:0.4s]' : callStatus === 'listening' ? 'h-2' : 'h-1 opacity-40'}`}></span>
-                    <span className={`w-1 bg-blue-400 rounded-full transition-all duration-200 ${callStatus === 'speaking' ? 'h-4 animate-pulse [animation-duration:0.6s]' : callStatus === 'listening' ? 'h-3' : 'h-1 opacity-40'}`}></span>
-                    <span className={`w-1 bg-blue-300 rounded-full transition-all duration-200 ${callStatus === 'speaking' ? 'h-3 animate-pulse [animation-duration:0.5s]' : callStatus === 'listening' ? 'h-2' : 'h-1 opacity-40'}`}></span>
-                    <span className={`w-1 bg-blue-400 rounded-full transition-all duration-200 ${callStatus === 'speaking' ? 'h-1.5 animate-pulse [animation-duration:0.7s]' : callStatus === 'listening' ? 'h-1' : 'h-1 opacity-40'}`}></span>
+                    <span className={`w-1 bg-blue-950 rounded-full transition-all duration-200 ${callStatus === 'speaking' ? 'h-3 animate-pulse' : callStatus === 'listening' ? 'h-1.5' : 'h-1 opacity-40'}`}></span>
+                    <span className={`w-1 bg-blue-800 rounded-full transition-all duration-200 ${callStatus === 'speaking' ? 'h-3.5 animate-pulse [animation-duration:0.4s]' : callStatus === 'listening' ? 'h-2' : 'h-1 opacity-40'}`}></span>
+                    <span className={`w-1 bg-blue-950 rounded-full transition-all duration-200 ${callStatus === 'speaking' ? 'h-4 animate-pulse [animation-duration:0.6s]' : callStatus === 'listening' ? 'h-3' : 'h-1 opacity-40'}`}></span>
+                    <span className={`w-1 bg-blue-800 rounded-full transition-all duration-200 ${callStatus === 'speaking' ? 'h-3 animate-pulse [animation-duration:0.5s]' : callStatus === 'listening' ? 'h-2' : 'h-1 opacity-40'}`}></span>
+                    <span className={`w-1 bg-blue-950 rounded-full transition-all duration-200 ${callStatus === 'speaking' ? 'h-1.5 animate-pulse [animation-duration:0.7s]' : callStatus === 'listening' ? 'h-1' : 'h-1 opacity-40'}`}></span>
                   </div>
 
                   {bargeInFlash && (
-                    <div className="px-3 py-1 bg-amber-500/20 border border-amber-500/50 rounded-full text-[11px] font-bold text-amber-300 flex items-center gap-1.5 animate-bounce shadow-lg">
-                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                    <div className="px-3 py-1 bg-amber-50 border border-amber-300 rounded-full text-[11px] font-bold text-amber-900 flex items-center gap-1.5 animate-bounce shadow-xs">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-600" />
                       <span>{isMalay ? "Disampuk! Mendengar soalan seterusnya..." : "Interrupted! Listening to your question..."}</span>
                     </div>
                   )}
 
-                  <span className="text-[11px] font-semibold text-slate-300 tracking-wide text-center">
+                  <span className="text-[11px] font-semibold text-slate-600 tracking-wide text-center">
                     {callStatus === 'speaking' && (isMalay ? "Ejen Sedang Menjawab (Terus bercakap untuk sampuk)" : "AI Speaking (Speak anytime to interrupt)")}
                     {callStatus === 'thinking' && (isMalay ? "AI Sedang Memproses & Mengira..." : "AI Processing & Calculating...")}
                     {callStatus === 'listening' && (isMalay ? "Mendengar suara anda..." : "Listening...")}
@@ -2441,9 +2438,9 @@ export default function AICoPilotChat({
                     <button
                       type="button"
                       onClick={handleInterruptAndSpeak}
-                      className="px-3.5 py-1 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 rounded-full text-[11px] font-bold flex items-center gap-1.5 transition-all shadow-md active:scale-95 cursor-pointer animate-fade-in"
+                      className="px-3.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-full text-[11px] font-bold flex items-center gap-1.5 transition-all shadow-xs active:scale-95 cursor-pointer animate-fade-in"
                     >
-                      <Pause className="w-3.5 h-3.5 text-amber-400" />
+                      <Pause className="w-3.5 h-3.5 text-amber-700" />
                       <span>{isMalay ? "Sampuk & Tanya Seterusnya ↵" : "Interrupt & Ask Next Question ↵"}</span>
                     </button>
                   )}
@@ -2453,15 +2450,15 @@ export default function AICoPilotChat({
                 <div className="w-full flex-1 max-h-[220px] overflow-y-auto flex flex-col gap-2 my-1 z-10 custom-scrollbar pr-0.5">
                   {/* Glowing Live AI Processing Demo Card while waiting for response */}
                   {callStatus === 'thinking' && (
-                    <div className="p-3.5 bg-blue-950/80 border border-cyan-500/40 rounded-2xl flex items-center gap-3 shadow-xl animate-pulse">
-                      <div className="w-8 h-8 rounded-xl bg-cyan-600/30 border border-cyan-400/40 flex items-center justify-center shrink-0">
-                        <Sparkles className="w-4.5 h-4.5 text-cyan-300 animate-spin" />
+                    <div className="p-3.5 bg-blue-50 border border-blue-200 rounded-2xl flex items-center gap-3 shadow-xs animate-pulse">
+                      <div className="w-8 h-8 rounded-xl bg-blue-100 border border-blue-200 flex items-center justify-center shrink-0">
+                        <Sparkles className="w-4.5 h-4.5 text-blue-900 animate-spin" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <span className="text-xs font-bold text-cyan-200 block">
+                        <span className="text-xs font-bold text-blue-950 block">
                           {isMalay ? "AI Sedang Menganalisis & Mengira..." : "AI Analyzing & Calculating..."}
                         </span>
-                        <span className="text-[10px] text-slate-300 block truncate">
+                        <span className="text-[10px] text-slate-500 block truncate">
                           {isMalay ? "Menilai kelayakan pembiayaan & pengiraan anda..." : "Assessing loan eligibility & calculation..."}
                         </span>
                       </div>
@@ -2470,26 +2467,26 @@ export default function AICoPilotChat({
 
                   {/* Live transcript while user is speaking */}
                   {liveTranscript ? (
-                    <div className="p-3 bg-slate-900/95 border border-blue-500/40 rounded-2xl flex items-center justify-between gap-2.5 shadow-lg animate-fade-in ring-1 ring-blue-500/20">
+                    <div className="p-3 bg-blue-50/80 border border-blue-200 rounded-2xl flex items-center justify-between gap-2.5 shadow-xs animate-fade-in">
                       <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <Mic className="w-4 h-4 text-cyan-400 shrink-0 animate-pulse" />
-                        <p className="text-xs text-white font-medium italic truncate">
+                        <Mic className="w-4 h-4 text-blue-700 shrink-0 animate-pulse" />
+                        <p className="text-xs text-blue-950 font-medium italic truncate">
                           &quot;{liveTranscript}&quot;
                         </p>
                       </div>
                       <button
                         type="button"
                         onClick={handleCommitCurrentSpeech}
-                        className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white text-[11px] font-bold rounded-xl shrink-0 cursor-pointer shadow-md active:scale-95 flex items-center gap-1"
+                        className="px-3 py-1.5 bg-blue-950 hover:bg-blue-900 text-white text-[11px] font-bold rounded-xl shrink-0 cursor-pointer shadow-xs active:scale-95 flex items-center gap-1"
                         title={isMalay ? "Hantar Sekarang" : "Send Now"}
                       >
                         <span>{isMalay ? 'Selesai' : 'Send'}</span>
-                        <ArrowRight className="w-3 h-3 text-blue-200" />
+                        <ArrowRight className="w-3 h-3 text-white" />
                       </button>
                     </div>
                   ) : callStatus === 'listening' && (
-                    <div className="px-3 py-2 bg-slate-900/40 border border-slate-800/80 rounded-xl text-center">
-                      <span className="text-[10px] text-slate-400">
+                    <div className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-center">
+                      <span className="text-[10px] text-slate-500">
                         {isMalay 
                           ? "Sebut keperluan anda (cth: 'Saya nak pinjam 5000, 5 tahun, 4% faedah')" 
                           : "Speak naturally (e.g., 'I want a loan of RM 5,000 for 5 years at 4%')"}
@@ -2499,83 +2496,83 @@ export default function AICoPilotChat({
 
                   {/* Previous User Speech pill */}
                   {!liveTranscript && lastUserSpeech && (
-                    <div className="px-2.5 py-1 bg-slate-900/70 border border-slate-800 rounded-lg text-[10px] text-slate-300 flex items-center gap-1.5">
-                      <User className="w-3 h-3 text-slate-400 shrink-0" />
+                    <div className="px-2.5 py-1 bg-slate-50 border border-slate-200 rounded-lg text-[10px] text-slate-600 flex items-center gap-1.5">
+                      <User className="w-3 h-3 text-slate-500 shrink-0" />
                       <span className="truncate italic">&quot;{lastUserSpeech}&quot;</span>
                     </div>
                   )}
 
-                  {/* Clean Monochromatic Calculation Card */}
+                  {/* Clean Calculation Card */}
                   {lastCallAction?.type === 'SET_CALCULATOR' && lastCallAction.payload ? (
-                    <div className="p-3 bg-slate-900/95 border border-slate-800 rounded-2xl shadow-xl flex flex-col gap-2 animate-fade-in">
-                      <div className="flex items-center justify-between border-b border-slate-800 pb-1.5">
+                    <div className="p-3.5 bg-white border border-slate-200 rounded-2xl shadow-sm flex flex-col gap-2 animate-fade-in">
+                      <div className="flex items-center justify-between border-b border-slate-100 pb-1.5">
                         <div className="flex items-center gap-1.5">
-                          <Calculator className="w-3.5 h-3.5 text-blue-400" />
-                          <span className="text-xs font-bold text-white tracking-wide">{isMalay ? 'Hasil Pengiraan Pinjaman' : 'Loan Calculation Result'}</span>
+                          <Calculator className="w-3.5 h-3.5 text-blue-900" />
+                          <span className="text-xs font-bold text-slate-900 tracking-wide">{isMalay ? 'Hasil Pengiraan Pinjaman' : 'Loan Calculation Result'}</span>
                         </div>
-                        <span className="text-[10px] font-bold bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md border border-slate-700">
+                        <span className="text-[10px] font-bold bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md border border-slate-200">
                           {lastCallAction.payload.interestRate}% flat p.a.
                         </span>
                       </div>
 
                       <div className="grid grid-cols-2 gap-2 text-left">
-                        <div className="bg-slate-950/80 p-2 rounded-xl border border-slate-800/80">
-                          <span className="text-[9px] font-bold text-slate-400 uppercase block">{isMalay ? 'Jumlah Pinjaman' : 'Loan Amount'}</span>
-                          <span className="text-sm font-black text-white block mt-0.5">RM {lastCallAction.payload.loanAmount.toLocaleString()}</span>
-                          <span className="text-[9px] text-slate-400 block">{lastCallAction.payload.tenureYears} {lastCallAction.payload.tenureYears === 1 ? 'Year' : 'Years'} ({lastCallAction.payload.tenureYears * 12} Mo)</span>
+                        <div className="bg-slate-50 p-2 rounded-xl border border-slate-100">
+                          <span className="text-[9px] font-bold text-slate-500 uppercase block">{isMalay ? 'Jumlah Pinjaman' : 'Loan Amount'}</span>
+                          <span className="text-sm font-black text-slate-900 block mt-0.5">RM {lastCallAction.payload.loanAmount.toLocaleString()}</span>
+                          <span className="text-[9px] text-slate-500 block">{lastCallAction.payload.tenureYears} {lastCallAction.payload.tenureYears === 1 ? 'Year' : 'Years'} ({lastCallAction.payload.tenureYears * 12} Mo)</span>
                         </div>
-                        <div className="bg-slate-950/80 p-2 rounded-xl border border-slate-800/80 text-right">
-                          <span className="text-[9px] font-bold text-slate-400 uppercase block">{isMalay ? 'Anggaran Ansuran' : 'Est. Installment'}</span>
-                          <span className="text-sm font-black text-blue-400 block mt-0.5">
+                        <div className="bg-slate-50 p-2 rounded-xl border border-slate-100 text-right">
+                          <span className="text-[9px] font-bold text-slate-500 uppercase block">{isMalay ? 'Anggaran Ansuran' : 'Est. Installment'}</span>
+                          <span className="text-sm font-black text-blue-900 block mt-0.5">
                             RM {(Math.round((lastCallAction.payload.loanAmount * (1 + (lastCallAction.payload.interestRate / 100) * lastCallAction.payload.tenureYears)) / (lastCallAction.payload.tenureYears * 12) * 100) / 100).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                           </span>
-                          <span className="text-[9px] text-slate-400 block">/ {isMalay ? 'bulan' : 'month'}</span>
+                          <span className="text-[9px] text-slate-500 block">/ {isMalay ? 'bulan' : 'month'}</span>
                         </div>
                       </div>
 
                       <button
                         type="button"
                         onClick={() => executeAgentAction(lastCallAction, true)}
-                        className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-md transition-all cursor-pointer active:scale-98"
+                        className="w-full py-2 bg-blue-950 hover:bg-blue-900 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs transition-all cursor-pointer active:scale-98"
                       >
                         <ArrowRight className="w-3.5 h-3.5 text-white" />
                         <span>{isMalay ? 'Buka Kalkulator Penuh →' : 'Open in Calculator Page →'}</span>
                       </button>
                     </div>
                   ) : lastCallAction?.type === 'NAVIGATE_DIRECTORY' ? (
-                    <div className="p-3 bg-slate-900/95 border border-slate-800 rounded-2xl flex flex-col gap-2">
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-white">
-                        <Landmark className="w-3.5 h-3.5 text-blue-400" />
+                    <div className="p-3.5 bg-white border border-slate-200 rounded-2xl flex flex-col gap-2 shadow-xs">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
+                        <Landmark className="w-3.5 h-3.5 text-blue-900" />
                         <span>{isMalay ? 'Direktori Bank & Pemberi Pinjaman' : 'Licensed Bank Directory'}</span>
                       </div>
-                      <p className="text-[11px] text-slate-300">{isMalay ? 'Semak 11 institusi kewangan yang dipadankan.' : 'Explore 11 matched financial institutions.'}</p>
+                      <p className="text-[11px] text-slate-600">{isMalay ? 'Semak 11 institusi kewangan yang dipadankan.' : 'Explore 11 matched financial institutions.'}</p>
                       <button
                         type="button"
                         onClick={() => executeAgentAction(lastCallAction, true)}
-                        className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                        className="w-full py-2 bg-blue-950 hover:bg-blue-900 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer"
                       >
                         <span>{isMalay ? 'Pergi ke Direktori Bank →' : 'Go to Bank Directory →'}</span>
                       </button>
                     </div>
                   ) : lastCallAction?.type === 'NAVIGATE_LOAN_NEED' ? (
-                    <div className="p-3 bg-slate-900/95 border border-slate-800 rounded-2xl flex flex-col gap-2">
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-white">
-                        <Target className="w-3.5 h-3.5 text-blue-400" />
+                    <div className="p-3.5 bg-white border border-slate-200 rounded-2xl flex flex-col gap-2 shadow-xs">
+                      <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
+                        <Target className="w-3.5 h-3.5 text-blue-900" />
                         <span>{isMalay ? 'Langkah 1: Keperluan Pinjaman' : 'Step 1: Loan Purpose Setup'}</span>
                       </div>
                       <button
                         type="button"
                         onClick={() => executeAgentAction(lastCallAction, true)}
-                        className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer"
+                        className="w-full py-2 bg-blue-950 hover:bg-blue-900 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer"
                       >
                         <span>{isMalay ? 'Pergi ke Langkah 1 →' : 'Go to Step 1 →'}</span>
                       </button>
                     </div>
                   ) : (
                     /* Default AI Text Subtitle Box with Auto-scroll */
-                    <div className="w-full bg-slate-900/95 border border-slate-800 rounded-2xl p-3 text-left shadow-lg flex items-start gap-2.5">
-                      <div className="w-6 h-6 rounded-lg bg-blue-600/20 border border-blue-500/30 flex items-center justify-center shrink-0 mt-0.5">
-                        <Bot className="w-3.5 h-3.5 text-blue-400" />
+                    <div className="w-full bg-slate-50 border border-slate-200 rounded-2xl p-3.5 text-left shadow-xs flex items-start gap-2.5">
+                      <div className="w-6 h-6 rounded-lg bg-blue-100 border border-blue-200 flex items-center justify-center shrink-0 mt-0.5">
+                        <Bot className="w-3.5 h-3.5 text-blue-950" />
                       </div>
                       <div 
                         ref={callSubtitleScrollRef}
@@ -2600,11 +2597,11 @@ export default function AICoPilotChat({
                             isUserScrollingSubtitlesRef.current = false;
                           }, 4000);
                         }}
-                        className="flex-1 text-xs text-slate-100 leading-relaxed max-h-[140px] overflow-y-auto pr-1 custom-scrollbar"
+                        className="flex-1 text-xs text-slate-800 leading-relaxed max-h-[140px] overflow-y-auto pr-1 custom-scrollbar"
                       >
                         <FormattedMessage 
                           text={lastAgentReply || (isMalay ? "Bagaimana saya boleh bantu anda?" : "How can I help you?")} 
-                          isDark={true}
+                          isDark={false}
                         />
                       </div>
                     </div>
@@ -2612,14 +2609,14 @@ export default function AICoPilotChat({
                 </div>
 
                 {/* Bottom Call Controls */}
-                <div className="flex items-center justify-center gap-6 mt-2 z-10 w-full pt-1.5 border-t border-slate-800/80">
+                <div className="flex items-center justify-center gap-6 mt-2 z-10 w-full pt-2 border-t border-slate-100">
                   <button
                     type="button"
                     onClick={() => setIsMuted(prev => !prev)}
                     className={`w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer ${
                       isMuted 
-                        ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40' 
-                        : 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700'
+                        ? 'bg-rose-50 text-rose-600 border border-rose-200' 
+                        : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200'
                     }`}
                     title={isMuted ? "Unmute" : "Mute"}
                   >
@@ -2641,7 +2638,7 @@ export default function AICoPilotChat({
                       stopSpeaking();
                       setIsCallActive(false);
                     }}
-                    className="w-10 h-10 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-full flex items-center justify-center border border-slate-700 transition-all cursor-pointer"
+                    className="w-10 h-10 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-full flex items-center justify-center border border-slate-200 transition-all cursor-pointer"
                     title="Switch to Chat"
                   >
                     <MessageSquare className="w-4 h-4" />
