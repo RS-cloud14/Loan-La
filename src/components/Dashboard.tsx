@@ -252,35 +252,43 @@ export default function Dashboard() {
 
     try {
       if (typeof window !== 'undefined') {
+        // Clean up legacy global unlock key that caused leak across accounts
+        localStorage.removeItem('creditflow_passport_unlocked');
+
         const sessionStr = localStorage.getItem('crediflow_user_session');
         const sessionObj = sessionStr ? JSON.parse(sessionStr) : null;
         if (sessionObj) {
           setUserSession(sessionObj);
-        }
+          
+          // Load account-specific plan
+          const uKey = sessionObj.profileId || sessionObj.phone || sessionObj.email || 'default';
+          const savedPlan = (localStorage.getItem(`creditflow_plan_${uKey}`) || localStorage.getItem('creditflow_unlocked_plan')) as 'single' | 'pro' | null;
+          const savedDocHash = localStorage.getItem(`creditflow_doc_${uKey}`) || localStorage.getItem('creditflow_unlocked_doc_hash');
+          const savedProExpiry = localStorage.getItem(`creditflow_expiry_${uKey}`) || localStorage.getItem('creditflow_pro_expiry');
 
-        const savedPlan = localStorage.getItem('creditflow_unlocked_plan') as 'single' | 'pro' | null;
-        const savedDocHash = localStorage.getItem('creditflow_unlocked_doc_hash');
-        const savedProExpiry = localStorage.getItem('creditflow_pro_expiry');
-
-        if (savedPlan === 'pro' && savedProExpiry) {
-          const expTime = parseInt(savedProExpiry, 10);
-          if (expTime > Date.now()) {
-            setUnlockedPlan('pro');
-            setProExpiryTimestamp(expTime);
+          if (savedPlan === 'pro' && savedProExpiry) {
+            const expTime = parseInt(savedProExpiry, 10);
+            if (expTime > Date.now()) {
+              setUnlockedPlan('pro');
+              setProExpiryTimestamp(expTime);
+              setIsPassportUnlocked(true);
+            } else {
+              setUnlockedPlan(null);
+              setIsPassportUnlocked(false);
+            }
+          } else if (savedPlan === 'single' && savedDocHash) {
+            setUnlockedPlan('single');
+            setUnlockedDocHash(savedDocHash);
             setIsPassportUnlocked(true);
           } else {
             setUnlockedPlan(null);
+            setUnlockedDocHash(null);
             setIsPassportUnlocked(false);
           }
-        } else if (savedPlan === 'single' && savedDocHash) {
-          setUnlockedPlan('single');
-          setUnlockedDocHash(savedDocHash);
-          setIsPassportUnlocked(true);
         } else {
-          const unlocked = localStorage.getItem('creditflow_passport_unlocked');
-          if (unlocked === 'true') {
-            setIsPassportUnlocked(true);
-          }
+          setUnlockedPlan(null);
+          setUnlockedDocHash(null);
+          setIsPassportUnlocked(false);
         }
       }
     } catch (e) {}
@@ -504,8 +512,9 @@ export default function Dashboard() {
       return false;
     }
 
-    return isPassportUnlocked;
-  }, [unlockedPlan, proExpiryTimestamp, unlockedDocHash, uploadedFiles, b2cResult?.hash, isPassportUnlocked, computeFilesFingerprint]);
+    // Unpaid / No Plan: strictly locked
+    return false;
+  }, [unlockedPlan, proExpiryTimestamp, unlockedDocHash, uploadedFiles, b2cResult?.hash, computeFilesFingerprint]);
 
   // Draft Storage State
   const [savedDraft, setSavedDraft] = useState<SavedApplicationDraft | null>(null);
@@ -1598,8 +1607,18 @@ export default function Dashboard() {
                         onClick={() => {
                           setUserDropdownOpen(false);
                           setUserSession(null);
+                          setUnlockedPlan(null);
+                          setUnlockedDocHash(null);
+                          setProExpiryTimestamp(null);
+                          setIsPassportUnlocked(false);
+                          setB2cResult(null);
+                          setUploadedFiles([]);
                           try {
                             localStorage.removeItem('crediflow_user_session');
+                            localStorage.removeItem('creditflow_passport_unlocked');
+                            localStorage.removeItem('creditflow_unlocked_plan');
+                            localStorage.removeItem('creditflow_unlocked_doc_hash');
+                            localStorage.removeItem('creditflow_pro_expiry');
                           } catch (e) {}
                         }}
                         className="w-full px-3 py-2 text-left text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition-all flex items-center gap-2 cursor-pointer"
@@ -7194,7 +7213,32 @@ export default function Dashboard() {
             epfStatus: user.epfStatus || 'i-saraan'
           };
           setUserSession(fullUser);
-          setIsPassportUnlocked(true);
+
+          // Check if this specific user account has an active paid plan
+          const uKey = fullUser.profileId || fullUser.phone || fullUser.email || 'default';
+          const savedPlan = localStorage.getItem(`creditflow_plan_${uKey}`) as 'single' | 'pro' | null;
+          const savedDocHash = localStorage.getItem(`creditflow_doc_${uKey}`);
+          const savedProExpiry = localStorage.getItem(`creditflow_expiry_${uKey}`);
+
+          if (savedPlan === 'pro' && savedProExpiry) {
+            const expTime = parseInt(savedProExpiry, 10);
+            if (expTime > Date.now()) {
+              setUnlockedPlan('pro');
+              setProExpiryTimestamp(expTime);
+              setIsPassportUnlocked(true);
+            } else {
+              setUnlockedPlan(null);
+              setIsPassportUnlocked(false);
+            }
+          } else if (savedPlan === 'single' && savedDocHash) {
+            setUnlockedPlan('single');
+            setUnlockedDocHash(savedDocHash);
+            setIsPassportUnlocked(true);
+          } else {
+            setUnlockedPlan(null);
+            setUnlockedDocHash(null);
+            setIsPassportUnlocked(false);
+          }
 
           if (serverApps && serverApps.length > 0) {
             setSubmittedApplications(serverApps);
@@ -7217,7 +7261,7 @@ export default function Dashboard() {
 
           try {
             localStorage.setItem('crediflow_user_session', JSON.stringify(fullUser));
-            localStorage.setItem('creditflow_passport_unlocked', 'true');
+            localStorage.removeItem('creditflow_passport_unlocked');
           } catch (e) {}
 
           setPdpaConsent(true);
@@ -7626,6 +7670,7 @@ export default function Dashboard() {
           setShowPaywallModal(false);
           const currentFingerprint = computeFilesFingerprint(uploadedFiles);
           const currentHash = b2cResult?.hash || currentFingerprint || 'doc-unlocked';
+          const uKey = userSession?.profileId || userSession?.phone || userSession?.email || 'default';
           
           if (plan === 'pro') {
             const expiry = Date.now() + 30 * 24 * 60 * 60 * 1000;
@@ -7633,9 +7678,11 @@ export default function Dashboard() {
             setProExpiryTimestamp(expiry);
             setIsPassportUnlocked(true);
             try {
+              localStorage.setItem(`creditflow_plan_${uKey}`, 'pro');
+              localStorage.setItem(`creditflow_expiry_${uKey}`, expiry.toString());
               localStorage.setItem('creditflow_unlocked_plan', 'pro');
               localStorage.setItem('creditflow_pro_expiry', expiry.toString());
-              localStorage.setItem('creditflow_passport_unlocked', 'true');
+              localStorage.removeItem('creditflow_passport_unlocked');
             } catch (e) {}
           } else {
             // Single Plan (RM 9.90): Unlocks only this current document batch
@@ -7643,9 +7690,11 @@ export default function Dashboard() {
             setUnlockedDocHash(currentHash);
             setIsPassportUnlocked(true);
             try {
+              localStorage.setItem(`creditflow_plan_${uKey}`, 'single');
+              localStorage.setItem(`creditflow_doc_${uKey}`, currentHash);
               localStorage.setItem('creditflow_unlocked_plan', 'single');
               localStorage.setItem('creditflow_unlocked_doc_hash', currentHash);
-              localStorage.setItem('creditflow_passport_unlocked', 'true');
+              localStorage.removeItem('creditflow_passport_unlocked');
             } catch (e) {}
           }
 

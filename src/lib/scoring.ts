@@ -537,9 +537,11 @@ export function calculateAlternativeCreditProfile(input: UnderwritingInput): Cre
   const numMonths = Math.max(1, derivedMonthlyIncomes.length, monthlyOutflowMap.size);
 
   // Computed average monthly essential expenses (deterministic)
-  const computedMonthlyExpenses = totalEssentialOutflows > 0 
-    ? (totalEssentialOutflows / numMonths) 
-    : (input.averageMonthlyExpenses || (avgIncome * 0.65));
+  const computedMonthlyExpenses = (input.averageMonthlyExpenses && input.averageMonthlyExpenses > 0)
+    ? input.averageMonthlyExpenses
+    : (totalEssentialOutflows > 0 
+        ? Math.round(totalEssentialOutflows / numMonths) 
+        : Math.round(avgIncome * 0.65));
 
   // Deterministic ending balance (prefer bank statement ending balance if present)
   let deterministicEndingBalance = input.endingBalance || 0;
@@ -648,7 +650,7 @@ export function calculateAlternativeCreditProfile(input: UnderwritingInput): Cre
   // Calculate Repayment Capacity & Affordability
   // ── DETERMINISTIC SURPLUS COMPUTATION ────────────────────────────────────────
   const adjustedEssentialExpenses = Math.min(computedMonthlyExpenses, avgIncome * 0.80);
-  const monthlySurplus = Math.max(avgIncome * 0.15, avgIncome - adjustedEssentialExpenses);
+  const monthlySurplus = Math.round(Math.max(avgIncome * 0.15, avgIncome - adjustedEssentialExpenses));
   
   let tenureYears = (input.tenureYears && input.tenureYears > 0) ? input.tenureYears : 5;
   let interestRate = 0.065; // default 6.5% flat p.a.
@@ -694,7 +696,7 @@ export function calculateAlternativeCreditProfile(input: UnderwritingInput): Cre
     ? Math.round((principal + totalInterest) / (tenureYears * 12)) 
     : 0;
 
-  const postLoanBuffer = monthlySurplus - estimatedInstallment;
+  const postLoanBuffer = Math.round(monthlySurplus - estimatedInstallment);
   
   let affordabilityStatus: 'Strong' | 'Borderline' | 'Deficit' = 'Strong';
   if (principal === 0) {

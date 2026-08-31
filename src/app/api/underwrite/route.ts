@@ -505,6 +505,9 @@ export function extractRealApplicantData(
   };
 }
 
+// In-memory cache for deterministic document hash assessments
+const UNDERWRITE_CACHE = new Map<string, any>();
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -543,6 +546,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: true,
         ...payloadResult
+      });
+    }
+
+    // Deterministic Cache Lookup for identical documents & identical loan parameters
+    const cacheKey = `${documentHash || ''}_${targetLoanPurpose || 'personal_cash'}_${targetLoanAmount || 5000}_${tenureYears || 1}_${applicantName || ''}`;
+    if (documentHash && UNDERWRITE_CACHE.has(cacheKey)) {
+      const cached = UNDERWRITE_CACHE.get(cacheKey);
+      return NextResponse.json({
+        success: true,
+        ...cached,
+        cached: true
       });
     }
 
@@ -1383,6 +1397,10 @@ Return ONLY valid JSON, no markdown, no explanation, matching this EXACT schema:
       };
 
       await saveAssessmentToJson(payloadResult);
+
+      if (documentHash) {
+        UNDERWRITE_CACHE.set(cacheKey, payloadResult);
+      }
 
       return NextResponse.json({
         success: true,
