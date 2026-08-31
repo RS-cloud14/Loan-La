@@ -1110,6 +1110,21 @@ export default function Dashboard() {
           return updated;
         });
 
+        // Sync report item to backend users database
+        if (userSession) {
+          fetch('/api/auth', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action: 'save-report',
+              userId: userSession.profileId,
+              phone: userSession.phone,
+              email: userSession.email,
+              reportItem: newReportItem
+            })
+          }).catch(() => {});
+        }
+
         if (type === 'real') {
           const newId = `real-${Date.now()}`;
           const newApplicant = {
@@ -6868,6 +6883,21 @@ export default function Dashboard() {
                               try { localStorage.setItem('crediflow_submitted_apps', JSON.stringify(updated)); } catch(e) {}
                               return updated;
                             });
+
+                            // Sync application to backend users database
+                            if (userSession) {
+                              fetch('/api/auth', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                  action: 'save-application',
+                                  userId: userSession.profileId,
+                                  phone: userSession.phone,
+                                  email: userSession.email,
+                                  application: newAppRecord
+                                })
+                              }).catch(() => {});
+                            }
                             setApplySubmitted(true);
                           }}
                           className={`flex-1 py-3 font-extrabold rounded-xl text-sm shadow-md flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
@@ -7055,23 +7085,43 @@ export default function Dashboard() {
       <AuthModal
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
-        onLoginSuccess={(user) => {
+        onLoginSuccess={(user, serverApps, serverReports) => {
           const fullUser: UserProfileData = {
             ...user,
             icNumber: user.icNumber || '891012-14-5566',
-            email: user.email || 'ahmad.razak@gmail.com',
+            email: user.email || 'borrower@loan-la.my',
             bankName: user.bankName || 'Maybank (Malayan Banking Berhad)',
             bankAccountNumber: user.bankAccountNumber || '114012849201',
             bankAccountHolder: user.bankAccountHolder || user.name || 'Ahmad Bin Razak',
-            bankAccountType: 'savings',
-            workCategory: 'gig',
-            platformName: 'Grab / Foodpanda',
-            platformId: 'GBR-884219',
-            estimatedMonthlyIncome: 3500,
-            epfStatus: 'i-saraan'
+            bankAccountType: user.bankAccountType || 'savings',
+            workCategory: user.workCategory || 'gig',
+            platformName: user.platformName || 'Grab / Foodpanda',
+            platformId: user.platformId || 'GBR-884219',
+            estimatedMonthlyIncome: user.estimatedMonthlyIncome || 3500,
+            epfStatus: user.epfStatus || 'i-saraan'
           };
           setUserSession(fullUser);
           setIsPassportUnlocked(true);
+
+          if (serverApps && serverApps.length > 0) {
+            setSubmittedApplications(serverApps);
+            try {
+              localStorage.setItem('crediflow_submitted_apps', JSON.stringify(serverApps));
+            } catch (e) {}
+          }
+          if (serverReports && serverReports.length > 0) {
+            setReportHistory(serverReports);
+            if (serverReports[0].result) {
+              setB2cResult(serverReports[0].result);
+              setIsCurrentResultDemo(serverReports[0].isDemo || false);
+              if (serverReports[0].loanAmount) setTargetLoanAmount(serverReports[0].loanAmount);
+              if (serverReports[0].loanPurpose) setTargetLoanPurpose(serverReports[0].loanPurpose);
+            }
+            try {
+              localStorage.setItem('crediflow_report_history', JSON.stringify(serverReports));
+            } catch (e) {}
+          }
+
           try {
             localStorage.setItem('crediflow_user_session', JSON.stringify(fullUser));
             localStorage.setItem('creditflow_passport_unlocked', 'true');
