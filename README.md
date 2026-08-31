@@ -54,12 +54,7 @@ Over **4.8 million gig workers** (Grab, Foodpanda, Shopee, Lalamove) and micro-S
 * **RMiT Image Forensics**: Detects clone-stamp artifacts, font weight inconsistencies, and pixel-level document tampering.
 * **Payout-to-Ledger Reconciliation**: Cross-matches third-party platform disbursements (e.g. Grab weekly transfers) against bank deposit credits with 99.4% precision.
 
-### 5. 🏦 Multi-Tier Smart Lender Matching & 1-Click Dispatch
-* **Tier 1 (Subsidized Micro-Credit)**: TEKUN Nasional (4.0% KUSKOP scheme), BSN MicroKredit Madani, PUNB.
-* **Tier 2 (Digital Banks & FinTechs)**: GXBank, AEON Bank, Boost Bank.
-* **Tier 3 (Tier-1 Commercial Banks)**: Maybank SME Digital Financing, CIMB Micro, Bank Rakyat.
-
-### 6. 🎙️ Real-Time Conversational AI Voice Coach & PDF Explainer
+### 5. 🎙️ Real-Time Conversational AI Voice Coach & PDF Explainer
 * Native Web Speech API integration (Speech-to-Text and Text-to-Speech).
 * Real-time Interactive PDF Explainer and Live Voice Call allowing borrowers to ask questions conversationally in **English** and **Bahasa Melayu**.
 
