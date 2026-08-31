@@ -15,7 +15,9 @@ import {
   MessageSquare,
   ArrowUpRight,
   ShieldCheck,
-  ChevronRight
+  ChevronRight,
+  Maximize2,
+  Minimize2
 } from 'lucide-react';
 import { getCreditPassportPdfBlobUrl, generateCreditPassportPdf } from '@/lib/pdfGenerator';
 import { CreditProfileReport as AssessmentReport, UnderwritingInput as UserInputData } from '@/lib/scoring';
@@ -101,6 +103,7 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
 }) => {
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
   const [mobileTab, setMobileTab] = useState<'pdf' | 'chat'>('chat');
+  const [isPdfMaximized, setIsPdfMaximized] = useState<boolean>(false);
   const [language, setLanguage] = useState<'en' | 'bm'>('en');
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
   const [chatMessages, setChatMessages] = useState<Array<{ sender: 'user' | 'assistant'; text: string }>>([]);
@@ -348,20 +351,20 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 md:p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200 overscroll-contain">
-      <div className="relative w-full max-w-[98vw] 2xl:max-w-[1550px] h-[96vh] flex flex-col rounded-2xl md:rounded-3xl border border-slate-200 bg-white text-slate-900 shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-1 sm:p-2 md:p-3 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200 overscroll-contain">
+      <div className="relative w-full max-w-[99vw] h-[98vh] flex flex-col rounded-2xl md:rounded-3xl border border-slate-200 bg-white text-slate-900 shadow-2xl overflow-hidden">
         
         {/* Clean Top White Header */}
-        <div className="flex items-center justify-between gap-3 px-4 sm:px-6 py-3 border-b border-slate-200 bg-white shrink-0">
+        <div className="flex items-center justify-between gap-3 px-3 sm:px-5 py-2.5 border-b border-slate-200 bg-white shrink-0">
           
           {/* Left: Branding & Core Applicant Info */}
           <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-blue-950 text-white flex items-center justify-center shadow-xs shrink-0 font-bold">
+            <div className="w-8 h-8 rounded-xl bg-blue-950 text-white flex items-center justify-center shadow-xs shrink-0 font-bold">
               <FileText className="w-4 h-4 text-blue-200" />
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-xs sm:text-sm md:text-base font-black text-slate-950 tracking-tight truncate">
+                <h2 className="text-xs sm:text-sm font-black text-slate-950 tracking-tight truncate">
                   Alternative Credit Passport
                 </h2>
                 <span className="text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 shrink-0">
@@ -413,9 +416,23 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
               <span className="hidden sm:inline">{isSpeaking ? 'Stop' : 'Voice'}</span>
             </button>
 
+            {/* Maximize / Split View Toggle Button */}
+            <button
+              onClick={() => setIsPdfMaximized(!isPdfMaximized)}
+              className={`px-2.5 py-1.5 rounded-xl border hidden lg:flex items-center gap-1.5 text-xs font-bold transition-all ${
+                isPdfMaximized
+                  ? 'bg-blue-950 text-white border-blue-900 shadow-xs'
+                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+              }`}
+              title={isPdfMaximized ? (language === 'bm' ? 'Pisah Skrin' : 'Split View') : (language === 'bm' ? 'Besarkan PDF Sepenuhnya' : 'Maximize PDF Canvas')}
+            >
+              {isPdfMaximized ? <Minimize2 className="w-3.5 h-3.5 text-blue-200" /> : <Maximize2 className="w-3.5 h-3.5 text-slate-700" />}
+              <span className="hidden sm:inline">{isPdfMaximized ? (language === 'bm' ? 'Pisah Skrin' : 'Split View') : (language === 'bm' ? 'Besarkan PDF' : 'Maximize PDF')}</span>
+            </button>
+
             {/* 1-Click PDF Download */}
             <button
-              onClick={() => generateCreditPassportPdf({ inputData, report, documentHash, isLocked })}
+              onClick={() => generateCreditPassportPdf({ inputData, report, documentHash, isLocked, matchedLenders: lendersToUse })}
               className="px-3 py-1.5 rounded-xl bg-blue-950 hover:bg-blue-900 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
               title="Download PDF"
             >
@@ -456,13 +473,13 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
           </button>
         </div>
 
-        {/* Main Body: Desktop 65/35 Split Screen, Mobile Full View Switch */}
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-0 overflow-hidden min-h-0 bg-slate-50">
+        {/* Main Body: Desktop 75/25 Split Screen or 100% Maximized PDF View */}
+        <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-0 overflow-hidden min-h-0 bg-slate-50 relative">
           
-          {/* Left Panel: PDF Viewer Canvas (Desktop 65% / Mobile conditional) */}
-          <div className={`${mobileTab === 'pdf' ? 'flex' : 'hidden'} lg:flex lg:col-span-8 border-r border-slate-200 bg-slate-100 flex-col min-h-0 overflow-hidden p-2 sm:p-3`}>
+          {/* Left Panel: Maximized PDF Viewer Canvas */}
+          <div className={`${mobileTab === 'pdf' ? 'flex' : 'hidden'} lg:flex ${isPdfMaximized ? 'lg:col-span-12' : 'lg:col-span-8 xl:col-span-9'} border-r border-slate-200 bg-slate-100 flex-col min-h-0 overflow-hidden p-1 sm:p-2 relative`}>
             {pdfBlobUrl ? (
-              <div className="w-full h-full rounded-2xl overflow-hidden border border-slate-300 bg-white shadow-md relative">
+              <div className="w-full h-full rounded-xl sm:rounded-2xl overflow-hidden border border-slate-300 bg-white shadow-md relative">
                 <iframe
                   src={`${pdfBlobUrl}#toolbar=0&navpanes=0&scrollbar=1`}
                   className="w-full h-full border-0 block"
@@ -477,10 +494,21 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
                 </p>
               </div>
             )}
+
+            {/* Floating Open AI Assistant pill when PDF is maximized */}
+            {isPdfMaximized && (
+              <button
+                onClick={() => setIsPdfMaximized(false)}
+                className="absolute bottom-4 right-4 z-40 px-4 py-2 rounded-xl bg-blue-950/95 hover:bg-blue-900 text-white text-xs font-bold shadow-xl border border-blue-800 flex items-center gap-2 cursor-pointer backdrop-blur-sm active:scale-95 transition-all"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
+                <span>{language === 'bm' ? 'Papar Pembantu AI' : 'Show AI Explainer'}</span>
+              </button>
+            )}
           </div>
 
           {/* Right Panel: Synchronized AI Underwriting Assistant */}
-          <div className={`${mobileTab === 'chat' ? 'flex' : 'hidden'} lg:flex lg:col-span-4 flex-col bg-white min-h-0 overflow-hidden`}>
+          <div className={`${mobileTab === 'chat' ? 'flex' : 'hidden'} ${isPdfMaximized ? 'lg:hidden' : 'lg:flex lg:col-span-4 xl:col-span-3'} flex-col bg-white min-h-0 overflow-hidden`}>
             
             {/* Quick Metrics Bar (Clickable) */}
             <div className="p-3 border-b border-slate-200 bg-slate-50 grid grid-cols-3 gap-2 shrink-0">

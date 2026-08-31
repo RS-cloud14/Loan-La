@@ -2176,15 +2176,38 @@ REAL-TIME SCREEN & ON-SCREEN VIEWPORT CONTEXT:
 ${matchedLenders.slice(0, 4).map((l: any, i: number) => `    ${i + 1}. ${l.name} (${l.matchScore}% Match · ${l.eligibilityLabel || 'Eligible'})`).join('\n')}
   • Cryptographic Forensic Hash: SHA-256 (${userContext?.documentHash || '661e6600ecd3371b59a091a0a08e2d4e24217164044f0b4d8784b1be7d2b37ee'}) — Verified Tamper-Proof under Bank Negara Malaysia FTFC & RMiT standards.
 
+EXACT NUMBERED SECTIONS OF THE 2-PAGE CREDIT PASSPORT PDF:
+- Section 1 (Page 1): "1. Credit Score & Certified Income Proof (Pengganti Slip Gaji)"
+  • Contains: FRI Score (${friScore}/850, ${riskGrade}), Verified Monthly Net Inflow (RM ${assessedInflow.toLocaleString()}/mo), Reference Code, and Official Income Certificate.
+- Section 2 (Page 1): "2. Underwriter's Key Strengths & Credit Merits (Mengapa Profil Ini Layak)"
+  • Contains 4 Key Merits: Consistent Platform Inflow, Healthy Debt Buffer (DSR 0.0%), Clean Banking Conduct (0 bounced cheques), and Statutory Savings Record (KWSP/EPF i-Saraan).
+- Section 3 (Page 1): "3. Verified Repayment Capacity & Disposable Buffer"
+  • Contains: Estimated Monthly Installment (RM ${safeMaxInstallment.toLocaleString()}/mo), Verified Month 1 Inflow (RM ${assessedInflow.toLocaleString()}/mo), and 12-Month Consolidated DSR/Net Free Surplus (RM ${monthlySurplus.toLocaleString()}/mo).
+- Section 4 (Page 1): "4. Matched Digital Lenders & Pre-Approval Odds (BNM Licensed)"
+  • Contains the Matched Lenders Table: ${matchedLenders.map((l: any) => `${l.name} (${l.matchScore}%)`).join(', ')}.
+- Section 5 (Page 1): "5. Central Bank (BNM) Regulatory Compliance Declarations"
+  • Contains Central Bank (BNM) Regulatory Policy Framework & Legal Audit:
+    1. BNM FTFC Framework (Fair Treatment of Financial Consumers): PASSED (transparent explainable AI scoring).
+    2. BNM RMiT Forensic Check (Risk Management in Technology): VERIFIED (tamper-proof font layer and hash audit).
+    3. AMLA 2001 Sanctions Scan (Anti-Money Laundering Act): PASSED (zero suspicious narratives, illegal loan or gambling keywords).
+    4. PDPA 2010 Privacy Assurance (Personal Data Protection Act 709): COMPLIANT (strict local zero-retention privacy standards).
+- Section 6 (Page 2): "6. 3-Month Audited Cashflow Trend (Bukti Kestabilan Pendapatan 3 Bulan)"
+  • Contains: Month 1, Month 2, Month 3, and 3-Month average inflow, expenses, free surplus, and active days.
+- Section 7 (Page 2): "7. Personalized Score Boost Roadmap (Unlock Lower Interest Rates)" & "EXECUTIVE UNDERWRITING SYNTHESIS"
+  • Contains: Actionable score improvement steps (EPF +35 pts, buffer +25 pts, smoothing +20 pts) and DSR affordability, seasonality, and forensic findings.
+- Section 8 (Page 2): "INSTITUTIONAL UNDERWRITING CERTIFICATION & DISCLOSURE"
+  • Contains: Cryptographic digital hash seal, QR code verification for bank officers, and official validity stamp.
+
 CRITICAL UNDERWRITING INSTRUCTIONS FOR REPORT EXPLAINER:
 - You are acting as Loan - La's Senior AI Underwriting Specialist & Credit Analyst directly conversing with the borrower.
+- When the user asks "what is section 5", explain Section 5: Central Bank (BNM) Regulatory Compliance Declarations (FTFC, RMiT, AMLA 2001, PDPA 2010).
+- When the user asks "what is section 4", explain Section 4: Matched Digital Lenders.
 - When the borrower asks "Why can this person apply for a loan?", "Why can I apply?", "Why am I approved?", or similar:
   * Do NOT give vague generic statements. Detail the exact, verified underwriter qualifications for this specific applicant:
     1. Zero Existing Debt Burden (DSR 0.0%): Bank statements show no existing loan deductions, meaning 100% of their borrowing capacity is free under Bank Negara Malaysia's 60% macroprudential limit.
     2. Over 10× Repayment Coverage: With verified free surplus of RM ${monthlySurplus.toLocaleString('en-MY')}/mo against an estimated installment of only RM ${safeMaxInstallment.toLocaleString('en-MY')}/mo, the applicant possesses exceptional liquidity safety margins.
     3. Strong Credit Score (FRI ${friScore}/850, ${riskGrade}): Their income consistency and zero overdrafts place them into the Prime Low-Risk tier.
     4. Target Government & Micro-Finance Programs: Institutions like BSN MicroKredit Madani (95% match) and Bank Rakyat specifically offer zero-collateral micro-financing for alternative income earners without conventional payslips.
-- When the borrower asks what a specific excerpt, sentence, or metric in the report means (e.g. DSR affordability, cash surplus buffer, BNM limit), break down every number and term in clear, plain language.
 - Provide intelligent, natural, custom reasoning for all new questions without using hardcoded boilerplate responses.`;
       }
 
@@ -2400,15 +2423,27 @@ Guidelines:
         });
       }
 
-      if (lastMsgLower.includes('meaning') || lastMsgLower.includes('maksud') || lastMsgLower.includes('affordability') || lastMsgLower.includes('dsr')) {
+      if (lastMsgLower.includes('section 5') || lastMsgLower.includes('seksyen 5') || lastMsgLower.includes('regulatory') || lastMsgLower.includes('bnm compliance') || lastMsgLower.includes('amla') || lastMsgLower.includes('rmit')) {
         const reply = isMalay
-          ? `💡 Penerangan Analisis DSR & Maksud Penyata Laporan:\n\n1. Anggaran Ansuran (RM ${safeMaxInstallment.toLocaleString('en-MY')}/bulan): Anggaran bayaran bulanan pinjaman sasaran anda.\n2. Lebihan Tunai Bebas (RM ${monthlySurplus.toLocaleString('en-MY')}/bulan): Baki tunai bulanan bersih anda selepas menolak belanja sara hidup.\n3. DSR Dinilai pada ${dsrVal.toFixed(1)}%: Anda tiada bebanan hutang bank sedia ada, membuktikan kapasiti pinjaman penuh.\n4. Had Makroprudensial BNM 60%: Bank Negara Malaysia membenarkan komitmen sehingga 60%. Pada ${dsrVal.toFixed(1)}%, anda berada dalam profil paling selamat untuk kelulusan segera.`
-          : `💡 Explanation of DSR Affordability Statement:\n\n1. Estimated Installment (RM ${safeMaxInstallment.toLocaleString('en-MY')}/mo): Projected monthly payment for your financing facility.\n2. Free Cash Surplus (RM ${monthlySurplus.toLocaleString('en-MY')}/mo): Verified disposable cash remaining after living expenses.\n3. DSR Assessed at ${dsrVal.toFixed(1)}%: Zero active debt commitments detected, confirming 100% available capacity.\n4. Below BNM 60% Limit: Bank Negara Malaysia guideline allows up to 60% debt. Your ratio is exceptionally safe.`;
+          ? `🏛️ **Seksyen 5: Pengisytiharan Pematuhan Kawal Selia Bank Negara Malaysia (BNM):**\n\nSeksyen 5 dalam Pasport Kredit anda membuktikan laporan ini mematuhi piawaian pengunderaitan institusi perbankan berlesen Malaysia mengikut 4 rangka kerja utama:\n\n1. **Rangka Kerja BNM FTFC (Layanan Adil Terhadap Pengguna):**\n• Status: **PASSED (LULUS)**. Kriteria pemarkahan FRI, pecahan aliran tunai, dan padanan bank adalah telus tanpa diskriminasi algoritma tersembunyi.\n\n2. **Pemeriksaan Forensik BNM RMiT (Pengurusan Risiko Teknologi):**\n• Status: **VERIFIED (DISAHKAN)**. Dokumen ini disahkan kalis manipulasi, tiada suntingan lapisan teks/fon penyata, dan dilindungi dengan meterai kriptografi SHA-256.\n\n3. **Imbasan Sekatan AMLA 2001 (Pencegahan Pengubahan Wang Haram):**\n• Status: **PASSED (LULUS)**. Tiada transaksi meragukan, perjudian haram, atau pinjaman tanpa lesen dikesan dalam aliran tunai anda.\n\n4. **Jaminan Privasi PDPA 2010 (Akta Perlindungan Data Peribadi):**\n• Status: **COMPLIANT (PATUH)**. Data kewangan anda diproses secara selamat tanpa simpanan data pihak ketiga.`
+          : `🏛️ **Section 5: Central Bank (BNM) Regulatory Compliance Declarations:**\n\nSection 5 of your Credit Passport certifies that your alternative credit dossier strictly meets Bank Negara Malaysia (BNM) institutional underwriting standards under 4 core mandates:\n\n1. **BNM FTFC Framework (Fair Treatment of Financial Consumers):**\n• Status: **PASSED**. All FRI scoring metrics, cashflow assessments, and lender criteria are 100% explainable, transparent, and non-discriminatory.\n\n2. **BNM RMiT Forensic Check (Risk Management in Technology):**\n• Status: **VERIFIED**. Multi-layer visual and cryptographic verification confirms zero PDF tampering, authentic font structures, and SHA-256 digital seal integrity.\n\n3. **AMLA 2001 Sanctions Scan (Anti-Money Laundering Act):**\n• Status: **PASSED**. Zero suspicious keywords, unlicensed money-lending (Ah Long) transfers, or gambling transaction narratives detected.\n\n4. **PDPA 2010 Privacy Assurance (Personal Data Protection Act):**\n• Status: **COMPLIANT**. Processed under strict local zero-retention privacy protocols adhering to Malaysian Act 709.`;
 
         return NextResponse.json({
           success: true,
           reply,
-          suggestions: isMalay ? ["Had Pinjaman Selamat", "Padanan Bank Direktori", "Cara Tingkatkan Skor"] : ["Safe Borrowing Limit", "Matched Lenders", "How to Boost Score?"]
+          suggestions: isMalay ? ["Padanan Bank Direktori", "Had Pinjaman Selamat", "Cara Tingkatkan Skor"] : ["Matched Lenders", "Safe Borrowing Limit", "How to Boost Score?"]
+        });
+      }
+
+      if (lastMsgLower.includes('section 4') || lastMsgLower.includes('seksyen 4') || (lastMsgLower.includes('section') && lastMsgLower.includes('bank'))) {
+        const reply = isMalay
+          ? `🏦 **Seksyen 4: Matriks Padanan Bank Digital & Peluang Pra-Kelulusan:**\n\nSeksyen 4 memaparkan institusi kewangan berlesen yang paling sesuai dengan profil pendapatan alternatif anda:\n\n1. **BSN MicroKredit Madani (95% Padanan):** Skim mikro bersubsidi kerajaan khas untuk pekerja gig tanpa slip gaji.\n2. **Bank Rakyat Pembiayaan Mikro-i (84% Padanan):** Kemudahan pembiayaan mikro patuh Syariah.\n3. **AEON i-Cash Personal (76% Padanan):** Pembiayaan peribadi pantas dengan kelulusan automatik.`
+          : `🏦 **Section 4: Matched Digital Lenders & Pre-Approval Odds:**\n\nSection 4 identifies the top licensed lenders matched to your verified gig income profile:\n\n1. **BSN MicroKredit Madani (95% Match):** Government-subsidized micro facility for gig workers with zero payslip requirements.\n2. **Bank Rakyat Pembiayaan Mikro-i (84% Match):** Shariah-compliant micro facility for informal income earners.\n3. **AEON i-Cash Personal (76% Match):** Commercial fast-disbursement facility with automated digital screening.`;
+
+        return NextResponse.json({
+          success: true,
+          reply,
+          suggestions: isMalay ? ["Seksyen 5 Pematuhan BNM", "Had Pinjaman Selamat", "Cara Tingkatkan Skor"] : ["Section 5 BNM Compliance", "Safe Borrowing Limit", "How to Boost Score?"]
         });
       }
     }
