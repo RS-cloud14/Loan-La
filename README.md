@@ -148,7 +148,7 @@ Experience the full live platform directly in your browser:
 
 ---
 
-## 🇲🇾 National & Regulatory Alignment
+## National & Regulatory Alignment
 
 1. **Bank Negara Malaysia (BNM) Financial Inclusion Framework 2023–2026**:
    * Directly advances BNM's mandate to enhance access to responsible financing for unserved and underserved micro-enterprises and informal gig workers.
@@ -158,11 +158,6 @@ Experience the full live platform directly in your browser:
    * Integrates document forensics, pixel anomaly detection, and client-side PII redacting to protect against synthetic identity fraud and altered bank statements.
 4. **MyDigital & Twelfth Malaysia Plan (12MP)**:
    * Drives fintech digitization, AI financial literacy, and financial resilience for B40 communities.
-
----
-
-## 📄 License
-This project is licensed under the **MIT License**.
 
 ---
 
