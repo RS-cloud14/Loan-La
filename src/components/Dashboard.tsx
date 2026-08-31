@@ -922,14 +922,20 @@ export default function Dashboard() {
   }, [activeStep, currentPage, perspective]);
 
   // Compute a SHA-256 helper for real uploads
-  const calculateSha256 = async (base64Str: string): Promise<string> => {
+  const calculateSha256 = async (identStr: string): Promise<string> => {
     try {
-      const msgBuffer = new TextEncoder().encode(base64Str.slice(0, 10000));
+      const msgBuffer = new TextEncoder().encode(identStr);
       const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
       const hashArray = Array.from(new Uint8Array(hashBuffer));
       return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     } catch (e) {
-      return Math.random().toString(36).substring(2) + Date.now().toString(36);
+      let hash = 0;
+      for (let i = 0; i < identStr.length; i++) {
+        const char = identStr.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+      }
+      return Math.abs(hash).toString(16).padStart(32, '0');
     }
   };
 
@@ -1000,8 +1006,11 @@ export default function Dashboard() {
           downpaymentAmount
         };
       } else {
-        const combinedBase64 = uploadedFiles.map(f => f.fileBase64 || '').join('');
-        docHash = await calculateSha256(combinedBase64 || Date.now().toString());
+        const fileIdentString = uploadedFiles
+          .map(f => `${f.fileName}_${f.fileSize || ''}_${f.category || ''}_${(f.fileText || '').slice(0, 10000)}_${(f.fileBase64 || '').slice(0, 50000)}`)
+          .sort()
+          .join(':::');
+        docHash = await calculateSha256(fileIdentString);
 
         // Smart Payload Serializer: Keep full Base64 for all documents within Vercel's 3.5MB safe budget
         // This ensures Gemini receives the original high-fidelity PDF binary to parse exact bank layouts

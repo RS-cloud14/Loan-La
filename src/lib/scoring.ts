@@ -537,11 +537,23 @@ export function calculateAlternativeCreditProfile(input: UnderwritingInput): Cre
   const numMonths = Math.max(1, derivedMonthlyIncomes.length, monthlyOutflowMap.size);
 
   // Computed average monthly essential expenses (deterministic)
-  const computedMonthlyExpenses = (input.averageMonthlyExpenses && input.averageMonthlyExpenses > 0)
-    ? input.averageMonthlyExpenses
-    : (totalEssentialOutflows > 0 
-        ? Math.round(totalEssentialOutflows / numMonths) 
-        : Math.round(avgIncome * 0.65));
+  let computedMonthlyExpenses = 0;
+  if (bFiles.length > 0) {
+    const validOutflows = bFiles.filter(b => typeof b.totalOutflows === 'number' && b.totalOutflows > 0);
+    if (validOutflows.length > 0) {
+      computedMonthlyExpenses = Math.round(validOutflows.reduce((sum, b) => sum + b.totalOutflows, 0) / validOutflows.length);
+    }
+  }
+
+  if (computedMonthlyExpenses <= 0) {
+    if (input.averageMonthlyExpenses && input.averageMonthlyExpenses > 0) {
+      computedMonthlyExpenses = input.averageMonthlyExpenses;
+    } else if (totalEssentialOutflows > 0) {
+      computedMonthlyExpenses = Math.round(totalEssentialOutflows / numMonths);
+    } else {
+      computedMonthlyExpenses = Math.round(avgIncome * 0.60);
+    }
+  }
 
   // Deterministic ending balance (prefer bank statement ending balance if present)
   let deterministicEndingBalance = input.endingBalance || 0;
