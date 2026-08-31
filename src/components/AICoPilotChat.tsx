@@ -2259,14 +2259,14 @@ export default function AICoPilotChat({
         {!isOpen && !isCallActive && (
           <button
             onClick={() => setIsOpen(true)}
-            className="flex items-center gap-2.5 px-4 py-3 sm:py-3.5 bg-blue-950 hover:bg-blue-900 text-white rounded-full shadow-2xl border border-blue-800 shrink-0 transition-all hover:scale-105 active:scale-95 group cursor-pointer"
-            title={isMalay ? "Tanya Ejen AI" : "Ask AI Agent"}
+            className="flex items-center gap-2 px-3.5 py-2.5 bg-blue-950 hover:bg-blue-900 text-white rounded-full shadow-lg border border-blue-800/80 shrink-0 transition-all hover:scale-105 active:scale-95 group cursor-pointer select-none"
+            title={isMalay ? "Tanya Ejen AI" : "Ask AI Assistant"}
           >
             <div className="relative flex items-center justify-center">
-              <AILogoIcon className="w-4 h-4" />
-              <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+              <Sparkles className="w-3.5 h-3.5 text-blue-300 group-hover:text-cyan-300 transition-colors" />
+              <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
             </div>
-            <span className="text-xs font-black tracking-wide text-white">
+            <span className="text-xs font-bold tracking-tight text-white pr-0.5">
               Ask AI
             </span>
           </button>
@@ -2388,7 +2388,7 @@ export default function AICoPilotChat({
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-64 bg-blue-50/80 rounded-full blur-3xl pointer-events-none" />
 
                 {/* Center Sleek Voice Orb & Equalizer */}
-                <div className="flex flex-col items-center justify-center gap-2.5 z-10 my-2">
+                <div className="flex flex-col items-center justify-center gap-3 z-10 my-3">
                   <div className="relative flex items-center justify-center">
                     <div className={`absolute w-24 h-24 rounded-full border border-blue-200 ${callStatus === 'speaking' ? 'animate-ping' : ''}`} />
                     <div className={`absolute w-20 h-20 rounded-full bg-blue-50 blur-md ${callStatus === 'speaking' ? 'animate-pulse' : ''}`} />
@@ -2406,7 +2406,7 @@ export default function AICoPilotChat({
                           ? 'bg-blue-900 animate-pulse shadow-blue-900/20 ring-4 ring-blue-100'
                           : 'bg-blue-950 hover:bg-blue-900 shadow-blue-950/20 ring-4 ring-blue-100'
                       }`}
-                      title={callStatus === 'speaking' ? (isMalay ? "Sentuh untuk Sampuk & Cakap" : "Tap to Interrupt & Speak") : undefined}
+                      title={callStatus === 'speaking' ? (isMalay ? "Sentuh untuk tanya soalan baharu" : "Tap to speak") : undefined}
                     >
                       {callStatus === 'speaking' ? (
                         <Activity className="w-7 h-7 text-white animate-pulse" />
@@ -2420,37 +2420,22 @@ export default function AICoPilotChat({
 
                   {/* Equalizer Sound Wave Bars */}
                   <div className="flex items-center gap-1 h-3.5">
-                    <span className={`w-1 bg-blue-950 rounded-full transition-all duration-200 ${callStatus === 'speaking' ? 'h-3 animate-pulse' : callStatus === 'listening' ? 'h-1.5' : 'h-1 opacity-40'}`}></span>
-                    <span className={`w-1 bg-blue-800 rounded-full transition-all duration-200 ${callStatus === 'speaking' ? 'h-3.5 animate-pulse [animation-duration:0.4s]' : callStatus === 'listening' ? 'h-2' : 'h-1 opacity-40'}`}></span>
-                    <span className={`w-1 bg-blue-950 rounded-full transition-all duration-200 ${callStatus === 'speaking' ? 'h-4 animate-pulse [animation-duration:0.6s]' : callStatus === 'listening' ? 'h-3' : 'h-1 opacity-40'}`}></span>
-                    <span className={`w-1 bg-blue-800 rounded-full transition-all duration-200 ${callStatus === 'speaking' ? 'h-3 animate-pulse [animation-duration:0.5s]' : callStatus === 'listening' ? 'h-2' : 'h-1 opacity-40'}`}></span>
-                    <span className={`w-1 bg-blue-950 rounded-full transition-all duration-200 ${callStatus === 'speaking' ? 'h-1.5 animate-pulse [animation-duration:0.7s]' : callStatus === 'listening' ? 'h-1' : 'h-1 opacity-40'}`}></span>
+                    <span className={`w-1 bg-blue-950 rounded-full transition-all duration-200 ${callStatus === 'speaking' ? 'h-3 animate-pulse' : callStatus === 'listening' ? 'h-1.5' : 'h-1 opacity-30'}`}></span>
+                    <span className={`w-1 bg-blue-800 rounded-full transition-all duration-200 ${callStatus === 'speaking' ? 'h-3.5 animate-pulse [animation-duration:0.4s]' : callStatus === 'listening' ? 'h-2' : 'h-1 opacity-30'}`}></span>
+                    <span className={`w-1 bg-blue-950 rounded-full transition-all duration-200 ${callStatus === 'speaking' ? 'h-4 animate-pulse [animation-duration:0.6s]' : callStatus === 'listening' ? 'h-3' : 'h-1 opacity-30'}`}></span>
+                    <span className={`w-1 bg-blue-800 rounded-full transition-all duration-200 ${callStatus === 'speaking' ? 'h-3 animate-pulse [animation-duration:0.5s]' : callStatus === 'listening' ? 'h-2' : 'h-1 opacity-30'}`}></span>
+                    <span className={`w-1 bg-blue-950 rounded-full transition-all duration-200 ${callStatus === 'speaking' ? 'h-1.5 animate-pulse [animation-duration:0.7s]' : callStatus === 'listening' ? 'h-1' : 'h-1 opacity-30'}`}></span>
                   </div>
 
-                  {bargeInFlash && (
-                    <div className="px-3 py-1 bg-amber-50 border border-amber-300 rounded-full text-[11px] font-bold text-amber-900 flex items-center gap-1.5 animate-bounce shadow-xs">
-                      <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-                      <span>{isMalay ? "Disampuk! Mendengar soalan seterusnya..." : "Interrupted! Listening to your question..."}</span>
-                    </div>
-                  )}
-
-                  <span className="text-[11px] font-semibold text-slate-600 tracking-wide text-center">
-                    {callStatus === 'speaking' && (isMalay ? "Ejen Sedang Menjawab (Terus bercakap untuk sampuk)" : "AI Speaking (Speak anytime to interrupt)")}
-                    {callStatus === 'thinking' && (isMalay ? "AI Sedang Memproses & Mengira..." : "AI Processing & Calculating...")}
-                    {callStatus === 'listening' && (isMalay ? "Mendengar suara anda..." : "Listening...")}
-                  </span>
-
-                  {/* Interrupt & Speak Button while AI is speaking */}
-                  {callStatus === 'speaking' && (
-                    <button
-                      type="button"
-                      onClick={handleInterruptAndSpeak}
-                      className="px-3.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-full text-[11px] font-bold flex items-center gap-1.5 transition-all shadow-xs active:scale-95 cursor-pointer animate-fade-in"
-                    >
-                      <Pause className="w-3.5 h-3.5 text-amber-700" />
-                      <span>{isMalay ? "Sampuk & Tanya Seterusnya ↵" : "Interrupt & Ask Next Question ↵"}</span>
-                    </button>
-                  )}
+                  {/* Clean, Intelligent Status Text */}
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600 tracking-wide text-center">
+                    <span className={`w-1.5 h-1.5 rounded-full ${callStatus === 'speaking' ? 'bg-blue-600 animate-pulse' : callStatus === 'thinking' ? 'bg-amber-500 animate-spin' : 'bg-emerald-500'}`}></span>
+                    <span>
+                      {callStatus === 'speaking' && (isMalay ? "Ejen AI Sedang Menjawab..." : "AI Assistant Speaking...")}
+                      {callStatus === 'thinking' && (isMalay ? "Menganalisis data..." : "Analyzing request...")}
+                      {callStatus === 'listening' && (isMalay ? "Mendengar suara anda..." : "Listening...")}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Live Visual Stream & HUD Card Container */}
