@@ -1683,13 +1683,13 @@ export default function Dashboard() {
 
 
             {/* Top Identity Badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200/80 text-blue-950 text-xs font-bold shadow-2xs">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200/80 text-blue-950 text-xs font-bold shadow-2xs mb-1">
               <ShieldCheck className="w-4 h-4 text-blue-800 shrink-0" />
               <span>{language === 'bm' ? 'Platform Penilaian Kredit Alternatif & Padanan Bank Berlesen' : 'AI Alternative Credit Scoring & Licensed Lender Matcher'}</span>
             </div>
 
-            {/* Dynamic Rotating Headline (Fixed Height - Zero Layout Shift) */}
-            <div className="h-[150px] sm:h-[135px] flex flex-col items-center justify-center w-full">
+            {/* Dynamic Rotating Headline (Spacious min-height - No Overlapping) */}
+            <div className="min-h-[200px] sm:min-h-[170px] flex flex-col items-center justify-center w-full">
               <div key={headlineIdx} className="animate-fade-in flex flex-col items-center">
                 <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-slate-900 tracking-tight leading-tight max-w-3xl">
                   {rotatingHeadlines[headlineIdx].top} <br className="hidden sm:inline" />
@@ -1697,13 +1697,13 @@ export default function Dashboard() {
                 </h1>
 
                 {/* Dynamic Explanatory Subtitle */}
-                <p className="text-sm sm:text-base text-slate-600 max-w-2xl leading-relaxed font-medium mt-2">
+                <p className="text-sm sm:text-base text-slate-600 max-w-2xl leading-relaxed font-medium mt-3">
                   {rotatingHeadlines[headlineIdx].sub}
                 </p>
               </div>
 
               {/* 4 Interactive Progress Dots */}
-              <div className="flex items-center gap-1.5 mt-3">
+              <div className="flex items-center gap-1.5 mt-4">
                 {rotatingHeadlines.map((_, idx) => (
                   <button
                     key={idx}
@@ -1718,7 +1718,7 @@ export default function Dashboard() {
             </div>
 
             {/* 2 Big Action Buttons */}
-            <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto mt-3">
+            <div className="flex flex-col sm:flex-row items-center gap-3.5 w-full sm:w-auto mt-2">
               <button
                 onClick={() => {
                   if (!userSession) {
