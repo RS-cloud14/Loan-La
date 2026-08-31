@@ -1265,26 +1265,26 @@ export default function Dashboard() {
 
   const uniqueDocCategories = countUniqueDocCategories();
 
-  // Dynamic rotating headlines (Changes every 3 seconds to explain functions clearly)
+  // Dynamic rotating headlines (Changes every 4 seconds to explain functions clearly)
   const rotatingHeadlines = [
     {
       top: language === 'bm' ? "Tiada Slip Gaji?" : "No Payslip?",
-      highlight: language === 'bm' ? "Cari Bank Yang Sesuai." : "Find Your Bank Match.",
+      highlight: language === 'bm' ? "Pra-Semak Padanan Bank." : "Pre-Check Your Bank Match.",
       sub: t.headline1Sub
     },
     {
       top: language === 'bm' ? "Pemandu Grab, Shopee atau Freelance?" : "Grab, Shopee or Freelance?",
-      highlight: language === 'bm' ? "Semak Kelayakan Segera." : "Get Instant Pre-Approval.",
+      highlight: language === 'bm' ? "Pra-Semakan Kelayakan Segera." : "Instant Eligibility Pre-Check.",
       sub: t.headline2Sub
     },
     {
-      top: language === 'bm' ? "Perlu Pembiayaan Alternatif?" : "Need Alternative Financing?",
-      highlight: language === 'bm' ? "Bimbingan Permohonan Terus." : "Guided Bank Application.",
+      top: language === 'bm' ? "Perlu Bimbingan Pinjaman?" : "Need Loan Guidance?",
+      highlight: language === 'bm' ? "Ejen Permohonan Dalam Talian." : "Online Application Agent.",
       sub: t.headline3Sub
     },
     {
       top: language === 'bm' ? "Tidak Tahu Di Mana Nak Mohon?" : "Don't Know Where to Apply?",
-      highlight: language === 'bm' ? "Bandingkan Kadar Terbaik." : "Compare Best Bank Rates.",
+      highlight: language === 'bm' ? "Bandingkan 11+ Bank Berlesen." : "Compare 11+ Licensed Banks.",
       sub: t.headline4Sub
     }
   ];
