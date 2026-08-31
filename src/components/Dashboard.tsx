@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   ShieldAlert, ShieldCheck, FileCheck, FileSpreadsheet,
   UploadCloud, Play, UserCheck, Landmark, CheckCircle,
@@ -256,6 +256,25 @@ export default function Dashboard() {
         const sessionObj = sessionStr ? JSON.parse(sessionStr) : null;
         if (sessionObj) {
           setUserSession(sessionObj);
+        }
+
+        const savedPlan = localStorage.getItem('creditflow_unlocked_plan') as 'single' | 'pro' | null;
+        const savedDocHash = localStorage.getItem('creditflow_unlocked_doc_hash');
+        const savedProExpiry = localStorage.getItem('creditflow_pro_expiry');
+
+        if (savedPlan === 'pro' && savedProExpiry) {
+          const expTime = parseInt(savedProExpiry, 10);
+          if (expTime > Date.now()) {
+            setUnlockedPlan('pro');
+            setProExpiryTimestamp(expTime);
+            setIsPassportUnlocked(true);
+          } else {
+            setUnlockedPlan(null);
+            setIsPassportUnlocked(false);
+          }
+        } else if (savedPlan === 'single' && savedDocHash) {
+          setUnlockedPlan('single');
+          setUnlockedDocHash(savedDocHash);
           setIsPassportUnlocked(true);
         } else {
           const unlocked = localStorage.getItem('creditflow_passport_unlocked');
@@ -323,6 +342,9 @@ export default function Dashboard() {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [categorySuitabilityModal, setCategorySuitabilityModal] = useState<any | null>(null);
   const [isPassportUnlocked, setIsPassportUnlocked] = useState<boolean>(false);
+  const [unlockedPlan, setUnlockedPlan] = useState<'single' | 'pro' | null>(null);
+  const [unlockedDocHash, setUnlockedDocHash] = useState<string | null>(null);
+  const [proExpiryTimestamp, setProExpiryTimestamp] = useState<number | null>(null);
   const [showPaywallModal, setShowPaywallModal] = useState<boolean>(false);
   const [isSupportModalOpen, setIsSupportModalOpen] = useState<boolean>(false);
   const [initialSupportTicketId, setInitialSupportTicketId] = useState<string | null>(null);
@@ -454,6 +476,36 @@ export default function Dashboard() {
   } | null>(null);
 
   const [viewingArchivedReport, setViewingArchivedReport] = useState<ReportHistoryItem | null>(null);
+
+  // Helper to compute fingerprint of active document batch
+  const computeFilesFingerprint = useCallback((files: typeof uploadedFiles) => {
+    if (!files || files.length === 0) return '';
+    return files.map(f => `${f.fileName}_${f.fileSize || f.fileType || ''}`).sort().join('::');
+  }, []);
+
+  // Determine if the current active document / assessment report is unlocked
+  const isCurrentAssessmentUnlocked = useMemo(() => {
+    // 1. Pro Plan (RM 19.90): 30-Day unlimited uploads & re-assessments
+    if (unlockedPlan === 'pro') {
+      if (proExpiryTimestamp && Date.now() < proExpiryTimestamp) {
+        return true;
+      }
+      return false; // Pro pass expired
+    }
+
+    // 2. Single Plan (RM 9.90): Only the specific document / report paid for is unlocked
+    if (unlockedPlan === 'single') {
+      const currentFingerprint = computeFilesFingerprint(uploadedFiles);
+      const resultHash = b2cResult?.hash;
+      if (unlockedDocHash && (unlockedDocHash === resultHash || (currentFingerprint && unlockedDocHash === currentFingerprint))) {
+        return true;
+      }
+      // If user uploaded new or different documents, they must pay for a new assessment or upgrade to Pro
+      return false;
+    }
+
+    return isPassportUnlocked;
+  }, [unlockedPlan, proExpiryTimestamp, unlockedDocHash, uploadedFiles, b2cResult?.hash, isPassportUnlocked, computeFilesFingerprint]);
 
   // Draft Storage State
   const [savedDraft, setSavedDraft] = useState<SavedApplicationDraft | null>(null);
@@ -2424,6 +2476,46 @@ export default function Dashboard() {
                         </div>
                       </div>
 
+                      {/* Active Plan Status Banner */}
+                      {unlockedPlan === 'pro' && (
+                        <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-between gap-3 text-xs text-emerald-950 animate-fade-in">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold">
+                              ⚡
+                            </div>
+                            <div>
+                              <strong className="block font-bold">
+                                {language === 'bm' ? 'Pas Pro 30 Hari Aktif (Akses Tanpa Had)' : '30-Day Pro Pass Active (Unlimited Access)'}
+                              </strong>
+                              <span className="text-[11px] text-emerald-700 block">
+                                {language === 'bm' ? 'Muat naik penyata baharu bila-bila masa — semua laporan terbuka penuh.' : 'Upload new statements anytime — all assessments fully unlocked.'}
+                              </span>
+                            </div>
+                          </div>
+                          <span className="text-[10px] font-black uppercase bg-emerald-600 text-white px-2.5 py-1 rounded-full shrink-0">
+                            UNLIMITED
+                          </span>
+                        </div>
+                      )}
+
+                      {unlockedPlan === 'single' && (
+                        <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl flex items-start gap-3 text-xs text-slate-700 animate-fade-in">
+                          <div className="w-7 h-7 rounded-xl bg-blue-50 text-blue-900 flex items-center justify-center font-bold shrink-0 mt-0.5">
+                            📄
+                          </div>
+                          <div>
+                            <strong className="block font-bold text-slate-900">
+                              {language === 'bm' ? 'Pelan Laporan Tunggal (1 Dokumen Sah)' : 'Single Report Plan (1 Document Pass)'}
+                            </strong>
+                            <span className="text-[11px] text-slate-600 block mt-0.5 leading-relaxed">
+                              {language === 'bm' 
+                                ? 'Jika anda memuat naik dokumen atau penyata baharu, bayaran analisis baharu (RM 9.90) diperlukan, atau naik taraf ke Pas Pro 30 Hari (RM 19.90) untuk muat naik tanpa had.'
+                                : 'Uploading new documents or statements will require a new single pass (RM 9.90), or upgrade to the 30-Day Pro Pass (RM 19.90) for unlimited re-audits.'}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
                       {/* STEP 2.1: CHOOSE EMPLOYMENT TYPE (CLEAR CARDS) */}
                       <div className="flex flex-col gap-2.5">
                         <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
@@ -3705,7 +3797,8 @@ export default function Dashboard() {
                   <div className="flex flex-col gap-6">
                     
                     {/* FREEMIUM PREVIEW BANNER */}
-                    {!isPassportUnlocked ? (
+                    {/* FREEMIUM PREVIEW BANNER */}
+                    {!isCurrentAssessmentUnlocked ? (
                       <div className="p-4.5 bg-gradient-to-r from-blue-950 via-slate-900 to-blue-900 text-white rounded-2xl shadow-lg border border-blue-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fade-in">
                         <div className="flex items-start sm:items-center gap-3">
                           <div className="w-10 h-10 rounded-xl bg-blue-600/30 border border-blue-400/40 flex items-center justify-center text-blue-300 shrink-0">
@@ -3714,7 +3807,7 @@ export default function Dashboard() {
                           <div>
                             <div className="flex items-center gap-2">
                               <span className="text-xs font-black tracking-wide text-white">
-                                {language === 'bm' ? 'Pratonton Percuma: Analisis Sampel Dokumen 1' : 'Free Preview Mode: Document 1 Sample Analysis'}
+                                {language === 'bm' ? 'Pratonton: Analisis Sampel Dokumen' : 'Preview Mode: Document Sample Analysis'}
                               </span>
                               <span className="text-[9px] font-black uppercase bg-blue-500 text-white px-2 py-0.5 rounded-full">
                                 {language === 'bm' ? 'PRATONTON' : 'PREVIEW'}
@@ -3722,8 +3815,8 @@ export default function Dashboard() {
                             </div>
                             <p className="text-[11px] text-blue-200 mt-0.5">
                               {language === 'bm' 
-                                ? 'Skor awal anda layak untuk 4 bank. Buka Laporan Penuh untuk penyatuan semua dokumen, PDF rasmi & permohonan 1-klik.' 
-                                : 'Your preliminary score qualifies for top lenders. Unlock full multi-document consolidation, official bank PDF, & 1-click apply.'}
+                                ? 'Skor awal anda layak untuk institusi kewangan terpilih. Buka Laporan Penuh untuk penyatuan dokumen, PDF rasmi & permohonan 1-klik.' 
+                                : 'Your preliminary score qualifies for top lenders. Unlock full consolidated report, official bank PDF, & 1-click apply.'}
                             </p>
                           </div>
                         </div>
@@ -3734,7 +3827,7 @@ export default function Dashboard() {
                           className="w-full sm:w-auto px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 cursor-pointer shrink-0"
                         >
                           <Lock className="w-3.5 h-3.5 text-blue-200" />
-                          <span>{language === 'bm' ? 'Buka Laporan Penuh (RM 9.90)' : 'Unlock Full Analysis Report (RM 9.90)'}</span>
+                          <span>{language === 'bm' ? 'Buka Laporan Penuh (RM 9.90 / RM 19.90 Pro)' : 'Unlock Full Report (RM 9.90 / RM 19.90 Pro)'}</span>
                           <ArrowRight className="w-3.5 h-3.5" />
                         </button>
                       </div>
@@ -3760,7 +3853,7 @@ export default function Dashboard() {
                               inputData: b2cResult.inputData,
                               report: b2cResult.report,
                               documentHash: b2cResult.hash || 'demo-hash',
-                              isLocked: !isPassportUnlocked
+                              isLocked: !isCurrentAssessmentUnlocked
                             })}
                             className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white text-xs font-bold rounded-xl transition-all shadow-md cursor-pointer active:scale-95 border border-emerald-400/30"
                             title={language === 'bm' ? 'Buka Laporan Interaktif & AI Explainer' : 'Open Interactive PDF & AI Explainer'}
@@ -3775,15 +3868,15 @@ export default function Dashboard() {
                                 inputData: b2cResult.inputData,
                                 report: b2cResult.report,
                                 documentHash: b2cResult.hash || 'demo-hash',
-                                isLocked: !isPassportUnlocked
+                                isLocked: !isCurrentAssessmentUnlocked
                               });
                             }}
                             className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 text-xs font-bold rounded-xl transition-all shadow-2xs cursor-pointer active:scale-95"
-                            title={!isPassportUnlocked ? (language === 'bm' ? 'Muat Turun Sampel PDF (Pratonton)' : 'Download Sample PDF Report (Preview)') : (language === 'bm' ? 'Muat Turun PDF Rasmi' : 'Download Official Certified PDF')}
+                            title={!isCurrentAssessmentUnlocked ? (language === 'bm' ? 'Muat Turun Sampel PDF (Pratonton)' : 'Download Sample PDF Report (Preview)') : (language === 'bm' ? 'Muat Turun PDF Rasmi' : 'Download Official Certified PDF')}
                           >
                             <Download className="w-3.5 h-3.5 text-blue-900" />
                             <span>
-                              {!isPassportUnlocked 
+                              {!isCurrentAssessmentUnlocked 
                                 ? (language === 'bm' ? 'Muat Turun Sampel PDF' : 'Download Sample PDF')
                                 : (language === 'bm' ? 'Muat Turun PDF' : 'Download PDF Report')}
                             </span>
@@ -3807,7 +3900,7 @@ export default function Dashboard() {
                                 fill="transparent" 
                                 strokeDasharray={2 * Math.PI * 56}
                                 strokeDashoffset={
-                                  !isPassportUnlocked
+                                  !isCurrentAssessmentUnlocked
                                     ? 2 * Math.PI * 56 * 0.65
                                     : 2 * Math.PI * 56 * (1 - ((b2cResult.report.score ?? 300) - 300) / 550)
                                 }
@@ -3819,9 +3912,9 @@ export default function Dashboard() {
                             {/* Centered Text */}
                             <div className="absolute flex flex-col items-center justify-center text-center px-2">
                               <span className="text-[9px] text-slate-400 font-extrabold uppercase tracking-wider">
-                                {!isPassportUnlocked ? 'Preview Status' : 'FRI Score'}
+                                {!isCurrentAssessmentUnlocked ? 'Preview Status' : 'FRI Score'}
                               </span>
-                              {!isPassportUnlocked ? (
+                              {!isCurrentAssessmentUnlocked ? (
                                 <>
                                   <div className="flex items-center gap-1 text-slate-800 font-extrabold text-sm my-1">
                                     <Lock className="w-3.5 h-3.5 text-blue-900" />
@@ -3847,19 +3940,19 @@ export default function Dashboard() {
                          <div className="md:col-span-7 flex flex-col justify-center">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="text-sm font-extrabold text-blue-955 uppercase tracking-wider">
-                              {!isPassportUnlocked ? 'Preliminary Scan:' : 'Income Evidence Result:'}
+                              {!isCurrentAssessmentUnlocked ? 'Preliminary Scan:' : 'Income Evidence Result:'}
                             </span>
                             <span className={`text-[11px] font-extrabold px-2.5 py-0.5 rounded-lg border ${
-                              !isPassportUnlocked ? 'bg-blue-50 text-blue-900 border-blue-200' :
+                              !isCurrentAssessmentUnlocked ? 'bg-blue-50 text-blue-900 border-blue-200' :
                               b2cResult.report.status === 'Approved' ? 'bg-blue-50 text-blue-900 border-blue-200' :
                               b2cResult.report.status === 'Borderline' ? 'bg-amber-50 text-amber-800 border-amber-200' :
                               b2cResult.report.status === 'Fraud Alert' ? 'bg-red-50 text-red-900 border-red-200' :
                               'bg-slate-100 text-slate-700 border-slate-300'
                             }`}>
-                              {!isPassportUnlocked ? (language === 'bm' ? '3 Bank Berpadanan (Bulan 1 Disahkan)' : '3 Lenders Matched (Month 1 Verified)') : getDisplayStatus(b2cResult.report.status)}
+                              {!isCurrentAssessmentUnlocked ? (language === 'bm' ? '3 Bank Berpadanan (Bulan 1 Disahkan)' : '3 Lenders Matched (Month 1 Verified)') : getDisplayStatus(b2cResult.report.status)}
                             </span>
                           </div>
-                          {!isPassportUnlocked ? (
+                          {!isCurrentAssessmentUnlocked ? (
                             (() => {
                               const isGood = b2cResult.report.status === 'Approved' || (b2cResult.report.score && b2cResult.report.score >= 680);
                               const isMedium = b2cResult.report.status === 'Borderline' || (b2cResult.report.score && b2cResult.report.score >= 550 && b2cResult.report.score < 680);
@@ -3881,8 +3974,8 @@ export default function Dashboard() {
                                         </strong>
                                         <p className="text-[11px] leading-relaxed mt-0.5 text-blue-900">
                                           {language === 'bm'
-                                            ? 'Aliran tunai Bulan 1 anda menunjukkan keupayaan bayaran balik yang baik. Membuka laporan penuh (RM 9.90) menyediakan dokumen penyatuan berbilang bulan yang diperlukan pihak bank untuk menawarkan kadar faedah lebih rendah dan kelulusan lebih pantas.'
-                                            : 'Your verified Month 1 inflow shows healthy cash flow. Unlocking the full report (RM 9.90) provides the multi-month consolidated dossier that digital banks require to offer lower interest rates and faster approvals.'}
+                                            ? 'Aliran tunai Bulan 1 anda menunjukkan keupayaan bayaran balik yang baik. Membuka laporan penuh (RM 9.90 / RM 19.90 Pro) menyediakan dokumen penyatuan berbilang bulan yang diperlukan pihak bank untuk menawarkan kadar faedah lebih rendah dan kelulusan lebih pantas.'
+                                            : 'Your verified Month 1 inflow shows healthy cash flow. Unlocking the full report (RM 9.90 / RM 19.90 Pro) provides the multi-month consolidated dossier that digital banks require to offer lower interest rates and faster approvals.'}
                                         </p>
                                       </div>
                                     </div>
@@ -3904,8 +3997,8 @@ export default function Dashboard() {
                                         </strong>
                                         <p className="text-[11px] leading-relaxed mt-0.5 text-amber-900">
                                           {language === 'bm'
-                                            ? 'Pendapatan anda mencukupi, tetapi corak mingguan tidak tetap mungkin menyebabkan bank biasa meminta dokumen tambahan. Buka laporan penuh (RM 9.90) untuk melihat pemberi pinjaman alternatif yang sesuai dan langkah mudah untuk memastikan permohonan anda lulus.'
-                                            : 'Your income is sufficient, but irregular weekly patterns might cause traditional banks to ask for extra documents. Unlocking the full report (RM 9.90) reveals flexible lenders suited for gig workers and gives you specific steps to improve your approval odds.'}
+                                            ? 'Pendapatan anda mencukupi, tetapi corak mingguan tidak tetap mungkin menyebabkan bank biasa meminta dokumen tambahan. Buka laporan penuh (RM 9.90 / RM 19.90 Pro) untuk melihat pemberi pinjaman alternatif yang sesuai dan langkah mudah untuk memastikan permohonan anda lulus.'
+                                            : 'Your income is sufficient, but irregular weekly patterns might cause traditional banks to ask for extra documents. Unlocking the full report (RM 9.90 / RM 19.90 Pro) reveals flexible lenders suited for gig workers and gives you specific steps to improve your approval odds.'}
                                         </p>
                                       </div>
                                     </div>
@@ -3927,8 +4020,8 @@ export default function Dashboard() {
                                         </strong>
                                         <p className="text-[11px] leading-relaxed mt-0.5 text-red-900">
                                           {language === 'bm'
-                                            ? 'Penyata anda mengandungi beberapa faktor risiko (seperti baki minima rendah atau perbelanjaan tidak stabil) yang boleh menyebabkan penolakan bank. Kami syorkan menyemak laporan diagnostik penuh (RM 9.90) untuk mengenal pasti perkara yang perlu diperbaiki sebelum memohon.'
-                                            : 'Your statement contains risk factors (e.g. low cash buffer or high expense volatility) that will likely trigger a bank rejection. We recommend reviewing the full diagnostic report (RM 9.90) to see exactly what to fix before submitting your loan application.'}
+                                            ? 'Penyata anda mengandungi beberapa faktor risiko (seperti baki minima rendah atau perbelanjaan tidak stabil) yang boleh menyebabkan penolakan bank. Kami syorkan menyemak laporan diagnostik penuh (RM 9.90 / RM 19.90 Pro) untuk mengenal pasti perkara yang perlu diperbaiki sebelum memohon.'
+                                            : 'Your statement contains risk factors (e.g. low cash buffer or high expense volatility) that will likely trigger a bank rejection. We recommend reviewing the full diagnostic report (RM 9.90 / RM 19.90 Pro) to see exactly what to fix before submitting your loan application.'}
                                         </p>
                                       </div>
                                     </div>
@@ -3960,7 +4053,7 @@ export default function Dashboard() {
                         </div>
                       </div>
 
-                      <div className={`grid grid-cols-1 ${isPassportUnlocked ? 'sm:grid-cols-2 lg:grid-cols-4' : 'md:grid-cols-3'} gap-4 mb-4`}>
+                      <div className={`grid grid-cols-1 ${isCurrentAssessmentUnlocked ? 'sm:grid-cols-2 lg:grid-cols-4' : 'md:grid-cols-3'} gap-4 mb-4`}>
                         {/* Item 1: Installment */}
                         <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
                           <span className="text-[9px] text-slate-400 block uppercase font-bold tracking-wider mb-1">Est. Monthly Installment</span>
@@ -3978,9 +4071,9 @@ export default function Dashboard() {
                         {/* Item 2: Verified Month 1 Income */}
                         <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
                           <span className="text-[9px] text-slate-400 block uppercase font-bold tracking-wider mb-1">
-                            {!isPassportUnlocked ? 'Verified Month 1 Inflow' : 'Monthly Cash Surplus'}
+                            {!isCurrentAssessmentUnlocked ? 'Verified Month 1 Inflow' : 'Monthly Cash Surplus'}
                           </span>
-                          {!isPassportUnlocked ? (
+                          {!isCurrentAssessmentUnlocked ? (
                             <div className="flex items-center gap-1.5 my-0.5">
                               <span className="text-lg font-extrabold text-slate-900">
                                 RM {Math.round(b2cResult.inputData.monthlyIncomes?.[0] || b2cResult.report.estimatedInstallment * 6).toLocaleString()}
@@ -3995,16 +4088,16 @@ export default function Dashboard() {
                             </span>
                           )}
                           <span className="text-[10px] text-slate-500 block mt-1">
-                            {!isPassportUnlocked ? (language === 'bm' ? 'Ekstraksi AI daripada Penyata 1' : 'AI Extracted from Statement 1') : 'Avg Income - Living Expenses'}
+                            {!isCurrentAssessmentUnlocked ? (language === 'bm' ? 'Ekstraksi AI daripada Penyata 1' : 'AI Extracted from Statement 1') : 'Avg Income - Living Expenses'}
                           </span>
                         </div>
 
                         {/* Item 3: Multi-Month Synthesis / Post-Loan Buffer */}
                         <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl">
                           <span className="text-[9px] text-slate-400 block uppercase font-bold tracking-wider mb-1">
-                            {!isPassportUnlocked ? '12-Month Consolidated DSR' : 'Post-Loan Buffer'}
+                            {!isCurrentAssessmentUnlocked ? '12-Month Consolidated DSR' : 'Post-Loan Buffer'}
                           </span>
-                          {!isPassportUnlocked ? (
+                          {!isCurrentAssessmentUnlocked ? (
                             <div className="flex items-center gap-1.5 my-0.5">
                               <span className="text-lg font-extrabold text-slate-400 font-mono tracking-widest">RM ••••</span>
                               <Lock className="w-3.5 h-3.5 text-slate-400" />
@@ -4017,12 +4110,12 @@ export default function Dashboard() {
                             </span>
                           )}
                           <span className="text-[10px] text-slate-500 block mt-1">
-                            {!isPassportUnlocked ? (language === 'bm' ? 'Perlu penyatuan berbilang bulan' : 'Requires multi-month synthesis') : 'Remaining surplus after payment'}
+                            {!isCurrentAssessmentUnlocked ? (language === 'bm' ? 'Perlu penyatuan berbilang bulan' : 'Requires multi-month synthesis') : 'Remaining surplus after payment'}
                           </span>
                         </div>
 
                         {/* Item 4: Assessed DSR (Paid User Exclusive Enhancement) */}
-                        {isPassportUnlocked && (
+                        {isCurrentAssessmentUnlocked && (
                           <div className="p-4 bg-emerald-50/60 border border-emerald-200 rounded-xl">
                             <div className="flex items-center justify-between mb-1">
                               <span className="text-[9px] text-emerald-800 block uppercase font-bold tracking-wider">Assessed DSR</span>
@@ -4039,7 +4132,7 @@ export default function Dashboard() {
                       </div>
 
                       {/* Affordability Status Banner */}
-                      {!isPassportUnlocked ? (
+                      {!isCurrentAssessmentUnlocked ? (
                         <div className="p-3.5 border rounded-xl flex items-center gap-3 bg-blue-50/40 border-blue-200">
                           <CheckCircle2 className="w-4 h-4 text-blue-900 shrink-0" />
                           <span className="font-bold text-xs text-blue-950">
@@ -4148,7 +4241,7 @@ export default function Dashboard() {
                           const renderLenderCard = (lender: typeof mockLenderCards[0]) => {
                             const applicationRecord = appliedLenders[lender.name];
                             const isApplied = !!applicationRecord;
-                            const isLocked = !isPassportUnlocked;
+                            const isLocked = !isCurrentAssessmentUnlocked;
 
                             const maskedBankName = lender.isTop
                               ? (language === 'bm' ? 'Bank Digital Berlesen (Padanan #1)' : 'Top-Tier Digital Bank (Match #1)')
@@ -4196,7 +4289,7 @@ export default function Dashboard() {
                                   </div>
 
                                   <div className="text-left sm:text-right shrink-0">
-                                    <span className="text-lg font-black text-blue-950 block leading-tight">{lender.installment}</span>
+                                    <span className="text-lg font-black text-blue-955 block leading-tight">{lender.installment}</span>
                                     <span className="text-[10px] text-slate-400 block font-medium">
                                       {language === 'bm' ? 'anggaran ansuran bulanan' : 'est. monthly installment'}
                                     </span>
@@ -4224,10 +4317,10 @@ export default function Dashboard() {
                                   <div className="flex items-center gap-2 flex-wrap">
                                     <span className="font-semibold text-slate-400">Required:</span>
                                     <span className={`flex items-center gap-1 ${hasBank ? 'text-slate-700 font-medium' : 'text-slate-400'}`}>
-                                      <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Bank Statement
+                                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Bank Statement
                                     </span>
                                     <span className={`flex items-center gap-1 ${hasPlatform ? 'text-slate-700 font-medium' : 'text-slate-400'}`}>
-                                      <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Platform Earnings
+                                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /> Platform Earnings
                                     </span>
                                   </div>
                                   <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 shrink-0">
@@ -4272,7 +4365,7 @@ export default function Dashboard() {
                                   
                                   <button
                                     onClick={() => {
-                                      if (!isPassportUnlocked) {
+                                      if (!isCurrentAssessmentUnlocked) {
                                         setShowPaywallModal(true);
                                         return;
                                       }
@@ -4317,7 +4410,7 @@ export default function Dashboard() {
                                 </button>
                                 <button
                                   onClick={() => {
-                                    if (!isPassportUnlocked) {
+                                    if (!isCurrentAssessmentUnlocked) {
                                       setShowPaywallModal(true);
                                       return;
                                     }
@@ -4333,10 +4426,10 @@ export default function Dashboard() {
                                   }}
                                   className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2 bg-blue-950 hover:bg-blue-900 text-white text-xs font-extrabold rounded-xl transition-all shadow-sm cursor-pointer"
                                 >
-                                  {!isPassportUnlocked ? (
+                                  {!isCurrentAssessmentUnlocked ? (
                                     <>
                                       <Lock className="w-3.5 h-3.5 text-blue-300" />
-                                      <span>{language === 'bm' ? 'Buka Padanan Utama (RM 9.90)' : 'Unlock Top Match (RM 9.90)'}</span>
+                                      <span>{language === 'bm' ? 'Buka Padanan Utama (RM 9.90 / RM 19.90 Pro)' : 'Unlock Top Match (RM 9.90 / RM 19.90 Pro)'}</span>
                                     </>
                                   ) : (
                                     <>
@@ -7530,17 +7623,29 @@ export default function Dashboard() {
         isOpen={showPaywallModal}
         onClose={() => setShowPaywallModal(false)}
         onSuccess={(plan) => {
-          setIsPassportUnlocked(true);
           setShowPaywallModal(false);
+          const currentFingerprint = computeFilesFingerprint(uploadedFiles);
+          const currentHash = b2cResult?.hash || currentFingerprint || 'doc-unlocked';
           
-          const isGuestTester = userSession?.profileId === 'guest_tester';
-          if (!isGuestTester) {
+          if (plan === 'pro') {
+            const expiry = Date.now() + 30 * 24 * 60 * 60 * 1000;
+            setUnlockedPlan('pro');
+            setProExpiryTimestamp(expiry);
+            setIsPassportUnlocked(true);
             try {
+              localStorage.setItem('creditflow_unlocked_plan', 'pro');
+              localStorage.setItem('creditflow_pro_expiry', expiry.toString());
               localStorage.setItem('creditflow_passport_unlocked', 'true');
             } catch (e) {}
           } else {
+            // Single Plan (RM 9.90): Unlocks only this current document batch
+            setUnlockedPlan('single');
+            setUnlockedDocHash(currentHash);
+            setIsPassportUnlocked(true);
             try {
-              localStorage.removeItem('creditflow_passport_unlocked');
+              localStorage.setItem('creditflow_unlocked_plan', 'single');
+              localStorage.setItem('creditflow_unlocked_doc_hash', currentHash);
+              localStorage.setItem('creditflow_passport_unlocked', 'true');
             } catch (e) {}
           }
 
