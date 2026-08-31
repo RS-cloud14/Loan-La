@@ -4115,152 +4115,134 @@ export default function Dashboard() {
                                 : (language === 'bm' ? 'Pembiaya Alternatif Berlesen (Padanan #3)' : 'Licensed Alternative Lender (Match #3)');
 
                             return (
-                              <div key={lender.id} className={`border rounded-2xl overflow-hidden transition-all ${lender.isTop ? 'border-blue-300 shadow-md ring-1 ring-blue-900/10' : 'border-slate-200 bg-white'}`}>
-                                <div className={`px-4 py-2.5 flex items-center justify-between text-xs font-bold ${lender.isTop ? 'bg-blue-950 text-white' : 'bg-slate-100 text-slate-700'}`}>
-                                  <span className="flex items-center gap-1.5">
-                                    <Building2 className="w-3.5 h-3.5" /> {lender.rankTag}
-                                  </span>
-                                  <span className={lender.isTop ? 'bg-blue-900 px-2 py-0.5 rounded text-[11px]' : 'bg-white px-2 py-0.5 rounded border border-slate-200 text-[11px]'}>
-                                    Match Score: {lender.score}/100
+                              <div 
+                                key={lender.id} 
+                                className={`p-4 sm:p-5 rounded-2xl border transition-all ${
+                                  lender.isTop 
+                                    ? 'border-blue-200 bg-white shadow-sm ring-1 ring-blue-900/5' 
+                                    : 'border-slate-200 bg-white hover:border-slate-300 shadow-2xs'
+                                }`}
+                              >
+                                {/* Top Row: Logo, Name, Badges, and Installment */}
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+                                  <div className="flex items-center gap-3">
+                                    {isLocked ? (
+                                      <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 shadow-2xs shrink-0">
+                                        <Lock className="w-4 h-4 text-slate-400" />
+                                      </div>
+                                    ) : (
+                                      <BankLogo bankName={lender.name} size="md" />
+                                    )}
+                                    <div>
+                                      <div className="flex items-center gap-2 flex-wrap">
+                                        <span className="text-base font-bold text-slate-900">
+                                          {isLocked ? maskedBankName : lender.name}
+                                        </span>
+                                        {lender.isTop && (
+                                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                            {language === 'bm' ? 'Padanan Terbaik' : 'Top Match'}
+                                          </span>
+                                        )}
+                                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
+                                          {lender.score}% {language === 'bm' ? 'Padanan' : 'Match'}
+                                        </span>
+                                      </div>
+                                      <p className="text-xs text-slate-400 mt-0.5 font-medium">
+                                        {lender.rate} · {lender.tenure}
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  <div className="text-left sm:text-right shrink-0">
+                                    <span className="text-lg font-black text-blue-950 block leading-tight">{lender.installment}</span>
+                                    <span className="text-[10px] text-slate-400 block font-medium">
+                                      {language === 'bm' ? 'anggaran ansuran bulanan' : 'est. monthly installment'}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {/* Match Reasons */}
+                                <div className="py-3 flex flex-col gap-1.5">
+                                  {lender.reasons.map((r, ri) => (
+                                    <div key={ri} className="flex items-center gap-2 text-xs text-slate-600 font-medium">
+                                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                      <span>{r}</span>
+                                    </div>
+                                  ))}
+                                  {lender.warning && (
+                                    <div className="flex items-center gap-2 text-xs text-amber-700 font-medium">
+                                      <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                                      <span>{lender.warning}</span>
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Doc Status & SLA */}
+                                <div className="flex items-center justify-between gap-2 text-[11px] text-slate-500 pb-3 border-b border-slate-100">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="font-semibold text-slate-400">Required:</span>
+                                    <span className={`flex items-center gap-1 ${hasBank ? 'text-slate-700 font-medium' : 'text-slate-400'}`}>
+                                      <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Bank Statement
+                                    </span>
+                                    <span className={`flex items-center gap-1 ${hasPlatform ? 'text-slate-700 font-medium' : 'text-slate-400'}`}>
+                                      <CheckCircle2 className="w-3 h-3 text-emerald-600" /> Platform Earnings
+                                    </span>
+                                  </div>
+                                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 shrink-0">
+                                    SLA: {lender.speed}
                                   </span>
                                 </div>
-                                <div className="p-4.5 bg-white flex flex-col gap-3">
-                                  <div className="flex justify-between items-start gap-3">
-                                    <div className="flex items-center gap-3">
-                                      {isLocked ? (
-                                        <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 shadow-2xs">
-                                          <Lock className="w-4 h-4 text-slate-400" />
-                                        </div>
-                                      ) : (
-                                        <BankLogo bankName={lender.name} size="md" />
-                                      )}
-                                      <div>
-                                        <div className="flex items-center gap-1.5">
-                                          <span className="text-base font-extrabold text-blue-950 block">
-                                            {isLocked ? maskedBankName : lender.name}
-                                          </span>
-                                          {isLocked && (
-                                            <span className="text-[9px] font-bold bg-slate-100 text-slate-500 border border-slate-200 px-1.5 py-0.5 rounded">
-                                              {language === 'bm' ? 'Nama Dikunci' : 'Name Masked'}
-                                            </span>
-                                          )}
-                                        </div>
-                                        <span className="text-xs text-slate-400 block mt-0.5">Indicative Rate: {lender.rate} · {lender.tenure}</span>
-                                      </div>
+
+                                {/* Applied Status Notification */}
+                                {isApplied && (
+                                  <div className="my-2 p-2.5 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-between text-xs text-blue-950 font-medium">
+                                    <div className="flex items-center gap-2">
+                                      <CheckCircle2 className="w-4 h-4 text-blue-900 shrink-0" />
+                                      <span className="font-bold">Application Submitted ({applicationRecord.refCode})</span>
                                     </div>
-                                    <div className="text-right shrink-0">
-                                      <span className="text-base font-extrabold text-blue-950 block">{lender.installment}</span>
-                                      <span className="text-[10px] text-slate-400 block">est. monthly installment</span>
-                                    </div>
+                                    <span className="text-[10px] font-bold bg-blue-900 text-white px-2 py-0.5 rounded-md">PENDING</span>
                                   </div>
+                                )}
 
-                                  {/* Match Reasons / Bank Benefits (Always visible for value showcase!) */}
-                                  <div className="flex flex-col gap-1">
-                                    {lender.reasons.map((r, ri) => (
-                                      <div key={ri} className="flex items-center gap-1.5 text-[11px] text-slate-600">
-                                        <CheckCircle2 className="w-3.5 h-3.5 text-blue-800 shrink-0" /> {r}
-                                      </div>
-                                    ))}
-                                    {lender.warning && (
-                                      <div className="flex items-center gap-1.5 text-[11px] text-slate-600">
-                                        <AlertCircle className="w-3.5 h-3.5 text-slate-500 shrink-0" /> {lender.warning}
-                                      </div>
-                                    )}
+                                {/* Expandable Info */}
+                                {expandedLenderInfo === lender.id && (
+                                  <div className="my-2 p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 flex flex-col gap-1 animate-fade-in">
+                                    <span className="font-bold text-slate-800 block">About {lender.name}</span>
+                                    <span>Licensed by Bank Negara Malaysia / Securities Commission Malaysia. Verified alternative lender accepting gig worker income documentation.</span>
                                   </div>
+                                )}
 
-                                  {/* Doc status */}
-                                  <div className="flex items-center gap-2 text-[10px] text-slate-500">
-                                    <span className="font-bold">Required Docs:</span>
-                                    <span className={`flex items-center gap-1 ${hasBank ? 'text-blue-900 font-bold' : 'text-slate-400'}`}>
-                                      <CheckCircle2 className="w-3 h-3" /> Bank Statement
-                                    </span>
-                                    <span className={`flex items-center gap-1 ${hasPlatform ? 'text-blue-900 font-bold' : 'text-slate-400'}`}>
-                                      <CheckCircle2 className="w-3 h-3" /> Platform Earnings
-                                    </span>
-                                    <span className="text-[10px] font-bold bg-blue-50 text-blue-900 px-1.5 py-0.5 rounded border border-blue-200 ml-auto">
-                                      SLA: {lender.speed}
-                                    </span>
-                                  </div>
-
-                                  {/* Applied Status Notification */}
-                                  {isApplied && (
-                                    <div className="p-3 bg-blue-50/60 border border-blue-200 rounded-xl flex items-center justify-between text-xs text-blue-950 font-medium">
-                                      <div className="flex items-center gap-2">
-                                        <CheckCircle2 className="w-4 h-4 text-blue-900 shrink-0" />
-                                        <div>
-                                          <span className="font-extrabold block">Application Submitted</span>
-                                          <span className="text-[10px] text-slate-500">Ref Code: <code className="font-mono font-bold text-blue-900">{applicationRecord.refCode}</code> ({applicationRecord.appliedAt})</span>
-                                        </div>
-                                      </div>
-                                      <span className="text-[10px] font-bold bg-blue-900 text-white px-2 py-0.5 rounded-md">PENDING LENDER</span>
-                                    </div>
-                                  )}
-
-                                  {/* Expandable Info */}
-                                  {expandedLenderInfo === lender.id && (
-                                    <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 flex flex-col gap-1.5 animate-fade-in">
-                                      <span className="font-bold text-slate-800 block">About {lender.name}</span>
-                                      <span>Licensed by Bank Negara Malaysia / Securities Commission Malaysia. Verified alternative lender accepting gig worker income documentation.</span>
-                                      <span className="font-bold text-slate-700 mt-1 block">Disbursement SLA</span>
-                                      <span>
-                                        {loanTier === 3
-                                          ? (language === 'bm'
-                                              ? 'Jumlah melebihi RM 50,000: Audit dokumentasi penuh & semakan manusia diperlukan (anggaran 3–7 hari bekerja selepas pengesahan).'
-                                              : 'Financing exceeding RM 50,000: Full document audit & human underwriter verification required (est. 3–7 business days upon review).')
-                                          : loanTier === 1
-                                            ? (language === 'bm'
-                                                ? 'Jika diluluskan: Hari yang sama (Tahap 1 Pantas) atau 1 hari bekerja pindahan terus ke bank.'
-                                                : 'If approved: Same day (Tier 1 Fast Track) direct bank transfer.')
-                                            : (language === 'bm'
-                                                ? 'Jika diluluskan: 1–3 hari bekerja (Tahap 2 Standard) pindahan terus ke bank.'
-                                                : 'If approved: 1–3 business days (Tier 2 Standard) direct bank transfer.')
-                                        }
-                                      </span>
-                                    </div>
-                                  )}
-
-                                  {/* Action Buttons */}
-                                  <div className="flex gap-2 pt-1">
-                                    <button
-                                      onClick={() => {
-                                        if (isLocked) {
-                                          setShowPaywallModal(true);
-                                        } else {
-                                          setExpandedLenderInfo(expandedLenderInfo === lender.id ? null : lender.id);
-                                        }
-                                      }}
-                                      className="flex-1 py-2 text-xs font-bold border border-slate-300 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                                    >
-                                      {isLocked ? <Lock className="w-3.5 h-3.5 text-slate-400" /> : <Info className="w-3.5 h-3.5" />} 
-                                      <span>{isLocked ? (language === 'bm' ? 'Buka Butiran Bank' : 'Unlock Bank Info') : (expandedLenderInfo === lender.id ? 'Hide Details' : 'Details')}</span>
-                                    </button>
-                                    
-                                    <button
-                                      onClick={() => {
-                                        if (!isPassportUnlocked) {
-                                          setShowPaywallModal(true);
-                                          return;
-                                        }
-                                        setApplyTarget({ lenderName: lender.name, lenderUrl: lender.url, productName: purposeLabel[targetLoanPurpose] + ' Loan' });
-                                        if (isApplied) {
-                                          setApplySubmitted(true);
-                                        } else {
-                                          setApplySubmitted(false);
-                                        }
-                                        setApplyModalOpen(true);
-                                      }}
-                                      className={`flex-1 py-2 text-xs font-extrabold rounded-xl transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer ${
-                                        isApplied
-                                          ? 'bg-blue-900 hover:bg-blue-950 text-white'
-                                          : !isPassportUnlocked
-                                            ? 'bg-[#091E42] hover:bg-[#071735] text-white'
-                                            : 'bg-blue-950 hover:bg-blue-900 text-white'
-                                      }`}
-                                    >
-                                      {isApplied ? <CheckCircle2 className="w-3.5 h-3.5" /> : !isPassportUnlocked ? <Lock className="w-3.5 h-3.5 text-slate-300" /> : <ArrowRight className="w-3.5 h-3.5" />}
-                                      <span>{isApplied ? 'View Submission' : !isPassportUnlocked ? (language === 'bm' ? 'Buka Nama Bank & Mohon (RM 9.90)' : 'Unlock Bank Identity & Apply (RM 9.90)') : (language === 'bm' ? 'Mohon Sekarang' : 'Apply Now')}</span>
-                                    </button>
-                                  </div>
+                                {/* Action Buttons */}
+                                <div className="flex gap-2 pt-3">
+                                  <button
+                                    onClick={() => {
+                                      if (isLocked) {
+                                        setShowPaywallModal(true);
+                                      } else {
+                                        setExpandedLenderInfo(expandedLenderInfo === lender.id ? null : lender.id);
+                                      }
+                                    }}
+                                    className="px-4 py-2 text-xs font-semibold border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                                  >
+                                    <Info className="w-3.5 h-3.5 text-slate-400" />
+                                    <span>{expandedLenderInfo === lender.id ? (language === 'bm' ? 'Tutup' : 'Hide') : (language === 'bm' ? 'Butiran' : 'Details')}</span>
+                                  </button>
+                                  
+                                  <button
+                                    onClick={() => {
+                                      if (!isPassportUnlocked) {
+                                        setShowPaywallModal(true);
+                                        return;
+                                      }
+                                      setApplyTarget({ lenderName: lender.name, lenderUrl: lender.url, productName: purposeLabel[targetLoanPurpose] + ' Loan' });
+                                      setApplySubmitted(isApplied);
+                                      setApplyModalOpen(true);
+                                    }}
+                                    className="flex-1 py-2 text-xs font-bold rounded-xl bg-blue-950 hover:bg-blue-900 text-white transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
+                                  >
+                                    {isApplied ? <CheckCircle2 className="w-3.5 h-3.5" /> : <ArrowRight className="w-3.5 h-3.5 text-blue-200" />}
+                                    <span>{isApplied ? (language === 'bm' ? 'Lihat Permohonan' : 'View Submission') : (language === 'bm' ? 'Mohon Sekarang' : 'Apply Now')}</span>
+                                  </button>
                                 </div>
                               </div>
                             );
@@ -4329,37 +4311,32 @@ export default function Dashboard() {
 
                             {/* 2. OTHERS BANK THAT MATCH SECTION */}
                             {otherMatches.length > 0 && (
-                              <div className="flex flex-col gap-3 pt-2 border-t border-slate-100 mt-1">
-                                <div className="flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200 rounded-2xl">
-                                  <div className="flex items-center gap-2.5">
-                                    <div className="w-8 h-8 rounded-xl bg-blue-950/10 text-blue-950 flex items-center justify-center font-bold">
-                                      <Landmark className="w-4 h-4 text-blue-950" />
-                                    </div>
-                                    <div>
-                                      <span className="text-xs font-black text-blue-950 block">
-                                        {language === 'bm' ? 'Pilihan Bank & Pemberi Pinjaman Lain' : 'Others Bank That Match'}
-                                      </span>
-                                      <span className="text-[10px] text-slate-500 block">
-                                        {language === 'bm'
-                                          ? `${otherMatches.length} pilihan bank berlesen lain yang sepadan dengan profil anda`
-                                          : `${otherMatches.length} more alternative licensed lenders matching your profile`}
-                                      </span>
-                                    </div>
+                              <div className="flex flex-col gap-3 pt-3 border-t border-slate-100 mt-2">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 px-1">
+                                  <div>
+                                    <h4 className="text-xs sm:text-sm font-bold text-slate-900">
+                                      {language === 'bm' ? 'Pilihan Bank & Pemberi Pinjaman Lain' : 'Other Matched Lenders'}
+                                    </h4>
+                                    <span className="text-[11px] text-slate-500 block">
+                                      {language === 'bm'
+                                        ? `${otherMatches.length} lagi institusi kewangan berlesen yang sepadan dengan profil anda`
+                                        : `${otherMatches.length} more alternative licensed lenders matching your profile`}
+                                    </span>
                                   </div>
 
                                   <div className="flex items-center gap-2">
                                     <button
                                       type="button"
                                       onClick={() => setCurrentPage('directory')}
-                                      className="px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all shadow-2xs cursor-pointer hidden sm:flex items-center gap-1"
+                                      className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold rounded-xl transition-all cursor-pointer hidden sm:flex items-center gap-1"
                                     >
                                       <Globe className="w-3.5 h-3.5 text-blue-900" />
-                                      {language === 'bm' ? 'Direktori Penuh' : 'Full Directory'}
+                                      <span>{language === 'bm' ? 'Direktori Penuh' : 'Full Directory'}</span>
                                     </button>
                                     <button
                                       type="button"
                                       onClick={() => setShowOtherLenders(!showOtherLenders)}
-                                      className="px-3 py-1.5 bg-blue-950 hover:bg-blue-900 text-white text-xs font-bold rounded-xl transition-all shadow-2xs cursor-pointer flex items-center gap-1"
+                                      className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl transition-all cursor-pointer flex items-center gap-1"
                                     >
                                       {showOtherLenders
                                         ? (language === 'bm' ? 'Sembunyikan ▲' : 'Hide Others ▲')
