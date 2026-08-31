@@ -17,7 +17,10 @@ import {
   ShieldCheck,
   ChevronRight,
   Maximize2,
-  Minimize2
+  Minimize2,
+  PhoneCall,
+  PhoneOff,
+  Phone
 } from 'lucide-react';
 import { getCreditPassportPdfBlobUrl, generateCreditPassportPdf } from '@/lib/pdfGenerator';
 import { CreditProfileReport as AssessmentReport, UnderwritingInput as UserInputData } from '@/lib/scoring';
@@ -106,6 +109,7 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
   const [isPdfMaximized, setIsPdfMaximized] = useState<boolean>(false);
   const [language, setLanguage] = useState<'en' | 'bm'>('en');
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
+  const [isLiveCallActive, setIsLiveCallActive] = useState<boolean>(false);
   const [chatMessages, setChatMessages] = useState<Array<{ sender: 'user' | 'assistant'; text: string }>>([]);
   const [chatInput, setChatInput] = useState<string>('');
   const [isLoadingReply, setIsLoadingReply] = useState<boolean>(false);
@@ -113,6 +117,8 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
   const speechSynthRef = useRef<SpeechSynthesisUtterance | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
+  const isLiveCallRef = useRef<boolean>(false);
+  isLiveCallRef.current = isLiveCallActive;
 
   // Lock outer background scrolling when modal is open
   useEffect(() => {
@@ -175,8 +181,8 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
     if (!isOpen) return;
 
     const initialWelcome = language === 'bm'
-      ? `👋 **Salam ${applicantName}!** Saya AI Penaja Jamin & Penjelas Laporan anda.\n\nBerikut ringkasan Pasport Kredit anda:\n• **Skor FRI:** **${friScore}/850 (${riskGrade})** · Kelulusan **${approvalOdds}**\n• **Purata Kemasukan:** **RM ${assessedInflow.toLocaleString('en-MY')}/bulan** (Lebihan Bersih: **RM ${netSurplus.toLocaleString('en-MY')}/bulan**)\n• **Kapasiti Ansuran Selamat:** **RM ${safeMaxInstallment.toLocaleString('en-MY')}/bulan** (DSR: **${dsrValue}%**)\n• **Bank Padanan Utama:** **${topMatch1}**, **${topMatch2}**, **${topMatch3}**\n\nKlik mana-mana butang di atas atau tanya apa-apa soalan mengenai dokumen ini!`
-      : `👋 **Hello ${applicantName}!** I am your AI Underwriting Companion.\n\nHere is your verified credit dossier summary:\n• **FRI Score:** **${friScore}/850 (${riskGrade})** · Approval Likelihood **${approvalOdds}**\n• **Assessed Inflow:** **RM ${assessedInflow.toLocaleString('en-MY')}/mo** (Free Surplus: **RM ${netSurplus.toLocaleString('en-MY')}/mo**)\n• **Safe Monthly Capacity:** **RM ${safeMaxInstallment.toLocaleString('en-MY')}/mo** (DSR: **${dsrValue}%**)\n• **Top Matched Lenders:** **${topMatch1}**, **${topMatch2}**, **${topMatch3}**\n\nAsk me anything about your PDF report or click the quick action chips above!`;
+      ? `👋 **Salam ${applicantName}!** Saya AI Penaja Jamin & Penjelas Laporan anda.\n\nBerikut ringkasan Pasport Kredit anda:\n• **Skor FRI:** **${friScore}/850 (${riskGrade})** · Kelulusan **${approvalOdds}**\n• **Purata Kemasukan:** **RM ${assessedInflow.toLocaleString('en-MY')}/bulan** (Lebihan Bersih: **RM ${netSurplus.toLocaleString('en-MY')}/bulan**)\n• **Kapasiti Ansuran Selamat:** **RM ${safeMaxInstallment.toLocaleString('en-MY')}/bulan** (DSR: **${dsrValue}%**)\n• **Bank Padanan Utama:** **${topMatch1}**, **${topMatch2}**, **${topMatch3}**\n\nKlik mana-mana butang di atas, taip soalan, atau tekan butang Live Call untuk bercakap secara langsung!`
+      : `👋 **Hello ${applicantName}!** I am your AI Underwriting Companion.\n\nHere is your verified credit dossier summary:\n• **FRI Score:** **${friScore}/850 (${riskGrade})** · Approval Likelihood **${approvalOdds}**\n• **Assessed Inflow:** **RM ${assessedInflow.toLocaleString('en-MY')}/mo** (Free Surplus: **RM ${netSurplus.toLocaleString('en-MY')}/mo**)\n• **Safe Monthly Capacity:** **RM ${safeMaxInstallment.toLocaleString('en-MY')}/mo** (DSR: **${dsrValue}%**)\n• **Top Matched Lenders:** **${topMatch1}**, **${topMatch2}**, **${topMatch3}**\n\nClick the action chips above, type a question, or press Live Call to speak directly with me!`;
 
     setChatMessages([{ sender: 'assistant', text: initialWelcome }]);
   }, [isOpen, language, applicantName, friScore, riskGrade, approvalOdds, assessedInflow, netSurplus, safeMaxInstallment, dsrValue, topMatch1, topMatch2, topMatch3]);
@@ -186,42 +192,120 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chatMessages, isLoadingReply]);
 
-  // Stop speech when closing
+  // Stop speech and live call when closing
   useEffect(() => {
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
-      setIsSpeaking(false);
     }
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+    }
+    setIsSpeaking(false);
+    setIsLiveCallActive(false);
   }, [isOpen]);
 
   if (!isOpen) return null;
 
-  // Speak text via TTS
-  const handleToggleSpeak = (textToRead?: string) => {
+  // Speak text via TTS with optional onComplete callback
+  const handleToggleSpeak = (textToRead?: string, onComplete?: () => void) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
 
-    if (isSpeaking) {
-      window.speechSynthesis.cancel();
-      setIsSpeaking(false);
-      return;
-    }
+    window.speechSynthesis.cancel();
 
     const text = textToRead || chatMessages[chatMessages.length - 1]?.text || 'No content to read';
     const cleanText = text.replace(/[*_#`[\]()•]/g, '').trim();
     const utterance = new SpeechSynthesisUtterance(cleanText);
     utterance.lang = language === 'bm' ? 'id-ID' : 'en-US';
-    utterance.rate = 1.0;
+    utterance.rate = 1.05;
     utterance.pitch = 1.0;
 
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      if (onComplete) onComplete();
+    };
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+      if (onComplete) onComplete();
+    };
 
     speechSynthRef.current = utterance;
     setIsSpeaking(true);
     window.speechSynthesis.speak(utterance);
   };
 
-  // Voice recognition handler
+  // Start voice recognition
+  const startListening = () => {
+    if (typeof window === 'undefined') return;
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+
+    try {
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch (e) {}
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = language === 'bm' ? 'ms-MY' : 'en-US';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => setIsVoiceListening(true);
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        if (transcript) {
+          handleSendMessage(transcript);
+        }
+      };
+      recognition.onerror = () => {
+        setIsVoiceListening(false);
+        // If live call active, re-listen after 1s
+        if (isLiveCallRef.current) {
+          setTimeout(() => {
+            if (isLiveCallRef.current && !isLoadingReply && !isSpeaking) {
+              startListening();
+            }
+          }, 1200);
+        }
+      };
+      recognition.onend = () => {
+        setIsVoiceListening(false);
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (err) {
+      console.warn('Recognition start error:', err);
+      setIsVoiceListening(false);
+    }
+  };
+
+  // Toggle Live Call
+  const handleToggleLiveCall = () => {
+    if (isLiveCallActive) {
+      // End call
+      setIsLiveCallActive(false);
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      if (recognitionRef.current) {
+        try { recognitionRef.current.stop(); } catch (e) {}
+      }
+      setIsSpeaking(false);
+      setIsVoiceListening(false);
+    } else {
+      // Start call
+      setIsLiveCallActive(true);
+      const callPrompt = language === 'bm'
+        ? `Panggilan langsung bermula. Sila tanya apa-apa soalan mengenai laporan kredit anda.`
+        : `Live call connected. Please speak and ask me any questions about your credit passport.`;
+
+      handleToggleSpeak(callPrompt, () => {
+        startListening();
+      });
+    }
+  };
+
+  // Voice recognition button handler
   const handleToggleVoiceInput = () => {
     if (typeof window === 'undefined') return;
 
@@ -237,28 +321,7 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
       return;
     }
 
-    try {
-      const recognition = new SpeechRecognition();
-      recognition.lang = language === 'bm' ? 'ms-MY' : 'en-US';
-      recognition.continuous = false;
-      recognition.interimResults = false;
-
-      recognition.onstart = () => setIsVoiceListening(true);
-      recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        if (transcript) {
-          handleSendMessage(transcript);
-        }
-      };
-      recognition.onerror = () => setIsVoiceListening(false);
-      recognition.onend = () => setIsVoiceListening(false);
-
-      recognitionRef.current = recognition;
-      recognition.start();
-    } catch (err) {
-      console.warn('Speech recognition error:', err);
-      setIsVoiceListening(false);
-    }
+    startListening();
   };
 
   // Send message to AI Explainer
@@ -305,8 +368,12 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
       const data = await response.json();
       if (data && data.reply) {
         setChatMessages(prev => [...prev, { sender: 'assistant', text: data.reply }]);
-        if (isSpeaking) {
-          handleToggleSpeak(data.reply);
+        if (isLiveCallRef.current || isSpeaking) {
+          handleToggleSpeak(data.reply, () => {
+            if (isLiveCallRef.current) {
+              startListening();
+            }
+          });
         }
       } else {
         throw new Error('No reply from server');
@@ -332,6 +399,13 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
           : `📊 **Credit Passport Status:**\nYour FRI score is **${friScore}/850 (${riskGrade})**. Your profile meets BNM FTFC & RMiT alternative underwriting standards with verified SHA-256 tamper-proof certification.`;
       }
       setChatMessages(prev => [...prev, { sender: 'assistant', text: fallback }]);
+      if (isLiveCallRef.current) {
+        handleToggleSpeak(fallback, () => {
+          if (isLiveCallRef.current) {
+            startListening();
+          }
+        });
+      }
     } finally {
       setIsLoadingReply(false);
     }
@@ -397,18 +471,18 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
               </button>
             </div>
 
-            {/* Read Aloud Voice Button */}
+            {/* Live Call Button */}
             <button
-              onClick={() => handleToggleSpeak()}
-              className={`px-2.5 py-1.5 rounded-xl border flex items-center gap-1.5 text-xs font-bold transition-all ${
-                isSpeaking
-                  ? 'bg-amber-50 text-amber-900 border-amber-300 animate-pulse'
-                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+              onClick={handleToggleLiveCall}
+              className={`px-2.5 py-1.5 rounded-xl border flex items-center gap-1.5 text-xs font-bold transition-all cursor-pointer ${
+                isLiveCallActive
+                  ? 'bg-rose-600 hover:bg-rose-700 text-white border-rose-700 shadow-sm animate-pulse'
+                  : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-900 border-emerald-300'
               }`}
-              title={language === 'bm' ? 'Baca Bersuara' : 'Read Aloud'}
+              title={language === 'bm' ? (isLiveCallActive ? 'Tamatkan Panggilan' : 'Panggilan Langsung') : (isLiveCallActive ? 'End Live Call' : 'Live Call')}
             >
-              {isSpeaking ? <VolumeX className="w-3.5 h-3.5 text-amber-700" /> : <Volume2 className="w-3.5 h-3.5 text-slate-700" />}
-              <span className="hidden sm:inline">{isSpeaking ? 'Stop' : 'Voice'}</span>
+              {isLiveCallActive ? <PhoneOff className="w-3.5 h-3.5" /> : <PhoneCall className="w-3.5 h-3.5 text-emerald-700" />}
+              <span className="hidden sm:inline">{isLiveCallActive ? (language === 'bm' ? 'Tamat' : 'End Call') : (language === 'bm' ? 'Panggilan Langsung' : 'Live Call')}</span>
             </button>
 
             {/* Maximize / Split View Toggle Button */}
@@ -505,41 +579,6 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
           {/* Right Panel: Synchronized AI Underwriting Assistant (35% width) */}
           <div className={`${mobileTab === 'chat' ? 'flex' : 'hidden'} ${isPdfMaximized ? 'lg:hidden' : 'lg:flex lg:col-span-4'} flex-col bg-white min-h-0 overflow-hidden`}>
             
-            {/* Quick Metrics Bar (Clickable) */}
-            <div className="p-2.5 border-b border-slate-200/80 bg-slate-50/70 grid grid-cols-3 gap-2 shrink-0">
-              <button
-                onClick={() => handleSendMessage(language === 'bm' ? 'Terangkan skor FRI dan gred saya.' : 'Explain my FRI score and risk grade.')}
-                className="p-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/80 text-left transition-all group shadow-2xs cursor-pointer"
-              >
-                <div className="text-[10px] text-slate-500 font-medium flex items-center justify-between">
-                  <span>{language === 'bm' ? 'Skor FRI' : 'FRI Score'}</span>
-                  <ArrowUpRight className="w-2.5 h-2.5 text-slate-400 group-hover:text-blue-950 transition-colors" />
-                </div>
-                <div className="text-xs font-black text-slate-950 mt-0.5">{friScore} · {riskGrade.replace('Grade ', '')}</div>
-              </button>
-
-              <button
-                onClick={() => handleSendMessage(language === 'bm' ? 'Terangkan had ansuran selamat bulanan saya.' : 'Explain my safe monthly installment capacity.')}
-                className="p-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/80 text-left transition-all group shadow-2xs cursor-pointer"
-              >
-                <div className="text-[10px] text-slate-500 font-medium flex items-center justify-between">
-                  <span>{language === 'bm' ? 'Had Ansuran' : 'Safe Limit'}</span>
-                  <ArrowUpRight className="w-2.5 h-2.5 text-slate-400 group-hover:text-blue-950 transition-colors" />
-                </div>
-                <div className="text-xs font-black text-blue-950 mt-0.5">RM {safeMaxInstallment.toLocaleString('en-MY')}</div>
-              </button>
-
-              <button
-                onClick={() => handleSendMessage(language === 'bm' ? 'Mengapa bank-bank ini dipadankan mengikut direktori?' : 'Why are these lenders matched according to the directory?')}
-                className="p-2 rounded-xl bg-white hover:bg-slate-50 border border-slate-200/80 text-left transition-all group shadow-2xs cursor-pointer"
-              >
-                <div className="text-[10px] text-slate-500 font-medium flex items-center justify-between">
-                  <span>{language === 'bm' ? 'Padanan Utama' : 'Top Match'}</span>
-                  <ArrowUpRight className="w-2.5 h-2.5 text-slate-400 group-hover:text-emerald-700 transition-colors" />
-                </div>
-                <div className="text-xs font-black text-emerald-800 mt-0.5 truncate">{topMatch1.split(' ')[0]}</div>
-              </button>
-            </div>
 
             {/* 2 Suggestion Buttons (Transparent Interactive Type) */}
             <div className="px-3 py-2 border-b border-slate-200/80 bg-white/60 flex items-center gap-2 shrink-0">
