@@ -8,6 +8,7 @@ interface PdfGeneratorProps {
   report: CreditProfileReport;
   documentHash: string;
   isLocked?: boolean;
+  matchedLenders?: any[];
 }
 
 /**
@@ -67,7 +68,7 @@ function drawFrostedBlur(
  * Builds the jsPDF instance for an executive, institutional-grade Alternative Credit Passport PDF.
  * Formatted to central banking standards (Bank Negara Malaysia CRM, FTFC, RMiT, AMLA 2001, PDPA 2010).
  */
-export function buildCreditPassportPdfDoc({ inputData, report, documentHash, isLocked = false }: PdfGeneratorProps): jsPDF {
+export function buildCreditPassportPdfDoc({ inputData, report, documentHash, isLocked = false, matchedLenders }: PdfGeneratorProps): jsPDF {
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -416,7 +417,14 @@ export function buildCreditPassportPdfDoc({ inputData, report, documentHash, isL
     ['Top-Tier Licensed Digital Bank (Match #1)', 'Direct Gig Financing Facility', 'High Odds (Pre-Qualified)', 'RM 1,000 - RM 20,000', '••••••', '••••••'],
     ['Government-Subsidized Bank (Match #2)', 'Micro-Financing Assistance Direct', 'High Odds (Pre-Qualified)', 'RM 1,000 - RM 15,000', '••••••', '••••••'],
     ['Licensed Alternative Credit (Match #3)', 'Alternative Capital Care Loan', 'Approved Tier', 'RM 2,000 - RM 30,000', '••••••', '••••••']
-  ] : (topLenders.length > 0 ? topLenders.map(m => [
+  ] : (matchedLenders && matchedLenders.length > 0 ? matchedLenders.slice(0, 4).map(m => [
+    `${m.name || m.lender?.name}`,
+    `${m.product?.name || m.productName || 'Micro-Financing Facility'}`,
+    `${m.matchScore || m.score || 95}% (${m.eligibilityLabel || 'Strong Match'})`,
+    `RM 1,000 - RM 50,000`,
+    `${m.rate || '4.0% - 6.5% p.a.'}`,
+    `${m.speed || (m.lender?.gigFriendly ? '1 - 2 Hours' : '3 - 5 Days')}`
+  ]) : (topLenders.length > 0 ? topLenders.map(m => [
     `${m.lender.name}`,
     `${m.product.name}`,
     `${m.matchScore}% (${m.eligibilityLabel})`,
@@ -424,10 +432,10 @@ export function buildCreditPassportPdfDoc({ inputData, report, documentHash, isL
     `${m.product.rateFromPercent}% - ${m.product.rateToPercent}% p.a.`,
     `${m.lender.gigFriendly ? '1 - 2 Hours' : '1 - 3 Days'}`
   ]) : [
-    ['GXBank Berhad (Digital Bank)', 'GX Flexi-Loan (Gig & Freelance)', '92% (Strong Match)', 'RM 1,000 - RM 20,000', '4.88% - 6.50% p.a.', '1 - 2 Hours'],
-    ['Boost Bank (RHB Digital Partner)', 'Boost Micro-Financing Direct', '88% (Strong Match)', 'RM 1,000 - RM 15,000', '5.50% - 7.20% p.a.', '2 - 4 Hours'],
-    ['AEON Credit Service Berhad', 'i-Cash Micro Capital Care', '85% (Good Fit)', 'RM 2,000 - RM 30,000', '6.88% - 8.99% p.a.', '24 Hours']
-  ]);
+    ['BSN MicroKredit Madani', 'BSN Micro-Financing Direct', '95% (Top Match)', 'RM 1,000 - RM 20,000', '4.0% flat p.a.', '3 - 5 Days'],
+    ['Bank Rakyat Pembiayaan Mikro-i', 'Mikro-i Facility', '84% (Good Fit)', 'RM 1,000 - RM 15,000', '5.50% - 7.20% p.a.', '3 - 5 Days'],
+    ['AEON i-Cash Personal', 'i-Cash Micro Capital', '76% (Good Fit)', 'RM 2,000 - RM 30,000', '2.8% - 4.2% flat', '3 - 5 Days']
+  ]));
 
   autoTable(doc, {
     startY: sec4Y + 4,

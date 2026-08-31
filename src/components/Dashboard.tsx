@@ -333,6 +333,7 @@ export default function Dashboard() {
     report: any;
     documentHash: string;
     isLocked?: boolean;
+    matchedLenders?: any[];
   } | null>(null);
 
   const handleOpenReportExplainer = (customPayload?: {
@@ -340,9 +341,39 @@ export default function Dashboard() {
     report: any;
     documentHash: string;
     isLocked?: boolean;
+    matchedLenders?: any[];
   }) => {
+    const activePurpose = b2cResult?.inputData?.targetLoanPurpose || targetLoanPurpose || 'personal_cash';
+    const lenderPurposeMap: Record<string, Array<{ name: string; matchScore: number; rate: string; installment: string; speed: string; eligibilityLabel: string }>> = {
+      personal_cash: [
+        { name: 'BSN MicroKredit Madani', matchScore: 95, rate: '4.0% flat p.a. (BSN Madani)', installment: 'RM 225/mo', speed: '3–5 business days', eligibilityLabel: 'Top Lender Match' },
+        { name: 'Bank Rakyat Pembiayaan Mikro-i', matchScore: 84, rate: '5.5% – 7.5% p.a.', installment: 'RM 225/mo', speed: '3–5 business days', eligibilityLabel: '2nd Ranked Fit' },
+        { name: 'AEON i-Cash Personal', matchScore: 76, rate: '2.8% – 4.2% flat', installment: 'RM 235/mo', speed: '3–5 business days', eligibilityLabel: '3rd Ranked Fit' }
+      ],
+      working_capital: [
+        { name: 'TEKUN Nasional (Skim Niaga)', matchScore: 95, rate: '4.0% flat p.a. (Subsidized)', installment: 'RM 225/mo', speed: '3–5 business days', eligibilityLabel: 'Top Lender Match' },
+        { name: 'SME Bank (SPUM Scheme)', matchScore: 84, rate: '4.0% – 5.0% flat p.a.', installment: 'RM 225/mo', speed: '3–5 business days', eligibilityLabel: '2nd Ranked Fit' },
+        { name: 'Maybank SME Digital Financing', matchScore: 76, rate: '5.5% – 7.5% p.a.', installment: 'RM 235/mo', speed: '3–5 business days', eligibilityLabel: '3rd Ranked Fit' }
+      ],
+      vehicle: [
+        { name: 'AEON Credit (Vehicle & Motor HP)', matchScore: 95, rate: '4.0% – 5.5% flat p.a.', installment: 'RM 225/mo', speed: '3–5 business days', eligibilityLabel: 'Top Lender Match' },
+        { name: 'TEKUN Mobilepreneur', matchScore: 84, rate: '4.0% flat p.a.', installment: 'RM 225/mo', speed: '3–5 business days', eligibilityLabel: '2nd Ranked Fit' },
+        { name: 'Maybank Hire Purchase', matchScore: 76, rate: '3.2% – 4.5% flat p.a.', installment: 'RM 235/mo', speed: '3–5 business days', eligibilityLabel: '3rd Ranked Fit' }
+      ],
+      equipment: [
+        { name: 'SME Bank (SPUM Mesin & Alatan)', matchScore: 95, rate: '4.0% – 5.0% flat p.a.', installment: 'RM 225/mo', speed: '3–5 business days', eligibilityLabel: 'Top Lender Match' },
+        { name: 'Agrobank Mesin-i', matchScore: 84, rate: '4.5% – 6.0% p.a.', installment: 'RM 225/mo', speed: '3–5 business days', eligibilityLabel: '2nd Ranked Fit' },
+        { name: 'MARA (SPiM Alatan)', matchScore: 76, rate: '4.0% flat p.a.', installment: 'RM 235/mo', speed: '3–5 business days', eligibilityLabel: '3rd Ranked Fit' }
+      ]
+    };
+
+    const currentLenders = lenderPurposeMap[activePurpose] || lenderPurposeMap.personal_cash;
+
     if (customPayload) {
-      setExplainerPayload(customPayload);
+      setExplainerPayload({
+        ...customPayload,
+        matchedLenders: customPayload.matchedLenders || currentLenders
+      });
       setShowReportExplainerModal(true);
       return;
     }
@@ -352,7 +383,8 @@ export default function Dashboard() {
         inputData: b2cResult.inputData,
         report: b2cResult.report,
         documentHash: b2cResult.hash || 'b2c-live-hash',
-        isLocked: !isPassportUnlocked
+        isLocked: !isPassportUnlocked,
+        matchedLenders: currentLenders
       });
       setShowReportExplainerModal(true);
       return;
@@ -370,7 +402,8 @@ export default function Dashboard() {
       platform: userSession?.platformName || userSession?.workCategory || 'Grab / Foodpanda',
       workType: 'gig_worker',
       phone: userSession?.phone || '+6012-3456789',
-      email: userSession?.email || 'ahmad.razak@example.com'
+      email: userSession?.email || 'ahmad.razak@example.com',
+      targetLoanPurpose: activePurpose
     };
     const defaultReport = {
       score: 740,
@@ -378,19 +411,20 @@ export default function Dashboard() {
       grade: 'A',
       riskTier: 'Grade A',
       status: 'APPROVED' as const,
-      dsr: 11.4,
-      dsrPercentage: 11.4,
+      dsr: 0.0,
+      dsrPercentage: 0.0,
       runwayMonths: 7.8,
       monthlySurplus: Math.round(income * 0.55),
-      estimatedInstallment: 1225,
+      estimatedInstallment: 249,
       confidenceScore: 94,
-      matchedLendersCount: 4
+      matchedLendersCount: 3
     };
     setExplainerPayload({
       inputData: defaultInput as any,
       report: defaultReport as any,
       documentHash: '0x8f2a1b94c3d7e5f6',
-      isLocked: !isPassportUnlocked
+      isLocked: !isPassportUnlocked,
+      matchedLenders: currentLenders
     });
     setShowReportExplainerModal(true);
   };
@@ -3718,7 +3752,6 @@ export default function Dashboard() {
                                 : (language === 'bm' ? 'Muat Turun PDF' : 'Download PDF Report')}
                             </span>
                           </button>
-                          {getStatusBadge(b2cResult.report.status)}
                         </div>
                       </div>
 
@@ -7546,6 +7579,7 @@ export default function Dashboard() {
           report={explainerPayload.report}
           documentHash={explainerPayload.documentHash}
           isLocked={explainerPayload.isLocked}
+          matchedLenders={explainerPayload.matchedLenders}
         />
       )}
 

@@ -28,6 +28,7 @@ interface ReportExplainerModalProps {
   report: AssessmentReport;
   documentHash: string;
   isLocked?: boolean;
+  matchedLenders?: any[];
 }
 
 // Clean Message Formatter: Renders clean bold text, bullet lists and headers without any raw markdown asterisks
@@ -95,7 +96,8 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
   inputData,
   report,
   documentHash,
-  isLocked = false
+  isLocked = false,
+  matchedLenders
 }) => {
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
   const [mobileTab, setMobileTab] = useState<'pdf' | 'chat'>('chat');
@@ -109,6 +111,17 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
   const chatEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
 
+  // Lock outer background scrolling when modal is open
+  useEffect(() => {
+    if (isOpen) {
+      const prevOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = prevOverflow || 'unset';
+      };
+    }
+  }, [isOpen]);
+
   // Assessed metrics extracted and cleaned
   const applicantName = inputData.name || (inputData as any).fullName || 'Borrower';
   const assessedInflow = Math.round(inputData.averageMonthlyNetIncome || 
@@ -119,16 +132,17 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
   const safeMaxInstallment = Math.round(report.estimatedInstallment || (assessedInflow * 0.35));
   const safeMaxLoan = Math.round(safeMaxInstallment * 36 * 0.85);
   const friScore = (report as any).creditScore || report.score || 710;
-  const dsrValue = Number(((report as any).dsrPercentage ?? (report.dsr !== undefined ? report.dsr : 11.4)).toFixed(1));
+  const dsrValue = Number(((report as any).dsrPercentage ?? (report.dsr !== undefined ? report.dsr : 0.0)).toFixed(1));
   const riskGrade = (report as any).riskTier || ('Grade ' + (report.grade || 'A'));
   const platformName = inputData.platform || 'Gig / Freelance';
   const approvalOdds = friScore >= 700 ? '88% - 94%' : (friScore >= 600 ? '70% - 85%' : '50% - 65%');
 
   // Real dynamic lender matching from Directory
   const dynamicMatches = matchLenders(report, inputData);
-  const topMatch1 = dynamicMatches[0]?.lender?.name ? `${dynamicMatches[0].lender.shortName || dynamicMatches[0].lender.name} (${dynamicMatches[0].matchScore}%)` : 'GXBank (94%)';
-  const topMatch2 = dynamicMatches[1]?.lender?.name ? `${dynamicMatches[1].lender.shortName || dynamicMatches[1].lender.name} (${dynamicMatches[1].matchScore}%)` : 'Boost Bank (88%)';
-  const topMatch3 = dynamicMatches[2]?.lender?.name ? `${dynamicMatches[2].lender.shortName || dynamicMatches[2].lender.name} (${dynamicMatches[2].matchScore}%)` : 'AEON Credit (82%)';
+  const lendersToUse = (matchedLenders && matchedLenders.length > 0) ? matchedLenders : dynamicMatches;
+  const topMatch1 = lendersToUse[0] ? `${lendersToUse[0].lender?.shortName || lendersToUse[0].lender?.name || lendersToUse[0].name} (${lendersToUse[0].matchScore || lendersToUse[0].score || 95}%)` : 'BSN MicroKredit Madani (95%)';
+  const topMatch2 = lendersToUse[1] ? `${lendersToUse[1].lender?.shortName || lendersToUse[1].lender?.name || lendersToUse[1].name} (${lendersToUse[1].matchScore || lendersToUse[1].score || 84}%)` : 'Bank Rakyat Pembiayaan Mikro-i (84%)';
+  const topMatch3 = lendersToUse[2] ? `${lendersToUse[2].lender?.shortName || lendersToUse[2].lender?.name || lendersToUse[2].name} (${lendersToUse[2].matchScore || lendersToUse[2].score || 76}%)` : 'AEON i-Cash Personal (76%)';
 
   // Generate PDF blob URL on mount / prop change
   useEffect(() => {
@@ -139,7 +153,8 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
         inputData,
         report,
         documentHash,
-        isLocked
+        isLocked,
+        matchedLenders: lendersToUse
       });
       setPdfBlobUrl(url);
 
@@ -149,7 +164,7 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
     } catch (err) {
       console.warn('Failed to generate PDF blob preview:', err);
     }
-  }, [isOpen, inputData, report, documentHash, isLocked]);
+  }, [isOpen, inputData, report, documentHash, isLocked, lendersToUse]);
 
   // Initial welcome message with complete high-density synthesis
   useEffect(() => {
@@ -273,11 +288,11 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
             safeMaxInstallment,
             safeMaxLoan,
             documentHash,
-            matchedLenders: dynamicMatches.slice(0, 3).map(m => ({
-              name: m.lender.name,
-              shortName: m.lender.shortName,
-              matchScore: m.matchScore,
-              eligibilityLabel: m.eligibilityLabel
+            matchedLenders: lendersToUse.slice(0, 3).map(m => ({
+              name: m.name || m.lender?.name,
+              shortName: m.lender?.shortName || m.name,
+              matchScore: m.matchScore || m.score || 95,
+              eligibilityLabel: m.eligibilityLabel || 'Eligible'
             }))
           }
         })
@@ -333,7 +348,7 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
   ];
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 md:p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 md:p-6 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200 overscroll-contain">
       <div className="relative w-full max-w-[98vw] 2xl:max-w-[1550px] h-[96vh] flex flex-col rounded-2xl md:rounded-3xl border border-slate-200 bg-white text-slate-900 shadow-2xl overflow-hidden">
         
         {/* Clean Top White Header */}
@@ -518,7 +533,7 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
             </div>
 
             {/* Chat Message List */}
-            <div className="flex-1 p-3.5 space-y-3 overflow-y-auto min-h-0 bg-slate-50/50">
+            <div className="flex-1 p-3.5 space-y-3 overflow-y-auto min-h-0 bg-slate-50/50 overscroll-contain">
               {chatMessages.map((msg, idx) => (
                 <div
                   key={idx}

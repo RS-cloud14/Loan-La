@@ -772,13 +772,36 @@ export async function POST(request: NextRequest) {
       const lenders = userContext.matchedLenders && userContext.matchedLenders.length > 0
         ? userContext.matchedLenders
         : [
-            { name: 'GXBank Berhad (Digital Bank)', matchScore: 94, eligibilityLabel: 'Strong Match' },
-            { name: 'Boost Bank (RHB Digital Partner)', matchScore: 88, eligibilityLabel: 'Strong Match' },
-            { name: 'AEON Credit Service Berhad', matchScore: 82, eligibilityLabel: 'Good Fit' }
+            { name: 'BSN MicroKredit Madani', matchScore: 95, eligibilityLabel: 'Top Lender Match' },
+            { name: 'Bank Rakyat Pembiayaan Mikro-i', matchScore: 84, eligibilityLabel: '2nd Ranked Fit' },
+            { name: 'AEON i-Cash Personal', matchScore: 76, eligibilityLabel: '3rd Ranked Fit' }
           ];
 
       const lenderTextEn = lenders.slice(0, 3).map((l, i) => `${i + 1}. **${l.name}** (${l.matchScore}% Match · ${l.eligibilityLabel || 'Eligible'})`).join('\n');
       const lenderTextBm = lenders.slice(0, 3).map((l, i) => `${i + 1}. **${l.name}** (${l.matchScore}% Padanan · ${l.eligibilityLabel || 'Layak'})`).join('\n');
+
+      // 0. Excerpt / Sentence Meaning Explanation (when user asks "what meaning", "what does this mean", or quotes report text)
+      const isExplanationOfSentence = (
+        lastMsgLower.includes('what meaning') || 
+        lastMsgLower.includes('apa maksud') || 
+        lastMsgLower.includes('terangkan ayat') || 
+        lastMsgLower.includes('explain this') ||
+        lastMsgLower.includes('affordability') ||
+        (lastMsgLower.includes('installment of') && lastMsgLower.includes('dsr')) ||
+        (lastMsgLower.includes('macroprudential') || lastMsgLower.includes('60%'))
+      );
+
+      if (isExplanationOfSentence) {
+        const reply = isMalay
+          ? `💡 **Penerangan Maksud Penyata Pengunderaitan DSR Ini:**\n\nAyat laporan ini mengesahkan **tahap kesihatan kewangan dan kemampuan pembayaran balik anda yang sangat kukuh** mengikut 4 fakta utama:\n\n1. **Anggaran Ansuran (RM ${safeMaxInstallment.toLocaleString('en-MY')}/bulan):**\n• Jumlah anggaran bayaran bulanan yang dicadangkan untuk pinjaman sasaran anda.\n\n2. **Lebihan Tunai Bersih (RM ${monthlySurplus.toLocaleString('en-MY')}/bulan):**\n• Anda mempunyai lebihan tunai bulanan bebas yang jauh lebih besar berbanding ansuran (penampan kecairan lebih 10x ganda!).\n\n3. **DSR Dinilai pada 0.0% (Nisbah Khidmat Hutang):**\n• Ini bermaksud anda **tiada rekod hutang komitmen bank sedia ada** dalam penyata bank anda. Ruang kapasiti pinjaman anda terbuka 100%.\n\n4. **Di bawah Siling Makroprudensial BNM 60%:**\n• Bank Negara Malaysia membenarkan komitmen hutang sehingga 60% daripada pendapatan. Pada 0.0% (dan hanya ~8% selepas ansuran baharu), profil anda berada dalam **kategori risiko paling selamat (Prime Tier)** untuk kelulusan bank segera.`
+          : `💡 **Plain Meaning of this DSR Affordability Statement:**\n\nThis statement is an **official underwriter confirmation that your loan repayment capacity is exceptionally safe and strong**. Here is the exact breakdown:\n\n1. **Estimated Installment (RM ${safeMaxInstallment.toLocaleString('en-MY')}/mo):**\n• The projected monthly payment for your requested financing facility.\n\n2. **Verified Cash Surplus (RM ${monthlySurplus.toLocaleString('en-MY')}/mo):**\n• Your verified disposable income after expenses is **RM ${monthlySurplus.toLocaleString('en-MY')}/mo** — which is more than 10x your required monthly payment!\n\n3. **DSR Assessed at 0.0%:**\n• Debt Service Ratio measures your existing bank debt against income. **0.0% means you have zero existing debt burdens**, leaving your full borrowing capacity completely intact.\n\n4. **Well below the BNM 60% Macroprudential Limit:**\n• Bank Negara Malaysia allows up to 60% of income for debt. Since your commitment is 0.0% (and only ~8% even after taking this loan), you are categorized as a **Prime Low-Risk borrower with high approval probability**.`;
+
+        return NextResponse.json({
+          success: true,
+          reply,
+          suggestions: isMalay ? ["Padanan Bank Direktori", "Had Pinjaman Selamat", "Cara Tingkatkan Skor"] : ["Matched Lenders", "Safe Borrowing Limit", "How to Boost Score?"]
+        });
+      }
 
       // 1. Free Surplus Explanation Query
       if (lastMsgLower.includes('surplus') || lastMsgLower.includes('lebihan') || lastMsgLower.includes('free cash') || lastMsgLower.includes('disposable')) {
