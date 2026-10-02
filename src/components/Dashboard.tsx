@@ -12,7 +12,7 @@ import {
   Banknote, Store, Wrench, Car, FileCheck2, GraduationCap, Zap, Search,
   Smartphone, Monitor, CheckCircle2, AlertCircle, Info, Clock, Building2, ArrowLeft,
   Bike, ShoppingBag, Package, Laptop, TrendingUp, Home, Calculator, Scale, LogOut, ChevronDown, Settings, Coins, Download, PlusCircle, Headphones,
-  Bookmark, Save, FileClock
+  Bookmark, Save, FileClock, ExternalLink
 } from 'lucide-react';
 import { generateCreditPassportPdf } from '@/lib/pdfGenerator';
 import { UnderwritingInput, CreditProfileReport, getDisplayStatus, getDisplayGrade } from '@/lib/scoring';
@@ -28,6 +28,7 @@ import AICoPilotChat from './AICoPilotChat';
 import CreditPassportPaywallModal from './CreditPassportPaywallModal';
 import ReportExplainerModal from './ReportExplainerModal';
 import SupportTicketsModal from './SupportTicketsModal';
+import AIApplicationDispatcherModal, { DispatcherTarget, DispatcherApplicantData } from './AIApplicationDispatcherModal';
 import { useLanguage, Language } from '@/context/LanguageContext';
 import { extractTextFromPdfBase64 } from '@/lib/pdfExtractor';
 
@@ -324,6 +325,8 @@ export default function Dashboard() {
   const [appliedLenders, setAppliedLenders] = useState<Record<string, { appliedAt: string; refCode: string }>>({});
   const [compareOpen, setCompareOpen] = useState(false);
   const [applyModalOpen, setApplyModalOpen] = useState(false);
+  const [aiDispatcherOpen, setAiDispatcherOpen] = useState(false);
+  const [dispatcherTarget, setDispatcherTarget] = useState<DispatcherTarget | null>(null);
   const [demoProfilesModalOpen, setDemoProfilesModalOpen] = useState(false);
   const [applyTarget, setApplyTarget] = useState<{ lenderName: string; lenderUrl: string; productName: string; speed?: string; installment?: number } | null>(null);
   const [applySubmitted, setApplySubmitted] = useState(false);
@@ -447,6 +450,75 @@ export default function Dashboard() {
       matchedLenders: currentLenders
     });
     setShowReportExplainerModal(true);
+  };
+
+  const handleOpenAiDispatcher = (target: {
+    lenderName: string;
+    lenderUrl?: string;
+    productName: string;
+    installment?: number;
+    speed?: string;
+    loanAmount?: number;
+  }) => {
+    setDispatcherTarget(target);
+    setAiDispatcherOpen(true);
+  };
+
+  const handleApplicationDispatched = (newRecord: any) => {
+    // 1. Centralized applications tracker
+    setSubmittedApplications(prev => {
+      const updated = [newRecord, ...prev.filter(a => a.lenderName !== newRecord.lenderName)];
+      try { localStorage.setItem('crediflow_submitted_apps', JSON.stringify(updated)); } catch(e) {}
+      return updated;
+    });
+
+    // 2. Applied lenders record
+    setAppliedLenders(prev => ({
+      ...prev,
+      [newRecord.lenderName]: { appliedAt: newRecord.appliedAt, refCode: newRecord.refCode }
+    }));
+
+    // 3. Sync to B2B Institutional Underwriter Console Queue
+    const newAppId = `live_${Date.now()}`;
+    const applicantName = b2cResult?.inputData.name || userSession?.name || 'Ahmad Bin Razali';
+    const newB2bEntry = {
+      id: newAppId,
+      name: applicantName,
+      platform: `${b2cResult?.inputData.platform || 'Grab & Foodpanda'} (${newRecord.lenderName})`,
+      score: b2cResult?.report.score || 740,
+      grade: b2cResult?.report.grade || 'A',
+      dsr: b2cResult?.report.dsr || 28.5,
+      status: 'Pending Review',
+      isTampered: false,
+      hash: b2cResult?.hash || 'f2a7b8e19c0b2d3e4f5a6b7c8d9e0f1a'
+    };
+
+    setB2bApplicants(prev => [newB2bEntry, ...prev]);
+
+    if (b2cResult) {
+      setFullProfilesDb(prev => ({
+        ...prev,
+        [newAppId]: {
+          inputData: {
+            ...b2cResult.inputData,
+            targetLoanAmount: newRecord.loanAmount || targetLoanAmount,
+            targetLoanPurpose: targetLoanPurpose,
+            name: applicantName
+          },
+          report: b2cResult.report,
+          hash: b2cResult.hash
+        }
+      }));
+    }
+  };
+
+  const handleSwitchToB2BPortalWithApplicant = (refCode?: string) => {
+    setPerspective('B2B');
+    if (b2bApplicants.length > 0) {
+      setSelectedB2bApplicant(b2bApplicants[0].id);
+    }
+    setB2bWorkspaceTab('cam');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // B2C Upload States
@@ -848,7 +920,7 @@ export default function Dashboard() {
 
   // B2B Active Applicant
   const [selectedB2bApplicant, setSelectedB2bApplicant] = useState<string>('ahmad');
-  const [b2bWorkspaceTab, setB2bWorkspaceTab] = useState<'summary' | 'dossier' | 'reconciliation' | 'ledger' | 'forensics'>('summary');
+  const [b2bWorkspaceTab, setB2bWorkspaceTab] = useState<'cam' | 'summary' | 'dossier' | 'reconciliation' | 'ledger' | 'forensics'>('cam');
   const [selectedDossierFileIndex, setSelectedDossierFileIndex] = useState<number>(0);
   const [b2bDocFilter, setB2bDocFilter] = useState<'all' | 'bank_statement' | 'platform_dashboard' | 'tax_epf' | 'mykad_id' | 'pay_slip' | 'business_proposal' | 'ssm_license' | 'premise_photos'>('all');
   const [inspectingDoc, setInspectingDoc] = useState<{ fileName: string; fileSize: string; status: string; documentType: string } | null>(null);
@@ -4400,14 +4472,19 @@ export default function Dashboard() {
                                         setShowPaywallModal(true);
                                         return;
                                       }
-                                      setApplyTarget({ lenderName: lender.name, lenderUrl: lender.url, productName: purposeLabel[targetLoanPurpose] + ' Loan' });
-                                      setApplySubmitted(isApplied);
-                                      setApplyModalOpen(true);
+                                      handleOpenAiDispatcher({
+                                        lenderName: lender.name,
+                                        lenderUrl: lender.url,
+                                        productName: purposeLabel[targetLoanPurpose] + ' Financing',
+                                        installment: lender.installment ? parseInt(lender.installment.replace(/[^0-9]/g, '')) : undefined,
+                                        speed: lender.speed,
+                                        loanAmount: targetLoanAmount
+                                      });
                                     }}
                                     className="flex-1 py-2 text-xs font-bold rounded-xl bg-blue-950 hover:bg-blue-900 text-white transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
                                   >
-                                    {isApplied ? <CheckCircle2 className="w-3.5 h-3.5" /> : <ArrowRight className="w-3.5 h-3.5 text-blue-200" />}
-                                    <span>{isApplied ? (language === 'bm' ? 'Lihat Permohonan' : 'View Submission') : (language === 'bm' ? 'Mohon Sekarang' : 'Apply Now')}</span>
+                                    {isApplied ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300" /> : <Sparkles className="w-3.5 h-3.5 text-cyan-300" />}
+                                    <span>{isApplied ? (language === 'bm' ? 'Permohonan Dihantar' : 'Application Dispatched') : (language === 'bm' ? 'Mohon dengan Ejen AI' : 'Apply with AI Agent')}</span>
                                   </button>
                                 </div>
                               </div>
@@ -4784,6 +4861,19 @@ export default function Dashboard() {
                 {/* 2. WORKSPACE TAB NAVIGATION BAR */}
                 <div className="flex flex-wrap items-center gap-2 p-2 bg-slate-100/90 border border-slate-200 rounded-2xl">
                   <button
+                    onClick={() => setB2bWorkspaceTab('cam')}
+                    className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      b2bWorkspaceTab === 'cam'
+                        ? 'bg-blue-950 text-white shadow-xs'
+                        : 'text-slate-600 hover:text-blue-950 hover:bg-white/80'
+                    }`}
+                  >
+                    <FileText className="w-3.5 h-3.5 text-cyan-300" />
+                    <span>Credit Memo (CAM)</span>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-700 font-mono font-bold">COMMITTEE</span>
+                  </button>
+
+                  <button
                     onClick={() => setB2bWorkspaceTab('summary')}
                     className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                       b2bWorkspaceTab === 'summary'
@@ -4845,6 +4935,264 @@ export default function Dashboard() {
                 </div>
 
                 {/* TAB CONTENT PANES */}
+
+                {/* TAB 0: CREDIT ASSESSMENT MEMORANDUM (CAM) — BANKER COMMITTEE BENCH */}
+                {b2bWorkspaceTab === 'cam' && (
+                  <div className="flex flex-col gap-5 animate-in fade-in duration-150">
+                    
+                    {/* Official CAM Memo Header Card */}
+                    <div className="premium-card p-6 bg-white border border-slate-200 shadow-sm flex flex-col gap-5">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 pb-4">
+                        <div className="flex items-center gap-3">
+                          <div className="p-3 bg-blue-950 text-white rounded-2xl shadow-sm">
+                            <FileText className="w-5 h-5 text-cyan-300" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <h3 className="text-sm font-black text-blue-950 tracking-tight">
+                                CREDIT ASSESSMENT MEMORANDUM (CAM)
+                              </h3>
+                              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-50 text-blue-900 border border-blue-200 font-bold">
+                                BNM RESPONSIBLE FINANCING COMPLIANT
+                              </span>
+                            </div>
+                            <span className="text-xs text-slate-500 font-normal">
+                              Memorandum Ref: <code className="font-mono text-blue-900 font-bold">CAM-MY-2026-LL-{activeB2bApplicantData.hash.slice(0, 8).toUpperCase()}</code> · Sanction Tier: Alternative Gig Facility
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 self-start sm:self-center">
+                          <button
+                            type="button"
+                            onClick={() => generateCreditPassportPdf({
+                              inputData: activeB2bApplicantData.inputData,
+                              report: activeB2bApplicantData.report,
+                              documentHash: activeB2bApplicantData.hash
+                            })}
+                            className="flex items-center gap-1.5 px-3 py-2 bg-blue-950 hover:bg-blue-900 text-white text-xs font-bold rounded-xl transition-all shadow-xs cursor-pointer"
+                          >
+                            <FileDown className="w-3.5 h-3.5 text-cyan-300" /> Export CAM (PDF)
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Sanction Recommendation Banner */}
+                      <div className={`p-4 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+                        activeB2bApplicantData.report.grade === 'A'
+                          ? 'bg-emerald-50/80 border-emerald-200 text-emerald-950'
+                          : activeB2bApplicantData.report.grade === 'B'
+                            ? 'bg-blue-50/80 border-blue-200 text-blue-950'
+                            : 'bg-rose-50/80 border-rose-200 text-rose-950'
+                      }`}>
+                        <div className="flex items-start gap-3">
+                          <div className={`p-2 rounded-xl shrink-0 mt-0.5 ${
+                            activeB2bApplicantData.report.grade === 'A'
+                              ? 'bg-emerald-600 text-white'
+                              : activeB2bApplicantData.report.grade === 'B'
+                                ? 'bg-blue-900 text-white'
+                                : 'bg-rose-600 text-white'
+                          }`}>
+                            <CheckCircle2 className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-bold uppercase tracking-wider block font-mono">
+                              Credit Committee Appraisal Verdict
+                            </span>
+                            <h4 className="text-sm font-black mt-0.5">
+                              {activeB2bApplicantData.report.grade === 'A'
+                                ? 'RECOMMENDED FOR CONDITIONAL SANCTION (STRONG CASHFLOW PROFILE)'
+                                : activeB2bApplicantData.report.grade === 'B'
+                                  ? 'RECOMMENDED FOR MARGINAL SANCTION (WITH REDUCED QUANTUM & ENHANCED CPs)'
+                                  : 'DECLINED / REFERRED TO MANUAL RISK INVESTIGATION (POLICY BREACH)'}
+                            </h4>
+                            <p className="text-xs mt-1 leading-relaxed opacity-90">
+                              Primary Repayment Source: Reconciled Gig/MSME Operating Cashflow ({activeB2bApplicantData.inputData.platform}). 3-Month Net Average Inflow: <strong>RM {activeB2bApplicantData.inputData.averageMonthlyNetIncome.toLocaleString()}</strong> with an estimated debt servicing surplus of <strong>RM {activeB2bApplicantData.report.monthlySurplus.toFixed(0)}/mo</strong>.
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="text-left sm:text-right shrink-0 p-3 bg-white/80 rounded-xl border border-slate-200/60">
+                          <span className="text-[10px] text-slate-500 font-bold block uppercase">Recommended Facility</span>
+                          <span className="text-base font-black text-blue-950 tabular-nums">
+                            RM {Math.min(activeB2bApplicantData.inputData.targetLoanAmount || 25000, 35000).toLocaleString()}
+                          </span>
+                          <span className="text-[10px] text-slate-500 block font-medium">Tenure: 24 Mos @ 5.0% p.a.</span>
+                        </div>
+                      </div>
+
+                      {/* 5 Cs of Credit Appraisal Grid */}
+                      <div className="flex flex-col gap-2.5">
+                        <div className="flex items-center gap-2">
+                          <Scale className="w-4 h-4 text-blue-900" />
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900">
+                            The 5 Cs of Credit Risk Evaluation (Bank Underwriter Matrix)
+                          </h4>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-5 gap-3 text-xs">
+                          {/* 1. Character */}
+                          <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col gap-1.5">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">1. Character</span>
+                            <span className="font-bold text-slate-900">FRI {activeB2bApplicantData.report.score}/850</span>
+                            <span className="text-[11px] text-slate-600 leading-tight">
+                              KYC confirmed. AMLA watchlist clean. Zero returned cheques in statement period.
+                            </span>
+                          </div>
+
+                          {/* 2. Capacity */}
+                          <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col gap-1.5">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">2. Capacity</span>
+                            <span className="font-bold text-slate-900">DSR {activeB2bApplicantData.report.dsr.toFixed(1)}%</span>
+                            <span className="text-[11px] text-slate-600 leading-tight">
+                              Below BNM 60% cap. Net monthly surplus RM {activeB2bApplicantData.report.monthlySurplus.toFixed(0)} exceeds EPF Belanjawanku living buffer.
+                            </span>
+                          </div>
+
+                          {/* 3. Capital */}
+                          <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col gap-1.5">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">3. Capital</span>
+                            <span className="font-bold text-slate-900">Runway {(activeB2bApplicantData.report.runwayMonths ?? 2.4).toFixed(1)} Mos</span>
+                            <span className="text-[11px] text-slate-600 leading-tight">
+                              Liquid savings buffer on hand to withstand temporary platform downtime.
+                            </span>
+                          </div>
+
+                          {/* 4. Collateral */}
+                          <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col gap-1.5">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">4. Collateral</span>
+                            <span className="font-bold text-slate-900">Unsecured / Cashflow</span>
+                            <span className="text-[11px] text-slate-600 leading-tight">
+                              Mitigated via auto-debit assignment on weekly gig payout disbursement account.
+                            </span>
+                          </div>
+
+                          {/* 5. Conditions */}
+                          <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200 flex flex-col gap-1.5">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">5. Conditions</span>
+                            <span className="font-bold text-emerald-700">Stress Test Passed</span>
+                            <span className="text-[11px] text-slate-600 leading-tight">
+                              Maintains DSCR &gt; 1.35x under 15% fuel inflation / income contraction stress scenario.
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Key Credit Risks vs Concrete Mitigants Table */}
+                      <div className="flex flex-col gap-2.5">
+                        <div className="flex items-center gap-2">
+                          <ShieldAlert className="w-4 h-4 text-blue-900" />
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-slate-900">
+                            Key Credit Risks &amp; Mitigating Factors (Credit Committee Audit Defense)
+                          </h4>
+                        </div>
+
+                        <div className="border border-slate-200 rounded-2xl overflow-hidden">
+                          <table className="w-full text-left text-xs">
+                            <thead className="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
+                              <tr>
+                                <th className="p-3 w-1/3">Identified Credit Risk</th>
+                                <th className="p-3 w-2/3">Contractual &amp; Behavioral Mitigating Factor</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                              <tr>
+                                <td className="p-3 font-medium text-slate-900 align-top">
+                                  <strong>Income Volatility:</strong> Irregular weekly gig earnings ({((activeB2bApplicantData.report.volatilityIndex ?? 0.15) * 100).toFixed(1)}% coefficient of variation).
+                                </td>
+                                <td className="p-3 text-slate-700 align-top leading-relaxed">
+                                  Trailing 3-month trough month income still covers proposed installment by 1.85x. The applicant demonstrated continuous active tenure for over 18 months on {activeB2bApplicantData.inputData.platform}.
+                                </td>
+                              </tr>
+                              <tr>
+                                <td className="p-3 font-medium text-slate-900 align-top">
+                                  <strong>Absence of EPF Form A / Corporate Payslip:</strong> Non-traditional gig tax &amp; wage documentation.
+                                </td>
+                                <td className="p-3 text-slate-700 align-top leading-relaxed">
+                                  100% 3-way reconciliation verified between platform earnings statements and incoming bank credits (DuitNow CR entries from registered corporate entities).
+                                </td>
+                              </tr>
+                              <tr>
+                                <td className="p-3 font-medium text-slate-900 align-top">
+                                  <strong>Operating Cost Inflation:</strong> Potential fuel price or vehicle maintenance surge squeezing disposable income.
+                                </td>
+                                <td className="p-3 text-slate-700 align-top leading-relaxed">
+                                  Post-loan cash buffer remains at RM {activeB2bApplicantData.report.postLoanBuffer.toFixed(0)}, comfortably exceeding the EPF Belanjawanku single-individual living allowance threshold.
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+
+                      {/* Conditions Precedent (CPs) & Underwriter Actions */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-slate-100">
+                        <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col gap-2 text-xs">
+                          <span className="font-bold text-slate-900 uppercase tracking-wider block text-[11px]">
+                            Recommended Conditions Precedent (CPs)
+                          </span>
+                          <span className="text-slate-700 flex items-start gap-1.5">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-blue-900 shrink-0 mt-0.5" />
+                            <span><strong>CP 1:</strong> Execution of automated weekly DuitNow Auto-Debit mandate on primary payout account.</span>
+                          </span>
+                          <span className="text-slate-700 flex items-start gap-1.5">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-blue-900 shrink-0 mt-0.5" />
+                            <span><strong>CP 2:</strong> Borrower covenant to maintain DSR ceiling under 60% throughout 24-month tenure.</span>
+                          </span>
+                          <span className="text-slate-700 flex items-start gap-1.5">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-blue-900 shrink-0 mt-0.5" />
+                            <span><strong>CP 3:</strong> Verification of active platform account status prior to disbursement.</span>
+                          </span>
+                        </div>
+
+                        <div className="p-4 bg-blue-950 text-white rounded-2xl flex flex-col justify-between gap-3">
+                          <div>
+                            <span className="text-xs font-bold text-cyan-300 uppercase tracking-wider block">
+                              Credit Analyst Sanction Controls
+                            </span>
+                            <p className="text-xs text-slate-300 mt-1">
+                              Record underwriter decision for this application dossier. Updates status across the institutional loan origination queue.
+                            </p>
+                          </div>
+
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setB2bApplicants(prev => prev.map(a => a.id === selectedB2bApplicant ? { ...a, status: 'Approved' } : a));
+                                alert(`Application for ${activeB2bApplicantData.inputData.name} has been conditionally APPROVED with standard covenants.`);
+                              }}
+                              className="flex-1 py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition-all cursor-pointer shadow-sm text-center"
+                            >
+                              ✓ Approve (CPs)
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                alert(`Request for Information (RFI) dispatched to ${activeB2bApplicantData.inputData.name} for updated 1-month platform statement.`);
+                              }}
+                              className="py-2.5 px-3 bg-blue-900 hover:bg-blue-800 text-cyan-300 font-bold text-xs rounded-xl transition-all cursor-pointer text-center"
+                            >
+                              Request Info (RFI)
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setB2bApplicants(prev => prev.map(a => a.id === selectedB2bApplicant ? { ...a, status: 'Declined' } : a));
+                                alert(`Application for ${activeB2bApplicantData.inputData.name} DECLINED under BNM Responsible Financing guidelines.`);
+                              }}
+                              className="py-2.5 px-3 bg-rose-900/80 hover:bg-rose-800 text-rose-200 font-bold text-xs rounded-xl transition-all cursor-pointer text-center"
+                            >
+                              Decline
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+
+                  </div>
+                )}
 
                 {/* TAB 1: SUMMARY & LOAN SIZING */}
                 {b2bWorkspaceTab === 'summary' && (
@@ -6447,14 +6795,35 @@ export default function Dashboard() {
                       </div>
                     </div>
 
-                    <a
-                      href={match.lender.applicationUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full flex items-center justify-center gap-2 py-2.5 bg-blue-950 hover:bg-blue-900 text-white text-xs font-bold rounded-xl transition-all"
-                    >
-                      <Globe className="w-3.5 h-3.5" /> Apply at {match.lender.shortName} — {match.lender.website}
-                    </a>
+                    <div className="flex gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setLenderMatchOpen(false);
+                          handleOpenAiDispatcher({
+                            lenderName: match.lender.name,
+                            lenderUrl: match.lender.applicationUrl,
+                            productName: match.product.name,
+                            installment: match.estimatedMonthlyInstallment,
+                            speed: '24 Hours',
+                            loanAmount: targetLoanAmount
+                          });
+                        }}
+                        className="flex-1 py-2.5 bg-blue-950 hover:bg-blue-900 text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-98"
+                      >
+                        <Cpu className="w-3.5 h-3.5 text-cyan-300 animate-pulse" />
+                        <span>{language === 'bm' ? 'Mohon dengan Ejen AI' : 'Apply with AI Agent'}</span>
+                      </button>
+                      <a
+                        href={match.lender.applicationUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all flex items-center justify-center"
+                        title={`Visit Official ${match.lender.shortName} Portal`}
+                      >
+                        <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
+                      </a>
+                    </div>
                   </div>
                 ))
               )}
@@ -7830,6 +8199,29 @@ export default function Dashboard() {
           documentHash={explainerPayload.documentHash}
           isLocked={explainerPayload.isLocked}
           matchedLenders={explainerPayload.matchedLenders}
+        />
+      )}
+
+      {/* Autonomous AI Application Dispatcher & Gateway Simulator */}
+      {aiDispatcherOpen && dispatcherTarget && (
+        <AIApplicationDispatcherModal
+          isOpen={aiDispatcherOpen}
+          onClose={() => setAiDispatcherOpen(false)}
+          target={dispatcherTarget}
+          applicant={{
+            name: b2cResult?.inputData.name || userSession?.name || 'Ahmad Bin Razali',
+            averageMonthlyNetIncome: b2cResult?.inputData.averageMonthlyNetIncome || 3850,
+            score: b2cResult?.report.score || 740,
+            grade: b2cResult?.report.grade || 'A',
+            dsr: b2cResult?.report.dsr || 28.5,
+            documentHash: b2cResult?.hash || 'f2a7b8e19c0b2d3e4f5a6b7c8d9e0f1a',
+            platform: b2cResult?.inputData.platform || userSession?.platformName || 'Grab & Foodpanda',
+            hasReconciledBankStatement: true,
+            status: b2cResult?.report.status || 'Approved'
+          }}
+          language={language}
+          onApplicationDispatched={handleApplicationDispatched}
+          onSwitchToB2BPortal={handleSwitchToB2BPortalWithApplicant}
         />
       )}
 
