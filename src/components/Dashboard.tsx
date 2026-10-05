@@ -1592,26 +1592,34 @@ export default function Dashboard() {
 
   const uniqueDocCategories = countUniqueDocCategories();
 
-  // Dynamic rotating headlines (Changes every 4 seconds to explain functions clearly)
+  // Dynamic rotating headlines (Changes every 4 seconds to explain functions clearly with animated visual badge)
   const rotatingHeadlines = [
     {
+      icon: FileCheck,
+      badge: language === 'bm' ? "Audit Penyata 100% Digital" : "Digital Statement Cashflow Audit",
       top: language === 'bm' ? "Tiada Slip Gaji?" : "No Payslip?",
       highlight: language === 'bm' ? "Pra-Semak Padanan Bank." : "Pre-Check Your Bank Match.",
       sub: t.headline1Sub
     },
     {
+      icon: Car,
+      badge: language === 'bm' ? "Mesra Pemandu Gig & E-Dagang" : "Gig Economy & Freelance Friendly",
       top: language === 'bm' ? "Pemandu Grab, Shopee atau Freelance?" : "Grab, Shopee or Freelance?",
       highlight: language === 'bm' ? "Pra-Semakan Kelayakan Segera." : "Instant Eligibility Pre-Check.",
       sub: t.headline2Sub
     },
     {
+      icon: Sparkles,
+      badge: language === 'bm' ? "Ejen Bimbingan Pintar Tanpa Broker" : "AI Financial Agent • Zero Broker Fees",
       top: language === 'bm' ? "Perlu Bimbingan Pinjaman?" : "Need Loan Guidance?",
       highlight: language === 'bm' ? "Ejen Permohonan Dalam Talian." : "Online Application Agent.",
       sub: t.headline3Sub
     },
     {
+      icon: Building2,
+      badge: language === 'bm' ? "18 Bank & Dana Mikro Berlesen" : "18 Licensed Banks & Micro Lenders",
       top: language === 'bm' ? "Tidak Tahu Di Mana Nak Mohon?" : "Don't Know Where to Apply?",
-      highlight: language === 'bm' ? "Bandingkan 11+ Bank Berlesen." : "Compare 11+ Licensed Banks.",
+      highlight: language === 'bm' ? "Bandingkan 18+ Bank Berlesen." : "Compare 18+ Licensed Banks.",
       sub: t.headline4Sub
     }
   ];
@@ -2011,9 +2019,25 @@ export default function Dashboard() {
             
 
 
-            {/* Dynamic Rotating Headline (Changes every 3s with smooth transition) */}
-            <div className="min-h-[145px] sm:min-h-[160px] flex flex-col items-center justify-center">
+            {/* Dynamic Rotating Headline with Animated Icon Badge */}
+            <div className="min-h-[175px] sm:min-h-[190px] flex flex-col items-center justify-center">
               <div key={headlineIdx} className="animate-fade-in flex flex-col items-center">
+                
+                {/* Visual Animated Pill with Icon */}
+                {(() => {
+                  const CurrentIcon = rotatingHeadlines[headlineIdx].icon;
+                  return (
+                    <div className="mb-3 px-3.5 py-1.5 rounded-full bg-blue-50/90 border border-blue-200/80 text-blue-950 text-xs font-bold flex items-center gap-2 shadow-2xs">
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600"></span>
+                      </span>
+                      <CurrentIcon className="w-3.5 h-3.5 text-blue-700 animate-pulse" />
+                      <span>{rotatingHeadlines[headlineIdx].badge}</span>
+                    </div>
+                  );
+                })()}
+
                 <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-blue-950 tracking-tight leading-tight max-w-2xl">
                   {rotatingHeadlines[headlineIdx].top} <br className="hidden sm:inline" />
                   <span className="text-blue-900">{rotatingHeadlines[headlineIdx].highlight}</span>
@@ -2026,13 +2050,13 @@ export default function Dashboard() {
               </div>
 
               {/* 4 Interactive Progress Dots */}
-              <div className="flex items-center gap-1.5 mt-3.5">
+              <div className="flex items-center gap-1.5 mt-4">
                 {rotatingHeadlines.map((_, idx) => (
                   <button
                     key={idx}
                     onClick={() => setHeadlineIdx(idx)}
-                    className={`h-1.5 rounded-full transition-all duration-300 ${
-                      headlineIdx === idx ? 'w-6 bg-blue-950' : 'w-2 bg-slate-300 hover:bg-slate-400'
+                    className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                      headlineIdx === idx ? 'w-7 bg-blue-950' : 'w-2 bg-slate-300 hover:bg-slate-400'
                     }`}
                     aria-label={`Show slide ${idx + 1}`}
                   />
@@ -2063,11 +2087,6 @@ export default function Dashboard() {
                 <DollarSign className="w-4 h-4 text-blue-900" />
                 <span>{t.navCalculator}</span>
               </button>
-            </div>
-
-            {/* Clear Role & Purpose Explanation Notice */}
-            <div className="p-3.5 bg-slate-50 border border-slate-200/80 rounded-2xl text-xs text-slate-600 max-w-2xl mt-1 text-center leading-relaxed font-medium">
-              {t.partnershipNotice}
             </div>
           </div>
 
