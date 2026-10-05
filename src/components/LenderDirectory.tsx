@@ -4,8 +4,7 @@ import React, { useState } from 'react';
 import { 
   Building2, Search, CheckCircle2, ShieldCheck, ArrowRight, ExternalLink, 
   Zap, Clock, Landmark, Coins, Tag, BarChart3, X, Check, Info, Sparkles, 
-  Scale, FileText, Filter, ArrowUpDown, DollarSign, Award, ChevronRight, ChevronDown, LayoutGrid, Table as TableIcon,
-  Bot, RefreshCw
+  Scale, FileText, Filter, ArrowUpDown, DollarSign, Award, ChevronRight, ChevronDown, LayoutGrid, Table as TableIcon
 } from 'lucide-react';
 import BankLogo from '@/components/BankLogo';
 import { useLanguage } from '@/context/LanguageContext';
@@ -22,63 +21,52 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
   // Comparison Modal Interactive States
   const [compareModalOpen, setCompareModalOpen] = useState(false);
   const [selectedCompareIds, setSelectedCompareIds] = useState<string[]>(['maybank_mikro', 'cimb_mikro', 'bsn']);
-  // Autonomous AI Bank Intelligence Agent States (100% automatic, no button clicks needed)
+  // Live Bank Intelligence State (silently auto-updated in background)
   const [liveOverrides, setLiveOverrides] = useState<Record<string, any>>({});
-  const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
-  const [isAutoScanning, setIsAutoScanning] = useState(false);
 
-  // Autonomous Agent Engine: Automatically discovers and refreshes Malaysian bank data in background
+  // Background Agent: Silently fetches latest bank data without intrusive UI
   React.useEffect(() => {
     let isMounted = true;
 
     const runAutonomousAgentSync = async () => {
       try {
-        // Step 1: Query current bank intelligence cache
         const res = await fetch('/api/bank-intelligence');
         const json = await res.json();
         
         let shouldAutoCrawl = false;
         if (json.success && json.data) {
-          if (isMounted) {
-            if (json.data.activeOverrides) setLiveOverrides(json.data.activeOverrides);
-            if (json.data.lastSyncTimestamp) setLastSyncTime(json.data.lastSyncTimestamp);
+          if (isMounted && json.data.activeOverrides) {
+            setLiveOverrides(json.data.activeOverrides);
           }
 
-          // If last sync was > 20 mins ago or empty, auto-trigger the crawler in background!
           const lastTs = json.data.lastSyncTimestamp ? new Date(json.data.lastSyncTimestamp).getTime() : 0;
           const ageMinutes = (Date.now() - lastTs) / (1000 * 60);
-          if (ageMinutes > 20 || !json.data.activeOverrides || Object.keys(json.data.activeOverrides).length === 0) {
+          if (ageMinutes > 30 || !json.data.activeOverrides || Object.keys(json.data.activeOverrides).length === 0) {
             shouldAutoCrawl = true;
           }
         } else {
           shouldAutoCrawl = true;
         }
 
-        // Step 2: If needed, run the autonomous AI crawler silently in the background
         if (shouldAutoCrawl && isMounted) {
-          setIsAutoScanning(true);
           const crawlRes = await fetch('/api/bank-intelligence', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ autoAutonomous: true })
           });
           const crawlJson = await crawlRes.json();
-          if (crawlJson.success && crawlJson.data && isMounted) {
-            if (crawlJson.data.activeOverrides) setLiveOverrides(crawlJson.data.activeOverrides);
-            if (crawlJson.data.lastSyncTimestamp) setLastSyncTime(crawlJson.data.lastSyncTimestamp);
+          if (crawlJson.success && crawlJson.data && isMounted && crawlJson.data.activeOverrides) {
+            setLiveOverrides(crawlJson.data.activeOverrides);
           }
         }
       } catch (err) {
-        console.warn('Autonomous Bank Agent background sync error:', err);
-      } finally {
-        if (isMounted) setIsAutoScanning(false);
+        // Silent background fallback
       }
     };
 
     runAutonomousAgentSync();
 
-    // Autonomous continuous monitoring interval every 5 minutes
-    const interval = setInterval(runAutonomousAgentSync, 5 * 60 * 1000);
+    const interval = setInterval(runAutonomousAgentSync, 10 * 60 * 1000);
     return () => {
       isMounted = false;
       clearInterval(interval);
@@ -796,7 +784,7 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
       requiredDocs: language === 'bm' ? ['Penyata Bank 6 Bulan', 'Salinan Invois / Pesanan Belian (PO)', 'Pendaftaran SSM'] : ['6-Month Bank Statements', 'Client Invoices / Purchase Orders (PO)', 'SSM Company Registration']
     }
   ];
-  // Merge live AI verified rate sheets & promotional overrides
+  // Merge live bank rate sheets quietly
   const lenders = baseLenders.map(l => {
     const override = liveOverrides[l.id];
     if (!override) return l;
@@ -807,8 +795,6 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
       minIncome: override.minIncome || l.minIncome,
       turnaround: override.turnaround || l.turnaround,
       maxLoan: override.maxLoan || l.maxLoan,
-      campaignPromo: override.campaignPromo,
-      isLiveVerified: true
     };
   });
 
@@ -846,34 +832,6 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
           </div>
 
           <div className="flex items-center gap-3 flex-wrap">
-            {/* Autonomous AI Background Agent Status (Continuous background sync, no button needed) */}
-            <div className="flex items-center gap-3 px-4 py-2.5 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-inner">
-              <span className="relative flex h-2.5 w-2.5 shrink-0">
-                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${isAutoScanning ? 'bg-cyan-400' : 'bg-emerald-400'} opacity-75`}></span>
-                <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isAutoScanning ? 'bg-cyan-400' : 'bg-emerald-500'}`}></span>
-              </span>
-              <div className="flex flex-col">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-white">
-                  <Bot className={`w-3.5 h-3.5 ${isAutoScanning ? 'text-cyan-300 animate-spin' : 'text-emerald-300'}`} />
-                  <span>
-                    {isAutoScanning
-                      ? (language === 'bm' ? 'Ejen AI Mengemas Kini Kadar...' : 'AI Agent Auto-Updating Rates...')
-                      : (language === 'bm' ? 'Ejen AI Aktif (Kadar Automatik)' : 'Autonomous AI Rate Agent Active')}
-                  </span>
-                  <span className="text-[9px] bg-emerald-400/20 text-emerald-300 border border-emerald-400/30 px-1.5 py-0.2 rounded-full font-mono uppercase">
-                    Auto
-                  </span>
-                </div>
-                <span className="text-[10px] text-blue-200/80 font-medium">
-                  {isAutoScanning
-                    ? (language === 'bm' ? 'Menyemak portal rasmi bank & garis panduan BNM...' : 'Auditing official bank disclosures & BNM OPR...')
-                    : (language === 'bm'
-                        ? `Pantauan automatik 24/7 · ${Object.keys(liveOverrides).length || 18} bank disahkan`
-                        : `Continuous 24/7 monitor · ${Object.keys(liveOverrides).length || 18} Malaysian banks verified`)}
-                </span>
-              </div>
-            </div>
-
             <button
               id="compare-lenders-btn"
               data-spotlight="compare-btn"
@@ -1009,14 +967,6 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
                   </span>
                 </div>
               </div>
-
-              {/* Dynamic Live Campaign Promo discovered by Autonomous AI Agent */}
-              {(lender as any).campaignPromo && (
-                <div className="p-2.5 bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 border border-teal-200/80 rounded-2xl text-[11px] text-teal-950 font-medium flex items-center gap-2 shadow-2xs">
-                  <Sparkles className="w-3.5 h-3.5 text-teal-600 shrink-0" />
-                  <span><strong>AI Live Alert:</strong> {(lender as any).campaignPromo}</span>
-                </div>
-              )}
 
               {/* Description */}
               <p className="text-xs text-slate-600 leading-relaxed font-normal">
