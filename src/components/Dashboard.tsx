@@ -34,7 +34,6 @@ import { extractTextFromPdfBase64 } from '@/lib/pdfExtractor';
 import CommitteeDecisionModal from './CommitteeDecisionModal';
 import PrintableCamModal from './PrintableCamModal';
 import AIBankIntelligenceModal from './AIBankIntelligenceModal';
-import AnimatedCapabilityFlow from './AnimatedCapabilityFlow';
 
 export interface GigSlipData {
   weekNum: string;
@@ -2064,21 +2063,6 @@ export default function Dashboard() {
                 <DollarSign className="w-4 h-4 text-blue-900" />
                 <span>{t.navCalculator}</span>
               </button>
-            </div>
-
-            {/* Animated 3-Step Interactive Capability Flow (Picture p1 replacement) */}
-            <div className="w-full mt-4">
-              <AnimatedCapabilityFlow
-                onStartAssessment={() => {
-                  if (!userSession) setAuthModalOpen(true);
-                  else triggerNewApplicationFlow();
-                }}
-                onExploreDirectory={() => setCurrentPage('directory')}
-                onStartPrecheck={() => {
-                  if (!userSession) setAuthModalOpen(true);
-                  else triggerNewApplicationFlow();
-                }}
-              />
             </div>
 
             {/* Clear Role & Purpose Explanation Notice */}
