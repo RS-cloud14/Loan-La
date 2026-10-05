@@ -24,6 +24,17 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
   // Live Bank Intelligence State (silently auto-updated in background)
   const [liveOverrides, setLiveOverrides] = useState<Record<string, any>>({});
 
+  // Layout & Expandable Accordion States (Reduces visual overwhelm)
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
+  const [expandedCards, setExpandedCards] = useState<Record<string, boolean>>({});
+
+  const toggleCardExpanded = (id: string) => {
+    setExpandedCards(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
+
   // Background Agent: Silently fetches latest bank data without intrusive UI
   React.useEffect(() => {
     let isMounted = true;
@@ -784,12 +795,36 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
       requiredDocs: language === 'bm' ? ['Penyata Bank 6 Bulan', 'Salinan Invois / Pesanan Belian (PO)', 'Pendaftaran SSM'] : ['6-Month Bank Statements', 'Client Invoices / Purchase Orders (PO)', 'SSM Company Registration']
     }
   ];
-  // Merge live bank rate sheets quietly
+  // Verified Official Micro Loan Portals for each licensed Malaysian institution
+  const LENDER_OFFICIAL_URLS: Record<string, string> = {
+    maybank_mikro: 'https://www.maybank2u.com.my/maybank2u/malaysia/en/personal/loans/business_loans/sme_digital_financing.page',
+    cimb_mikro: 'https://www.cimb.com.my/en/business/financing/micro-financing.html',
+    bank_islam_itekad: 'https://www.bankislam.com/business-banking/sme-banking/itekad/',
+    agrobank_mikro: 'https://www.agrobank.com.my/product/pembiayaan-mikro/',
+    affin_mikro: 'https://www.affinalways.com/en/sme-financing',
+    muamalat_mikro: 'https://www.muamalat.com.my/business-banking/micro-financing/',
+    aim_madani: 'https://www.aim.gov.my/',
+    bsn: 'https://www.bsn.com.my/page/BSN-Micro',
+    bank_rakyat: 'https://www.bankrakyat.com.my/c/business/financing/micro-financing-i',
+    tekun: 'https://www.tekun.gov.my/',
+    aeon: 'https://www.aeoncredit.com.my/personal-financing/i-cash',
+    gxbank: 'https://gxbank.my/',
+    boost_bank: 'https://myboostbank.co/',
+    aeon_bank: 'https://www.aeonbank.com.my/',
+    kredit_komuniti_runcit: 'https://www.kpkt.gov.my/',
+    mara: 'https://www.mara.gov.my/en/entrepreneurship/financing/',
+    funding_societies: 'https://fundingsocieties.com.my/',
+    capbay: 'https://capbay.com/',
+  };
+
+  // Merge live bank rate sheets & official URLs quietly
   const lenders = baseLenders.map(l => {
     const override = liveOverrides[l.id];
-    if (!override) return l;
+    const officialUrl = LENDER_OFFICIAL_URLS[l.id] || 'https://www.bnm.gov.my';
+    if (!override) return { ...l, officialUrl };
     return {
       ...l,
+      officialUrl,
       rate: override.rateLabel || l.rate,
       rateNumeric: override.rateNumeric !== undefined ? override.rateNumeric : l.rateNumeric,
       minIncome: override.minIncome || l.minIncome,
@@ -891,117 +926,295 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
 
       </div>
 
-      {/* Directory Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
-        {filtered.map((lender) => (
-          <div 
-            key={lender.id} 
-            id={`lender-card-${lender.id}`}
-            data-lender-card={lender.name}
-            data-spotlight={`lender-${lender.id.includes('maybank') ? 'maybank' : lender.id.includes('cimb') ? 'cimb' : lender.id.includes('islam') ? 'bankislam' : lender.id.includes('agro') ? 'agrobank' : lender.id}`}
-            className="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 flex flex-col justify-between hover:border-blue-300 hover:shadow-md transition-all group"
+      {/* Controls Bar: Results Count & Grid/Table Layout Switcher */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
+        <span className="text-xs font-bold text-slate-500">
+          {language === 'bm'
+            ? `Menunjukkan ${filtered.length} skim pembiayaan mikro berlesen`
+            : `Showing ${filtered.length} licensed micro-financing schemes`}
+        </span>
+
+        {/* View Switcher: Grid vs Compact Table (Relieves visual overwhelm) */}
+        <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 self-start sm:self-auto">
+          <button
+            onClick={() => setViewMode('grid')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              viewMode === 'grid' 
+                ? 'bg-white text-blue-950 shadow-xs' 
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
           >
-            
-            <div className="flex flex-col gap-4">
-              
-              {/* Card Top: Header & Badges */}
-              <div>
-                <div className="flex justify-between items-start gap-2 mb-1.5">
-                  <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
-                    {lender.categoryLabel}
-                  </span>
-                  {lender.shariah ? (
-                    <span className="text-[10px] font-extrabold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
-                      SHARIAH
-                    </span>
-                  ) : (
-                    <span className="text-[10px] font-semibold text-slate-500 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-md">
-                      Conventional
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-3 mt-1 mb-1">
-                  <BankLogo bankId={lender.id} bankName={lender.name} size="md" />
-                  <h3 className="text-base font-black text-blue-950 group-hover:text-blue-900 transition-colors">
-                    {lender.name}
-                  </h3>
-                </div>
-              </div>
-
-              {/* Standardized 4-Box Metric Matrix (Clean Font Sizes & Weights) */}
-              <div className="grid grid-cols-2 gap-2 bg-slate-50 p-3.5 rounded-2xl border border-slate-200">
-                <div className="p-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-                    Indicative Rate
-                  </span>
-                  <span className="text-xs font-black text-blue-950 block mt-1">
-                    {lender.rate}
-                  </span>
-                </div>
-
-                <div className="p-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-                    Approval SLA
-                  </span>
-                  <span className="text-xs font-bold text-blue-900 block mt-1">
-                    {lender.turnaround}
-                  </span>
-                </div>
-
-                <div className="p-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-                    Max Loan Limit
-                  </span>
-                  <span className="text-xs font-bold text-slate-800 block mt-1">
-                    {lender.maxLoan}
-                  </span>
-                </div>
-
-                <div className="p-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 block">
-                    Min. Income
-                  </span>
-                  <span className="text-xs font-bold text-slate-800 block mt-1">
-                    {lender.minIncome}
-                  </span>
-                </div>
-              </div>
-
-              {/* Description */}
-              <p className="text-xs text-slate-600 leading-relaxed font-normal">
-                {lender.description}
-              </p>
-
-              {/* Key Features */}
-              <div className="flex flex-col gap-1.5 pt-3 border-t border-slate-100">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
-                  Key Advantages
-                </span>
-                {lender.features.map((f, fi) => (
-                  <div key={fi} className="flex items-start gap-2 text-xs text-slate-700 font-medium">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-blue-900 shrink-0 mt-0.5" />
-                    <span>{f}</span>
-                  </div>
-                ))}
-              </div>
-
-            </div>
-
-            {/* Card Footer */}
-            <div className="pt-4 mt-5 border-t border-slate-100 flex items-center justify-end gap-3">
-              <button
-                onClick={() => onApplyLender ? onApplyLender(lender.name) : null}
-                className="w-full sm:w-auto px-4 py-2.5 bg-blue-950 hover:bg-blue-900 text-white text-xs font-black rounded-xl transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer"
-              >
-                <span>Check Match</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-          </div>
-        ))}
+            <LayoutGrid className="w-3.5 h-3.5" />
+            <span>{language === 'bm' ? 'Paparan Kad' : 'Card Grid'}</span>
+          </button>
+          <button
+            onClick={() => setViewMode('table')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+              viewMode === 'table' 
+                ? 'bg-white text-blue-950 shadow-xs' 
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            <TableIcon className="w-3.5 h-3.5" />
+            <span>{language === 'bm' ? 'Jadual Padat' : 'Compact Table'}</span>
+          </button>
+        </div>
       </div>
+
+      {/* VIEW 1: EXECUTIVE CARD GRID (De-cluttered with Collapsible Accordion & Direct Portal Links) */}
+      {viewMode === 'grid' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
+          {filtered.map((lender) => {
+            const isExpanded = !!expandedCards[lender.id];
+
+            return (
+              <div 
+                key={lender.id} 
+                id={`lender-card-${lender.id}`}
+                data-lender-card={lender.name}
+                data-spotlight={`lender-${lender.id.includes('maybank') ? 'maybank' : lender.id.includes('cimb') ? 'cimb' : lender.id.includes('islam') ? 'bankislam' : lender.id.includes('agro') ? 'agrobank' : lender.id}`}
+                className="bg-white rounded-3xl border border-slate-200/90 shadow-sm p-5 sm:p-6 flex flex-col justify-between hover:border-blue-300 hover:shadow-md transition-all group"
+              >
+                <div className="flex flex-col gap-3.5">
+                  
+                  {/* Card Top: Badges & Institution Info */}
+                  <div>
+                    <div className="flex justify-between items-center gap-2 mb-2">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[10px] font-extrabold text-blue-950 bg-blue-50 border border-blue-200/70 px-2 py-0.5 rounded-md">
+                          {`#${lender.rank}`}
+                        </span>
+                        <span className="text-[10px] font-bold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
+                          {lender.categoryLabel}
+                        </span>
+                      </div>
+                      {lender.shariah ? (
+                        <span className="text-[10px] font-black text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                          SHARIAH
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-semibold text-slate-500 bg-slate-50 border border-slate-200 px-2 py-0.5 rounded-md">
+                          Conventional
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="flex items-center gap-3 mt-1 mb-1">
+                      <BankLogo bankId={lender.id} bankName={lender.name} size="md" />
+                      <div>
+                        <h3 className="text-sm font-black text-blue-950 group-hover:text-blue-900 transition-colors leading-snug">
+                          {lender.name}
+                        </h3>
+                        <span className="text-[11px] text-slate-500 font-medium">
+                          {lender.institution}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Clean 4-Metric Grid (Clean typography, zero bulk) */}
+                  <div className="grid grid-cols-2 gap-2 bg-slate-50/90 p-3 rounded-2xl border border-slate-200/80">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                        {language === 'bm' ? 'Kadar Faedah / Untung' : 'Indicative Rate'}
+                      </span>
+                      <span className="text-xs font-black text-blue-950 block mt-0.5">
+                        {lender.rate}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                        {language === 'bm' ? 'Had Pembiayaan' : 'Max Loan Limit'}
+                      </span>
+                      <span className="text-xs font-black text-blue-950 block mt-0.5">
+                        {lender.maxLoan}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                        {language === 'bm' ? 'Kelulusan SLA' : 'Approval SLA'}
+                      </span>
+                      <span className="text-xs font-bold text-slate-700 block mt-0.5">
+                        {lender.turnaround}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">
+                        {language === 'bm' ? 'Kelayakan Gaji Min.' : 'Min. Income'}
+                      </span>
+                      <span className="text-xs font-bold text-slate-700 block mt-0.5">
+                        {lender.minIncome}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Distinct Highlight Pill */}
+                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-blue-50/70 border border-blue-100 rounded-xl text-[11px] text-blue-900 font-medium">
+                    <Sparkles className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                    <span className="line-clamp-1">{lender.highlightBadge}</span>
+                  </div>
+
+                  {/* Expandable Criteria Accordion (Keeps cards neat and non-overwhelming) */}
+                  <button
+                    type="button"
+                    onClick={() => toggleCardExpanded(lender.id)}
+                    className="w-full py-2 px-3 bg-slate-100/70 hover:bg-slate-100 rounded-xl text-xs font-bold text-slate-700 flex items-center justify-between transition-all cursor-pointer border border-slate-200/50 mt-0.5"
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <FileText className="w-3.5 h-3.5 text-slate-500" />
+                      {isExpanded 
+                        ? (language === 'bm' ? 'Sembunyikan Syarat Penuh' : 'Hide Full Criteria') 
+                        : (language === 'bm' ? 'Lihat Kriteria & Dokumen Lengkap' : 'View Criteria & Required Documents')}
+                    </span>
+                    <ChevronDown className={`w-3.5 h-3.5 text-slate-500 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {/* Accordion Content: Full Description, Key Advantages & Documents */}
+                  {isExpanded && (
+                    <div className="flex flex-col gap-3 pt-2 text-xs border-t border-slate-100 animate-fade-in">
+                      <p className="text-xs text-slate-600 leading-relaxed font-normal">
+                        {lender.description}
+                      </p>
+
+                      <div className="flex flex-col gap-1.5 pt-1">
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                          {language === 'bm' ? 'Kelebihan Utama' : 'Key Advantages'}
+                        </span>
+                        {lender.features.map((f, fi) => (
+                          <div key={fi} className="flex items-start gap-2 text-xs text-slate-700 font-medium">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-blue-900 shrink-0 mt-0.5" />
+                            <span>{f}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="flex flex-col gap-1.5 pt-2 border-t border-slate-100">
+                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                          {language === 'bm' ? 'Dokumen Diperlukan' : 'Required Documents'}
+                        </span>
+                        {lender.requiredDocs.map((doc, di) => (
+                          <div key={di} className="flex items-start gap-2 text-xs text-slate-600">
+                            <FileText className="w-3.5 h-3.5 text-slate-400 shrink-0 mt-0.5" />
+                            <span>{doc}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                </div>
+
+                {/* Card Footer: Dual Action Buttons (Official Bank Portal + Check Match) */}
+                <div className="pt-4 mt-4 border-t border-slate-100 flex items-center gap-2">
+                  <a
+                    href={(lender as any).officialUrl || 'https://www.bnm.gov.my'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 border border-slate-200 shrink-0 cursor-pointer active:scale-95"
+                    title={language === 'bm' ? `Layari Laman Rasmi ${lender.name}` : `Visit Official ${lender.name} Website`}
+                  >
+                    <span>{language === 'bm' ? 'Portal Rasmi' : 'Official Portal'}</span>
+                    <ExternalLink className="w-3.5 h-3.5 text-slate-500" />
+                  </a>
+
+                  <button
+                    onClick={() => onApplyLender ? onApplyLender(lender.name) : null}
+                    className="flex-1 px-4 py-2.5 bg-blue-950 hover:bg-blue-900 text-white text-xs font-black rounded-xl transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                  >
+                    <span>{language === 'bm' ? 'Semak Kelayakan' : 'Check Match'}</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-blue-200" />
+                  </button>
+                </div>
+
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* VIEW 2: COMPACT COMPARISON TABLE (Ultra-clean, zero visual overwhelm) */}
+      {viewMode === 'table' && (
+        <div className="w-full bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden animate-fade-in">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase text-[10px] tracking-wider">
+                  <th className="py-3.5 px-4 font-bold">{language === 'bm' ? 'Institusi Perbankan' : 'Bank & Scheme'}</th>
+                  <th className="py-3.5 px-3 font-bold">{language === 'bm' ? 'Kategori' : 'Category'}</th>
+                  <th className="py-3.5 px-3 font-bold">{language === 'bm' ? 'Kadar' : 'Rate'}</th>
+                  <th className="py-3.5 px-3 font-bold">{language === 'bm' ? 'Had Maksimum' : 'Max Limit'}</th>
+                  <th className="py-3.5 px-3 font-bold">{language === 'bm' ? 'Kelulusan' : 'Speed'}</th>
+                  <th className="py-3.5 px-3 font-bold">{language === 'bm' ? 'Gaji Minimum' : 'Min Income'}</th>
+                  <th className="py-3.5 px-4 font-bold text-right">{language === 'bm' ? 'Tindakan' : 'Actions'}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filtered.map((lender) => (
+                  <tr key={lender.id} className="hover:bg-blue-50/30 transition-colors">
+                    <td className="py-3 px-4">
+                      <div className="flex items-center gap-2.5">
+                        <BankLogo bankId={lender.id} bankName={lender.name} size="sm" />
+                        <div>
+                          <span className="font-bold text-slate-900 block">{lender.name}</span>
+                          <span className="text-[10px] text-slate-400">{lender.institution}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-3 px-3">
+                      <div className="flex items-center gap-1">
+                        <span className="text-[10px] font-semibold text-slate-600 bg-slate-100 px-2 py-0.5 rounded-md">
+                          {lender.categoryLabel}
+                        </span>
+                        {lender.shariah && (
+                          <span className="text-[9px] font-extrabold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded">
+                            ISLAMIC
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-3 px-3 font-black text-blue-950 whitespace-nowrap">
+                      {lender.rate}
+                    </td>
+                    <td className="py-3 px-3 font-bold text-slate-800 whitespace-nowrap">
+                      {lender.maxLoan}
+                    </td>
+                    <td className="py-3 px-3 text-slate-600 whitespace-nowrap">
+                      {lender.turnaround}
+                    </td>
+                    <td className="py-3 px-3 text-slate-600">
+                      {lender.minIncome}
+                    </td>
+                    <td className="py-3 px-4 text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-2">
+                        <a
+                          href={(lender as any).officialUrl || 'https://www.bnm.gov.my'}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-lg transition-all inline-flex items-center gap-1 border border-slate-200"
+                          title="Visit Official Portal"
+                        >
+                          <span>{language === 'bm' ? 'Portal' : 'Portal'}</span>
+                          <ExternalLink className="w-3 h-3 text-slate-500" />
+                        </a>
+                        <button
+                          onClick={() => onApplyLender ? onApplyLender(lender.name) : null}
+                          className="px-3 py-1.5 bg-blue-950 hover:bg-blue-900 text-white text-xs font-bold rounded-lg transition-all inline-flex items-center gap-1"
+                        >
+                          <span>{language === 'bm' ? 'Pilih' : 'Apply'}</span>
+                          <ArrowRight className="w-3 h-3" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* ========================================================================= */}
       {/* PROFESSIONAL NO-SCROLL SIDE-BY-SIDE LENDER COMPARISON                      */}

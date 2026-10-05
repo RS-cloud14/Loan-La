@@ -34,6 +34,7 @@ import { extractTextFromPdfBase64 } from '@/lib/pdfExtractor';
 import CommitteeDecisionModal from './CommitteeDecisionModal';
 import PrintableCamModal from './PrintableCamModal';
 import AIBankIntelligenceModal from './AIBankIntelligenceModal';
+import AnimatedCapabilityFlow from './AnimatedCapabilityFlow';
 
 export interface GigSlipData {
   weekNum: string;
@@ -2065,81 +2066,19 @@ export default function Dashboard() {
               </button>
             </div>
 
-            {/* 3 Clear Capability Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 w-full mt-3 text-left">
-              
-              <div
-                onClick={() => {
+            {/* Animated 3-Step Interactive Capability Flow (Picture p1 replacement) */}
+            <div className="w-full mt-4">
+              <AnimatedCapabilityFlow
+                onStartAssessment={() => {
                   if (!userSession) setAuthModalOpen(true);
                   else triggerNewApplicationFlow();
                 }}
-                className="p-4 sm:p-4.5 bg-white border border-slate-200/90 rounded-2xl shadow-2xs flex flex-col justify-between gap-2 hover:border-blue-300 transition-all cursor-pointer group"
-              >
-                <div>
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-900 flex items-center justify-center shrink-0">
-                      <FileCheck className="w-3.5 h-3.5" />
-                    </div>
-                    <span className="text-xs font-bold text-slate-900 group-hover:text-blue-950">
-                      {t.situation1Title}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-600 leading-relaxed font-normal">
-                    {t.situation1Desc}
-                  </p>
-                </div>
-                <span className="text-[11px] font-bold text-blue-950 mt-1 flex items-center gap-1">
-                  {t.situation1Btn}
-                </span>
-              </div>
-
-              <div
-                onClick={() => setCurrentPage('directory')}
-                className="p-4 sm:p-4.5 bg-white border border-slate-200/90 rounded-2xl shadow-2xs flex flex-col justify-between gap-2 hover:border-blue-300 transition-all cursor-pointer group"
-              >
-                <div>
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-800 flex items-center justify-center shrink-0">
-                      <Building2 className="w-3.5 h-3.5" />
-                    </div>
-                    <span className="text-xs font-bold text-slate-900 group-hover:text-blue-950">
-                      {t.situation2Title}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-600 leading-relaxed font-normal">
-                    {t.situation2Desc}
-                  </p>
-                </div>
-                <span className="text-[11px] font-bold text-blue-950 mt-1 flex items-center gap-1">
-                  {t.situation2Btn}
-                </span>
-              </div>
-
-              <div
-                onClick={() => {
+                onExploreDirectory={() => setCurrentPage('directory')}
+                onStartPrecheck={() => {
                   if (!userSession) setAuthModalOpen(true);
                   else triggerNewApplicationFlow();
                 }}
-                className="p-4 sm:p-4.5 bg-white border border-slate-200/90 rounded-2xl shadow-2xs flex flex-col justify-between gap-2 hover:border-blue-300 transition-all cursor-pointer group"
-              >
-                <div>
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <div className="w-7 h-7 rounded-lg bg-indigo-50 text-indigo-900 flex items-center justify-center shrink-0">
-                      <FileText className="w-3.5 h-3.5" />
-                    </div>
-                    <span className="text-xs font-bold text-slate-900 group-hover:text-blue-950">
-                      {t.situation3Title}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-600 leading-relaxed font-normal">
-                    {t.situation3Desc}
-                  </p>
-                </div>
-                <span className="text-[11px] font-bold text-blue-950 mt-1 flex items-center gap-1">
-                  {t.situation3Btn}
-                </span>
-              </div>
-
+              />
             </div>
 
             {/* Clear Role & Purpose Explanation Notice */}
