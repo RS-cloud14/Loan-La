@@ -521,6 +521,23 @@ export default function Dashboard() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      (window as any).__loanLaOpenDispatcher = (payload: any) => {
+        handleOpenAiDispatcher({
+          lenderName: payload?.lenderName || 'GXBank',
+          productName: 'Digital Cash Facility',
+          loanAmount: payload?.loanAmount || targetLoanAmount
+        });
+      };
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        try { delete (window as any).__loanLaOpenDispatcher; } catch (e) {}
+      }
+    };
+  }, [targetLoanAmount]);
+
   // B2C Upload States
   const [uploadedFiles, setUploadedFiles] = useState<{
     fileName: string;
