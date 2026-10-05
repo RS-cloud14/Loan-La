@@ -600,8 +600,8 @@ export default function AICoPilotChat({
         content: greetingText,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         suggestions: isMalay 
-          ? ["Semak Status Permohonan", "Tetapkan Keperluan Pinjaman", "Kalkulator"]
-          : ["Check Application Status", "Set Loan Purpose", "Loan Calculator"]
+          ? ["Semak Peluang Kelulusan", "Adakah DSR Saya Selamat?", "Cadangkan Bank Terbaik", "Mohon di GXBank / Boost"]
+          : ["Check Approval Odds", "Is My DSR Safe?", "Recommend Best Banks", "Apply at GXBank / Boost"]
       }
     ]);
   }, [isMalay]);
@@ -617,8 +617,8 @@ export default function AICoPilotChat({
         content: greetingText,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         suggestions: isMalay 
-          ? ["Semak Status Permohonan", "Tetapkan Keperluan Pinjaman", "Kalkulator"]
-          : ["Check Application Status", "Set Loan Purpose", "Loan Calculator"]
+          ? ["Semak Peluang Kelulusan", "Adakah DSR Saya Selamat?", "Cadangkan Bank Terbaik", "Mohon di GXBank / Boost"]
+          : ["Check Approval Odds", "Is My DSR Safe?", "Recommend Best Banks", "Apply at GXBank / Boost"]
       }
     ];
     setMessages(freshWelcome);

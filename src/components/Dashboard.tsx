@@ -31,6 +31,8 @@ import SupportTicketsModal from './SupportTicketsModal';
 import AIApplicationDispatcherModal, { DispatcherTarget, DispatcherApplicantData } from './AIApplicationDispatcherModal';
 import { useLanguage, Language } from '@/context/LanguageContext';
 import { extractTextFromPdfBase64 } from '@/lib/pdfExtractor';
+import CommitteeDecisionModal from './CommitteeDecisionModal';
+import PrintableCamModal from './PrintableCamModal';
 
 export interface GigSlipData {
   weekNum: string;
@@ -943,6 +945,14 @@ export default function Dashboard() {
   const [inspectingDoc, setInspectingDoc] = useState<{ fileName: string; fileSize: string; status: string; documentType: string } | null>(null);
   const [ledgerMonthFilter, setLedgerMonthFilter] = useState<string>('all');
   const [ledgerSearchQuery, setLedgerSearchQuery] = useState<string>('');
+  // B2B Credit Committee Decision & Interactive Workbench States
+  const [committeeModal, setCommitteeModal] = useState<{
+    isOpen: boolean;
+    type: 'APPROVE' | 'RFI' | 'DECLINE';
+  } | null>(null);
+  const [isPrintCamOpen, setIsPrintCamOpen] = useState(false);
+  const [decisionToast, setDecisionToast] = useState<string | null>(null);
+
 
 
   // B2B Applicants list
@@ -967,6 +977,152 @@ export default function Dashboard() {
 
   // Active B2B selection resolver
   const activeB2bApplicantData = fullProfilesDb[selectedB2bApplicant];
+
+  const handleCommitteeApprove = async (data: {
+    quantum: number;
+    tenureMonths: number;
+    profitRate: number;
+    covenants: string[];
+    notes: string;
+    sanctionRef: string;
+  }) => {
+    setB2bApplicants(prev => prev.map(a => a.id === selectedB2bApplicant ? { ...a, status: 'Approved' } : a));
+    const targetName = activeB2bApplicantData?.inputData?.name || 'Applicant';
+    const newRecord: ApplicationRecord = {
+      id: `sanct_${Date.now()}`,
+      refCode: data.sanctionRef,
+      lenderName: 'Credit Committee Decision Desk',
+      productName: 'Approved Alternative Facility',
+      loanAmount: data.quantum,
+      monthlyInstallment: Math.round((data.quantum * (1 + (data.profitRate / 100) * (data.tenureMonths / 12))) / data.tenureMonths),
+      appliedAt: new Date().toISOString().split('T')[0] + ' · Today',
+      status: 'CONDITIONALLY_APPROVED',
+      speed: 'Disbursement Ready',
+      lenderUrl: '#'
+    };
+
+    setSubmittedApplications(prev => [newRecord, ...prev.filter(a => a.refCode !== data.sanctionRef)]);
+    try {
+      localStorage.setItem('crediflow_submitted_apps', JSON.stringify([newRecord, ...submittedApplications]));
+    } catch (e) {}
+
+    try {
+      await fetch('/api/store-assessment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'UNDERWRITER_DECISION',
+          assessmentId: activeB2bApplicantData?.hash || selectedB2bApplicant,
+          payload: {
+            decision: {
+              verdict: 'APPROVED',
+              recommendedQuantum: data.quantum,
+              recommendedTenureMonths: data.tenureMonths,
+              counterOfferRate: data.profitRate,
+              dsrAtRecommendedQuantum: activeB2bApplicantData?.report?.dsr || 28.5,
+              covenants: data.covenants,
+              riskNotes: data.notes,
+              decidedBy: 'Credit Risk Committee',
+              decidedAt: new Date().toISOString()
+            }
+          }
+        })
+      });
+    } catch (e) {}
+
+    setCommitteeModal(null);
+    setDecisionToast(`Sanction Reference ${data.sanctionRef} issued for ${targetName}. Facility RM ${data.quantum.toLocaleString()} approved with covenants.`);
+    setTimeout(() => setDecisionToast(null), 6000);
+  };
+
+  const handleCommitteeRfi = async (data: {
+    lenderName: string;
+    requiredDoc: string;
+    queryText: string;
+  }) => {
+    setB2bApplicants(prev => prev.map(a => a.id === selectedB2bApplicant ? { ...a, status: 'Under Review' } : a));
+
+    setSubmittedApplications(prev => {
+      const qry = {
+        queryText: data.queryText,
+        requiredDoc: data.requiredDoc,
+        requestedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        resolved: false
+      };
+      if (prev.length === 0) {
+        return [{
+          id: `app_${Date.now()}`,
+          refCode: `LL-2026-RFI${Math.floor(100 + Math.random() * 900)}`,
+          lenderName: data.lenderName,
+          productName: 'Application Under Investigation',
+          loanAmount: activeB2bApplicantData?.inputData?.targetLoanAmount || 8000,
+          monthlyInstallment: 245,
+          appliedAt: new Date().toISOString().split('T')[0] + ' · Today',
+          status: 'UNDER_REVIEW',
+          speed: 'Action Required',
+          lenderUrl: '#',
+          bankQuery: qry
+        }];
+      }
+      return prev.map((app, idx) => idx === 0 ? { ...app, status: 'UNDER_REVIEW', bankQuery: qry } : app);
+    });
+
+    try {
+      await fetch('/api/store-assessment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'ADD_BANK_QUERY',
+          assessmentId: activeB2bApplicantData?.hash || selectedB2bApplicant,
+          payload: {
+            lenderName: data.lenderName,
+            queryText: data.queryText,
+            requiredDocumentType: data.requiredDoc
+          }
+        })
+      });
+    } catch (e) {}
+
+    setCommitteeModal(null);
+    setDecisionToast(`Official Bank Inquiry dispatched to applicant tracker for ${data.requiredDoc}.`);
+    setTimeout(() => setDecisionToast(null), 6000);
+  };
+
+  const handleCommitteeDecline = async (data: {
+    reasonCode: string;
+    notes: string;
+  }) => {
+    setB2bApplicants(prev => prev.map(a => a.id === selectedB2bApplicant ? { ...a, status: 'Declined' } : a));
+
+    try {
+      await fetch('/api/store-assessment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'UNDERWRITER_DECISION',
+          assessmentId: activeB2bApplicantData?.hash || selectedB2bApplicant,
+          payload: {
+            decision: {
+              verdict: 'DECLINED',
+              recommendedQuantum: 0,
+              recommendedTenureMonths: 0,
+              counterOfferRate: 0,
+              dsrAtRecommendedQuantum: activeB2bApplicantData?.report?.dsr || 0,
+              covenants: [],
+              riskNotes: `${data.reasonCode}. ${data.notes}`,
+              decidedBy: 'Credit Risk Committee',
+              decidedAt: new Date().toISOString()
+            }
+          }
+        })
+      });
+    } catch (e) {}
+
+    setCommitteeModal(null);
+    setDecisionToast(`Adverse action recorded under ${data.reasonCode}. Application declined.`);
+    setTimeout(() => setDecisionToast(null), 6000);
+  };
+
 
   // Populate B2B standard profiles on load
   useEffect(() => {
@@ -4991,6 +5147,13 @@ export default function Dashboard() {
                           >
                             <FileDown className="w-3.5 h-3.5 text-cyan-300" /> Export CAM (PDF)
                           </button>
+                          <button
+                            type="button"
+                            onClick={() => setIsPrintCamOpen(true)}
+                            className="flex items-center gap-1.5 px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold rounded-xl transition-all border border-slate-300 cursor-pointer"
+                          >
+                            <FileText className="w-3.5 h-3.5 text-blue-900" /> Single-Page Memo
+                          </button>
                         </div>
                       </div>
 
@@ -5175,32 +5338,24 @@ export default function Dashboard() {
                           <div className="flex gap-2">
                             <button
                               type="button"
-                              onClick={() => {
-                                setB2bApplicants(prev => prev.map(a => a.id === selectedB2bApplicant ? { ...a, status: 'Approved' } : a));
-                                alert(`Application for ${activeB2bApplicantData.inputData.name} has been conditionally APPROVED with standard covenants.`);
-                              }}
-                              className="flex-1 py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition-all cursor-pointer shadow-sm text-center"
+                              onClick={() => setCommitteeModal({ isOpen: true, type: 'APPROVE' })}
+                              className="flex-1 py-2.5 px-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition-all cursor-pointer shadow-sm text-center flex items-center justify-center gap-1.5"
                             >
-                              ✓ Approve (CPs)
+                              <CheckCircle2 className="w-3.5 h-3.5" /> Sanction (CPs)
                             </button>
                             <button
                               type="button"
-                              onClick={() => {
-                                alert(`Request for Information (RFI) dispatched to ${activeB2bApplicantData.inputData.name} for updated 1-month platform statement.`);
-                              }}
-                              className="py-2.5 px-3 bg-blue-900 hover:bg-blue-800 text-cyan-300 font-bold text-xs rounded-xl transition-all cursor-pointer text-center"
+                              onClick={() => setCommitteeModal({ isOpen: true, type: 'RFI' })}
+                              className="py-2.5 px-3 bg-blue-900 hover:bg-blue-800 text-cyan-300 font-bold text-xs rounded-xl transition-all cursor-pointer text-center flex items-center gap-1"
                             >
-                              Request Info (RFI)
+                              <HelpCircle className="w-3.5 h-3.5" /> Request Info
                             </button>
                             <button
                               type="button"
-                              onClick={() => {
-                                setB2bApplicants(prev => prev.map(a => a.id === selectedB2bApplicant ? { ...a, status: 'Declined' } : a));
-                                alert(`Application for ${activeB2bApplicantData.inputData.name} DECLINED under BNM Responsible Financing guidelines.`);
-                              }}
-                              className="py-2.5 px-3 bg-rose-900/80 hover:bg-rose-800 text-rose-200 font-bold text-xs rounded-xl transition-all cursor-pointer text-center"
+                              onClick={() => setCommitteeModal({ isOpen: true, type: 'DECLINE' })}
+                              className="py-2.5 px-3 bg-rose-900/80 hover:bg-rose-800 text-rose-200 font-bold text-xs rounded-xl transition-all cursor-pointer text-center flex items-center gap-1"
                             >
-                              Decline
+                              <ShieldAlert className="w-3.5 h-3.5" /> Decline
                             </button>
                           </div>
                         </div>
@@ -8217,6 +8372,50 @@ export default function Dashboard() {
           isLocked={explainerPayload.isLocked}
           matchedLenders={explainerPayload.matchedLenders}
         />
+      )}
+
+      {/* Institutional Credit Committee Decision Modal */}
+      {committeeModal?.isOpen && activeB2bApplicantData && (
+        <CommitteeDecisionModal
+          isOpen={committeeModal.isOpen}
+          type={committeeModal.type}
+          applicant={{
+            id: selectedB2bApplicant,
+            name: activeB2bApplicantData.inputData.name,
+            platform: activeB2bApplicantData.inputData.platform,
+            score: activeB2bApplicantData.report.score,
+            grade: activeB2bApplicantData.report.grade,
+            dsr: activeB2bApplicantData.report.dsr,
+            requestedAmount: activeB2bApplicantData.inputData.targetLoanAmount || 8000,
+            hash: activeB2bApplicantData.hash
+          }}
+          onClose={() => setCommitteeModal(null)}
+          onApprove={handleCommitteeApprove}
+          onRfi={handleCommitteeRfi}
+          onDecline={handleCommitteeDecline}
+        />
+      )}
+
+      {/* Printable Credit Assessment Memorandum Modal */}
+      {isPrintCamOpen && activeB2bApplicantData && (
+        <PrintableCamModal
+          isOpen={isPrintCamOpen}
+          onClose={() => setIsPrintCamOpen(false)}
+          applicantData={activeB2bApplicantData.inputData}
+          report={activeB2bApplicantData.report}
+          hash={activeB2bApplicantData.hash}
+        />
+      )}
+
+      {/* Underwriter Action Toast Notification */}
+      {decisionToast && (
+        <div className="fixed bottom-6 right-6 z-50 p-4 bg-blue-950 text-white border border-cyan-400/40 rounded-2xl shadow-2xl flex items-center gap-3 animate-in slide-in-from-bottom-5 duration-200 max-w-md">
+          <CheckCircle2 className="w-5 h-5 text-cyan-300 shrink-0" />
+          <span className="text-xs font-bold flex-1">{decisionToast}</span>
+          <button onClick={() => setDecisionToast(null)} className="p-1 text-slate-400 hover:text-white cursor-pointer">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
       )}
 
       {/* Autonomous AI Application Dispatcher & Gateway Simulator */}

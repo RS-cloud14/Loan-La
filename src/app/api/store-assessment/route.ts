@@ -1,73 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
-import fs from 'fs/promises';
-import path from 'path';
-import os from 'os';
+import {
+  saveAssessment,
+  getAssessment,
+  updateUnderwriterDecision,
+  addBankQuery,
+  maskMyKad,
+  maskPhoneNumber,
+  generateBnmAuditHash,
+  AssessmentRecord
+} from '@/lib/storage';
 
-// Global in-memory cache for serverless environments (Vercel, AWS Lambda)
-declare global {
-  // eslint-disable-next-line no-var
-  var _crediflowAssessmentStore: any;
-}
-
-const DATA_DIR = path.join(process.cwd(), 'public', 'data');
-const FILE_PATH = path.join(DATA_DIR, 'latest_assessment.json');
-const TMP_FILE_PATH = path.join(os.tmpdir(), 'crediflow_latest_assessment.json');
-
-async function safeWrite(record: any): Promise<string> {
-  // 1. Always update global in-memory store
-  globalThis._crediflowAssessmentStore = record;
-
-  // 2. Try writing to public/data (works in local dev)
+// GET: Retrieve assessment by id/session, or latest fallback
+export async function GET(request: NextRequest) {
   try {
-    await fs.mkdir(DATA_DIR, { recursive: true });
-    await fs.writeFile(FILE_PATH, JSON.stringify(record, null, 2), 'utf-8');
-    return 'disk:public/data';
-  } catch {
-    // Expected on Vercel / serverless (EROFS: read-only file system)
-  }
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+    const sessionId = searchParams.get('sessionId');
+    const userId = searchParams.get('userId');
 
-  // 3. Fallback: Try writing to /tmp (writable on Vercel serverless)
-  try {
-    await fs.writeFile(TMP_FILE_PATH, JSON.stringify(record, null, 2), 'utf-8');
-    return 'disk:tmp';
-  } catch {
-    // If even tmp fails, in-memory cache is still active
-  }
+    const key = id || (sessionId ? `session:${sessionId}` : '') || (userId ? `user:${userId}` : '') || 'latest';
+    const record = await getAssessment(key);
 
-  return 'memory';
-}
-
-async function safeRead(): Promise<any | null> {
-  // 1. Check in-memory store
-  if (globalThis._crediflowAssessmentStore) {
-    return globalThis._crediflowAssessmentStore;
-  }
-
-  // 2. Check local disk (public/data)
-  try {
-    const data = await fs.readFile(FILE_PATH, 'utf-8');
-    const parsed = JSON.parse(data);
-    globalThis._crediflowAssessmentStore = parsed;
-    return parsed;
-  } catch {}
-
-  // 3. Check /tmp
-  try {
-    const data = await fs.readFile(TMP_FILE_PATH, 'utf-8');
-    const parsed = JSON.parse(data);
-    globalThis._crediflowAssessmentStore = parsed;
-    return parsed;
-  } catch {}
-
-  return null;
-}
-
-// GET: Retrieve latest assessment JSON stored in memory or disk
-export async function GET() {
-  try {
-    const data = await safeRead();
-    if (data) {
-      return NextResponse.json({ success: true, data });
+    if (record) {
+      return NextResponse.json({ success: true, data: record });
     }
     return NextResponse.json({ success: false, message: "No assessment data saved yet." }, { status: 200 });
   } catch (error: any) {
@@ -75,31 +30,93 @@ export async function GET() {
   }
 }
 
-// POST: Save assessment data to cache/disk (resilient to Vercel read-only filesystem)
+// POST: Save assessment data, update committee decision, or add bank query
 export async function POST(request: NextRequest) {
   try {
-    const payload = await request.json();
+    const body = await request.json();
+    const { action = 'SAVE_ASSESSMENT', assessmentId, payload } = body;
 
-    const record = {
-      updatedAt: new Date().toISOString(),
-      timestamp: Date.now(),
-      ...payload
+    if (action === 'UNDERWRITER_DECISION') {
+      const targetId = assessmentId || payload?.assessmentId || 'latest';
+      const updated = await updateUnderwriterDecision(targetId, payload?.decision);
+      return NextResponse.json({
+        success: Boolean(updated),
+        message: updated ? "Underwriter committee decision recorded." : "Assessment record not found.",
+        data: updated
+      });
+    }
+
+    if (action === 'ADD_BANK_QUERY') {
+      const targetId = assessmentId || payload?.assessmentId || 'latest';
+      const updated = await addBankQuery(targetId, {
+        lenderName: payload?.lenderName || 'Bank Underwriting Team',
+        queryText: payload?.queryText || 'Clarification required on submitted documents.',
+        requiredDocumentType: payload?.requiredDocumentType || 'Additional Evidence'
+      });
+      return NextResponse.json({
+        success: Boolean(updated),
+        message: updated ? "Bank query dispatched to applicant tracker." : "Assessment record not found.",
+        data: updated
+      });
+    }
+
+    // Default: SAVE_ASSESSMENT
+    const now = new Date();
+    const inputData = payload?.inputData || body?.inputData || body;
+    const report = payload?.report || body?.report;
+    const applicantName = inputData?.name || inputData?.identityData?.fullName || 'Borrower';
+    const icDigits = inputData?.identityData?.icNumber || inputData?.icNumber || '';
+    const monthlyIncome = inputData?.averageMonthlyNetIncome || 3500;
+    const friScore = report?.score || 720;
+    const timestamp = Date.now();
+    const recordId = assessmentId || body?.id || `asm_${timestamp}_${Math.floor(Math.random() * 1000)}`;
+
+    const bnmAuditHash = generateBnmAuditHash({
+      applicantName,
+      icDigits,
+      monthlyIncome,
+      friScore,
+      timestamp,
+      documentHash: body?.hash || payload?.hash
+    });
+
+    const assessmentRecord: AssessmentRecord = {
+      id: recordId,
+      userId: body?.userId || payload?.userId,
+      sessionId: body?.sessionId || payload?.sessionId,
+      createdAt: body?.createdAt || now.toISOString(),
+      updatedAt: now.toISOString(),
+      timestamp,
+      bnmComplianceHash: bnmAuditHash,
+      applicant: {
+        name: applicantName,
+        maskedIc: maskMyKad(icDigits),
+        maskedPhone: maskPhoneNumber(inputData?.phone || body?.phone),
+        platform: inputData?.platform || 'Gig Economy & Micro-SME',
+        address: inputData?.address || inputData?.identityData?.address
+      },
+      inputData,
+      report,
+      underwriterDecision: body?.underwriterDecision || payload?.underwriterDecision,
+      bankQueries: body?.bankQueries || payload?.bankQueries
     };
 
-    const storageType = await safeWrite(record);
+    const persistResult = await saveAssessment(assessmentRecord);
 
     return NextResponse.json({
       success: true,
-      message: "Assessment data successfully saved.",
-      storage: storageType,
-      timestamp: record.updatedAt
+      message: "Assessment data successfully saved with multi-tenant partitioning.",
+      storage: persistResult.storageLocation,
+      assessmentId: recordId,
+      bnmAuditHash,
+      timestamp: assessmentRecord.updatedAt,
+      data: assessmentRecord
     });
   } catch (error: any) {
-    console.warn("store-assessment non-critical warning:", error?.message);
-    // Never crash the client with 500 for optional persistence sync
+    console.warn("store-assessment error:", error?.message);
     return NextResponse.json({
       success: true,
-      warning: "Assessment persisted to browser localStorage; server cache write skipped",
+      warning: "Persisted to browser memory; server write skipped.",
       error: error?.message
     }, { status: 200 });
   }

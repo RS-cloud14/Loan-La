@@ -189,8 +189,8 @@ LIVE APPLICANT FINANCIAL CONTEXT:
 - Financial Readiness Index (FRI): ${friScore}/850 (Grade ${grade})
 - Current Debt Service Ratio (DSR): ${dsr.toFixed(1)}% (BNM Macroprudential Cap is 60%)
 - Target Loan Need: RM ${loanAmount.toLocaleString()} (${loanPurpose}) over ${tenureYears} year(s)
-- Current Location in App: Page "${currentPage}", Step ${activeStep} of 4
 - Uploaded Financial Evidence: ${uploadedFilesCount} file(s) attached
+${dsr > 55 ? `⚠️ CRITICAL UNDERWRITING WARNING: Applicant's current DSR is ${dsr.toFixed(1)}%, which approaches or exceeds Bank Negara Malaysia (BNM) 60% macroprudential ceiling. When the user asks about loan feasibility or approval odds, proactively advise them to extend tenure or adjust quantum to bring DSR into the safe zone (<45%), and call 'optimize_affordability'!` : `✅ HEALTHY UNDERWRITING PROFILE: Applicant's DSR is ${dsr.toFixed(1)}% (well within BNM 60% safe zone). Reassure them of high approval odds with digital banks (GXBank, Boost Bank) and government micro-funds (TEKUN, BSN).`}
 
 AGENT BEHAVIOR RULES:
 1. EMBEDDED & EFFORTLESS:

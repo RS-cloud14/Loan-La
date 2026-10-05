@@ -5,21 +5,45 @@ import path from 'path';
 import { ExtendedUnderwritingInput } from '@/components/Dashboard';
 import { calculateAlternativeCreditProfile } from '@/lib/scoring';
 import { callGeminiWithModelRotation, callGeminiWithRotation } from '@/lib/geminiRotator';
+import { saveAssessment, generateBnmAuditHash, maskMyKad, maskPhoneNumber } from '@/lib/storage';
 
-// Ensure data directory exists and persist assessment JSON file
+// Persist assessment to multi-tenant store and legacy JSON
 async function saveAssessmentToJson(data: any) {
   try {
-    const dataDir = path.join(process.cwd(), 'public', 'data');
-    await fs.mkdir(dataDir, { recursive: true });
-    const filePath = path.join(dataDir, 'latest_assessment.json');
-    const record = {
+    const timestamp = Date.now();
+    const applicantName = data?.inputData?.name || data?.name || 'Borrower';
+    const icDigits = data?.inputData?.identityData?.icNumber || data?.inputData?.icNumber || '';
+    const monthlyIncome = data?.inputData?.averageMonthlyNetIncome || 3500;
+    const friScore = data?.report?.score || 720;
+    const recordId = data?.id || `asm_${timestamp}_${Math.floor(Math.random() * 1000)}`;
+
+    const bnmAuditHash = generateBnmAuditHash({
+      applicantName,
+      icDigits,
+      monthlyIncome,
+      friScore,
+      timestamp,
+      documentHash: data?.hash
+    });
+
+    await saveAssessment({
+      id: recordId,
+      createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      timestamp: Date.now(),
-      ...data
-    };
-    await fs.writeFile(filePath, JSON.stringify(record, null, 2), 'utf-8');
+      timestamp,
+      bnmComplianceHash: bnmAuditHash,
+      applicant: {
+        name: applicantName,
+        maskedIc: maskMyKad(icDigits),
+        maskedPhone: maskPhoneNumber(data?.inputData?.phone),
+        platform: data?.inputData?.platform || 'Gig Economy & Micro-SME',
+        address: data?.inputData?.address
+      },
+      inputData: data?.inputData || data,
+      report: data?.report
+    });
   } catch (e) {
-    console.warn("Auto-save to JSON skipped:", e);
+    console.warn("Auto-save to storage skipped:", e);
   }
 }
 
