@@ -33,6 +33,7 @@ import { useLanguage, Language } from '@/context/LanguageContext';
 import { extractTextFromPdfBase64 } from '@/lib/pdfExtractor';
 import CommitteeDecisionModal from './CommitteeDecisionModal';
 import PrintableCamModal from './PrintableCamModal';
+import AIBankIntelligenceModal from './AIBankIntelligenceModal';
 
 export interface GigSlipData {
   weekNum: string;
@@ -523,6 +524,8 @@ export default function Dashboard() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  const [aiBankIntelligenceOpen, setAiBankIntelligenceOpen] = useState(false);
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       (window as any).__loanLaOpenDispatcher = (payload: any) => {
@@ -532,10 +535,14 @@ export default function Dashboard() {
           loanAmount: payload?.loanAmount || targetLoanAmount
         });
       };
+      (window as any).__loanLaOpenBankIntelligence = () => {
+        setAiBankIntelligenceOpen(true);
+      };
     }
     return () => {
       if (typeof window !== 'undefined') {
         try { delete (window as any).__loanLaOpenDispatcher; } catch (e) {}
+        try { delete (window as any).__loanLaOpenBankIntelligence; } catch (e) {}
       }
     };
   }, [targetLoanAmount]);
@@ -8438,6 +8445,14 @@ export default function Dashboard() {
           language={language}
           onApplicationDispatched={handleApplicationDispatched}
           onSwitchToB2BPortal={handleSwitchToB2BPortalWithApplicant}
+        />
+      )}
+
+      {/* AI Bank Intelligence & Rate Auto-Updater Agent Modal */}
+      {aiBankIntelligenceOpen && (
+        <AIBankIntelligenceModal
+          isOpen={aiBankIntelligenceOpen}
+          onClose={() => setAiBankIntelligenceOpen(false)}
         />
       )}
 

@@ -7,6 +7,7 @@ import {
   Scale, FileText, Filter, ArrowUpDown, DollarSign, Award, ChevronRight, ChevronDown, LayoutGrid, Table as TableIcon
 } from 'lucide-react';
 import BankLogo from '@/components/BankLogo';
+import AIBankIntelligenceModal from '@/components/AIBankIntelligenceModal';
 import { useLanguage } from '@/context/LanguageContext';
 
 interface LenderDirectoryProps {
@@ -21,8 +22,24 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
   // Comparison Modal Interactive States
   const [compareModalOpen, setCompareModalOpen] = useState(false);
   const [selectedCompareIds, setSelectedCompareIds] = useState<string[]>(['maybank_mikro', 'cimb_mikro', 'bsn']);
+  // AI Bank Intelligence & Auto-Updater States
+  const [aiIntelligenceModalOpen, setAiIntelligenceModalOpen] = useState(false);
+  const [liveOverrides, setLiveOverrides] = useState<Record<string, any>>({});
+  const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
 
-  const lenders = [
+  React.useEffect(() => {
+    fetch("/api/bank-intelligence")
+      .then(res => res.json())
+      .then(json => {
+        if (json.success && json.data) {
+          if (json.data.activeOverrides) setLiveOverrides(json.data.activeOverrides);
+          if (json.data.lastSyncTimestamp) setLastSyncTime(json.data.lastSyncTimestamp);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const baseLenders = [
     // ─── TRADITIONAL BANK MICRO LOANS ───────────────────────────────────────
     {
       id: 'maybank_mikro',
@@ -733,6 +750,21 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
       requiredDocs: language === 'bm' ? ['Penyata Bank 6 Bulan', 'Salinan Invois / Pesanan Belian (PO)', 'Pendaftaran SSM'] : ['6-Month Bank Statements', 'Client Invoices / Purchase Orders (PO)', 'SSM Company Registration']
     }
   ];
+  // Merge live AI verified rate sheets & promotional overrides
+  const lenders = baseLenders.map(l => {
+    const override = liveOverrides[l.id];
+    if (!override) return l;
+    return {
+      ...l,
+      rate: override.rateLabel || l.rate,
+      rateNumeric: override.rateNumeric !== undefined ? override.rateNumeric : l.rateNumeric,
+      minIncome: override.minIncome || l.minIncome,
+      turnaround: override.turnaround || l.turnaround,
+      maxLoan: override.maxLoan || l.maxLoan,
+      campaignPromo: override.campaignPromo,
+      isLiveVerified: true
+    };
+  });
 
 
   // Main Directory Filtering
@@ -767,6 +799,19 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
             </p>
           </div>
 
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <button
+              onClick={() => setAiIntelligenceModalOpen(true)}
+              className="px-4 py-3 bg-gradient-to-r from-emerald-500 via-teal-600 to-cyan-600 hover:from-emerald-400 hover:to-teal-500 text-white text-xs font-black rounded-2xl shadow-md transition-all flex items-center gap-2 shrink-0 border border-teal-300/40 cursor-pointer active:scale-98"
+            >
+              <Zap className="w-4 h-4 text-emerald-200 animate-pulse" />
+              <span>{language === "bm" ? "🤖 Ejen AI Auto-Kemas Kini Kadar" : "🤖 AI Rate Auto-Updater Agent"}</span>
+              {lastSyncTime && (
+                <span className="hidden sm:inline-block text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-mono">
+                  Live
+                </span>
+              )}
+            </button>
           <button
             id="compare-lenders-btn"
             data-spotlight="compare-btn"
@@ -776,6 +821,7 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
             <BarChart3 className="w-4 h-4 text-blue-900" />
             <span>{language === 'bm' ? 'Bandingkan Bank Bersebelahan' : 'Compare Lenders Side-by-Side'}</span>
           </button>
+          </div>
         </div>
       </div>
 
@@ -880,6 +926,12 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
                   </span>
                   <span className="text-xs font-bold text-blue-900 block mt-1">
                     {lender.turnaround}
+              {(lender as any).campaignPromo && (
+                <div className="p-2.5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/80 rounded-2xl text-[11px] text-blue-950 font-medium flex items-center gap-2 shadow-2xs">
+                  <Sparkles className="w-3.5 h-3.5 text-cyan-600 shrink-0" />
+                  <span><strong>Live Campaign:</strong> {(lender as any).campaignPromo}</span>
+                </div>
+              )}
                   </span>
                 </div>
 
@@ -1182,6 +1234,14 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
                 </button>
               </div>
 
+      {/* AI Bank Intelligence & Rate Auto-Updater Agent Modal */}
+      {aiIntelligenceModalOpen && (
+        <AIBankIntelligenceModal
+          isOpen={aiIntelligenceModalOpen}
+          onClose={() => setAiIntelligenceModalOpen(false)}
+          onApplyRates={(overrides) => setLiveOverrides(overrides)}
+        />
+      )}
             </div>
           </div>
         );

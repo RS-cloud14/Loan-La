@@ -965,6 +965,12 @@ export default function AICoPilotChat({
       if (typeof window !== 'undefined' && typeof (window as any).__loanLaOpenDispatcher === 'function') {
         (window as any).__loanLaOpenDispatcher(action.payload);
       }
+    } else if (action.type === 'OPEN_BANK_INTELLIGENCE') {
+      if (typeof window !== 'undefined' && typeof (window as any).__loanLaOpenBankIntelligence === 'function') {
+        (window as any).__loanLaOpenBankIntelligence();
+      } else if (typeof onNavigateToDirectory === 'function') {
+        onNavigateToDirectory();
+      }
     }
   };
 
