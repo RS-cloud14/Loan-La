@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { UploadCloud, Building2, CheckCircle, ArrowRight, ShieldCheck } from 'lucide-react';
+import { UploadCloud, Building2, ShieldCheck, ArrowRight, Sparkles } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 
 interface AnimatedCapabilityFlowProps {
@@ -18,7 +18,7 @@ export default function AnimatedCapabilityFlow({
   const { language } = useLanguage();
   const [activeStep, setActiveStep] = useState<number>(0);
 
-  // Auto cycle smoothly between 1, 2, 3 every 3.5s
+  // Smooth, high-level auto-cycle every 3.5s
   useEffect(() => {
     const timer = setInterval(() => {
       setActiveStep((prev) => (prev + 1) % 3);
@@ -28,122 +28,119 @@ export default function AnimatedCapabilityFlow({
 
   const steps = [
     {
-      num: '1',
-      title: language === 'bm' ? 'Muat Naik Penyata' : 'Upload Statement',
-      desc: language === 'bm' ? 'Audit aliran tunai PDF tanpa slip gaji' : 'Audit PDF cashflow without payslips',
+      num: '01',
+      title: language === 'bm' ? '1. Muat Naik Penyata' : '1. Upload Statement',
+      subtitle: language === 'bm' ? 'Penyata Bank / Gig PDF' : 'Bank, Grab or Shopee PDF',
       action: onStartAssessment,
-      visual: (isActive: boolean) => (
-        <div className="w-full h-20 bg-zinc-50 rounded-xl border border-zinc-200/80 p-2.5 flex flex-col justify-between overflow-hidden relative">
-          {/* Subtle scanning bar animation */}
-          {isActive && (
-            <div className="absolute inset-x-0 h-0.5 bg-black top-0 animate-[bounce_2s_infinite]" />
-          )}
-          <div className="flex items-center justify-between text-[11px]">
-            <span className="font-mono font-bold text-zinc-900">statement.pdf</span>
-            <span className="text-[10px] font-mono text-zinc-400">PDF</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono font-bold text-black">+RM 4,250</span>
-            <span className="text-[10px] font-bold bg-black text-white px-1.5 py-0.5 rounded">
-              DSR 28%
-            </span>
-          </div>
-        </div>
-      )
+      icon: UploadCloud
     },
     {
-      num: '2',
-      title: language === 'bm' ? 'Padanan Pintar' : 'Smart Match',
-      desc: language === 'bm' ? '18 bank & dana mikro berlesen' : '18 licensed banks & micro funds',
+      num: '02',
+      title: language === 'bm' ? '2. Padanan Pintar Bank' : '2. Smart Bank Match',
+      subtitle: language === 'bm' ? '18 Bank & Dana Berlesen' : '18 Licensed Malaysian Banks',
       action: onExploreDirectory,
-      visual: (isActive: boolean) => (
-        <div className="w-full h-20 bg-zinc-50 rounded-xl border border-zinc-200/80 p-2.5 flex flex-col justify-between overflow-hidden relative">
-          <div className="flex items-center justify-between text-[11px]">
-            <span className="font-bold text-black">Maybank · GXBank · BSN</span>
-            <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-black animate-ping' : 'bg-zinc-300'}`} />
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-zinc-600">Best Rate: 4.0%</span>
-            <span className="text-[10px] font-bold bg-zinc-200 text-black px-1.5 py-0.5 rounded">
-              98% Match
-            </span>
-          </div>
-        </div>
-      )
+      icon: Building2
     },
     {
-      num: '3',
-      title: language === 'bm' ? 'Mohon & Lulus' : 'Get Approved',
-      desc: language === 'bm' ? 'Pasport kredit rasmi ke portal bank' : 'Certified credit passport to bank portal',
+      num: '03',
+      title: language === 'bm' ? '3. Kelulusan Terus' : '3. Direct Approval',
+      subtitle: language === 'bm' ? 'Rasmi & Tanpa Broker' : 'Official Portal & 0 Broker Fees',
       action: onStartPrecheck,
-      visual: (isActive: boolean) => (
-        <div className="w-full h-20 bg-zinc-50 rounded-xl border border-zinc-200/80 p-2.5 flex flex-col justify-between overflow-hidden relative">
-          <div className="flex items-center justify-between text-[11px]">
-            <span className="font-bold text-black">Credit Passport™</span>
-            <span className="text-[10px] font-mono text-black font-bold">BNM QR</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono text-zinc-600">RM 50,000</span>
-            <span className="text-[10px] font-bold bg-black text-white px-1.5 py-0.5 rounded flex items-center gap-1">
-              ✓ Ready
-            </span>
-          </div>
-        </div>
-      )
+      icon: ShieldCheck
     }
   ];
 
   return (
-    <div className="w-full my-2">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-        {steps.map((step, idx) => {
-          const isActive = activeStep === idx;
-          return (
-            <div
-              key={step.num}
-              onClick={() => {
-                setActiveStep(idx);
-                step.action();
-              }}
-              className={`bg-white rounded-2xl p-4 sm:p-5 border transition-all cursor-pointer flex flex-col justify-between gap-3 text-left relative overflow-hidden group ${
-                isActive 
-                  ? 'border-black shadow-md ring-1 ring-black' 
-                  : 'border-zinc-200 hover:border-zinc-400'
-              }`}
-            >
-              {/* Minimal Progress Bar on active step */}
-              {isActive && (
-                <div className="absolute top-0 left-0 right-0 h-1 bg-black animate-[pulse_2s_infinite]" />
-              )}
+    <div className="w-full max-w-4xl mx-auto my-3">
+      {/* High-Level Connected 3-Step Flow */}
+      <div className="bg-white/95 backdrop-blur-md rounded-3xl border border-slate-200/90 shadow-sm p-3.5 sm:p-5 relative overflow-hidden">
+        
+        {/* Subtle background ambient beam */}
+        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-blue-900/10 via-blue-950/20 to-blue-900/10" />
 
-              {/* Step Header */}
-              <div className="flex items-center justify-between">
-                <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-black transition-colors ${
-                  isActive ? 'bg-black text-white' : 'bg-zinc-100 text-zinc-700 group-hover:bg-zinc-200'
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 relative">
+          
+          {steps.map((step, idx) => {
+            const isActive = activeStep === idx;
+            const IconComponent = step.icon;
+
+            return (
+              <div
+                key={step.num}
+                onClick={() => {
+                  setActiveStep(idx);
+                  step.action();
+                }}
+                className={`relative rounded-2xl p-4 sm:p-4.5 transition-all duration-300 cursor-pointer flex items-center gap-3.5 text-left group ${
+                  isActive
+                    ? 'bg-blue-50/70 border border-blue-900/30 shadow-xs scale-[1.01]'
+                    : 'bg-slate-50/50 hover:bg-slate-100/70 border border-slate-200/60'
+                }`}
+              >
+                {/* Active Indicator Top Light Bar */}
+                {isActive && (
+                  <div className="absolute top-0 left-4 right-4 h-0.5 bg-blue-950 rounded-full animate-pulse" />
+                )}
+
+                {/* Animated Icon Avatar */}
+                <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-300 relative ${
+                  isActive
+                    ? 'bg-blue-950 text-white shadow-md shadow-blue-950/20 scale-105'
+                    : 'bg-white text-slate-700 border border-slate-200 group-hover:border-slate-300 group-hover:text-blue-950'
                 }`}>
-                  {step.num}
-                </span>
+                  <IconComponent className={`w-5 h-5 transition-transform duration-300 ${
+                    isActive ? 'scale-110 animate-[pulse_2s_infinite]' : 'group-hover:scale-105'
+                  }`} />
+                  
+                  {/* Small Animated Pulse Dot */}
+                  {isActive && (
+                    <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-600" />
+                    </span>
+                  )}
+                </div>
 
-                <div className="flex items-center text-xs font-bold text-zinc-400 group-hover:text-black transition-colors">
-                  <ArrowRight className="w-3.5 h-3.5" />
+                {/* Content: Clean, High-Contrast Typography */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-1">
+                    <h4 className={`text-xs sm:text-sm font-black tracking-tight truncate transition-colors ${
+                      isActive ? 'text-blue-950' : 'text-slate-800 group-hover:text-blue-950'
+                    }`}>
+                      {step.title}
+                    </h4>
+                    <ArrowRight className={`w-3.5 h-3.5 shrink-0 transition-all ${
+                      isActive 
+                        ? 'text-blue-950 translate-x-0.5' 
+                        : 'text-slate-300 opacity-0 group-hover:opacity-100 group-hover:text-slate-600'
+                    }`} />
+                  </div>
+                  <p className="text-[11px] text-slate-500 font-medium truncate mt-0.5">
+                    {step.subtitle}
+                  </p>
                 </div>
               </div>
+            );
+          })}
 
-              {/* Minimal Black & White Animated Micro-Visual */}
-              {step.visual(isActive)}
+        </div>
 
-              {/* Minimal Typography: Title & Short Subtitle */}
-              <div>
-                <h4 className="text-sm font-black text-black tracking-tight">
-                  {step.title}
-                </h4>
-                <p className="text-xs text-zinc-500 font-normal mt-0.5 leading-snug">
-                  {step.desc}
-                </p>
-              </div>
-            </div>
-          );
-        })}
+        {/* Minimal Footer Progress Bar: Smoothly tracks active step */}
+        <div className="flex items-center justify-center gap-1.5 mt-3 pt-2">
+          {steps.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setActiveStep(idx)}
+              className={`h-1 rounded-full transition-all duration-300 cursor-pointer ${
+                activeStep === idx 
+                  ? 'w-7 bg-blue-950' 
+                  : 'w-2 bg-slate-200 hover:bg-slate-300'
+              }`}
+              title={`Step ${idx + 1}`}
+            />
+          ))}
+        </div>
+
       </div>
     </div>
   );
