@@ -8375,6 +8375,9 @@ export default function Dashboard() {
           target={dispatcherTarget}
           applicant={{
             name: b2cResult?.inputData.name || userSession?.name || 'Ahmad Bin Razali',
+            icNumber: (b2cResult?.inputData as any)?.icNumber || (userSession as any)?.icNumber || '940815-14-5521',
+            phone: (b2cResult?.inputData as any)?.phone || (userSession as any)?.phoneNumber || '+60 12-345 6789',
+            email: (b2cResult?.inputData as any)?.email || userSession?.email || 'borrower@loan-la.my',
             averageMonthlyNetIncome: b2cResult?.inputData.averageMonthlyNetIncome || 3850,
             score: b2cResult?.report.score || 740,
             grade: b2cResult?.report.grade || 'A',

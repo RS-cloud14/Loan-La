@@ -4,7 +4,7 @@
  * Ministry of Entrepreneur Development & Cooperatives (KUSKOP), individual official rate sheets.
  * 
  * Verified Malaysian Banks, Government Micro-Funds & Licensed P2P Platforms.
- * Last updated: August 2026.
+ * Last updated: 2026.
  */
 
 export type LenderType =
@@ -37,6 +37,12 @@ export type ProductType =
 
 export type RateType = 'flat_pa' | 'reducing_pa' | 'profit_rate_pa';
 
+export type ApplicationChannel =
+  | 'digital_bank_app'        // 100% App-based (GXBank, Boost Bank, AEON Bank, TNG GOpinjam)
+  | 'digital_web_portal'      // 100% Online Web Form (Maybank SME, Alliance Digital SME, Funding Societies, CapBay)
+  | 'government_micro_agency' // e-Permohonan / Cawangan / WhatsApp Officer (TEKUN, MARA, AIM, BSN)
+  | 'commercial_bank_assisted';// Bank portal + Branch/Officer intake (CIMB, Public Bank, AmBank, Affin, Agrobank, Bank Rakyat, Bank Islam, SME Bank)
+
 export interface LenderProduct {
   id: string;
   name: string;
@@ -55,12 +61,21 @@ export interface LenderProduct {
   notes: string;
 }
 
+export interface ApplicationStep {
+  step: number;
+  titleEn: string;
+  titleBm: string;
+  descEn: string;
+  descBm: string;
+}
+
 export interface Lender {
   id: string;
   name: string;
   shortName: string;
   emoji: string;
   type: LenderType;
+  channelType: ApplicationChannel;
   regulatedBy: string;
   shariah: boolean;
   products: LenderProduct[];
@@ -74,11 +89,321 @@ export interface Lender {
   minFRIScore: number;
   highlight: string;
   notes: string;
+  appDownloadUrl?: {
+    ios?: string;
+    android?: string;
+  };
+  whatsappOfficer?: string;
+  applicationSteps?: ApplicationStep[];
 }
 
 export const LENDERS: Lender[] = [
   /* ─────────────────────────────────────────────────────────────────── */
-  /* 1. MAYBANK — Malaysia's largest commercial bank                     */
+  /* 1. GXBANK — Malaysia's 1st BNM-Licensed Digital Bank                */
+  /* ─────────────────────────────────────────────────────────────────── */
+  {
+    id: 'gxbank',
+    name: 'GX Bank Berhad (GXBank)',
+    shortName: 'GXBank',
+    emoji: '📱',
+    type: 'Commercial Bank',
+    channelType: 'digital_bank_app',
+    regulatedBy: 'Bank Negara Malaysia (BNM)',
+    shariah: false,
+    gigFriendly: true,
+    acceptedPlatforms: ['all', 'grab', 'foodpanda', 'lalamove', 'shopee', 'lazada', 'freelance'],
+    minIncomeRM: 1500,
+    minGigHistoryMonths: 3,
+    website: 'gxbank.my',
+    hotline: '+603-7498 3188',
+    applicationUrl: 'https://www.gxbank.my',
+    appDownloadUrl: {
+      ios: 'https://apps.apple.com/my/app/gxbank/id6448790074',
+      android: 'https://play.google.com/store/apps/details?id=my.gxbank.app'
+    },
+    minFRIScore: 500,
+    highlight: 'Malaysia’s 1st BNM-licensed digital bank. 100% in-app application with 10-minute instant approval & fast disbursement.',
+    notes: 'Applications are submitted exclusively inside the GXBank mobile app. Collateral-free personal financing with automated e-KYC.',
+    applicationSteps: [
+      {
+        step: 1,
+        titleEn: 'Open GXBank Mobile App',
+        titleBm: 'Buka Aplikasi GXBank di Telefon',
+        descEn: 'Install and open the GXBank app on your iOS or Android smartphone.',
+        descBm: 'Pasang dan buka aplikasi GXBank di telefon pintar iOS atau Android anda.'
+      },
+      {
+        step: 2,
+        titleEn: 'Navigate to FlexiCredit',
+        titleBm: 'Pilih Bahagian FlexiCredit',
+        descEn: 'On the app home screen, tap "FlexiCredit" under the "For You Today" section.',
+        descBm: 'Di skrin utama aplikasi, ketik "FlexiCredit" di bawah bahagian "For You Today".'
+      },
+      {
+        step: 3,
+        titleEn: 'Input Pre-Screened Figures',
+        titleBm: 'Masukkan Maklumat Pra-Saringan',
+        descEn: 'Use our 1-click Fast-Fill tool to paste your verified monthly income, financing amount, and tenure.',
+        descBm: 'Gunakan alat Salin Pantas kami untuk menampal pendapatan bersih, jumlah pembiayaan, dan tempoh pinjaman.'
+      },
+      {
+        step: 4,
+        titleEn: 'Attach CAM PDF & Facial e-KYC',
+        titleBm: 'Muat Naik CAM PDF & Imbasan Wajah e-KYC',
+        descEn: 'Attach your Loan-La Credit Passport CAM if requested, complete your 30-second selfie verification, and get funded.',
+        descBm: 'Muat naik PDF Credit Passport CAM jika diminta, lengkapkan imbasan swafoto e-KYC 30 saat, dan dana dikreditkan terus.'
+      }
+    ],
+    products: [
+      {
+        id: 'gx_flexicredit',
+        name: 'GX FlexiCredit / Digital Cash',
+        productType: 'personal_financing',
+        minAmountRM: 1000,
+        maxAmountRM: 50000,
+        tenureMinMonths: 6,
+        tenureMaxMonths: 60,
+        rateType: 'reducing_pa',
+        rateFromPercent: 4.88,
+        rateToPercent: 8.88,
+        payslipRequired: false,
+        compatibleAssets: ['personal_cash', 'working_capital'],
+        requiredDocs: ['MyKad (e-KYC Face Scan)', '6 months Bank Statement (PDF) or Grab E-Wallet Statement'],
+        notes: 'Instant approval within app for gig earners, drivers, and freelancers.',
+      },
+    ],
+  },
+
+  /* ─────────────────────────────────────────────────────────────────── */
+  /* 2. BOOST BANK — Digital Bank (Axiata & RHB Consortium)             */
+  /* ─────────────────────────────────────────────────────────────────── */
+  {
+    id: 'boost_bank',
+    name: 'Boost Bank Berhad',
+    shortName: 'Boost Bank',
+    emoji: '📱',
+    type: 'Commercial Bank',
+    channelType: 'digital_bank_app',
+    regulatedBy: 'Bank Negara Malaysia (BNM)',
+    shariah: false,
+    gigFriendly: true,
+    acceptedPlatforms: ['all', 'grab', 'foodpanda', 'shopee', 'lazada', 'freelance'],
+    minIncomeRM: 1000,
+    minGigHistoryMonths: 3,
+    website: 'boostbank.my',
+    hotline: '+603-7651 8833',
+    applicationUrl: 'https://www.myboostsme.co',
+    appDownloadUrl: {
+      ios: 'https://apps.apple.com/my/app/boost-bank/id6471676884',
+      android: 'https://play.google.com/store/apps/details?id=com.boostbank.app'
+    },
+    minFRIScore: 480,
+    highlight: 'BNM-licensed digital bank by Axiata & RHB. Rapid 10-minute approval for micro-merchants, online sellers, and gig workers.',
+    notes: 'Available through Boost Bank Mobile App and Boost SME digital portal. High acceptance for digital sellers and riders.',
+    applicationSteps: [
+      {
+        step: 1,
+        titleEn: 'Launch Boost Bank / Boost SME App',
+        titleBm: 'Buka Aplikasi Boost Bank / Boost SME',
+        descEn: 'Open the Boost Bank or Boost SME application on your smartphone.',
+        descBm: 'Buka aplikasi Boost Bank atau Boost SME di telefon pintar anda.'
+      },
+      {
+        step: 2,
+        titleEn: 'Select SME Financing / Micro Credit',
+        titleBm: 'Pilih Pembiayaan Mikro / SME',
+        descEn: 'Navigate to "Financing" and choose Term Loan or Revolving Micro Credit.',
+        descBm: 'Pergi ke bahagian "Pembiayaan" dan pilih Pinjaman Berjangka atau Kredit Mikro.'
+      },
+      {
+        step: 3,
+        titleEn: 'Enter Pre-Calculated Data',
+        titleBm: 'Salin Maklumat Terpilih',
+        descEn: 'Copy your monthly net earnings and business details directly from the Loan-La Assistant.',
+        descBm: 'Salin anggaran pendapatan dan maklumat perniagaan anda daripada Pembantu Loan-La.'
+      },
+      {
+        step: 4,
+        titleEn: 'Digital Signature & Payout',
+        titleBm: 'Tandatangan Digital & Pengeluaran',
+        descEn: 'Review the approval terms in-app and confirm disbursement directly into your bank account within 24 hours.',
+        descBm: 'Semak tawaran kelulusan dalam aplikasi dan sahkan pengeluaran dana ke akaun anda dalam 24 jam.'
+      }
+    ],
+    products: [
+      {
+        id: 'boost_sme_capital',
+        name: 'Boost SME Capital / Micro-Financing',
+        productType: 'sme_loan',
+        minAmountRM: 1000,
+        maxAmountRM: 100000,
+        tenureMinMonths: 3,
+        tenureMaxMonths: 36,
+        rateType: 'reducing_pa',
+        rateFromPercent: 5.5,
+        rateToPercent: 10.5,
+        payslipRequired: false,
+        compatibleAssets: ['working_capital', 'equipment', 'personal_cash'],
+        requiredDocs: ['MyKad (e-KYC)', '3-6 months Bank Statement (PDF)', 'Digital Store Link or Platform Profile'],
+        notes: 'Zero paperwork, 100% digital disbursement in 24 to 48 hours.',
+      },
+    ],
+  },
+
+  /* ─────────────────────────────────────────────────────────────────── */
+  /* 3. AEON BANK — Malaysia's 1st Islamic Digital Bank                  */
+  /* ─────────────────────────────────────────────────────────────────── */
+  {
+    id: 'aeon_bank',
+    name: 'AEON Bank (M) Berhad',
+    shortName: 'AEON Bank',
+    emoji: '📱',
+    type: 'Islamic Bank',
+    channelType: 'digital_bank_app',
+    regulatedBy: 'Bank Negara Malaysia (BNM)',
+    shariah: true,
+    gigFriendly: true,
+    acceptedPlatforms: ['all', 'grab', 'foodpanda', 'lalamove', 'shopee', 'freelance'],
+    minIncomeRM: 1000,
+    minGigHistoryMonths: 3,
+    website: 'aeonbank.com.my',
+    hotline: '+603-2719 9999',
+    applicationUrl: 'https://www.aeonbank.com.my',
+    appDownloadUrl: {
+      ios: 'https://apps.apple.com/my/app/aeon-bank/id6473859663',
+      android: 'https://play.google.com/store/apps/details?id=my.com.aeonbank'
+    },
+    minFRIScore: 460,
+    highlight: 'Malaysia’s 1st Islamic digital bank. 100% Shariah-compliant digital micro financing via mobile app.',
+    notes: 'Fully digital Islamic financing operated via mobile app under Tawarruq structure. No physical branch required.',
+    applicationSteps: [
+      {
+        step: 1,
+        titleEn: 'Download AEON Bank App',
+        titleBm: 'Muat Turun Aplikasi AEON Bank',
+        descEn: 'Install AEON Bank on your smartphone and activate your digital Islamic account.',
+        descBm: 'Pasang aplikasi AEON Bank di telefon anda dan aktifkan akaun digital Islamik anda.'
+      },
+      {
+        step: 2,
+        titleEn: 'Apply for Digital Financing-i',
+        titleBm: 'Mohon Pembiayaan Digital-i',
+        descEn: 'Tap on "Financing-i" to access Shariah-compliant micro capital.',
+        descBm: 'Ketik "Pembiayaan-i" untuk memohon modal mikro patuh Syariah.'
+      },
+      {
+        step: 3,
+        titleEn: 'Provide Verified Statement & CAM',
+        titleBm: 'Lampirkan Penyata & CAM PDF',
+        descEn: 'Upload your verified PDF bank statement prepared by Loan-La as supporting proof.',
+        descBm: 'Muat naik penyata bank PDF yang disahkan oleh Loan-La sebagai dokumen sokongan.'
+      },
+      {
+        step: 4,
+        titleEn: 'Instant Digital Murabahah Acceptance',
+        titleBm: 'Penerimaan Akad Murabahah Digital',
+        descEn: 'Complete the digital Akad consent on screen for instant credit line disbursement.',
+        descBm: 'Selesaikan persetujuan Akad digital pada skrin untuk pengeluaran pembiayaan serta-merta.'
+      }
+    ],
+    products: [
+      {
+        id: 'aeon_bank_islamic_cash',
+        name: 'AEON Bank Digital Financing-i',
+        productType: 'personal_financing',
+        minAmountRM: 1000,
+        maxAmountRM: 50000,
+        tenureMinMonths: 6,
+        tenureMaxMonths: 60,
+        rateType: 'flat_pa',
+        rateFromPercent: 5.0,
+        rateToPercent: 9.5,
+        payslipRequired: false,
+        compatibleAssets: ['personal_cash', 'working_capital'],
+        requiredDocs: ['MyKad (e-KYC)', '3-6 months Bank Statement (PDF)'],
+        notes: '100% Shariah-compliant digital financing. Instant approval.',
+      },
+    ],
+  },
+
+  /* ─────────────────────────────────────────────────────────────────── */
+  /* 4. TOUCH 'N GO GOPINJAM — CIMB-Powered Express Digital Credit       */
+  /* ─────────────────────────────────────────────────────────────────── */
+  {
+    id: 'tng_gopinjam',
+    name: 'Touch \'n Go GOpinjam (CIMB Bank)',
+    shortName: 'TNG GOpinjam',
+    emoji: '📱',
+    type: 'Commercial Bank',
+    channelType: 'digital_bank_app',
+    regulatedBy: 'Bank Negara Malaysia (BNM)',
+    shariah: false,
+    gigFriendly: true,
+    acceptedPlatforms: ['all', 'grab', 'foodpanda', 'lalamove', 'shopee', 'freelance'],
+    minIncomeRM: 800,
+    minGigHistoryMonths: 1,
+    website: 'touchngo.com.my',
+    hotline: '+603-5022 3888',
+    applicationUrl: 'https://www.touchngo.com.my/consumer/financial-services/gopinjam/',
+    appDownloadUrl: {
+      ios: 'https://apps.apple.com/my/app/touch-n-go-ewallet/id1344696702',
+      android: 'https://play.google.com/store/apps/details?id=my.com.tngdigital.ewallet'
+    },
+    minFRIScore: 420,
+    highlight: 'Micro-personal loan inside TNG eWallet. Powered by CIMB. Lowest income threshold (RM 800/mo) and instant credit.',
+    notes: 'Access directly within the Touch \'n Go eWallet app under Financial Services > GOpinjam.',
+    applicationSteps: [
+      {
+        step: 1,
+        titleEn: 'Open Touch \'n Go eWallet App',
+        titleBm: 'Buka Aplikasi TNG eWallet',
+        descEn: 'Open your existing Touch \'n Go eWallet app on your phone.',
+        descBm: 'Buka aplikasi Touch \'n Go eWallet sedia ada di telefon anda.'
+      },
+      {
+        step: 2,
+        titleEn: 'Tap GOpinjam Icon',
+        titleBm: 'Ketik Ikon GOpinjam',
+        descEn: 'Go to Financial Services > GOpinjam and tap "Apply Now".',
+        descBm: 'Pergi ke Perkhidmatan Kewangan > GOpinjam dan ketik "Mohon Sekarang".'
+      },
+      {
+        step: 3,
+        titleEn: 'Paste Loan-La Verified Info',
+        titleBm: 'Tampal Maklumat Disahkan Loan-La',
+        descEn: 'Paste your exact pre-calculated net income and loan amount using our Fast-Fill clipboard.',
+        descBm: 'Tampal pendapatan bersih dan jumlah pinjaman yang telah disahkan menggunakan papan keratan pantas kami.'
+      },
+      {
+        step: 4,
+        titleEn: 'Instant Credit to TNG Wallet or Bank',
+        titleBm: 'Pindahan Segera ke Dompet TNG / Bank',
+        descEn: 'Once approved, funds are transferred instantly into your TNG eWallet balance or CIMB account.',
+        descBm: 'Setelah diluluskan, wang dipindahkan serta-merta ke baki TNG eWallet atau akaun bank anda.'
+      }
+    ],
+    products: [
+      {
+        id: 'gopinjam_micro',
+        name: 'TNG GOpinjam Express Cash',
+        productType: 'personal_financing',
+        minAmountRM: 500,
+        maxAmountRM: 10000,
+        tenureMinMonths: 1,
+        tenureMaxMonths: 36,
+        rateType: 'flat_pa',
+        rateFromPercent: 8.0,
+        rateToPercent: 18.0,
+        payslipRequired: false,
+        compatibleAssets: ['personal_cash', 'working_capital'],
+        requiredDocs: ['MyKad (e-KYC)', '1-3 months Bank / e-Wallet Statement'],
+        notes: 'Rapid disbursement directly to eWallet or nominated bank account.',
+      },
+    ],
+  },
+
+  /* ─────────────────────────────────────────────────────────────────── */
+  /* 5. MAYBANK — SME Digital Financing (100% Online Web Portal)         */
   /* ─────────────────────────────────────────────────────────────────── */
   {
     id: 'maybank',
@@ -86,6 +411,7 @@ export const LENDERS: Lender[] = [
     shortName: 'Maybank',
     emoji: '🏦',
     type: 'Commercial Bank',
+    channelType: 'digital_web_portal',
     regulatedBy: 'Bank Negara Malaysia (BNM)',
     shariah: true,
     gigFriendly: true,
@@ -98,6 +424,36 @@ export const LENDERS: Lender[] = [
     minFRIScore: 550,
     highlight: 'Malaysia’s largest bank. Clean digital micro-financing for business and vehicle hire purchase.',
     notes: 'Offers dedicated SME digital financing with automated 10-minute in-principle approval with 6 months bank statement.',
+    applicationSteps: [
+      {
+        step: 1,
+        titleEn: 'Open Maybank SME Digital Portal',
+        titleBm: 'Buka Portal Maybank SME Digital',
+        descEn: 'Loan-La opens Maybank’s official clean SME digital application portal in a secure window.',
+        descBm: 'Loan-La membuka portal permohonan digital rasmi Maybank SME dalam tetingkap selamat.'
+      },
+      {
+        step: 2,
+        titleEn: 'Copy Pre-Filled Details',
+        titleBm: 'Salin Maklumat Lengkap',
+        descEn: 'Use our floating clipboard assistant to paste your SSM number, IC, and verified revenue.',
+        descBm: 'Gunakan pembantu salin terapung untuk menampal nombor pendaftaran, IC, dan pendapatan disahkan.'
+      },
+      {
+        step: 3,
+        titleEn: 'Upload 6 Months Statement & CAM',
+        titleBm: 'Muat Naik Penyata 6 Bulan & CAM',
+        descEn: 'Upload your original e-statement PDF alongside your Loan-La certified Credit Memo.',
+        descBm: 'Muat naik fail PDF penyata bank asal bersama Memo Kredit CAM Loan-La yang disahkan.'
+      },
+      {
+        step: 4,
+        titleEn: 'In-Principle Digital Decision',
+        titleBm: 'Keputusan Kelulusan Digital',
+        descEn: 'Receive in-principle decision within 10 minutes with immediate disbursement offer.',
+        descBm: 'Terima keputusan awal dalam masa 10 minit dengan tawaran pengeluaran segera.'
+      }
+    ],
     products: [
       {
         id: 'maybank_sme_mikro',
@@ -135,7 +491,7 @@ export const LENDERS: Lender[] = [
   },
 
   /* ─────────────────────────────────────────────────────────────────── */
-  /* 2. CIMB BANK — Regional leader with Micro-SME packages              */
+  /* 6. CIMB BANK — Regional leader with Micro-SME packages              */
   /* ─────────────────────────────────────────────────────────────────── */
   {
     id: 'cimb',
@@ -143,6 +499,7 @@ export const LENDERS: Lender[] = [
     shortName: 'CIMB',
     emoji: '🏦',
     type: 'Commercial Bank',
+    channelType: 'commercial_bank_assisted',
     regulatedBy: 'Bank Negara Malaysia (BNM)',
     shariah: true,
     gigFriendly: true,
@@ -192,7 +549,7 @@ export const LENDERS: Lender[] = [
   },
 
   /* ─────────────────────────────────────────────────────────────────── */
-  /* 3. TEKUN NASIONAL — Subsidized 4% Micro-Financing for Usahawan       */
+  /* 7. TEKUN NASIONAL — Subsidized 4% Micro-Financing for Usahawan       */
   /* ─────────────────────────────────────────────────────────────────── */
   {
     id: 'tekun',
@@ -200,6 +557,7 @@ export const LENDERS: Lender[] = [
     shortName: 'TEKUN',
     emoji: '🏛️',
     type: 'Government Agency',
+    channelType: 'government_micro_agency',
     regulatedBy: 'Kementerian Pembangunan Usahawan & Koperasi (KUSKOP)',
     shariah: true,
     gigFriendly: true,
@@ -208,10 +566,41 @@ export const LENDERS: Lender[] = [
     minGigHistoryMonths: 3,
     website: 'tekun.gov.my',
     hotline: '+603-9059 8888',
-    applicationUrl: 'https://tekun.gov.my',
+    whatsappOfficer: '+6019-223 8888',
+    applicationUrl: 'https://tekunonline.tekun.gov.my/login',
     minFRIScore: 400,
     highlight: 'Ultra-low 4.0% subsidized annual profit rate. Open to micro-traders, blacklisted applicants & gig riders.',
-    notes: 'Agency under KUSKOP. Highest approval rate in Malaysia for self-employed and informal earners.',
+    notes: 'Agency under KUSKOP. Highest approval rate in Malaysia for self-employed and informal earners. Supports online e-Permohonan and WhatsApp loan officer dispatch.',
+    applicationSteps: [
+      {
+        step: 1,
+        titleEn: 'Review Pre-Approved Dossier',
+        titleBm: 'Semak Dossier Pra-Kelulusan',
+        descEn: 'Loan-La packages your verified earnings into the official TEKUN Kertas Kerja format.',
+        descBm: 'Loan-La menyusun pendapatan disahkan anda ke dalam format Kertas Kerja rasmi TEKUN.'
+      },
+      {
+        step: 2,
+        titleEn: 'Choose Submission Channel',
+        titleBm: 'Pilih Kaedah Permohonan',
+        descEn: 'Submit directly via TEKUN Online Portal, WhatsApp an authorized TEKUN Officer, or download printed dossier.',
+        descBm: 'Mohon terus melalui Portal TEKUN Online, WhatsApp Pegawai TEKUN bertauliah, atau cetak dossier.'
+      },
+      {
+        step: 3,
+        titleEn: 'Submit Documentation',
+        titleBm: 'Hantar Dokumen Sokongan',
+        descEn: 'Provide MyKad, bank statement book, and gig rider platform screenshots.',
+        descBm: 'Sertakan MyKad, penyata akaun bank, dan tangkap layar profil pemandu/rider gig.'
+      },
+      {
+        step: 4,
+        titleEn: 'Officer Interview & Disbursement',
+        titleBm: 'Temuduga Pegawai & Agihan Dana',
+        descEn: 'Brief phone or counter verification, followed by direct bank credit at 4% flat subsidized rate.',
+        descBm: 'Pengesahan ringkas melalui telefon atau kaunter, diikuti kemasukan dana pada kadar subsidi 4% setahun.'
+      }
+    ],
     products: [
       {
         id: 'tekun_niaga',
@@ -255,7 +644,206 @@ export const LENDERS: Lender[] = [
   },
 
   /* ─────────────────────────────────────────────────────────────────── */
-  /* 4. SME BANK — Government SME Specialist (SPUM Scheme)                */
+  /* 8. BSN — Bank Simpanan Nasional (MicroKredit Madani)                */
+  /* ─────────────────────────────────────────────────────────────────── */
+  {
+    id: 'bsn',
+    name: 'Bank Simpanan Nasional (BSN)',
+    shortName: 'BSN',
+    emoji: '🏦',
+    type: 'Development Bank',
+    channelType: 'government_micro_agency',
+    regulatedBy: 'Bank Negara Malaysia (BNM) / Ministry of Finance',
+    shariah: true,
+    gigFriendly: true,
+    acceptedPlatforms: ['all', 'grab', 'foodpanda', 'lalamove', 'shopee', 'freelance'],
+    minIncomeRM: 800,
+    minGigHistoryMonths: 6,
+    website: 'bsn.com.my',
+    hotline: '1300-88-1900',
+    whatsappOfficer: '+6012-288 1900',
+    applicationUrl: 'https://www.bsn.com.my/page/business-financing-products-index',
+    minFRIScore: 450,
+    highlight: 'Lowest monthly income requirement (RM 800/mo). Subsidized rate 4.0% p.a. for micro-businesses & gig workers.',
+    notes: 'Official mandate bank under Belanjawan Madani for micro-enterprise empowerment. Applied online via official BSN Business portal or at BSN Micro Finance centers.',
+    applicationSteps: [
+      {
+        step: 1,
+        titleEn: 'Review BSN Madani Dossier',
+        titleBm: 'Semak Dossier BSN Madani',
+        descEn: 'Check your verified income and pre-calculated installment at the subsidized 4.0% rate.',
+        descBm: 'Periksa pendapatan disahkan dan anggaran ansuran pada kadar subsidi 4.0% p.a.'
+      },
+      {
+        step: 2,
+        titleEn: 'Open BSN Business Financing Portal',
+        titleBm: 'Buka Portal Pembiayaan BSN',
+        descEn: 'Access official BSN business financing portal or locate your nearest BSN Micro Credit Center.',
+        descBm: 'Akses portal rasmi pembiayaan BSN atau rujuk Pusat Kredit Mikro BSN berdekatan.'
+      },
+      {
+        step: 3,
+        titleEn: 'Submit Application with CAM Memo',
+        titleBm: 'Hantar Permohonan bersama Memo CAM',
+        descEn: 'Attach your certified Credit Assessment Memo (CAM) for priority review by BSN officers.',
+        descBm: 'Sertakan Memo Penilaian Kredit (CAM) Loan-La untuk semakan keutamaan pegawai BSN.'
+      },
+      {
+        step: 4,
+        titleEn: 'Disbursement into BSN Account',
+        titleBm: 'Penyaluran ke Akaun BSN',
+        descEn: 'Once endorsed, financing is credited directly into your BSN Giro account.',
+        descBm: 'Setelah disahkan, pembiayaan dikreditkan terus ke akaun BSN Giro anda.'
+      }
+    ],
+    products: [
+      {
+        id: 'bsn_micro_niaga',
+        name: 'BSN MicroKredit Semarak Niaga / Madani',
+        productType: 'micro_credit',
+        minAmountRM: 5000,
+        maxAmountRM: 50000,
+        tenureMinMonths: 12,
+        tenureMaxMonths: 60,
+        rateType: 'flat_pa',
+        rateFromPercent: 4.0,
+        rateToPercent: 4.0,
+        payslipRequired: false,
+        compatibleAssets: ['working_capital', 'personal_cash'],
+        requiredDocs: ['MyKad / NRIC', '3-6 months Bank Statement or BSN Savings Account Book', 'SSM Registration or PBT Permit (if business)'],
+        notes: 'Very flexible eligibility criteria. Available for micro-traders, stall owners, and gig freelancers.',
+      },
+    ],
+  },
+
+  /* ─────────────────────────────────────────────────────────────────── */
+  /* 9. ALLIANCE BANK — Digital SME Specialist (100% Online)             */
+  /* ─────────────────────────────────────────────────────────────────── */
+  {
+    id: 'alliance_mikro',
+    name: 'Alliance Bank Malaysia Berhad',
+    shortName: 'Alliance SME',
+    emoji: '🏦',
+    type: 'Commercial Bank',
+    channelType: 'digital_web_portal',
+    regulatedBy: 'Bank Negara Malaysia (BNM)',
+    shariah: false,
+    gigFriendly: true,
+    acceptedPlatforms: ['all', 'shopee', 'lazada', 'freelance'],
+    minIncomeRM: 2000,
+    minGigHistoryMonths: 6,
+    website: 'alliancebank.com.my',
+    hotline: '+603-5516 9988',
+    applicationUrl: 'https://www.alliancebank.com.my/business/loans/digital-sme.aspx',
+    minFRIScore: 530,
+    highlight: '100% online digital application with 24-hour in-principle approval. Zero collateral required.',
+    notes: 'Fastest digital onboarding for Malaysian registered sole props and partnerships. 100% web application.',
+    products: [
+      {
+        id: 'alliance_digital_sme',
+        name: 'Alliance Digital SME Express Loan',
+        productType: 'sme_loan',
+        minAmountRM: 10000,
+        maxAmountRM: 100000,
+        tenureMinMonths: 12,
+        tenureMaxMonths: 60,
+        rateType: 'reducing_pa',
+        rateFromPercent: 5.8,
+        rateToPercent: 10.5,
+        payslipRequired: false,
+        compatibleAssets: ['working_capital'],
+        requiredDocs: ['MyKad / NRIC', '6 months Bank Statement (PDF)', 'SSM Certificate'],
+        notes: 'Fully digital submission without visiting a physical branch.',
+      },
+    ],
+  },
+
+  /* ─────────────────────────────────────────────────────────────────── */
+  /* 10. FUNDING SOCIETIES — Malaysia's #1 SC-Licensed P2P Platform      */
+  /* ─────────────────────────────────────────────────────────────────── */
+  {
+    id: 'fundingsocieties',
+    name: 'Funding Societies Malaysia (Modalku Ventures Sdn Bhd)',
+    shortName: 'Funding Societies',
+    emoji: '🤝',
+    type: 'P2P Platform',
+    channelType: 'digital_web_portal',
+    regulatedBy: 'Securities Commission Malaysia (SC)',
+    shariah: true,
+    gigFriendly: true,
+    acceptedPlatforms: ['all', 'shopee', 'lazada', 'freelance'],
+    minIncomeRM: 1500,
+    minGigHistoryMonths: 3,
+    website: 'fundingsocieties.com.my',
+    hotline: '+603-2202 1013',
+    applicationUrl: 'https://fundingsocieties.com.my/micro-financing',
+    minFRIScore: 470,
+    highlight: 'SC-licensed P2P financing. 100% digital with rapid 24-hour approval. Accepts Shopee/Lazada sellers and sole-props.',
+    notes: 'Over RM 10 billion disbursed across Southeast Asia. Uses alternative data scoring for rapid funding.',
+    products: [
+      {
+        id: 'fs_micro_financing',
+        name: 'Funding Societies Micro Financing',
+        productType: 'p2p_lending',
+        minAmountRM: 5000,
+        maxAmountRM: 100000,
+        tenureMinMonths: 3,
+        tenureMaxMonths: 18,
+        rateType: 'reducing_pa',
+        rateFromPercent: 8.0,
+        rateToPercent: 18.0,
+        payslipRequired: false,
+        compatibleAssets: ['working_capital', 'equipment'],
+        requiredDocs: ['MyKad / NRIC', '6 months Bank Statement (PDF)', 'SSM Certificate / E-Commerce Store Link'],
+        notes: 'Fast cash disbursement in 24 hours. Minimal documentation for e-commerce and retail merchants.',
+      },
+    ],
+  },
+
+  /* ─────────────────────────────────────────────────────────────────── */
+  /* 11. CAPBAY — Supply Chain & Invoice Liquidity Specialist            */
+  /* ─────────────────────────────────────────────────────────────────── */
+  {
+    id: 'capbay',
+    name: 'CapBay (Bay Group Holdings / Amber Creative Sdn Bhd)',
+    shortName: 'CapBay',
+    emoji: '🤝',
+    type: 'P2P Platform',
+    channelType: 'digital_web_portal',
+    regulatedBy: 'Securities Commission Malaysia (SC)',
+    shariah: true,
+    gigFriendly: true,
+    acceptedPlatforms: ['all', 'freelance'],
+    minIncomeRM: 2000,
+    minGigHistoryMonths: 6,
+    website: 'capbay.com',
+    hotline: '+603-7931 7168',
+    applicationUrl: 'https://capbay.com/p2p-financing',
+    minFRIScore: 500,
+    highlight: 'Fintech supply chain financing. Unlocks up to 90% instant cash advance on unpaid invoices and purchase orders.',
+    notes: 'Backed by leading venture capital and approved by Securities Commission Malaysia.',
+    products: [
+      {
+        id: 'capbay_invoice_p2p',
+        name: 'CapBay Invoice & Supply Chain Financing',
+        productType: 'invoice_financing',
+        minAmountRM: 10000,
+        maxAmountRM: 200000,
+        tenureMinMonths: 1,
+        tenureMaxMonths: 6,
+        rateType: 'reducing_pa',
+        rateFromPercent: 6.5,
+        rateToPercent: 14.0,
+        payslipRequired: false,
+        compatibleAssets: ['invoice_financing', 'working_capital'],
+        requiredDocs: ['MyKad / NRIC', '6 months Bank Statement', 'SSM Registration', 'Unpaid Invoices / Client PO'],
+        notes: 'Up to 90% advance rate on verified corporate and government invoices.',
+      },
+    ],
+  },
+
+  /* ─────────────────────────────────────────────────────────────────── */
+  /* 12. SME BANK — Government SME Specialist (SPUM Scheme)               */
   /* ─────────────────────────────────────────────────────────────────── */
   {
     id: 'sme_bank_mikro',
@@ -263,6 +851,7 @@ export const LENDERS: Lender[] = [
     shortName: 'SME Bank',
     emoji: '🏛️',
     type: 'Development Bank',
+    channelType: 'commercial_bank_assisted',
     regulatedBy: 'Bank Negara Malaysia (BNM) / KUSKOP',
     shariah: true,
     gigFriendly: true,
@@ -296,7 +885,7 @@ export const LENDERS: Lender[] = [
   },
 
   /* ─────────────────────────────────────────────────────────────────── */
-  /* 5. MARA — Majlis Amanah Rakyat (SPiM & SPiKE)                       */
+  /* 13. MARA — Majlis Amanah Rakyat (SPiM & SPiKE)                       */
   /* ─────────────────────────────────────────────────────────────────── */
   {
     id: 'mara_spim',
@@ -304,6 +893,7 @@ export const LENDERS: Lender[] = [
     shortName: 'MARA',
     emoji: '🏛️',
     type: 'Government Agency',
+    channelType: 'government_micro_agency',
     regulatedBy: 'Kementerian Kemajuan Desa dan Wilayah (KKDW)',
     shariah: true,
     gigFriendly: true,
@@ -333,68 +923,11 @@ export const LENDERS: Lender[] = [
         requiredDocs: ['MyKad / NRIC', '6 months Bank Statement', 'SSM Certificate', 'Rancangan Perniagaan Ringkas (Business Proposal)', 'Premise Photos'],
         notes: 'Subsidized 4.0% rate. No collateral required for loans up to RM 50,000.',
       },
-      {
-        id: 'mara_spike',
-        name: 'Skim Pembiayaan Kontrak Ekspres (SPiKE)',
-        productType: 'invoice_financing',
-        minAmountRM: 10000,
-        maxAmountRM: 100000,
-        tenureMinMonths: 3,
-        tenureMaxMonths: 12,
-        rateType: 'flat_pa',
-        rateFromPercent: 4.0,
-        rateToPercent: 4.0,
-        payslipRequired: false,
-        compatibleAssets: ['invoice_financing', 'working_capital'],
-        requiredDocs: ['MyKad / NRIC', '6 months Bank Statement', 'SSM Certificate', 'Awarded Contract / Purchase Order (PO) / Invoice'],
-        notes: 'Express cash advances for awarded government or corporate supply orders and contracts.',
-      },
     ],
   },
 
   /* ─────────────────────────────────────────────────────────────────── */
-  /* 6. BSN — Bank Simpanan Nasional (MicroKredit Semarak Niaga / Madani)*/
-  /* ─────────────────────────────────────────────────────────────────── */
-  {
-    id: 'bsn',
-    name: 'Bank Simpanan Nasional (BSN)',
-    shortName: 'BSN',
-    emoji: '🏦',
-    type: 'Development Bank',
-    regulatedBy: 'Bank Negara Malaysia (BNM) / Ministry of Finance',
-    shariah: true,
-    gigFriendly: true,
-    acceptedPlatforms: ['all', 'grab', 'foodpanda', 'lalamove', 'shopee', 'freelance'],
-    minIncomeRM: 800,
-    minGigHistoryMonths: 6,
-    website: 'bsn.com.my',
-    hotline: '1300-88-1900',
-    applicationUrl: 'https://www.bsn.com.my/page/BSN-Micro-i-Semarak-Niaga',
-    minFRIScore: 450,
-    highlight: 'Lowest monthly income requirement (RM 800/mo). Subsidized rate 4.0% p.a. for micro-businesses & gig workers.',
-    notes: 'Official mandate bank under Belanjawan Madani for micro-enterprise empowerment.',
-    products: [
-      {
-        id: 'bsn_micro_niaga',
-        name: 'BSN MicroKredit Semarak Niaga / Madani',
-        productType: 'micro_credit',
-        minAmountRM: 5000,
-        maxAmountRM: 50000,
-        tenureMinMonths: 12,
-        tenureMaxMonths: 60,
-        rateType: 'flat_pa',
-        rateFromPercent: 4.0,
-        rateToPercent: 4.0,
-        payslipRequired: false,
-        compatibleAssets: ['working_capital', 'personal_cash'],
-        requiredDocs: ['MyKad / NRIC', '3-6 months Bank Statement or BSN Savings Account Book', 'SSM Registration or PBT Permit (if business)'],
-        notes: 'Very flexible eligibility criteria. Available for micro-traders, stall owners, and gig freelancers.',
-      },
-    ],
-  },
-
-  /* ─────────────────────────────────────────────────────────────────── */
-  /* 7. BANK RAKYAT — Islamic Cooperative Bank                          */
+  /* 14. BANK RAKYAT — Islamic Cooperative Bank                          */
   /* ─────────────────────────────────────────────────────────────────── */
   {
     id: 'bank_rakyat',
@@ -402,6 +935,7 @@ export const LENDERS: Lender[] = [
     shortName: 'Bank Rakyat',
     emoji: '🏛️',
     type: 'Cooperative Bank',
+    channelType: 'commercial_bank_assisted',
     regulatedBy: 'Bank Negara Malaysia (BNM) / Ministry of Finance',
     shariah: true,
     gigFriendly: true,
@@ -431,27 +965,11 @@ export const LENDERS: Lender[] = [
         requiredDocs: ['MyKad / NRIC', '6 months Bank Statement', 'SSM Registration or Local Council License'],
         notes: 'Structured under Tawarruq arrangement. No collateral required.',
       },
-      {
-        id: 'bank_rakyat_auto_i',
-        name: 'Bank Rakyat Auto Financing-i',
-        productType: 'hire_purchase',
-        minAmountRM: 10000,
-        maxAmountRM: 100000,
-        tenureMinMonths: 12,
-        tenureMaxMonths: 84,
-        rateType: 'flat_pa',
-        rateFromPercent: 3.0,
-        rateToPercent: 4.5,
-        payslipRequired: false,
-        compatibleAssets: ['vehicle', 'car', 'van'],
-        requiredDocs: ['MyKad / NRIC', '6 months Bank Statement', 'Vehicle Dealer Sales Quotation'],
-        notes: 'Shariah-compliant vehicle hire purchase with competitive fixed profit rates.',
-      },
     ],
   },
 
   /* ─────────────────────────────────────────────────────────────────── */
-  /* 8. AGROBANK — Agriculture & Rural Food Micro-Financing             */
+  /* 15. AGROBANK — Agriculture & Rural Food Micro-Financing             */
   /* ─────────────────────────────────────────────────────────────────── */
   {
     id: 'agrobank_mikro',
@@ -459,6 +977,7 @@ export const LENDERS: Lender[] = [
     shortName: 'Agrobank',
     emoji: '🌾',
     type: 'Development Bank',
+    channelType: 'commercial_bank_assisted',
     regulatedBy: 'Bank Negara Malaysia (BNM)',
     shariah: true,
     gigFriendly: true,
@@ -485,30 +1004,14 @@ export const LENDERS: Lender[] = [
         rateToPercent: 8.5,
         payslipRequired: false,
         compatibleAssets: ['working_capital'],
-        requiredDocs: ['MyKad / NRIC', '6 months Bank Statement', 'SSM Registration or Agro Association Member Letter', 'Brief Operational Plan'],
+        requiredDocs: ['MyKad / NRIC', '6 months Bank Statement', 'SSM Registration or Agro Association Member Letter'],
         notes: 'Working capital for raw materials, fertilizers, seeds, and stall operations.',
-      },
-      {
-        id: 'agrobank_mesin_vehicle',
-        name: 'Agrobank Mesin & Kenderaan-i',
-        productType: 'hire_purchase',
-        minAmountRM: 10000,
-        maxAmountRM: 150000,
-        tenureMinMonths: 12,
-        tenureMaxMonths: 84,
-        rateType: 'flat_pa',
-        rateFromPercent: 3.5,
-        rateToPercent: 5.5,
-        payslipRequired: false,
-        compatibleAssets: ['equipment', 'vehicle', 'van'],
-        requiredDocs: ['MyKad / NRIC', '6 months Bank Statement', 'Supplier Machinery / Vehicle Quotation'],
-        notes: 'Financing for 4x4 pickups, delivery lorries, tractors, and food processing machines.',
       },
     ],
   },
 
   /* ─────────────────────────────────────────────────────────────────── */
-  /* 9. BANK ISLAM — Social Finance BangKIT Micro-Financing             */
+  /* 16. BANK ISLAM — Social Finance BangKIT Micro-Financing             */
   /* ─────────────────────────────────────────────────────────────────── */
   {
     id: 'bank_islam_mikro',
@@ -516,6 +1019,7 @@ export const LENDERS: Lender[] = [
     shortName: 'Bank Islam',
     emoji: '🕌',
     type: 'Islamic Bank',
+    channelType: 'commercial_bank_assisted',
     regulatedBy: 'Bank Negara Malaysia (BNM)',
     shariah: true,
     gigFriendly: true,
@@ -549,7 +1053,7 @@ export const LENDERS: Lender[] = [
   },
 
   /* ─────────────────────────────────────────────────────────────────── */
-  /* 10. AIM (AMANAH IKHTIAR MALAYSIA) — Grameen-style Microcredit       */
+  /* 17. AIM (AMANAH IKHTIAR MALAYSIA) — Grameen-style Microcredit       */
   /* ─────────────────────────────────────────────────────────────────── */
   {
     id: 'aim',
@@ -557,6 +1061,7 @@ export const LENDERS: Lender[] = [
     shortName: 'AIM (Amanah Ikhtiar)',
     emoji: '🏛️',
     type: 'Government Agency',
+    channelType: 'government_micro_agency',
     regulatedBy: 'Kementerian Pembangunan Usahawan dan Koperasi (KUSKOP)',
     shariah: true,
     gigFriendly: true,
@@ -590,7 +1095,7 @@ export const LENDERS: Lender[] = [
   },
 
   /* ─────────────────────────────────────────────────────────────────── */
-  /* 11. AEON CREDIT SERVICE — Largest Non-Bank Hire Purchase & Cash     */
+  /* 18. AEON CREDIT SERVICE — Largest Non-Bank Hire Purchase & Cash     */
   /* ─────────────────────────────────────────────────────────────────── */
   {
     id: 'aeon',
@@ -598,6 +1103,7 @@ export const LENDERS: Lender[] = [
     shortName: 'AEON Credit',
     emoji: '🏪',
     type: 'Finance Company',
+    channelType: 'commercial_bank_assisted',
     regulatedBy: 'Ministry of Housing & Local Government (KPKT) / BNM',
     shariah: false,
     gigFriendly: true,
@@ -647,48 +1153,7 @@ export const LENDERS: Lender[] = [
   },
 
   /* ─────────────────────────────────────────────────────────────────── */
-  /* 12. ALLIANCE BANK — Digital SME Specialist                          */
-  /* ─────────────────────────────────────────────────────────────────── */
-  {
-    id: 'alliance_mikro',
-    name: 'Alliance Bank Malaysia Berhad',
-    shortName: 'Alliance SME',
-    emoji: '🏦',
-    type: 'Commercial Bank',
-    regulatedBy: 'Bank Negara Malaysia (BNM)',
-    shariah: false,
-    gigFriendly: true,
-    acceptedPlatforms: ['all', 'shopee', 'lazada', 'freelance'],
-    minIncomeRM: 2000,
-    minGigHistoryMonths: 6,
-    website: 'alliancebank.com.my',
-    hotline: '+603-5516 9988',
-    applicationUrl: 'https://www.alliancebank.com.my/business/loans/digital-sme.aspx',
-    minFRIScore: 530,
-    highlight: '100% online digital application with 24-hour in-principle approval. Zero collateral required.',
-    notes: 'Fastest digital onboarding for Malaysian registered sole props and partnerships.',
-    products: [
-      {
-        id: 'alliance_digital_sme',
-        name: 'Alliance Digital SME Express Loan',
-        productType: 'sme_loan',
-        minAmountRM: 10000,
-        maxAmountRM: 100000,
-        tenureMinMonths: 12,
-        tenureMaxMonths: 60,
-        rateType: 'reducing_pa',
-        rateFromPercent: 5.8,
-        rateToPercent: 10.5,
-        payslipRequired: false,
-        compatibleAssets: ['working_capital'],
-        requiredDocs: ['MyKad / NRIC', '6 months Bank Statement (PDF)', 'SSM Certificate'],
-        notes: 'Fully digital submission without visiting a physical branch.',
-      },
-    ],
-  },
-
-  /* ─────────────────────────────────────────────────────────────────── */
-  /* 13. AMBANK — CGC-backed BizClub Micro Financing                     */
+  /* 19. AMBANK — CGC-backed BizClub Micro Financing                     */
   /* ─────────────────────────────────────────────────────────────────── */
   {
     id: 'ambank_mikro',
@@ -696,6 +1161,7 @@ export const LENDERS: Lender[] = [
     shortName: 'AmBank BizClub',
     emoji: '🏦',
     type: 'Commercial Bank',
+    channelType: 'commercial_bank_assisted',
     regulatedBy: 'Bank Negara Malaysia (BNM)',
     shariah: true,
     gigFriendly: true,
@@ -725,27 +1191,11 @@ export const LENDERS: Lender[] = [
         requiredDocs: ['MyKad / NRIC', '6 months Bank Statement', 'SSM Registration Certificate'],
         notes: 'Suitable for business growth, inventory procurement, and commercial tool upgrades.',
       },
-      {
-        id: 'ambank_auto_hp',
-        name: 'AmBank Auto Financing',
-        productType: 'hire_purchase',
-        minAmountRM: 10000,
-        maxAmountRM: 100000,
-        tenureMinMonths: 12,
-        tenureMaxMonths: 84,
-        rateType: 'flat_pa',
-        rateFromPercent: 3.1,
-        rateToPercent: 4.6,
-        payslipRequired: false,
-        compatibleAssets: ['vehicle', 'car', 'van'],
-        requiredDocs: ['MyKad / NRIC', '6 months Bank Statement', 'Vehicle Dealer Quotation'],
-        notes: 'Hire purchase financing for passenger cars and delivery vans.',
-      },
     ],
   },
 
   /* ─────────────────────────────────────────────────────────────────── */
-  /* 14. PUBLIC BANK — Solid Commercial Micro Sizing (SPM)               */
+  /* 20. PUBLIC BANK — Solid Commercial Micro Sizing (SPM)               */
   /* ─────────────────────────────────────────────────────────────────── */
   {
     id: 'public_bank_mikro',
@@ -753,6 +1203,7 @@ export const LENDERS: Lender[] = [
     shortName: 'Public Bank',
     emoji: '🏦',
     type: 'Commercial Bank',
+    channelType: 'commercial_bank_assisted',
     regulatedBy: 'Bank Negara Malaysia (BNM)',
     shariah: false,
     gigFriendly: true,
@@ -782,27 +1233,11 @@ export const LENDERS: Lender[] = [
         requiredDocs: ['MyKad / NRIC', '6 months Bank Statement', 'SSM Certificate', 'Utility Bill of Business Premise'],
         notes: 'Unsecured working capital facility under BNM micro-finance framework.',
       },
-      {
-        id: 'public_bank_auto_hp',
-        name: 'Public Bank Hire Purchase',
-        productType: 'hire_purchase',
-        minAmountRM: 10000,
-        maxAmountRM: 150000,
-        tenureMinMonths: 12,
-        tenureMaxMonths: 84,
-        rateType: 'flat_pa',
-        rateFromPercent: 2.7,
-        rateToPercent: 3.9,
-        payslipRequired: false,
-        compatibleAssets: ['vehicle', 'car', 'van'],
-        requiredDocs: ['MyKad / NRIC', '6 months Bank Statement', 'Vehicle Sales Order'],
-        notes: 'One of the lowest hire purchase interest rates in Malaysia.',
-      },
     ],
   },
 
   /* ─────────────────────────────────────────────────────────────────── */
-  /* 15. BANK MUAMALAT — Islamic Micro-Financing Specialist             */
+  /* 21. BANK MUAMALAT — Islamic Micro-Financing Specialist             */
   /* ─────────────────────────────────────────────────────────────────── */
   {
     id: 'muamalat_mikro',
@@ -810,6 +1245,7 @@ export const LENDERS: Lender[] = [
     shortName: 'Bank Muamalat',
     emoji: '🕌',
     type: 'Islamic Bank',
+    channelType: 'commercial_bank_assisted',
     regulatedBy: 'Bank Negara Malaysia (BNM)',
     shariah: true,
     gigFriendly: true,
@@ -839,27 +1275,11 @@ export const LENDERS: Lender[] = [
         requiredDocs: ['MyKad / NRIC', '6 months Bank Statement', 'SSM Registration Certificate'],
         notes: 'Shariah-compliant capital for retail, hawking, and small services.',
       },
-      {
-        id: 'muamalat_auto_i',
-        name: 'Bank Muamalat Auto Financing-i',
-        productType: 'hire_purchase',
-        minAmountRM: 10000,
-        maxAmountRM: 100000,
-        tenureMinMonths: 12,
-        tenureMaxMonths: 84,
-        rateType: 'flat_pa',
-        rateFromPercent: 3.2,
-        rateToPercent: 4.8,
-        payslipRequired: false,
-        compatibleAssets: ['vehicle', 'car', 'van'],
-        requiredDocs: ['MyKad / NRIC', '6 months Bank Statement', 'Vehicle Dealer Quotation'],
-        notes: 'Vehicle hire purchase under Ijarah Thumma Al-Bai (AITAB) concept.',
-      },
     ],
   },
 
   /* ─────────────────────────────────────────────────────────────────── */
-  /* 16. AFFIN BANK — Affin SMEmerge Micro-Financing                     */
+  /* 22. AFFIN BANK — Affin SMEmerge Micro-Financing                     */
   /* ─────────────────────────────────────────────────────────────────── */
   {
     id: 'affin_mikro',
@@ -867,6 +1287,7 @@ export const LENDERS: Lender[] = [
     shortName: 'Affin SMEmerge',
     emoji: '🏦',
     type: 'Commercial Bank',
+    channelType: 'commercial_bank_assisted',
     regulatedBy: 'Bank Negara Malaysia (BNM)',
     shariah: true,
     gigFriendly: true,
@@ -898,139 +1319,108 @@ export const LENDERS: Lender[] = [
       },
     ],
   },
-
-  /* ─────────────────────────────────────────────────────────────────── */
-  /* 17. FUNDING SOCIETIES — Malaysia's #1 P2P Crowdfunding Platform     */
-  /* ─────────────────────────────────────────────────────────────────── */
-  {
-    id: 'fundingsocieties',
-    name: 'Funding Societies Malaysia (Modalku Ventures Sdn Bhd)',
-    shortName: 'Funding Societies',
-    emoji: '🤝',
-    type: 'P2P Platform',
-    regulatedBy: 'Securities Commission Malaysia (SC)',
-    shariah: true,
-    gigFriendly: true,
-    acceptedPlatforms: ['all', 'shopee', 'lazada', 'freelance'],
-    minIncomeRM: 1500,
-    minGigHistoryMonths: 3,
-    website: 'fundingsocieties.com.my',
-    hotline: '+603-2202 1013',
-    applicationUrl: 'https://fundingsocieties.com.my/micro-financing',
-    minFRIScore: 470,
-    highlight: 'SC-licensed P2P financing. 100% digital with rapid 24-hour approval. Accepts Shopee/Lazada sellers and sole-props.',
-    notes: 'Over RM 10 billion disbursed across Southeast Asia. Uses alternative data scoring for rapid funding.',
-    products: [
-      {
-        id: 'fs_micro_financing',
-        name: 'Funding Societies Micro Financing',
-        productType: 'p2p_lending',
-        minAmountRM: 5000,
-        maxAmountRM: 100000,
-        tenureMinMonths: 3,
-        tenureMaxMonths: 18,
-        rateType: 'reducing_pa',
-        rateFromPercent: 8.0,
-        rateToPercent: 18.0,
-        payslipRequired: false,
-        compatibleAssets: ['working_capital', 'equipment'],
-        requiredDocs: ['MyKad / NRIC', '6 months Bank Statement (PDF)', 'SSM Certificate / E-Commerce Store Link'],
-        notes: 'Fast cash disbursement in 24 hours. Minimal documentation for e-commerce and retail merchants.',
-      },
-      {
-        id: 'fs_invoice_financing',
-        name: 'Funding Societies Invoice & PO Financing',
-        productType: 'invoice_financing',
-        minAmountRM: 10000,
-        maxAmountRM: 100000,
-        tenureMinMonths: 1,
-        tenureMaxMonths: 6,
-        rateType: 'flat_pa',
-        rateFromPercent: 1.0,
-        rateToPercent: 2.0,
-        payslipRequired: false,
-        compatibleAssets: ['invoice_financing', 'working_capital'],
-        requiredDocs: ['MyKad / NRIC', '6 months Bank Statement', 'SSM Certificate', 'Issued Invoices or Purchase Orders'],
-        notes: 'Immediate cash advance against pending client invoices or supplier purchase orders.',
-      },
-    ],
-  },
-
-  /* ─────────────────────────────────────────────────────────────────── */
-  /* 18. CAPBAY — Supply Chain & Invoice Liquidity Specialist            */
-  /* ─────────────────────────────────────────────────────────────────── */
-  {
-    id: 'capbay',
-    name: 'CapBay (Bay Group Holdings / Amber Creative Sdn Bhd)',
-    shortName: 'CapBay',
-    emoji: '🤝',
-    type: 'P2P Platform',
-    regulatedBy: 'Securities Commission Malaysia (SC)',
-    shariah: true,
-    gigFriendly: true,
-    acceptedPlatforms: ['all', 'freelance'],
-    minIncomeRM: 2000,
-    minGigHistoryMonths: 6,
-    website: 'capbay.com',
-    hotline: '+603-7931 7168',
-    applicationUrl: 'https://capbay.com/p2p-financing',
-    minFRIScore: 500,
-    highlight: 'Fintech supply chain financing. Unlocks up to 90% instant cash advance on unpaid invoices and purchase orders.',
-    notes: 'Backed by leading venture capital and approved by Securities Commission Malaysia.',
-    products: [
-      {
-        id: 'capbay_invoice_p2p',
-        name: 'CapBay Invoice & Supply Chain Financing',
-        productType: 'invoice_financing',
-        minAmountRM: 10000,
-        maxAmountRM: 200000,
-        tenureMinMonths: 1,
-        tenureMaxMonths: 6,
-        rateType: 'reducing_pa',
-        rateFromPercent: 6.5,
-        rateToPercent: 14.0,
-        payslipRequired: false,
-        compatibleAssets: ['invoice_financing', 'working_capital'],
-        requiredDocs: ['MyKad / NRIC', '6 months Bank Statement', 'SSM Registration', 'Unpaid Invoices / Client PO'],
-        notes: 'Up to 90% advance rate on verified corporate and government invoices.',
-      },
-    ],
-  },
 ];
 
 /**
  * Returns the verified direct application/portal URL for a lender.
- * If existingUrl is already valid and not '#' or placeholder, it is returned.
- * Otherwise, resolves against official Malaysian banks and government micro-funds.
+ * Never returns broken/placeholder links.
  */
 export function getLenderOfficialPortalUrl(lenderName?: string, existingUrl?: string): string {
-  if (existingUrl && existingUrl.startsWith('http') && !existingUrl.includes('localhost') && existingUrl !== '#' && existingUrl !== 'https://gxbank.my') {
+  if (
+    existingUrl &&
+    existingUrl.startsWith('http') &&
+    !existingUrl.includes('localhost') &&
+    existingUrl !== '#' &&
+    !existingUrl.includes('undefined')
+  ) {
+    // If it's a known old broken BSN link, fix it to the official working one
+    if (existingUrl.includes('bsn.com.my') && (existingUrl.includes('BSN-Micro') || existingUrl.includes('semarak'))) {
+      return 'https://www.bsn.com.my/page/business-financing-products-index';
+    }
     return existingUrl;
   }
+
   const name = (lenderName || '').toLowerCase();
+  if (name.includes('gxbank') || name.includes('gx bank')) return 'https://www.gxbank.my';
+  if (name.includes('boost')) return 'https://www.myboostsme.co';
+  if (name.includes('aeon bank')) return 'https://www.aeonbank.com.my';
+  if (name.includes('tng') || name.includes('gopinjam') || name.includes('touch')) return 'https://www.touchngo.com.my/consumer/financial-services/gopinjam/';
+  if (name.includes('tekun')) return 'https://tekunonline.tekun.gov.my/login';
+  if (name.includes('bsn') || name.includes('simpanan')) return 'https://www.bsn.com.my/page/business-financing-products-index';
   if (name.includes('maybank')) return 'https://www.maybank2u.com.my/maybank2u/malaysia/en/personal/loans/business/sme_clean_loan.page';
-  if (name.includes('gxbank') || name.includes('gx bank')) return 'https://gxbank.my';
-  if (name.includes('boost')) return 'https://myboost.co';
-  if (name.includes('agrobank') || name.includes('agro')) return 'https://www.agrobank.com.my';
-  if (name.includes('tekun')) return 'https://www.tekun.gov.my/ms/skm-tekun-niaga/';
-  if (name.includes('bsn') || name.includes('simpanan nasional')) return 'https://www.bsn.com.my/page/bsn-micro-semarak';
-  if (name.includes('alliance')) return 'https://www.alliancebank.com.my/business/business-financing/digital-sme.aspx';
-  if (name.includes('bank islam') || name.includes('islam')) return 'https://www.bankislam.com/business-banking/sme-banking/';
-  if (name.includes('bank rakyat') || name.includes('rakyat')) return 'https://www.bankrakyat.com.my/c/business/financing-i/micro-financing-i';
-  if (name.includes('sme bank')) return 'https://www.smebank.com.my';
-  if (name.includes('funding societies')) return 'https://fundingsocieties.com.my';
-  if (name.includes('aeon')) return 'https://www.aeoncredit.com.my/personal-financing';
-  if (name.includes('mara')) return 'https://www.mara.gov.my/en/pembiayaan-perniagaan/';
-  if (name.includes('rhb')) return 'https://www.rhbgroup.com/sme/financing/index.html';
-  if (name.includes('cimb')) return 'https://www.cimb.com.my/en/business/financing.html';
-  if (name.includes('hong leong') || name.includes('hlb')) return 'https://www.hlb.com.my/en/business-banking.html';
-  if (name.includes('public bank') || name.includes('pbb')) return 'https://www.pbebank.com/Business-Banking.aspx';
+  if (name.includes('alliance')) return 'https://www.alliancebank.com.my/business/loans/digital-sme.aspx';
+  if (name.includes('funding societies') || name.includes('fundingsocieties')) return 'https://fundingsocieties.com.my/micro-financing';
   if (name.includes('capbay')) return 'https://capbay.com/p2p-financing';
-  if (name.includes('amfinance') || name.includes('ambank')) return 'https://www.ambank.com.my/eng/business';
-  
-  if (existingUrl && existingUrl.startsWith('http') && existingUrl !== '#') {
-    return existingUrl;
-  }
-  return 'https://gxbank.my';
+  if (name.includes('cimb')) return 'https://www.cimb.com.my/en/business/financing/micro-financing.html';
+  if (name.includes('agrobank') || name.includes('agro')) return 'https://www.agrobank.com.my/product/pembiayaan-kredit-mikro-i';
+  if (name.includes('bank islam') || name.includes('islam')) return 'https://www.bankislam.com/sme-banking/social-finance/bangkit-microfinancing';
+  if (name.includes('bank rakyat') || name.includes('rakyat')) return 'https://www.bankrakyat.com.my/c/personal-banking/financing/pembiayaan-mikro-i';
+  if (name.includes('sme bank')) return 'https://www.smebank.com.my/en/financing/spum';
+  if (name.includes('mara')) return 'https://www.mara.gov.my/en/business/entrepreneur-financing';
+  if (name.includes('aim') || name.includes('ikhtiar')) return 'https://www.aim.gov.my';
+  if (name.includes('aeon')) return 'https://www.aeoncredit.com.my';
+  if (name.includes('ambank')) return 'https://www.ambank.com.my/business/financing/bizclub';
+  if (name.includes('public bank') || name.includes('pbb')) return 'https://www.pbebank.com/business-banking/loans-financing/micro-financing.aspx';
+  if (name.includes('muamalat')) return 'https://www.muamalat.com.my/business-banking/micro-financing';
+  if (name.includes('affin')) return 'https://www.affinalways.com/en/sme-banking/smemerge';
+
+  return 'https://www.gxbank.my';
 }
 
+/**
+ * Returns the application channel type for a lender (app, web, government, or assisted).
+ */
+export function getLenderChannelType(lenderNameOrId?: string): ApplicationChannel {
+  const query = (lenderNameOrId || '').toLowerCase();
+  
+  // 1. Digital Bank Apps
+  if (
+    query.includes('gxbank') ||
+    query.includes('gx bank') ||
+    query.includes('boost') ||
+    query.includes('aeon bank') ||
+    query.includes('tng') ||
+    query.includes('gopinjam') ||
+    query.includes('touch')
+  ) {
+    return 'digital_bank_app';
+  }
+
+  // 2. Government & Subsidized Micro Agencies
+  if (
+    query.includes('tekun') ||
+    query.includes('bsn') ||
+    query.includes('mara') ||
+    query.includes('aim') ||
+    query.includes('ikhtiar')
+  ) {
+    return 'government_micro_agency';
+  }
+
+  // 3. Digital Web Online Portals
+  if (
+    query.includes('maybank') ||
+    query.includes('alliance') ||
+    query.includes('funding societies') ||
+    query.includes('capbay')
+  ) {
+    return 'digital_web_portal';
+  }
+
+  // 4. Commercial / Development Banks
+  return 'commercial_bank_assisted';
+}
+
+/**
+ * Finds a lender object by ID or partial name
+ */
+export function findLenderByNameOrId(nameOrId?: string): Lender | undefined {
+  if (!nameOrId) return undefined;
+  const q = nameOrId.toLowerCase().trim();
+  return LENDERS.find(l => 
+    l.id.toLowerCase() === q ||
+    l.name.toLowerCase().includes(q) ||
+    l.shortName.toLowerCase().includes(q) ||
+    q.includes(l.shortName.toLowerCase())
+  );
+}
