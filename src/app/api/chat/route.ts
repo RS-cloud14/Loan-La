@@ -47,6 +47,60 @@ interface UserContextPayload {
   uploadedFilesSummary?: string[];
 }
 
+/**
+ * Intelligent Language Detector
+ * Checks the user's actual prompt to determine whether it is in English or Bahasa Melayu.
+ * Never defaults to Malay if the user is typing in English!
+ */
+function detectMessageLanguage(text: string, requestedLang?: 'en' | 'bm'): 'en' | 'bm' {
+  if (!text || text.trim().length === 0) return requestedLang || 'en';
+  const lower = text.toLowerCase();
+
+  // Strong Malay indicators
+  const malayPatterns = [
+    /\b(saya|awak|anda|kami|kita|dia|mereka)\b/,
+    /\b(nak|mau|mohon|buat|pinjam|pinjaman|pembiayaan)\b/,
+    /\b(tak|tidak|bukan|tiada|ada|ke|kah|takkan)\b/,
+    /\b(boleh|dapat|lepas|lulus|sangkut|tolak|kena|patut)\b/,
+    /\b(kadar|faedah|bunga|ansuran|bayar|bayaran|sebulan|bulan|tahun)\b/,
+    /\b(duit|wang|gaji|pendapatan|modal|pusing|stok|kedai|perniagaan)\b/,
+    /\b(dokumen|penyata|akaun|bank|cawangan|syarat|kelayakan)\b/,
+    /\b(siapa|mana|apa|apakah|bagaimana|bagaimanakah|kenapa|mengapa)\b/,
+    /\b(paling|laju|cepat|senang|mudah|murah|rendah|tinggi)\b/,
+    /\b(kerajaan|agensi|skim|bantuan|dana|usahawan|wanita|belia)\b/,
+    /\b(sah|lesen|berlesen|ah\s*long|yuran|pendahuluan)\b/,
+    /\b(terima\s*kasih|tolong|bantu|tunjuk|buka)\b/
+  ];
+
+  // Strong English indicators
+  const englishPatterns = [
+    /\b(i|i'm|im|my|me|we|our|you|your|they|them|he|she)\b/,
+    /\b(can|could|would|should|will|do|does|did|is|are|am|was|were)\b/,
+    /\b(how|what|which|where|when|why|who|whose)\b/,
+    /\b(loan|borrow|financing|installment|repayment|interest|rate|rates)\b/,
+    /\b(qualify|approved|approval|rejected|odds|eligible|eligibility)\b/,
+    /\b(monthly|yearly|tenure|years|months|amount|payout|fastest)\b/,
+    /\b(payslip|payslips|statement|statements|income|working\s*capital)\b/,
+    /\b(digital\s*bank|inventory|government|fund|funds|female|young|youth)\b/,
+    /\b(licensed|service|shark|ah\s*long|upfront|charges|fees|deposit)\b/,
+    /\b(please|help|show|calculate|calculator|check|increase)\b/
+  ];
+
+  let malayScore = 0;
+  for (const p of malayPatterns) {
+    if (p.test(lower)) malayScore += 1;
+  }
+
+  let englishScore = 0;
+  for (const p of englishPatterns) {
+    if (p.test(lower)) englishScore += 1;
+  }
+
+  if (englishScore > malayScore) return 'en';
+  if (malayScore > englishScore) return 'bm';
+  return requestedLang || 'en';
+}
+
 // Read latest assessment from stored JSON file on disk if available
 async function getLatestStoredAssessment(): Promise<any | null> {
   try {
@@ -63,8 +117,30 @@ const agentTools: any = [
   {
     functionDeclarations: [
       {
+        name: 'set_calculator',
+        description: 'Update the loan calculator with specific loan amount, tenure in years, and interest rate. Call this whenever the user asks for repayment calculations or asks to see/configure the loan calculator.',
+        parameters: {
+          type: Type.OBJECT,
+          properties: {
+            loanAmount: {
+              type: Type.NUMBER,
+              description: 'Financing principal amount in Ringgit Malaysia (e.g. 15000).'
+            },
+            tenureYears: {
+              type: Type.NUMBER,
+              description: 'Tenure in years (e.g. 1, 2, 3, 5).'
+            },
+            interestRate: {
+              type: Type.NUMBER,
+              description: 'Indicative interest rate percentage p.a. (e.g. 5.5).'
+            }
+          },
+          required: ['loanAmount', 'tenureYears']
+        }
+      },
+      {
         name: 'configure_loan_parameters',
-        description: 'Configure or update the borrower loan need: loan purpose, principal amount in MYR, tenure in years, and working platform.',
+        description: 'Configure or update the borrower loan application in Step 1. ONLY call this when the user explicitly asks to apply, set, or update their loan application parameters (NOT when just asking general advice or questions).',
         parameters: {
           type: Type.OBJECT,
           properties: {
@@ -175,54 +251,113 @@ export async function POST(request: NextRequest) {
     }
 
     const lastUserMessage = messages[messages.length - 1]?.content || '';
-    const storedAssessment = await getLatestStoredAssessment();
 
-    // Consolidate live financial telemetry
-    const applicantName = userContext.userName || userContext.name || storedAssessment?.applicantName || 'Borrower';
-    const assessedIncome = userContext.averageMonthlyIncome || userContext.assessedInflow || storedAssessment?.averageMonthlyNetIncome || 3500;
-    const friScore = userContext.friScore || userContext.latestScore || storedAssessment?.score || 720;
-    const grade = userContext.latestGrade || storedAssessment?.grade || 'A';
-    const dsr = userContext.dsrPercentage !== undefined ? userContext.dsrPercentage : (userContext.currentDsr !== undefined ? userContext.currentDsr : 32.5);
-    const loanAmount = userContext.targetLoanAmount || storedAssessment?.targetLoanAmount || 10000;
-    const loanPurpose = userContext.targetLoanPurpose || storedAssessment?.targetLoanPurpose || 'working_capital';
+    // Precise language detection: prioritize the user's latest query language!
+    const detectedLang = detectMessageLanguage(lastUserMessage, language);
+
+    const isLoggedIn = Boolean(userContext.isLoggedIn && userContext.name && userContext.name !== 'Guest');
+    const hasAssessment = Boolean((userContext.latestScore && userContext.latestScore > 0) || (userContext.friScore && userContext.friScore > 0));
+
+    const storedAssessment = hasAssessment ? await getLatestStoredAssessment() : null;
+
+    // Applicant context
+    const applicantName = isLoggedIn ? (userContext.userName || userContext.name || 'Borrower') : 'Guest';
+    const assessedIncome = hasAssessment ? (userContext.averageMonthlyIncome || userContext.assessedInflow || storedAssessment?.averageMonthlyNetIncome || 3500) : 0;
+    const friScore = hasAssessment ? (userContext.friScore || userContext.latestScore || storedAssessment?.score || 720) : null;
+    const grade = hasAssessment ? (userContext.latestGrade || storedAssessment?.grade || 'A') : null;
+    const dsr = hasAssessment ? (userContext.dsrPercentage !== undefined ? userContext.dsrPercentage : (userContext.currentDsr !== undefined ? userContext.currentDsr : 32.5)) : null;
+    const loanAmount = userContext.targetLoanAmount || 10000;
+    const loanPurpose = userContext.targetLoanPurpose || 'working_capital';
     const tenureYears = userContext.calcTenureYears || 2;
-    const platform = userContext.platform || 'Gig Economy & Micro-SME';
-    const currentPage = userContext.currentPage || 'app';
-    const activeStep = userContext.activeStep || 1;
-    const uploadedFilesCount = userContext.uploadedFilesCount || 0;
+    const platform = userContext.platform && userContext.platform !== 'Guest' ? userContext.platform : 'Gig Economy / Micro-SME';
 
-    // Build the Autonomous Agent System Prompt
-    const systemPrompt = `You are Loan-La's Autonomous AI Credit Agent & Financial Underwriting Copilot.
-You are embedded directly in the Loan-La financial platform for Malaysian gig workers (Grab, Foodpanda, Shopee, Lalamove, TikTok) and micro-SMEs.
-You do NOT just provide passive content or canned lectures. You are an active, intelligent agent with real tools to inspect, configure, optimize, and dispatch loan applications.
+    // Strict System Prompt with Comprehensive Malaysian Lending Knowledge
+    const systemPrompt = `You are Loan-La's Expert AI Credit Copilot & Financial Underwriting Assistant.
+You are embedded directly in the Loan-La platform, helping Malaysian gig workers (Grab, Foodpanda, Shopee, Lalamove, TikTok) and micro-SMEs secure financing from licensed Malaysian digital banks and government micro-funds.
 
-LIVE APPLICANT FINANCIAL CONTEXT:
+========================================
+CRITICAL LANGUAGE ENFORCEMENT:
+========================================
+- USER MESSAGE LANGUAGE: "${detectedLang.toUpperCase()}" (${detectedLang === 'en' ? 'ENGLISH' : 'BAHASA MELAYU'}).
+- MANDATORY: You MUST reply 100% in ${detectedLang === 'en' ? 'ENGLISH' : 'BAHASA MELAYU'}.
+${detectedLang === 'en' 
+  ? '- DO NOT speak or reply in Bahasa Melayu under any circumstances because the user asked in English.' 
+  : '- Sila jawab sepenuhnya dalam Bahasa Melayu yang mesra, profesional dan mudah difahami.'}
+
+========================================
+USER STATUS & CONTEXT:
+========================================
+${hasAssessment && friScore !== null
+  ? `VERIFIED ASSESSMENT AVAILABLE:
 - Name: ${applicantName}
-- Platform / Business: ${platform}
-- Assessed Monthly Net Income: RM ${assessedIncome.toLocaleString()}
-- Financial Readiness Index (FRI): ${friScore}/850 (Grade ${grade})
-- Current Debt Service Ratio (DSR): ${dsr.toFixed(1)}% (BNM Macroprudential Cap is 60%)
-- Target Loan Need: RM ${loanAmount.toLocaleString()} (${loanPurpose}) over ${tenureYears} year(s)
-- Uploaded Financial Evidence: ${uploadedFilesCount} file(s) attached
-${dsr > 55 ? `⚠️ CRITICAL UNDERWRITING WARNING: Applicant's current DSR is ${dsr.toFixed(1)}%, which approaches or exceeds Bank Negara Malaysia (BNM) 60% macroprudential ceiling. When the user asks about loan feasibility or approval odds, proactively advise them to extend tenure or adjust quantum to bring DSR into the safe zone (<45%), and call 'optimize_affordability'!` : `✅ HEALTHY UNDERWRITING PROFILE: Applicant's DSR is ${dsr.toFixed(1)}% (well within BNM 60% safe zone). Reassure them of high approval odds with digital banks (GXBank, Boost Bank) and government micro-funds (TEKUN, BSN).`}
+- Platform: ${platform}
+- Assessed Net Monthly Income: RM ${assessedIncome.toLocaleString()}
+- FRI Score: ${friScore}/850 (Grade ${grade})
+- Current DSR: ${dsr !== null ? dsr.toFixed(1) : '35'}% (BNM Macroprudential Cap: 60%)
+- Target Loan: RM ${loanAmount.toLocaleString()} (${loanPurpose}) over ${tenureYears} year(s)
+${dsr !== null && dsr > 55 ? `⚠️ HIGH DSR ALERT: Current DSR is ${dsr.toFixed(1)}%. Advise extending tenure to bring DSR into the safe zone (<45%) and recommend flexible lenders like TEKUN/BSN.` : `✅ HEALTHY DSR: DSR is safe.`}`
+  : `GUEST VISITOR (NO ASSESSMENT COMPLETED YET):
+- The user is currently browsing as a guest.
+- They have NOT completed a credit check or document upload yet.
+- DO NOT invent or hallucinate a "DSR of 0.0%", fake startup credit scores, or past assessment data!
+- Address their questions directly, accurately, and warmly.`}
 
-AGENT BEHAVIOR RULES:
-1. EMBEDDED & EFFORTLESS:
-   - When a user states their financing need, amount, tenure, or income (e.g. "Saya nak pinjam RM15k untuk beli stok raya"), DO NOT write a lecture. Call the \`configure_loan_parameters\` tool to update their application state directly!
-   - When a user asks how to qualify or fix a high DSR, analyze their numbers, suggest an optimal tenure or lender, and call \`optimize_affordability\`.
-   - When a user wants to submit or apply to a bank (e.g. "Mohon untuk saya di GXBank"), call \`dispatch_lender_application\`.
-   - When a user asks to view calculator, directory, tracker, or report, call \`navigate_view\`.
-2. NATURAL & MULTILINGUAL:
-   - Understand any human speech: Bahasa Melayu, English, Manglish, colloquial slang, or typos.
-   - Match the user's language naturally. If they speak Malay, respond in friendly, professional Malay. If English, respond in English.
-3. CONCISE & ACTION-ORIENTED:
-   - Keep conversational explanations clear, empathetic, and concise (2-4 sentences max).
-   - State clearly what action you have executed or recommend.
-   - Never output hardcoded disclaimers or raw markdown hashes (#) headers. Talk like an experienced, trusted personal banker.`;
+========================================
+VERIFIED MALAYSIAN FINANCING KNOWLEDGE:
+========================================
+1. GIG WORKERS & NO PAYSLIPS (Grab, Foodpanda, Shopee sellers, freelancers):
+   - Traditional commercial banks reject borrowers who lack 3 months of formal corporate payslips or EPF/EA forms.
+   - HOWEVER, licensed Malaysian Digital Banks (GXBank, Boost Bank, AEON Bank) and alternative lenders (AEON Credit, Direct Lending, Fundaztic) DO NOT require conventional payslips.
+   - They accept:
+     a) 3–6 months of bank statement PDFs showing driver e-wallet cashout transfers.
+     b) Driver/rider app weekly earnings summary statements.
+     c) E-wallet transaction summaries.
+   - As long as monthly inflows show consistent earning history (e.g. RM3,000–RM4,000/mo), borrowers can comfortably qualify for RM5,000–RM20,000.
+
+2. SPEED OF DISBURSEMENT & DIGITAL BANKS:
+   - FASTEST PAYOUT: **GXBank** (Singlife / Grab consortium) offers the fastest payout in Malaysia. Once approved digitally in-app, funds are disbursed directly into the account within **10 minutes to under 1 hour** (up to RM50,000, 100% online, zero paperwork).
+   - 2ND FASTEST: **Boost Bank SME** (Axiata / RHB consortium) — 100% digital, typical turnaround within **24 to 48 hours** (up to RM100,000 for registered merchants).
+   - **AEON Bank**: 100% Islamic digital bank with a 1–3 business day turnaround.
+
+3. HIGH DSR (DEBT SERVICE RATIO) & PRIOR BANK REJECTIONS (e.g. CIMB / Maybank reject with DSR ~58%):
+   - Why commercial banks reject: They enforce strict scoring cutoffs and hard DSR ceilings (usually 50%–60%).
+   - Solutions to increase approval odds:
+     a) **Extend repayment tenure**: Extending tenure (e.g. from 2 years to 4–5 years) slashes the monthly installment by ~40-50%, dropping DSR from 58% down to ~35-40%, safely below BNM's 60% threshold.
+     b) **Apply to alternative / development lenders**: **TEKUN Nasional** and **BSN Mikro** assess actual business cashflow rather than rigid corporate credit scores.
+     c) **Debt Consolidation**: Combine high-interest credit card debt into a single lower-rate micro-loan.
+     d) **Avoid blind multi-applications**: Multiple commercial bank rejections leave hard inquiries on CCRIS, damaging credit score.
+
+4. LOAN REPAYMENT CALCULATION:
+   - Flat interest formula:
+     * Total Interest = Principal × (Rate / 100) × TenureYears
+     * Total Repayment = Principal + Total Interest
+     * Monthly Repayment = Total Repayment / (TenureYears × 12)
+   - Example (RM15,000, 2 years, 5.5% interest):
+     * Total Interest = 15,000 × 0.055 × 2 = RM 1,650
+     * Total Repayment = RM 16,650
+     * Monthly Installment = RM 16,650 ÷ 24 = **RM 693.75 / month**.
+   - Whenever asked for calculations, state the numbers clearly and trigger the \`set_calculator\` tool!
+
+5. GOVERNMENT FUNDS FOR FEMALE & YOUTH ENTREPRENEURS:
+   - **TEKUNITA (TEKUN Nasional)**: Specifically for female micro-entrepreneurs. Financing up to RM20,000 with a low subsidized interest rate of **4.0% p.a. flat**, minimal paperwork, and quick processing.
+   - **BSN Micro / TemanNita**: Dedicated financing for women-owned micro-enterprises up to RM50,000 with subsidized low rates.
+   - **Skim Pembangunan Usahawan Belia (TEKUN / BSN Belia)**: Dedicated micro-credit for youth entrepreneurs aged 18–30 with subsidized rates as low as **4.0% p.a.**
+
+6. LEGITIMACY & ANTI-SCAM ASSURANCE:
+   - Loan-La is 100% LEGITIMATE and SAFE. We are **NOT** a loan shark (ah long) and **NOT** an unlicensed moneylender.
+   - **NO UPFRONT FEES**: Loan-La is 100% free for borrowers. We NEVER ask for processing fees, deposit fees, or lawyer fees before approval. Any party asking for money upfront is an illegal scam!
+   - We connect borrowers ONLY to Bank Negara Malaysia (BNM) licensed banks and KPKT-regulated moneylenders.
+
+========================================
+TOOL CALLING RULES:
+========================================
+1. When calling ANY tool (like \`set_calculator\`, \`query_bank_intelligence\`, \`configure_loan_parameters\`, or \`optimize_affordability\`), YOU MUST STILL GENERATE A COMPLETE, HELPFUL TEXT RESPONSE answering the user's specific question!
+2. If the user asks a question (e.g. "Which bank has fastest payout?" or "What is my monthly repayment?"), ALWAYS answer their specific question with detailed facts first. DO NOT just output a generic "I have configured your loan on Step 1" boilerplate!
+3. Keep answers clear, empathetic, and professional (2-4 concise paragraphs max).`;
 
     // Format conversational history for Gemini
     const contents: any[] = [];
-    const recentMessages = messages.slice(-8); // Keep last 8 turns for tight latency
+    const recentMessages = messages.slice(-8);
 
     for (const msg of recentMessages) {
       contents.push({
@@ -231,14 +366,14 @@ AGENT BEHAVIOR RULES:
       });
     }
 
-    // Call Gemini 2.5 with Native Function Calling
+    // Call Gemini with rotation
     const geminiResult = await callGeminiWithModelRotation(async (ai, model) => {
       const response = await ai.models.generateContent({
         model,
         contents,
         config: {
           systemInstruction: systemPrompt,
-          temperature: 0.4,
+          temperature: 0.35,
           tools: agentTools
         }
       });
@@ -249,13 +384,35 @@ AGENT BEHAVIOR RULES:
     const functionCalls = geminiResult.functionCalls;
     let extractedAction: any = undefined;
 
-    // Handle tool execution decisions
+    // Process Tool Decisions
     if (functionCalls && functionCalls.length > 0) {
       const toolCall = functionCalls[0];
       const toolName = toolCall.name;
       const args: any = toolCall.args || {};
 
-      if (toolName === 'configure_loan_parameters') {
+      if (toolName === 'set_calculator') {
+        const pAmount = args.loanAmount || 15000;
+        const pTenure = args.tenureYears || 2;
+        const pRate = args.interestRate || 5.5;
+        const totalInterest = pAmount * (pRate / 100) * pTenure;
+        const totalPayable = pAmount + totalInterest;
+        const monthly = Math.round((totalPayable / (pTenure * 12)) * 100) / 100;
+
+        extractedAction = {
+          type: 'SET_CALCULATOR',
+          payload: {
+            loanAmount: pAmount,
+            tenureYears: pTenure,
+            interestRate: pRate
+          }
+        };
+
+        if (!reply || reply.length < 20) {
+          reply = detectedLang === 'bm'
+            ? `Untuk pinjaman RM ${pAmount.toLocaleString()} selama ${pTenure} tahun pada kadar faedah ${pRate}% p.a.:\n\n• **Anggaran Ansuran Bulanan:** RM ${monthly.toFixed(2)}/bulan\n• **Jumlah Faedah:** RM ${totalInterest.toLocaleString()}\n• **Jumlah Bayaran Balik:** RM ${totalPayable.toLocaleString()}\n\nSaya telah mengemas kini kalkulator interaktif pada skrin anda supaya anda boleh menyemak butirannya dengan mudah!`
+            : `For a loan of RM ${pAmount.toLocaleString()} over ${pTenure} year(s) at an indicative interest rate of ${pRate}% p.a.:\n\n• **Estimated Monthly Installment:** RM ${monthly.toFixed(2)} / month\n• **Total Interest:** RM ${totalInterest.toLocaleString()}\n• **Total Repayment:** RM ${totalPayable.toLocaleString()}\n\nI have updated the interactive calculator on your screen with these exact numbers!`;
+        }
+      } else if (toolName === 'configure_loan_parameters') {
         extractedAction = {
           type: 'SET_LOAN_PURPOSE',
           payload: {
@@ -266,24 +423,29 @@ AGENT BEHAVIOR RULES:
             targetStep: 2
           }
         };
-        if (!reply) {
-          reply = language === 'bm'
-            ? `Saya telah tetapkan permohonan pembiayaan anda sebanyak RM ${(args.amount || loanAmount).toLocaleString()} untuk tempoh ${args.tenureYears || tenureYears} tahun pada Langkah 1. Anda boleh terus memuat naik dokumen penyata anda di Langkah 2!`
-            : `I've configured your loan application for RM ${(args.amount || loanAmount).toLocaleString()} over ${args.tenureYears || tenureYears} year(s) on Step 1. You can now proceed to upload your statements on Step 2!`;
+
+        if (!reply || reply.length < 20) {
+          reply = detectedLang === 'bm'
+            ? `Saya telah menetapkan keperluan pinjaman anda sebanyak RM ${(args.amount || loanAmount).toLocaleString()} untuk tempoh ${args.tenureYears || tenureYears} tahun pada Langkah 1. Anda boleh teruskan untuk memuat naik dokumen penyata anda di Langkah 2!`
+            : `I've configured your loan request for RM ${(args.amount || loanAmount).toLocaleString()} over ${args.tenureYears || tenureYears} year(s) on Step 1. You can now proceed to review or upload your statements on Step 2!`;
         }
       } else if (toolName === 'optimize_affordability') {
+        const proposedYears = args.proposedTenureYears || (tenureYears + 2);
+        const proposedAmt = args.proposedLoanAmount || loanAmount;
+
         extractedAction = {
           type: 'SET_CALCULATOR',
           payload: {
-            loanAmount: args.proposedLoanAmount || loanAmount,
-            tenureYears: args.proposedTenureYears || (tenureYears + 1),
+            loanAmount: proposedAmt,
+            tenureYears: proposedYears,
             interestRate: 5.5
           }
         };
-        if (!reply) {
-          reply = language === 'bm'
-            ? `Berdasarkan analisis kapasiti bayaran balik anda, saya telah melaraskan tempoh kepada ${args.proposedTenureYears || (tenureYears + 1)} tahun dalam kalkulator untuk menurunkan DSR anda ke tahap selamat.`
-            : `Based on your cashflow capacity, I've adjusted your repayment tenure to ${args.proposedTenureYears || (tenureYears + 1)} years in the calculator to bring your DSR well within the safe approval zone.`;
+
+        if (!reply || reply.length < 20) {
+          reply = detectedLang === 'bm'
+            ? `Untuk mengurangkan DSR anda dan mengelakkan penolakan oleh bank, saya cadangkan melanjutkan tempoh bayaran balik kepada ${proposedYears} tahun. Ini akan menurunkan ansuran bulanan anda dan meletakkan DSR anda dalam zon selamat Bank Negara Malaysia (<45%). Saya telah melaraskannya pada kalkulator untuk anda.`
+            : `To lower your DSR and prevent another bank rejection, extending your repayment tenure to ${proposedYears} years will significantly reduce your monthly installments, bringing your DSR into Bank Negara Malaysia's safe zone (<45%). I have adjusted the calculator accordingly for you.`;
         }
       } else if (toolName === 'dispatch_lender_application') {
         extractedAction = {
@@ -294,9 +456,9 @@ AGENT BEHAVIOR RULES:
           }
         };
         if (!reply) {
-          reply = language === 'bm'
-            ? `Memulakan penghantaran automatik permohonan dan Memorandum Penilaian Kredit (CAM) anda ke pintu masuk ${args.lenderName || 'lender'} sekarang.`
-            : `Initiating automated dispatch of your application and Credit Assessment Memorandum (CAM) to ${args.lenderName || 'the lender'} gateway now.`;
+          reply = detectedLang === 'bm'
+            ? `Memulakan penghantaran permohonan digital anda ke ${args.lenderName || 'lender'} sekarang.`
+            : `Initiating digital application dispatch to ${args.lenderName || 'the lender'} gateway now.`;
         }
       } else if (toolName === 'navigate_view') {
         const page = args.targetPage;
@@ -316,46 +478,33 @@ AGENT BEHAVIOR RULES:
           extractedAction = { type: 'NAVIGATE_SUPPORT' };
         }
         if (!reply) {
-          reply = language === 'bm'
+          reply = detectedLang === 'bm'
             ? `Membuka halaman ${page} untuk anda.`
             : `Navigating to ${page} for you now.`;
         }
       } else if (toolName === 'query_bank_intelligence') {
         extractedAction = { type: 'OPEN_BANK_INTELLIGENCE' };
-        try {
-          const intelState = await getBankIntelligenceState();
-          const targetId = args.lenderId;
-          const overrides = intelState.activeOverrides;
-          const target = targetId && overrides[targetId] ? overrides[targetId] : null;
-
-          if (target) {
-            reply = language === 'bm'
-              ? `Maklumat rasmi terkini yang disahkan oleh Ejen Pasaran untuk **${target.name}**: Kadar indikatif ialah **${target.rateLabel}** dengan kelajuan pembayaran **${target.turnaround}** (Had pembiayaan maksimum: ${target.maxLoan}). Promosi aktif: "${target.campaignPromo || 'Pengecualian yuran pemprosesan'}".`
-              : `Latest official intelligence verified by the Market Agent for **${target.name}**: Indicative rate is **${target.rateLabel}** with **${target.turnaround}** turnaround (Max quantum: ${target.maxLoan}). Active campaign: "${target.campaignPromo || 'Zero processing fee promo'}".`;
-          } else {
-            reply = language === 'bm'
-              ? `Ejen Pasaran AI sedang memantau ${intelState.totalBanksMonitored} institusi berlesen Malaysia. Kadar terkini: **GXBank** (4.0% – 5.5% p.a., bayaran tunai 10 minit), **Boost Bank** (3.75% – 5.25% p.a., had RM 100k), dan **TEKUN** (4.0% tetap bersubsidi). Saya telah membuka panel risikan pasaran untuk semakan terperinci anda.`
-              : `The AI Market Agent is tracking ${intelState.totalBanksMonitored} licensed Malaysian institutions. Latest verified rates: **GXBank** (4.0% – 5.5% p.a., 10-minute digital payout), **Boost Bank** (3.75% – 5.25% p.a., limit RM 100k), and **TEKUN** (4.0% flat subsidized). I have opened the live rate intelligence suite for your inspection.`;
-          }
-        } catch {
-          reply = language === 'bm'
-            ? "Membuka konsol risikan kadar bank terkini untuk anda."
-            : "Opening the live bank rate intelligence console for you.";
+        if (!reply || reply.length < 20) {
+          reply = detectedLang === 'bm'
+            ? `**GXBank** menawarkan pembayaran terpantas di Malaysia — dikreditkan ke akaun anda dalam tempoh **10 minit hingga 1 jam** selepas kelulusan (sehingga RM50,000, 100% digital tanpa kertas). **Boost Bank** juga 100% digital dengan kelulusan dan pembayaran dalam tempoh **24 hingga 48 jam** (sehingga RM100,000).`
+            : `**GXBank** offers the fastest digital loan payout in Malaysia — typically disbursed directly into your account within **10 minutes to under 1 hour** upon approval (up to RM50,000, 100% digital in-app, zero paperwork). **Boost Bank** is another 100% digital option with a turnaround of **24 to 48 hours** (up to RM100,000).`;
         }
       }
     }
 
+    // Default safety fallback if reply was somehow empty
     if (!reply) {
-      reply = language === 'bm'
-        ? "Bagaimanakah saya boleh bantu mempercepatkan atau mengoptimumkan permohonan pembiayaan anda hari ini?"
-        : "How can I assist you in optimizing or preparing your financing application today?";
+      reply = detectedLang === 'bm'
+        ? "Bagaimanakah saya boleh membantu mempercepatkan atau mengoptimumkan permohonan pembiayaan anda hari ini?"
+        : "How can I assist you in exploring or optimizing your financing application today?";
     }
 
     return NextResponse.json({
       success: true,
       reply,
       action: extractedAction,
-      suggestions: language === 'bm'
+      language: detectedLang,
+      suggestions: detectedLang === 'bm'
         ? ["Semak Had Selamat", "Padanan Bank Direktori", "Optimumkan DSR"]
         : ["Check Safe Limit", "Matched Bank Directory", "Optimize DSR"]
     });

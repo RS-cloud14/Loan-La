@@ -1311,10 +1311,11 @@ export default function AICoPilotChat({
       });
 
       const data = await res.json();
-      const replyContent = data.reply || (isMalay ? "Bagaimana saya boleh bantu?" : "How can I help you?");
+      const isReplyMalay = data.language ? data.language === 'bm' : isMalay;
+      const replyContent = data.reply || (isReplyMalay ? "Bagaimana saya boleh bantu?" : "How can I help you?");
       const replySuggestions = data.suggestions || [
-        isMalay ? "Semak Status" : "Check Status",
-        isMalay ? "Direktori Bank" : "Bank Directory"
+        isReplyMalay ? "Semak Status" : "Check Status",
+        isReplyMalay ? "Direktori Bank" : "Bank Directory"
       ];
 
       const assistantMsg: ChatMessage = {
@@ -1344,19 +1345,19 @@ export default function AICoPilotChat({
           if (data.action.type === 'SET_CALCULATOR' && data.action.payload && currentPage !== 'app') {
             const p = data.action.payload;
             const estMth = Math.round((p.loanAmount * (1 + (p.interestRate / 100) * p.tenureYears)) / (p.tenureYears * 12) * 100) / 100;
-            speechToRead = isMalay
+            speechToRead = isReplyMalay
               ? `Untuk pembiayaan RM ${p.loanAmount.toLocaleString()} selama ${p.tenureYears} tahun pada kadar faedah ${p.interestRate}%, anggaran ansuran bulanan anda ialah RM ${estMth.toFixed(2)}. Kalkulator telah sedia dikonfigurasikan pada skrin anda.`
               : `For a loan of RM ${p.loanAmount.toLocaleString()} over ${p.tenureYears} years at ${p.interestRate}%, your estimated monthly installment is RM ${estMth.toFixed(2)}. I've configured the calculator for you on your screen.`;
           } else if (data.action.type === 'NAVIGATE_DIRECTORY') {
-            speechToRead = isMalay
-              ? "Membuka senarai direktori 11 institusi kewangan dan bank digital untuk anda."
+            speechToRead = isReplyMalay
+              ? "Membuka senarai direktori institusi kewangan dan bank digital untuk anda."
               : "Opening the directory of verified digital banks and lenders for you.";
           } else if (data.action.type === 'NAVIGATE_LOAN_NEED') {
-            speechToRead = isMalay
+            speechToRead = isReplyMalay
               ? "Membuka Langkah 1 untuk menetapkan tujuan dan keperluan pinjaman anda."
               : "Opening Step 1 to set your loan purpose and amount.";
           } else if (data.action.type === 'NAVIGATE_TRACKER') {
-            speechToRead = isMalay
+            speechToRead = isReplyMalay
               ? "Membuka penjejak status permohonan pembiayaan anda."
               : "Opening your loan application tracker.";
           }
