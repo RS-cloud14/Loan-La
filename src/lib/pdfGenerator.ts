@@ -283,18 +283,26 @@ export function buildCreditPassportPdfDoc({ inputData, report, documentHash, isL
   doc.setFontSize(7.5);
   doc.text(isMalay ? 'PEMOHON DISAHKAN & BUKTI PENDAPATAN' : 'CERTIFIED APPLICANT & INCOME PROOF', infoX + 4, cardY + 5.2);
 
+  const docCount = inputData.fileChecklist?.length || 1;
+  const isMultiDoc = docCount > 1;
+  const periodTag = isLocked 
+    ? (isMalay ? '(Kemasukan Bln 1)' : '(Month 1 Inflow)')
+    : (isMultiDoc 
+        ? (isMalay ? `(${docCount} Dok Disahkan)` : `(${docCount} Docs Audited)`) 
+        : (isMalay ? '(Purata Bulanan)' : '(Monthly Average)'));
+
   const icFormatted = inputData.identityData?.icNumber || (isMalay ? 'Disahkan melalui Penyata Bank' : 'Verified via Bank Direct');
   const infoRows = isMalay ? [
     ['Nama Penuh Rasmi:', inputData.name || 'PEMOHON'],
     ['Nombor MyKad / KP:', icFormatted],
     ['Saluran Utama / Gig:', `${inputData.platform || 'Platform Gig'} (${inputData.activeDaysPerMonth || 26} hari aktif/bln)`],
-    ['Purata Kemasukan Dinilai:', `RM ${Math.round(assessedInflow).toLocaleString()} / bulan (Kemasukan Bln 1)`],
+    ['Purata Kemasukan Dinilai:', `RM ${Math.round(assessedInflow).toLocaleString()} / bulan ${periodTag}`],
     ['Status Ketulenan:', 'Pengesahan Forensik LULUS · Sifar Usikan']
   ] : [
     ['Full Legal Name:', inputData.name || 'APPLICANT'],
     ['MyKad / IC Number:', icFormatted],
     ['Primary Channel / Gig:', `${inputData.platform || 'Gig Platform'} (${inputData.activeDaysPerMonth || 26} active days/mo)`],
-    ['Assessed Monthly Inflow:', `RM ${Math.round(assessedInflow).toLocaleString()} / month (Month 1 Inflow)`],
+    ['Assessed Monthly Inflow:', `RM ${Math.round(assessedInflow).toLocaleString()} / month ${periodTag}`],
     ['Authenticity Status:', 'Forensic Verification PASS · Zero Tampering']
   ];
 
@@ -336,7 +344,7 @@ export function buildCreditPassportPdfDoc({ inputData, report, documentHash, isL
     doc.text(isMalay ? 'Aliran Masuk Platform Konsisten:' : 'Consistent Platform Inflow:', 21, meritBoxY + 6);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(71, 85, 105);
-    doc.text(isMalay ? `Kemasukan bank Bulan 1 disahkan pada RM ${Math.round(assessedInflow).toLocaleString()}/bln tanpa bendera usikan.` : `Month 1 bank inflow verified at RM ${Math.round(assessedInflow).toLocaleString()}/mo with zero tampering flags.`, 62, meritBoxY + 6);
+    doc.text(isMalay ? `Kemasukan ${isMultiDoc ? `${docCount} dokumen` : 'Bulan 1'} disahkan pada RM ${Math.round(assessedInflow).toLocaleString()}/bln tanpa bendera usikan.` : `${isMultiDoc ? `${docCount} verified documents confirm` : 'Month 1 bank inflow verified at'} RM ${Math.round(assessedInflow).toLocaleString()}/mo with zero tampering flags.`, 62, meritBoxY + 6);
 
     // Frosted Blur over merits 2, 3, 4
     drawFrostedBlur(doc, 17, meritBoxY + 9.5, pageWidth - 34, 14.5, isMalay ? 'Sintesis Mampu Milik & Tingkah Laku Berbilang Bulan' : 'Multi-Month Debt Affordability & Conduct Synthesis');
@@ -384,7 +392,13 @@ export function buildCreditPassportPdfDoc({ inputData, report, documentHash, isL
   const capWidth = (pageWidth - 28 - (2 * 4)) / 3;
   const capacityMetrics = isMalay ? [
     { lbl: 'ANGGARAN ANSURAN BULANAN', val: `RM ${(report.estimatedInstallment || 458).toLocaleString()}`, sub: 'Asas Tenur 1 Tahun', color: [15, 23, 42], isMasked: false },
-    { lbl: 'KEMASUKAN BULAN 1 DISAHKAN', val: `RM ${Math.round(assessedInflow).toLocaleString()}`, sub: 'Kemasukan Bersih Platform', color: [6, 95, 70], isMasked: false },
+    { 
+      lbl: isLocked ? 'KEMASUKAN BULAN 1 DISAHKAN' : 'PURATA PENDAPATAN BULANAN', 
+      val: `RM ${Math.round(assessedInflow).toLocaleString()}`, 
+      sub: isLocked ? 'Kemasukan Bersih Platform (Pratonton)' : (isMultiDoc ? `Purata Rentas ${docCount} Dokumen` : 'Kemasukan Bersih Bulanan'), 
+      color: [6, 95, 70], 
+      isMasked: false 
+    },
     { 
       lbl: 'DSR DISATUKAN 12-BULAN', 
       val: isLocked ? 'RM ••••' : `RM ${Math.round(netCashFlow).toLocaleString()}`, 
@@ -394,7 +408,13 @@ export function buildCreditPassportPdfDoc({ inputData, report, documentHash, isL
     }
   ] : [
     { lbl: 'EST. MONTHLY INSTALLMENT', val: `RM ${(report.estimatedInstallment || 458).toLocaleString()}`, sub: '1-Year Tenure Basis', color: [15, 23, 42], isMasked: false },
-    { lbl: 'VERIFIED MONTH 1 INFLOW', val: `RM ${Math.round(assessedInflow).toLocaleString()}`, sub: 'Net Platform Inflow', color: [6, 95, 70], isMasked: false },
+    { 
+      lbl: isLocked ? 'VERIFIED MONTH 1 INFLOW' : 'AUDITED MONTHLY INFLOW', 
+      val: `RM ${Math.round(assessedInflow).toLocaleString()}`, 
+      sub: isLocked ? 'Net Platform Inflow (Preview)' : (isMultiDoc ? `Average Across ${docCount} Docs` : 'Net Monthly Cashflow'), 
+      color: [6, 95, 70], 
+      isMasked: false 
+    },
     { 
       lbl: '12-MONTH CONSOLIDATED DSR', 
       val: isLocked ? 'RM ••••' : `RM ${Math.round(netCashFlow).toLocaleString()}`, 

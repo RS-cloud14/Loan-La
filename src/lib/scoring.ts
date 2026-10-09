@@ -97,6 +97,13 @@ export interface UnderwritingInput {
   };
   endingBalance: number;
   averageMonthlyExpenses: number;
+  fileChecklist?: Array<{
+    fileName: string;
+    fileSize?: string;
+    status?: string;
+    documentType?: string;
+    [key: string]: any;
+  }>;
   identityData?: IdentityData;
   epfAnalysis?: EpfAnalysisData;
   paySlipData?: PaySlipData;
