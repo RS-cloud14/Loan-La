@@ -7,7 +7,7 @@ import {
   Building2, ExternalLink, Check, AlertTriangle,
   Copy, ClipboardCheck, Info, Smartphone, QrCode,
   Download, Send, MessageCircle, HelpCircle, ChevronRight,
-  Bot, Play, Terminal, Zap, RefreshCw, Cpu, Layers, CheckCircle
+  Bot, Play, Terminal, Zap, RefreshCw, Cpu, Layers, CheckCircle, UserCheck
 } from 'lucide-react';
 import BankLogo from '@/components/BankLogo';
 import {
@@ -27,6 +27,7 @@ export interface DispatcherTarget {
   productName: string;
   installment?: number;
   speed?: string;
+  rate?: string;
   loanAmount?: number;
   channelType?: ApplicationChannel;
 }
@@ -92,9 +93,15 @@ export default function AIApplicationDispatcherModal({
   const [proposalData, setProposalData] = useState<LoanProposalData | null>(null);
 
   const logsEndRef = useRef<HTMLDivElement>(null);
+  const prevIsOpenRef = useRef(false);
+  const prevLenderRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (isOpen && target) {
+    // Only re-initialize when modal first opens or when target lender changes
+    const isJustOpened = isOpen && !prevIsOpenRef.current;
+    const isLenderChanged = target && target.lenderName !== prevLenderRef.current;
+
+    if (isOpen && target && (isJustOpened || isLenderChanged)) {
       setStage('APPROVAL');
       setUserConsented(true);
       setCopiedField(null);
@@ -135,8 +142,10 @@ export default function AIApplicationDispatcherModal({
         .substring(0, 3)
         .toUpperCase();
       setGeneratedRefCode(`LL-${new Date().getFullYear()}-${prefix}-${Math.floor(10000 + Math.random() * 90000)}`);
+      prevLenderRef.current = target.lenderName;
     }
-  }, [isOpen, target, applicant]);
+    prevIsOpenRef.current = isOpen;
+  }, [isOpen, target?.lenderName, target?.loanAmount]);
 
   // Start Agent Automation Sequence when entering AGENT_AUTOMATION stage
   useEffect(() => {
@@ -255,7 +264,9 @@ export default function AIApplicationDispatcherModal({
     ].join('\n');
 
     try {
-      navigator.clipboard.writeText(textSummary);
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        navigator.clipboard.writeText(textSummary).catch(() => {});
+      }
       setCopiedAll(true);
       setTimeout(() => setCopiedAll(false), 2500);
     } catch {}
@@ -265,7 +276,9 @@ export default function AIApplicationDispatcherModal({
   const handleCopyAutoFillScript = () => {
     const snippet = `/* Loan-La Auto-Fill Injector */ (function(){const d={name:"${applicant.name}",ic:"${applicant.icNumber || '940815-14-5521'}",phone:"${applicant.phone || '0123456789'}",income:"${applicant.averageMonthlyNetIncome}",amount:"${loanAmount}"};document.querySelectorAll("input").forEach(i=>{const n=(i.name||i.id||"").toLowerCase();if(n.includes("name"))i.value=d.name;if(n.includes("ic")||n.includes("nric")||n.includes("mykad"))i.value=d.ic;if(n.includes("phone")||n.includes("tel"))i.value=d.phone;if(n.includes("income")||n.includes("gaji"))i.value=d.income;if(n.includes("amount")||n.includes("jumlah"))i.value=d.amount;i.dispatchEvent(new Event("input",{bubbles:true}));i.dispatchEvent(new Event("change",{bubbles:true}));});alert("Loan-La AI Agent: All form fields populated successfully!");})();`;
     try {
-      navigator.clipboard.writeText(snippet);
+      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+        navigator.clipboard.writeText(snippet).catch(() => {});
+      }
       setCopiedField('injector');
       setTimeout(() => setCopiedField(null), 2500);
     } catch {}
@@ -317,7 +330,9 @@ export default function AIApplicationDispatcherModal({
     : portalUrl;
 
   const handleLaunchBankPortal = () => {
-    window.open(effectivePortalUrl, '_blank', 'noopener,noreferrer');
+    if (typeof window !== 'undefined') {
+      window.open(effectivePortalUrl, '_blank', 'noopener,noreferrer');
+    }
   };
 
   // Download Official Pre-Filled Bank Application Pack (PDF)
@@ -372,31 +387,44 @@ export default function AIApplicationDispatcherModal({
     }
   };
 
-  // User explicitly approves the package
+  // User explicitly approves the package and launches AI Agent
   const handleApproveAndProceed = () => {
-    if (!userConsented) {
-      setUserConsented(true);
-    }
+    setUserConsented(true);
 
     // Record application in tracker
     const record = {
       id: `app-${Date.now()}`,
       refCode: generatedRefCode,
       lenderName,
-      productName: target.productName,
+      productName: selectedBsnScheme ? selectedBsnScheme.name : target.productName,
       loanAmount,
       monthlyInstallment,
       appliedAt: `Today, ${new Date().toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit' })}`,
       status: channelType === 'digital_bank_app' ? 'CONDITIONALLY_APPROVED' : 'SUBMITTED',
       speed: target.speed || (channelType === 'digital_bank_app' ? '10 Mins (Digital Payout)' : '24–48 Hours'),
-      lenderUrl: portalUrl
+      lenderUrl: effectivePortalUrl
     };
 
     if (onApplicationDispatched) {
       onApplicationDispatched(record);
     }
 
+    // Advance to Stage 2 immediately
     setStage('AGENT_AUTOMATION');
+
+    // Auto-copy verified credentials for easy pasting (safe promise)
+    try {
+      handleCopyAll();
+    } catch (e) {}
+
+    // Launch official portal in new tab for borrower safely
+    try {
+      if (typeof window !== 'undefined') {
+        window.open(effectivePortalUrl, '_blank', 'noopener,noreferrer');
+      }
+    } catch (e) {
+      console.error('Failed to open bank portal:', e);
+    }
   };
 
   // Channel helper labels - Clean, Simple Institutional Palette
@@ -487,221 +515,171 @@ export default function AIApplicationDispatcherModal({
         {/* ═══════════════════════════════════════════════════════════════════ */}
         {stage === 'APPROVAL' && (
           <>
-            <div className="p-5 sm:p-6 overflow-y-auto flex-1 flex flex-col gap-4 bg-slate-50/40">
+            <div className="p-5 sm:p-6 overflow-y-auto flex-1 flex flex-col gap-4 bg-slate-50/50">
               
-              {/* Lender Header Card */}
-              <div className="p-4 sm:p-5 rounded-xl bg-white border border-slate-200 shadow-2xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                <div className="flex items-center gap-3.5">
-                  <BankLogo bankName={lenderName} size="lg" />
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                        {lenderData?.regulatedBy || 'Bank Negara Malaysia Regulated'}
-                      </span>
+              {/* CARD 1: FINANCING FACILITY & TERMS (Important Info #1) */}
+              <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col gap-3.5">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3.5">
+                    <BankLogo bankName={lenderName} size="lg" />
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-900 text-white">
+                          {isBsn ? (selectedBsnScheme?.tag || 'Government Micro Scheme') : (lenderData?.regulatedBy || 'Bank Negara Regulated')}
+                        </span>
+                        <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
+                          {target.speed || '3–5 Business Days'}
+                        </span>
+                      </div>
+                      <h3 className="text-base sm:text-lg font-bold text-slate-900 mt-1">
+                        {isBsn && selectedBsnScheme ? (isBm ? selectedBsnScheme.nameBm : selectedBsnScheme.name) : (target.productName || lenderName)}
+                      </h3>
+                      <p className="text-xs text-slate-500 mt-0.5">
+                        {isBsn && selectedBsnScheme 
+                          ? (isBm ? selectedBsnScheme.targetAudienceBm : selectedBsnScheme.targetAudience)
+                          : (isBm ? 'Pembiayaan tunai mikro patuh BNM dengan proses pantas.' : 'BNM-compliant micro financing facility with accelerated digital intake.')}
+                      </p>
                     </div>
-                    <h3 className="text-base sm:text-lg font-bold text-slate-900 mt-0.5">{lenderName}</h3>
-                    <p className="text-xs text-slate-600 font-medium">
-                      {target.productName} · {isBm ? 'Ansuran Est.:' : 'Est. Installment:'} <span className="font-semibold text-slate-900">RM {monthlyInstallment.toLocaleString()}/mo</span>
-                    </p>
                   </div>
                 </div>
-                <div className="text-left sm:text-right shrink-0 bg-slate-50 sm:bg-transparent p-3 sm:p-0 rounded-lg w-full sm:w-auto border sm:border-0 border-slate-100">
-                  <span className="text-[11px] text-slate-500 block font-medium">{isBm ? 'Jumlah Permohonan' : 'Requested Amount'}</span>
-                  <span className="text-xl sm:text-2xl font-bold text-slate-900 tabular-nums">RM {loanAmount.toLocaleString()}</span>
-                </div>
-              </div>
 
-              {/* Application Channel Notice */}
-              <div className="p-3 rounded-xl bg-white border border-slate-200 flex items-center justify-between gap-3 text-xs shadow-2xs">
-                <div className="flex items-center gap-2.5">
-                  <ChannelIcon className="w-4 h-4 text-slate-600 shrink-0" />
-                  <div>
-                    <span className="font-semibold text-slate-900 block">{channelBadge.label}</span>
-                    <span className="text-[11px] text-slate-500">
-                      {channelType === 'digital_bank_app'
-                        ? (isBm ? 'Ejen AI menyediakan data untuk aplikasi mudah alih bank & onboarding e-KYC.' : 'AI Agent pre-formats all data for digital app onboarding with e-KYC.')
-                        : (isBm ? 'Ejen AI mengautomasikan pengisian borang portal bank rasmi bagi pihak anda.' : 'AI Agent automates web form entry and document injection on your behalf.')}
+                {/* 4 Key Metrics Bar */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-3 border-t border-slate-100">
+                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                    <span className="text-[10px] font-semibold text-slate-500 uppercase block">{isBm ? 'Jumlah Dimohon' : 'Loan Amount'}</span>
+                    <span className="text-base sm:text-lg font-black text-slate-900 tabular-nums">RM {loanAmount.toLocaleString()}</span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                    <span className="text-[10px] font-semibold text-slate-500 uppercase block">{isBm ? 'Kadar Faedah' : 'Profit Rate'}</span>
+                    <span className="text-sm sm:text-base font-bold text-slate-900">
+                      {isBsn && selectedBsnScheme ? selectedBsnScheme.profitRate.split(' ')[0] : (target.rate || '3.50%')} p.a.
+                    </span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                    <span className="text-[10px] font-semibold text-slate-500 uppercase block">{isBm ? 'Ansuran Est.' : 'Est. Installment'}</span>
+                    <span className="text-sm sm:text-base font-bold text-slate-900 tabular-nums">RM {monthlyInstallment.toLocaleString()}/mo</span>
+                  </div>
+                  <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-100">
+                    <span className="text-[10px] font-semibold text-slate-500 uppercase block">{isBm ? 'Tempoh' : 'Tenure'}</span>
+                    <span className="text-sm sm:text-base font-bold text-slate-900">
+                      {isBsn && selectedBsnScheme ? selectedBsnScheme.tenureYears : '24 – 36 Mo'}
                     </span>
                   </div>
                 </div>
-                <span className="text-[11px] font-medium px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 shrink-0 border border-slate-200">
-                  {target.speed || '24h Approval'}
-                </span>
-              </div>
 
-              {/* ─── BSN SCHEME INTELLIGENCE (17 Micro Schemes Matcher) ─── */}
-              {isBsn && selectedBsnScheme && (
-                <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs flex flex-col gap-3">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-900 text-white">
-                          {isBm ? 'Skim BSN Dipadankan' : 'BSN Scheme Intelligence'}
-                        </span>
-                        <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
-                          {selectedBsnScheme.tag}
-                        </span>
-                      </div>
-                      <h4 className="text-sm font-bold text-slate-900 mt-1.5">
-                        {isBm ? selectedBsnScheme.nameBm : selectedBsnScheme.name}
-                      </h4>
-                      <p className="text-xs text-slate-600 mt-0.5 leading-relaxed">
-                        {isBm ? selectedBsnScheme.targetAudienceBm : selectedBsnScheme.targetAudience}
-                      </p>
-                    </div>
-                    <div className="text-right shrink-0 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-                      <span className="text-[10px] text-slate-500 font-medium uppercase block">{isBm ? 'Kadar Subsidi' : 'Govt Subsidized Rate'}</span>
-                      <span className="text-xs font-bold text-slate-900">{selectedBsnScheme.profitRate}</span>
-                      <span className="text-[10px] text-slate-500 block mt-0.5">Max {selectedBsnScheme.tenureYears}</span>
-                    </div>
-                  </div>
-
-                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between flex-wrap gap-2 text-xs">
-                    <div className="flex items-center gap-1.5 text-slate-700 font-medium text-[11px]">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-slate-500" />
-                      <span>{isBm ? `Had Pembiayaan: RM ${selectedBsnScheme.minAmountRM.toLocaleString()} – RM ${selectedBsnScheme.maxAmountRM.toLocaleString()}` : `Financing Limit: RM ${selectedBsnScheme.minAmountRM.toLocaleString()} – RM ${selectedBsnScheme.maxAmountRM.toLocaleString()}`}</span>
-                    </div>
+                {/* Optional Scheme Switcher for BSN */}
+                {isBsn && (
+                  <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                    <span className="text-[11px] text-slate-500 font-medium">
+                      {isBm ? `Skim Terpilih: ${selectedBsnScheme?.name || 'BSN Micro'}` : `Selected Scheme: ${selectedBsnScheme?.name || 'BSN Micro'}`}
+                    </span>
                     <button
                       type="button"
                       onClick={() => setShowAllBsnSchemes(!showAllBsnSchemes)}
-                      className="text-[11px] font-semibold text-slate-700 hover:text-slate-900 underline underline-offset-2 cursor-pointer flex items-center gap-1"
+                      className="text-[11px] font-semibold text-slate-800 hover:text-black underline underline-offset-2 cursor-pointer"
                     >
-                      <span>{showAllBsnSchemes ? (isBm ? 'Sembunyikan Senarai' : 'Hide Scheme List') : (isBm ? 'Tukar Skim (17 Skim Mikro BSN) ▾' : 'Change Scheme (17 Official Schemes) ▾')}</span>
+                      {showAllBsnSchemes ? (isBm ? 'Tutup Senarai' : 'Close List') : (isBm ? 'Tukar Skim (17 Pilihan Rasmi) ▾' : 'Change Scheme (17 Available) ▾')}
                     </button>
                   </div>
+                )}
 
-                  {/* Expanded list of all 17 BSN micro schemes */}
-                  {showAllBsnSchemes && (
-                    <div className="mt-1 p-2 bg-slate-50 rounded-lg border border-slate-200 max-h-56 overflow-y-auto divide-y divide-slate-100 text-xs">
-                      <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider block p-1 mb-1">
-                        {isBm ? 'Pilih Skim BSN Rasmi:' : 'Select Target BSN Scheme:'}
-                      </span>
-                      {BSN_SCHEMES.map(s => (
-                        <div
-                          key={s.id}
-                          onClick={() => { setSelectedBsnScheme(s); setShowAllBsnSchemes(false); }}
-                          className={`py-2 px-2.5 rounded-md flex items-center justify-between gap-3 hover:bg-slate-200/60 cursor-pointer transition ${
-                            selectedBsnScheme.id === s.id ? 'bg-white font-bold border border-slate-300 shadow-2xs' : ''
-                          }`}
-                        >
-                          <div>
-                            <span className="font-semibold text-slate-900 block">{s.name}</span>
-                            <span className="text-[10px] text-slate-500">{s.tag} · Max RM {s.maxAmountRM.toLocaleString()}</span>
-                          </div>
-                          <div className="text-right shrink-0">
-                            <span className="text-[11px] font-mono text-slate-900 font-semibold">{s.profitRate}</span>
-                            {selectedBsnScheme.id === s.id && (
-                              <span className="text-[10px] text-slate-700 block font-bold">✓ Selected</span>
-                            )}
-                          </div>
+                {/* Collapsible BSN Schemes List */}
+                {isBsn && showAllBsnSchemes && (
+                  <div className="p-2 bg-slate-50 rounded-xl border border-slate-200 max-h-48 overflow-y-auto divide-y divide-slate-100 text-xs">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block p-1">
+                      {isBm ? 'Pilih Skim Rasmi BSN:' : 'Select Official BSN Scheme:'}
+                    </span>
+                    {BSN_SCHEMES.map(s => (
+                      <div
+                        key={s.id}
+                        onClick={() => { setSelectedBsnScheme(s); setShowAllBsnSchemes(false); }}
+                        className={`py-2 px-2.5 rounded-lg flex items-center justify-between gap-3 hover:bg-slate-200/60 cursor-pointer transition ${
+                          selectedBsnScheme?.id === s.id ? 'bg-white font-bold border border-slate-300 shadow-2xs' : ''
+                        }`}
+                      >
+                        <div>
+                          <span className="font-semibold text-slate-900 block">{s.name}</span>
+                          <span className="text-[10px] text-slate-500">{s.tag} · Had: RM {s.maxAmountRM.toLocaleString()}</span>
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* ─── BORROWER 5-STEP LOAN PROPOSAL (PART B ADDENDUM) ─── */}
-              <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs flex flex-col gap-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center shrink-0 border border-slate-200">
-                      <FileText className="w-4 h-4" />
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-slate-900">
-                          {isBm ? 'Cadangan Pinjaman Peminjam (Bahagian B)' : 'Borrower Loan Proposal (Part B Addendum)'}
-                        </span>
-                        {proposalData ? (
-                          <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
-                            ✓ {isBm ? 'Lengkap & Dilampirkan' : 'Completed & Attached'}
-                          </span>
-                        ) : (
-                          <span className="text-[10px] font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
-                            {isBm ? 'Disyorkan' : 'Recommended'}
-                          </span>
-                        )}
+                        <div className="text-right shrink-0">
+                          <span className="text-[11px] font-mono text-slate-900 font-semibold">{s.profitRate}</span>
+                          {selectedBsnScheme?.id === s.id && (
+                            <span className="text-[10px] text-emerald-700 block font-bold">✓ Selected</span>
+                          )}
+                        </div>
                       </div>
-                      <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                        {proposalData
-                          ? (isBm 
-                              ? `Tujuan pembiayaan, pelan bayaran balik, dan mitigasi risiko telah siap dirangka untuk semakan pegawai pinjaman ${lenderName}.` 
-                              : `Financing purpose, repayment source, and risk mitigation are ready for credit review.`)
-                          : (isBm
-                              ? `Tingkatkan peluang kelulusan dengan justifikasi tujuan dan pelan bayaran balik.`
-                              : `Strengthen approval odds by completing 5 quick questions covering purpose and repayment.`)}
-                      </p>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setIsProposalModalOpen(true)}
-                    className="px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 transition shadow-2xs shrink-0 cursor-pointer flex items-center gap-1.5"
-                  >
-                    <FileText className="w-3.5 h-3.5 text-slate-500" />
-                    <span>{proposalData ? (isBm ? 'Semak Proposal' : 'Review Proposal') : (isBm ? 'Lengkapkan Proposal' : 'Complete Proposal')}</span>
-                  </button>
-                </div>
-
-                {proposalData && (
-                  <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs text-slate-700 space-y-1">
-                    <div>
-                      <strong className="text-slate-900">{isBm ? 'Tujuan:' : 'Purpose:'}</strong> {proposalData.purposeDetail.slice(0, 110)}...
-                    </div>
-                    <div className="flex items-center justify-between text-slate-600 text-[11px] pt-1 border-t border-slate-200/60">
-                      <span><strong>{isBm ? 'Pelan Bayaran:' : 'Repayment:'}</strong> {proposalData.repaymentPlan.slice(0, 85)}...</span>
-                      <span className="text-slate-700 font-medium shrink-0">✓ Verified Evidence Attached</span>
-                    </div>
+                    ))}
                   </div>
                 )}
               </div>
 
-              {/* Verified Financial Dossier & Checklist Summary */}
-              <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-2xs flex flex-col gap-3">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                  <span className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                    <FileText className="w-3.5 h-3.5 text-slate-500" />
-                    {isBm ? 'Pakej Dokumen Disahkan' : 'Verified Credit Dossier Package'}
-                  </span>
+              {/* CARD 2: VERIFIED BORROWER DOSSIER & PROPOSAL (Important Info #2) */}
+              <div className="p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col gap-3.5">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                  <div className="flex items-center gap-2">
+                    <UserCheck className="w-4 h-4 text-slate-700" />
+                    <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                      {isBm ? 'Profil & Kelayakan Peminjam Disahkan' : 'Verified Borrower Dossier & Eligibility'}
+                    </span>
+                  </div>
                   <span className="text-[10px] font-mono text-slate-400">
-                    SHA-256: {applicant.documentHash.slice(0, 12)}...
+                    ID: {generatedRefCode}
                   </span>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                  {/* Left: Verified documents */}
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-slate-700">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-slate-600 shrink-0" />
-                      <span><strong>{isBm ? 'Memo CAM Rasmi:' : 'Official CAM Dossier:'}</strong> {applicant.score}/850 (Grade {applicant.grade}), DSR {applicant.dsr.toFixed(1)}%</span>
+                {/* Borrower Summary Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div className="space-y-1.5 p-3 rounded-xl bg-slate-50/80 border border-slate-100">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">{isBm ? 'Nama Pemohon' : 'Applicant Name'}</span>
+                      <strong className="text-slate-900">{applicant.name}</strong>
                     </div>
-                    <div className="flex items-center gap-2 text-slate-700">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-slate-600 shrink-0" />
-                      <span><strong>{isBm ? 'Penyata Diselaraskan:' : 'Reconciled Statements:'}</strong> RM {applicant.averageMonthlyNetIncome.toLocaleString()}/mo</span>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">{isBm ? 'No. Kad Pengenalan' : 'MyKad / NRIC'}</span>
+                      <span className="font-mono font-semibold text-slate-800">{applicant.icNumber || '940815-14-5521'}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-slate-700">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-slate-600 shrink-0" />
-                      <span><strong>{isBm ? 'Pengesahan Pemohon:' : 'Applicant Identity:'}</strong> {applicant.name} ({applicant.icNumber || '940815-14-5521'})</span>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">{isBm ? 'Sektor / Platform' : 'Sector / Platform'}</span>
+                      <span className="font-medium text-slate-800">{applicant.platform || 'Gig Worker (Foodpanda)'}</span>
                     </div>
                   </div>
 
-                  {/* Right: Key metrics */}
-                  <div className="bg-slate-50 rounded-lg p-2.5 border border-slate-100 divide-y divide-slate-100 space-y-1 text-[11px]">
-                    <div className="flex justify-between pb-1">
-                      <span className="text-slate-500">{isBm ? 'Platform / Sektor' : 'Sector / Platform'}</span>
-                      <span className="font-semibold text-slate-900">{applicant.platform || 'Gig / Self-Employed'}</span>
+                  <div className="space-y-1.5 p-3 rounded-xl bg-slate-50/80 border border-slate-100">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">{isBm ? 'Pendapatan Bersih' : 'Verified Income'}</span>
+                      <strong className="text-slate-900">RM {applicant.averageMonthlyNetIncome.toLocaleString()}/mo</strong>
                     </div>
-                    <div className="flex justify-between py-1">
-                      <span className="text-slate-500">{isBm ? 'Nisbah Khidmat Hutang (DSR)' : 'Debt Service Ratio (DSR)'}</span>
-                      <span className="font-semibold text-slate-900">{applicant.dsr.toFixed(1)}%</span>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">{isBm ? 'Skor FRI CreditFlow' : 'CreditFlow FRI Score'}</span>
+                      <span className="font-bold text-emerald-700">{applicant.score}/850 (Grade {applicant.grade})</span>
                     </div>
-                    <div className="flex justify-between pt-1">
-                      <span className="text-slate-500">{isBm ? 'Tempoh Pembiayaan' : 'Estimated Tenure'}</span>
-                      <span className="font-semibold text-slate-900">2 - 3 Years</span>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">{isBm ? 'Nisbah Hutang (DSR)' : 'Debt Service (DSR)'}</span>
+                      <span className="font-semibold text-slate-800">{applicant.dsr.toFixed(1)}% (Healthy)</span>
                     </div>
                   </div>
+                </div>
+
+                {/* Purpose & Proposal Quick Attachment */}
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <FileText className="w-4 h-4 text-slate-500 shrink-0" />
+                    <div className="truncate">
+                      <span className="font-bold text-slate-900 block truncate">
+                        {isBm ? 'Tujuan Pembiayaan: Modal Pusingan & Peralatan' : 'Financing Purpose: Working Capital & Equipment'}
+                      </span>
+                      <span className="text-[11px] text-slate-500 truncate block">
+                        {proposalData ? `✓ Proposal Part B dilampirkan (${proposalData.purposeDetail.slice(0, 45)}...)` : '✓ Dokumen CAM & Analisis Aliran Tunai Dilampirkan'}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsProposalModalOpen(true)}
+                    className="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 transition shadow-2xs shrink-0 cursor-pointer"
+                  >
+                    {isBm ? 'Semak Proposal' : 'Review Proposal'}
+                  </button>
                 </div>
               </div>
 
@@ -754,392 +732,160 @@ export default function AIApplicationDispatcherModal({
         {/* ═══════════════════════════════════════════════════════════════════ */}
         {stage === 'AGENT_AUTOMATION' && (
           <>
-            <div className="p-5 sm:p-6 overflow-y-auto flex-1 flex flex-col gap-4 bg-slate-50/40">
+            <div className="p-5 sm:p-6 overflow-y-auto flex-1 flex flex-col gap-4 bg-slate-50/50">
               
-              {/* Top Agent Status Banner */}
-              <div className="p-4 bg-slate-900 text-white rounded-xl border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-slate-800 text-slate-200 border border-slate-700 flex items-center justify-center shrink-0">
-                    <Bot className={`w-5 h-5 ${agentRunning ? 'animate-pulse' : ''}`} />
+              {/* Top Dispatch Confirmation Banner */}
+              <div className="p-4 sm:p-5 bg-slate-900 text-white rounded-2xl border border-slate-800 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 text-emerald-400 border border-slate-700 flex items-center justify-center shrink-0">
+                    <CheckCircle2 className="w-5 h-5 stroke-[2.5]" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold uppercase tracking-wider text-white">
-                        {isBm ? 'Ejen AI Sedang Bertindak Bagi Pihak Anda' : 'AI Agent Executing On Your Behalf'}
+                      <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
+                        {isBm ? 'Ejen AI Telah Dilancarkan & Dipra-Isi' : 'AI Agent Dispatched & Pre-Filled'}
                       </span>
-                      <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                     </div>
-                    <p className="text-xs text-slate-300 font-medium mt-0.5">
-                      {lenderName} · {isBm ? 'Pengautomasian Borang Tanpa Perlu API Bank' : 'Client-side RPA Form Automation (Zero API Dependency)'}
+                    <h3 className="text-sm sm:text-base font-bold text-white mt-0.5">
+                      {isBsn && selectedBsnScheme ? selectedBsnScheme.name : lenderName}
+                    </h3>
+                    <p className="text-xs text-slate-300 font-mono mt-0.5">
+                      {isBm ? 'Kod Rujukan:' : 'Ref ID:'} <span className="text-slate-100 font-bold">{generatedRefCode}</span> · {isBm ? 'Diselaraskan dengan Penyata Rasmi' : 'Reconciled with Bank Statement'}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
-                  <div className="text-right">
-                    <span className="text-[10px] text-slate-400 font-mono block">AGENT STATUS</span>
-                    <span className="text-xs font-bold text-white font-mono">
-                      {agentFinished ? '100% READY' : `${agentProgress}% EXECUTING...`}
-                    </span>
-                  </div>
-                  <button
-                    onClick={runAgentAutomation}
-                    disabled={agentRunning}
-                    className="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer border border-slate-700"
-                    title="Re-run Automation"
-                  >
-                    <RefreshCw className={`w-3.5 h-3.5 ${agentRunning ? 'animate-spin' : ''}`} />
-                  </button>
+                <div className="text-left sm:text-right shrink-0 bg-slate-800/80 p-2.5 px-3 rounded-xl border border-slate-700 w-full sm:w-auto">
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold block">{isBm ? 'Status Pematuhan' : 'Compliance Check'}</span>
+                  <span className="text-xs font-bold text-white flex items-center gap-1.5 mt-0.5">
+                    <Shield className="w-3.5 h-3.5 text-emerald-400" />
+                    {isBm ? 'Pematuhan BNM 100%' : '100% BNM Compliant'}
+                  </span>
                 </div>
               </div>
 
-              {/* Progress Bar */}
-              <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-slate-900 transition-all duration-300 rounded-full"
-                  style={{ width: `${agentProgress}%` }}
-                />
-              </div>
-
-              {/* View Selector: Live Form Simulation vs Agent Logs Terminal */}
-              <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => setActiveTab('SIMULATION')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
-                      activeTab === 'SIMULATION'
-                        ? 'bg-slate-900 text-white shadow-xs'
-                        : 'text-slate-600 hover:bg-slate-100'
-                    }`}
-                  >
-                    <Layers className="w-3.5 h-3.5 text-slate-400" />
-                    <span>{isBm ? 'Paparan Simulasi Pengisian Borang' : 'Live Bank Form Auto-Fill'}</span>
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('TERMINAL')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
-                      activeTab === 'TERMINAL'
-                        ? 'bg-slate-900 text-white shadow-xs'
-                        : 'text-slate-600 hover:bg-slate-100'
-                    }`}
-                  >
-                    <Terminal className="w-3.5 h-3.5 text-slate-400" />
-                    <span>{isBm ? 'Log Aktiviti Ejen AI' : 'Agent Activity Log'}</span>
-                  </button>
-                  <button
-                    onClick={() => setActiveTab('MANUAL_HELPER')}
-                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
-                      activeTab === 'MANUAL_HELPER'
-                        ? 'bg-slate-900 text-white shadow-xs'
-                        : 'text-slate-600 hover:bg-slate-100'
-                    }`}
-                  >
-                    <ClipboardCheck className="w-3.5 h-3.5 text-slate-400" />
-                    <span>{isBm ? 'Salin Pantas (Backup)' : 'Fast-Fill (Backup)'}</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* TAB 1: LIVE SIMULATED BANK FORM (What the AI Agent is auto-filling) */}
-              {activeTab === 'SIMULATION' && (
-                <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs bg-white">
-                  {/* Browser URL Bar */}
-                  <div className="bg-slate-900 text-white px-3.5 py-2 flex items-center gap-2 border-b border-slate-800 text-xs font-mono">
-                    <div className="flex-1 bg-slate-800 px-3 py-1 rounded-md text-slate-300 text-[11px] truncate flex items-center gap-1.5 border border-slate-700">
-                      <Lock className="w-3 h-3 text-slate-400 shrink-0" />
-                      <span className="text-slate-200">{portalUrl}</span>
-                    </div>
-                    <span className="text-[10px] text-emerald-400 font-bold uppercase shrink-0">
-                      {agentFinished ? '✓ FORM FILLED' : 'POPULATING...'}
-                    </span>
-                  </div>
-
-                  {/* Simulated Form Body */}
-                  <div className="p-4 bg-slate-50/50 divide-y divide-slate-200 text-xs flex flex-col gap-3">
-                    <div className="flex items-center justify-between pb-2">
-                      <div className="flex items-center gap-2">
-                        <BankLogo bankName={lenderName} size="sm" />
-                        <div>
-                          <strong className="text-slate-900 block text-xs">{lenderName} · Official Loan Application Form</strong>
-                          <span className="text-[10px] text-slate-500 font-medium">Borang Permohonan Pembiayaan Rasmi (Diselia BNM)</span>
-                        </div>
-                      </div>
-                      <span className="text-[10px] bg-slate-100 text-slate-700 font-medium px-2 py-0.5 rounded-md border border-slate-200">
-                        RPA Auto-Fill Active
+              {/* 2 Primary Action Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                
+                {/* Action Card 1: Official Bank Portal Access */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between gap-3">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                        {isBm ? 'Langkah 1: Portal Rasmi' : 'Step 1: Official Portal'}
                       </span>
+                      <ExternalLink className="w-4 h-4 text-slate-400" />
                     </div>
-
-                    {/* Form fields populated by the Agent */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-3">
-                      <div className="p-2.5 bg-white rounded-lg border border-slate-200 shadow-2xs">
-                        <span className="text-[10px] text-slate-400 block font-bold uppercase">Field: Nama Penuh (Full Name)</span>
-                        <div className="flex items-center justify-between mt-1">
-                          <span className="font-bold text-slate-900">{applicant.name}</span>
-                          <span className="text-[10px] font-medium text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">✓ AI Filled</span>
-                        </div>
-                      </div>
-
-                      <div className="p-2.5 bg-white rounded-lg border border-slate-200 shadow-2xs">
-                        <span className="text-[10px] text-slate-400 block font-bold uppercase">Field: No. Kad Pengenalan (NRIC)</span>
-                        <div className="flex items-center justify-between mt-1">
-                          <span className="font-mono font-bold text-slate-900">{applicant.icNumber || '940815-10-6622'}</span>
-                          <span className="text-[10px] font-medium text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">✓ AI Filled</span>
-                        </div>
-                      </div>
-
-                      <div className="p-2.5 bg-white rounded-lg border border-slate-200 shadow-2xs">
-                        <span className="text-[10px] text-slate-400 block font-bold uppercase">Field: Pendapatan Bersih (Net Monthly Income)</span>
-                        <div className="flex items-center justify-between mt-1">
-                          <span className="font-bold text-slate-900">RM {applicant.averageMonthlyNetIncome.toLocaleString()}</span>
-                          <span className="text-[10px] font-medium text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">✓ Audited</span>
-                        </div>
-                      </div>
-
-                      <div className="p-2.5 bg-white rounded-lg border border-slate-200 shadow-2xs">
-                        <span className="text-[10px] text-slate-400 block font-bold uppercase">Field: Sumber Pekerjaan / Sektor</span>
-                        <div className="flex items-center justify-between mt-1">
-                          <span className="font-bold text-slate-800">{applicant.platform || 'Gig Worker (Foodpanda)'}</span>
-                          <span className="text-[10px] font-medium text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">✓ AI Filled</span>
-                        </div>
-                      </div>
-
-                      <div className="p-2.5 bg-white rounded-lg border border-slate-200 shadow-2xs">
-                        <span className="text-[10px] text-slate-400 block font-bold uppercase">Field: Amaun Pinjaman Dimohon</span>
-                        <div className="flex items-center justify-between mt-1">
-                          <span className="font-bold text-slate-900">RM {loanAmount.toLocaleString()}</span>
-                          <span className="text-[10px] font-medium text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">✓ DSR OK</span>
-                        </div>
-                      </div>
-
-                      <div className="p-2.5 bg-white rounded-lg border border-slate-200 shadow-2xs">
-                        <span className="text-[10px] text-slate-400 block font-bold uppercase">Field: Dokumen Sokongan (Attachment)</span>
-                        <div className="flex items-center justify-between mt-1">
-                          <span className="font-mono text-[11px] text-slate-800 truncate max-w-[150px]">CreditFlow_CAM.pdf</span>
-                          <span className="text-[10px] font-medium text-slate-700 bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200">✓ Attached</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Checkpoint note */}
-                    <div className="p-2.5 bg-slate-100 border border-slate-200 rounded-lg text-[11px] text-slate-700 flex items-center justify-between mt-2">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-slate-600 shrink-0" />
-                        <span>
-                          <strong>Status:</strong> Borang telah 100% diisi secara automatik. Pengesahan OTP akhir kekal di tangan anda.
-                        </span>
-                      </div>
-                      <span className="text-[10px] font-mono text-slate-600 font-bold shrink-0">OTP READY</span>
-                    </div>
+                    <h4 className="text-sm font-bold text-slate-900 mt-2">
+                      {isBm ? `Buka Portal Rasmi ${lenderName}` : `Open Official ${lenderName} Portal`}
+                    </h4>
+                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                      {isBm
+                        ? 'Portal rasmi dibuka dalam tab baru. Semua butiran pendapatan, skor kredit, dan cadangan pembiayaan sedia untuk pengesahan akhir.'
+                        : 'Access the bank\'s official application intake page. Verified applicant credentials and loan terms are prepared.'}
+                    </p>
                   </div>
-                </div>
-              )}
 
-              {/* TAB 2: AGENT ACTIVITY LOG TERMINAL */}
-              {activeTab === 'TERMINAL' && (
-                <div className="bg-slate-950 text-slate-300 p-4 rounded-xl font-mono text-xs border border-slate-800 shadow-inner max-h-64 overflow-y-auto flex flex-col gap-2">
-                  <div className="flex items-center justify-between pb-2 border-b border-slate-800 text-[11px] text-slate-400">
-                    <span className="flex items-center gap-1.5">
-                      <Terminal className="w-3.5 h-3.5 text-slate-400" />
-                      AI Agent Execution Log · PID #49281
-                    </span>
-                    <span className="text-slate-400 font-semibold">LIVE LOG</span>
-                  </div>
-                  {agentLogs.map((log, idx) => (
-                    <div key={idx} className="leading-relaxed">
-                      {log}
-                    </div>
-                  ))}
-                  {agentRunning && (
-                    <div className="text-slate-400 animate-pulse flex items-center gap-1.5">
-                      <RefreshCw className="w-3 h-3 animate-spin" />
-                      <span>Agent is analyzing form DOM tree and injecting verified data...</span>
-                    </div>
-                  )}
-                  <div ref={logsEndRef} />
-                </div>
-              )}
-
-              {/* TAB 3: BACKUP FAST-FILL HELPER */}
-              {activeTab === 'MANUAL_HELPER' && (
-                <div className="border border-slate-200 rounded-xl overflow-hidden shadow-2xs">
-                  <div className="bg-slate-900 px-4 py-2.5 flex items-center justify-between">
-                    <span className="text-xs font-bold text-white uppercase tracking-wider">
-                      {isBm ? 'Nilai Disahkan CreditFlow' : 'CreditFlow Verified Values'}
-                    </span>
-                    <button
-                      onClick={handleCopyAll}
-                      className="px-2.5 py-1 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-semibold transition-colors flex items-center gap-1.5 cursor-pointer"
-                    >
-                      {copiedAll ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-                      <span>{copiedAll ? 'Copied All!' : 'Copy All'}</span>
-                    </button>
-                  </div>
-                  <div className="divide-y divide-slate-100 text-xs">
-                    {prefillFields.map(f => (
-                      <div key={f.field} className="flex items-center justify-between px-4 py-2 hover:bg-slate-50">
-                        <span className="text-slate-500 font-medium">{f.label}</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-slate-900 font-bold tabular-nums">{f.value}</span>
-                          <button
-                            onClick={() => handleCopy(f.value.replace('RM ', '').replace(',', ''), f.field)}
-                            className="p-1 rounded-md hover:bg-slate-200 text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
-                          >
-                            {copiedField === f.field
-                              ? <ClipboardCheck className="w-3.5 h-3.5 text-slate-700" />
-                              : <Copy className="w-3.5 h-3.5" />}
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* ─── REAL APPLICATION ACTIONS ─── */}
-              <div className="flex flex-col gap-3 pt-1">
-                <span className="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                  <Zap className="w-4 h-4 text-slate-600" />
-                  {isBm ? 'Pilihan Laksana Permohonan Ejen AI:' : 'AI Agent Application Execution Options:'}
-                </span>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {/* Action 1: Launch Bank Portal */}
                   <button
                     type="button"
                     onClick={handleLaunchBankPortal}
-                    className="p-4 rounded-xl bg-white border border-slate-200 hover:border-slate-400 transition-all shadow-2xs flex flex-col gap-2 text-left cursor-pointer group"
+                    className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                        <ExternalLink className="w-4 h-4 text-slate-700" />
-                        {isBm ? `Buka Portal Rasmi ${lenderName}` : `Open Official ${lenderName} Portal`}
-                      </span>
-                      <ArrowRight className="w-4 h-4 text-slate-400 group-hover:translate-x-1 group-hover:text-slate-900 transition-transform" />
-                    </div>
-                    <p className="text-[11px] text-slate-500 leading-relaxed">
-                      {isBm
-                        ? 'Buka portal rasmi bank dalam tab baru. Borang telah siap dipra-sediakan untuk anda.'
-                        : 'Opens the bank\'s real application portal. Form data is pre-mapped and ready.'}
-                    </p>
+                    <ExternalLink className="w-3.5 h-3.5 text-slate-300" />
+                    <span>{isBm ? 'Buka Portal Bank Sekarang ↗' : 'Open Bank Portal Now ↗'}</span>
                   </button>
-
-                  {/* Action 2: 1-Click Auto-Fill Injector */}
-                  <button
-                    type="button"
-                    onClick={handleCopyAutoFillScript}
-                    className="p-4 rounded-xl bg-white border border-slate-200 hover:border-slate-400 transition-all shadow-2xs flex flex-col gap-2 text-left cursor-pointer group"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                        <Bot className="w-4 h-4 text-slate-700" />
-                        {copiedField === 'injector'
-                          ? (isBm ? '✓ Skrip Auto-Fill Disalin!' : '✓ Auto-Fill Script Copied!')
-                          : (isBm ? 'Salin Skrip Auto-Fill 1-Klik' : '1-Click Form Auto-Fill Injector')}
-                      </span>
-                      <Copy className="w-4 h-4 text-slate-400 group-hover:scale-105 transition-transform" />
-                    </div>
-                    <p className="text-[11px] text-slate-500 leading-relaxed">
-                      {isBm
-                        ? 'Salin skrip injeksi automatik untuk mengisi semua kotak borang bank dalam 1 klik tanpa menaip.'
-                        : 'Copies automated DOM injection snippet to fill all bank input fields in 1 second.'}
-                    </p>
-                  </button>
-
-                  {/* Action 3: Concierge Direct Dispatch */}
-                  <button
-                    type="button"
-                    onClick={handleConciergeDispatch}
-                    disabled={conciergeDispatched}
-                    className={`p-4 rounded-xl border transition-all shadow-2xs flex flex-col gap-2 text-left cursor-pointer group ${
-                      conciergeDispatched
-                        ? 'bg-slate-50 border-slate-300 text-slate-900 cursor-default'
-                        : 'bg-white border-slate-200 hover:border-slate-400'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                        <Send className="w-4 h-4 text-slate-700" />
-                        {conciergeDispatched
-                          ? (isBm ? '✓ Pakej Dihantar ke Meja Kredit!' : '✓ Dispatched to Intake Queue!')
-                          : (isBm ? 'Hantar Terus via Ejen Konsierj' : 'Direct AI Concierge Dispatch')}
-                      </span>
-                      <CheckCircle className={`w-4 h-4 ${conciergeDispatched ? 'text-slate-900' : 'text-slate-400'}`} />
-                    </div>
-                    <p className="text-[11px] text-slate-500 leading-relaxed">
-                      {conciergeDispatched
-                        ? `Pakej permohonan telah dihantar ke sistem penilaian institusi dengan kod rujukan ${generatedRefCode}.`
-                        : 'Hantar pakej CAM bersekuriti terus ke saluran intake pembiayaan tanpa kertas kerja.'}
-                    </p>
-                  </button>
-
-                  {/* Action 4: WhatsApp Officer Concierge */}
-                  <a
-                    href={whatsappUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-4 rounded-xl bg-white border border-slate-200 hover:border-slate-400 transition-all shadow-2xs flex flex-col gap-2 text-left cursor-pointer group"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-900 flex items-center gap-1.5">
-                        <MessageCircle className="w-4 h-4 text-slate-700" />
-                        {isBm ? 'WhatsApp Pegawai Pembiayaan' : 'WhatsApp Loan Officer'}
-                      </span>
-                      <ExternalLink className="w-4 h-4 text-slate-400 group-hover:translate-x-1 group-hover:text-slate-900 transition-transform" />
-                    </div>
-                    <p className="text-[11px] text-slate-500 leading-relaxed">
-                      {isBm
-                        ? 'Hantar draf permohonan formal yang lengkap terus ke WhatsApp pegawai pembiayaan.'
-                        : 'Sends pre-formatted formal loan application pitch directly to a registered loan officer.'}
-                    </p>
-                  </a>
                 </div>
-              </div>
 
-              {/* Document Download & Supporting Packet */}
-              <div className="p-4 bg-white border border-slate-200 rounded-xl shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center shrink-0 border border-slate-200">
-                    <Download className="w-4 h-4 text-slate-600" />
-                  </div>
+                {/* Action Card 2: Pre-Filled Bank Dossier PDF */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between gap-3">
                   <div>
-                    <span className="text-xs font-bold text-slate-900 block">
-                      {isBm ? 'Pakej Dokumen Permohonan Rasmi Institusi' : 'Certified Institutional Application Pack & CAM Dossier'}
-                    </span>
-                    <span className="text-[11px] text-slate-500">
-                      SHA-256: {applicant.documentHash.slice(0, 16)}... · Bank Negara Malaysia FTFC Standard
-                    </span>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                        {isBm ? 'Langkah 2: Dokumen Rasmi' : 'Step 2: Official Dossier'}
+                      </span>
+                      <Download className="w-4 h-4 text-slate-400" />
+                    </div>
+                    <h4 className="text-sm font-bold text-slate-900 mt-2">
+                      {isBm ? 'Pakej Permohonan Pra-Isi (PDF)' : 'Pre-Filled Application Pack (PDF)'}
+                    </h4>
+                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                      {isBm
+                        ? 'Muat turun pakej borang permohonan lengkap yang telah siap diisi beserta sijil pengesahan integriti CAM.'
+                        : 'Download verified application pack complete with audited financials, Part B proposal, and CAM certificate hash.'}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleDownloadApplicationPackPdf}
+                      className="flex-1 py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.98]"
+                    >
+                      <FileText className="w-3.5 h-3.5 text-slate-300" />
+                      <span>{isBm ? 'Muat Turun Pack (PDF)' : 'Download Bank Pack'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDownloadCamPdf}
+                      className="py-2.5 px-3 rounded-xl bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 font-semibold text-xs shadow-2xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                      title="Download CAM Assessment Memo"
+                    >
+                      <Download className="w-3.5 h-3.5 text-slate-600" />
+                      <span>CAM PDF</span>
+                    </button>
                   </div>
                 </div>
-                <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
+
+              </div>
+
+              {/* Verified Application Credentials Card (Fast Copy Reference) */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col gap-3">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                  <div className="flex items-center gap-2">
+                    <ClipboardCheck className="w-4 h-4 text-slate-700" />
+                    <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                      {isBm ? 'Data Permohonan Disahkan (Untuk Rujukan)' : 'Verified Application Credentials'}
+                    </span>
+                  </div>
                   <button
                     type="button"
-                    onClick={handleDownloadApplicationPackPdf}
-                    className="w-full sm:w-auto px-4 py-2 rounded-lg bg-slate-900 hover:bg-black text-white text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs shrink-0"
-                    title="Download Pre-filled Official Application Pack"
+                    onClick={handleCopyAll}
+                    className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-semibold transition-colors flex items-center gap-1.5 cursor-pointer border border-slate-200"
                   >
-                    <FileText className="w-3.5 h-3.5 text-slate-300" />
-                    <span>{isBm ? 'Muat Turun Borang Pra-Isi (PDF)' : 'Download Pre-Filled Bank Pack (PDF)'}</span>
+                    {copiedAll ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-500" />}
+                    <span>{copiedAll ? (isBm ? 'Disalin!' : 'Copied!') : (isBm ? 'Salin Semua Data' : 'Copy All Data')}</span>
                   </button>
-                  <button
-                    type="button"
-                    onClick={handleDownloadCamPdf}
-                    className="w-full sm:w-auto px-3.5 py-2 rounded-lg bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs shrink-0"
-                  >
-                    <Download className="w-3.5 h-3.5 text-slate-600" />
-                    <span>CAM PDF</span>
-                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
+                  {prefillFields.map(f => (
+                    <div key={f.field} className="p-2 rounded-xl bg-slate-50 border border-slate-100 flex flex-col justify-between">
+                      <span className="text-[10px] text-slate-500 font-medium block">{f.label}</span>
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="font-bold text-slate-900 tabular-nums truncate">{f.value}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleCopy(f.value.replace('RM ', '').replace(',', ''), f.field)}
+                          className="p-1 text-slate-400 hover:text-slate-800 transition-colors cursor-pointer"
+                          title="Copy field"
+                        >
+                          {copiedField === f.field ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              {/* Architectural Explanation for Judges & Investors */}
-              <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 flex items-start gap-2.5">
-                <HelpCircle className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-                <div className="leading-relaxed text-[11px]">
-                  <strong>{isBm ? 'Bagaimana Ejen AI ini berfungsi tanpa kerjasama API Bank?' : 'How this AI Agent works without Bank APIs:'} </strong>
+              {/* Regulatory Human-In-The-Loop Note */}
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 flex items-center gap-2.5">
+                <Info className="w-4 h-4 text-slate-500 shrink-0" />
+                <span className="text-[11px] leading-relaxed">
                   {isBm
-                    ? `CreditFlow menggunakan teknologi RPA (Robotic Process Automation) dan Computer-Use berasaskan DOM parser. Ejen AI menganalisis borang web awam institusi kewangan, memadankan data pemohon yang telah diaudit, mengisi borang secara automatik, dan melampirkan fail CAM bersekuriti. Mengikut garis panduan BNM, semakan OTP terakhir kekal di tangan pengguna (Human-in-the-Loop) bagi memastikan pematuhan undang-undang 100%.`
-                    : `CreditFlow employs client-side RPA (Robotic Process Automation) and intelligent DOM schema mapping. The AI Agent inspects the bank's public web intake form, maps audited applicant financials, auto-populates all inputs, and injects the certified CAM dossier. In compliance with Bank Negara Malaysia guidelines, the final OTP signature remains with the borrower (Human-in-the-Loop), guaranteeing regulatory compliance without requiring private bank APIs.`}
-                </div>
+                    ? 'Pematuhan Bank Negara Malaysia (BNM): Pengesahan OTP akhir kekal di tangan pemohon (Human-in-the-Loop) bagi memastikan keselamatan perbankan 100% tanpa memerlukan sebarang perkongsian kata laluan.'
+                    : 'Bank Negara Malaysia (BNM) Compliance: The final OTP authentication is confirmed by you directly on the official banking portal to ensure absolute security with zero password sharing.'}
+                </span>
               </div>
 
             </div>
