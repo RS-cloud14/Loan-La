@@ -524,20 +524,20 @@ export default function AIApplicationDispatcherModal({
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-sm sm:text-base font-bold text-slate-900">
-                  {isBm ? 'Kelulusan & Penyerahan Permohonan' : 'Application Dossier & Authorization'}
+                  {isBm ? 'Pakej Permohonan & Pengesahan Serahan' : 'Application Pack & Submission Verification'}
                 </h2>
                 <span className="text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
                   {stage === 'APPROVAL'
-                    ? (isBm ? 'Langkah 1/2: Kelulusan' : 'Step 1 of 2: Approval')
+                    ? (isBm ? 'Langkah 1/2: Semakan Profil' : 'Step 1 of 2: Profile Review')
                     : stage === 'AGENT_AUTOMATION'
-                    ? (isBm ? 'Langkah 2/2: Automasi' : 'Step 2 of 2: Automation')
+                    ? (isBm ? 'Langkah 2/2: Pakej Permohonan' : 'Step 2 of 2: Application Pack')
                     : (isBm ? 'Selesai' : 'Completed')}
                 </span>
               </div>
               <p className="text-xs text-slate-500 mt-0.5">
                 {isBm
-                  ? 'Semak profil dan sahkan sebelum ejen menghantar ke institusi kewangan'
-                  : 'Review verified profile and authorize CreditFlow AI agent submission'}
+                  ? 'Semak profil pembiayaan dan sahkan untuk menjana pakej rasmi permohonan institusi kewangan'
+                  : 'Review verified profile and prepare your official bank submission dossier'}
               </p>
             </div>
           </div>
@@ -737,8 +737,8 @@ export default function AIApplicationDispatcherModal({
                 />
                 <span className="leading-tight">
                   {isBm
-                    ? `Saya memberi kuasa kepada Ejen AI untuk menghantar fail ke ${lenderName}`
-                    : `I authorize AI Agent to submit and process my dossier with ${lenderName}`}
+                    ? `Saya mengesahkan maklumat pembiayaan ini tepat untuk penyediaan permohonan ke ${lenderName}`
+                    : `I confirm these financing details are accurate for preparing my application to ${lenderName}`}
                 </span>
               </label>
 
@@ -755,11 +755,11 @@ export default function AIApplicationDispatcherModal({
                   onClick={handleApproveAndProceed}
                   className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-slate-900 hover:bg-black text-white font-semibold text-xs shadow-sm transition flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
                 >
-                  <Bot className="w-3.5 h-3.5 text-slate-300" />
+                  <FileText className="w-3.5 h-3.5 text-slate-300" />
                   <span>
                     {isBm
-                      ? `Luluskan & Lancarkan Ejen AI (${lenderName}) →`
-                      : `Approve & Launch AI Agent for ${lenderName} →`}
+                      ? `Sahkan & Sedia Pakej Permohonan (${lenderName}) →`
+                      : `Confirm & Generate Application Pack for ${lenderName} →`}
                   </span>
                 </button>
               </div>
@@ -783,7 +783,7 @@ export default function AIApplicationDispatcherModal({
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
-                        {isBm ? 'Ejen AI Telah Dilancarkan & Dipra-Isi' : 'AI Agent Dispatched & Pre-Filled'}
+                        {isBm ? 'Pakej Permohonan Disahkan Siap Dijana' : 'Verified Application Pack Prepared'}
                       </span>
                       <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
                     </div>
@@ -821,7 +821,7 @@ export default function AIApplicationDispatcherModal({
                 <div className="text-xs">
                   <span className="font-extrabold text-blue-950 block">
                     {isWalkIn
-                      ? (isBm ? 'Saluran Institusi: Penyerahan Kaunter / Walk-In Cawangan Diperlukan' : 'Bank Intake Channel: Physical Branch Walk-In & Counter Intake Required')
+                      ? (isBm ? `Saluran Rasmi ${lenderName}: Penyerahan Kaunter Cawangan (Walk-In Diwajibkan)` : `Official ${lenderName} Channel: Physical Branch Walk-In Required`)
                       : isWhatsAppOfficer
                       ? (isBm ? 'Saluran Agensi: Penyerahan Melalui Pegawai Daerah / WhatsApp' : 'Agency Intake Channel: Direct District Officer WhatsApp Submission')
                       : isDigitalApp
@@ -832,8 +832,8 @@ export default function AIApplicationDispatcherModal({
                   <p className="text-slate-600 mt-0.5 leading-relaxed">
                     {isWalkIn
                       ? (isBm
-                          ? `Skim mikro perbankan fizikal (${lenderName}) mewajibkan penyerahan dokumen di kaunter cawangan mengikut piawaian BNM. Pakej Permohonan (PDF) telah menyediakan semua borang, kertas kerja Part B, dan Memo CAM agar anda hanya perlu hadir sekali tanpa kekurangan dokumen.`
-                          : `Malaysian physical micro-financing (${lenderName}) requires in-person submission at any branch counter per BNM regulations. Your Pre-Filled Application Pack (PDF) compiles your application forms, Part B proposal, and CAM score memo so you can submit in a single counter visit.`)
+                          ? `Pihak ${lenderName} memerlukan pemohon hadir secara fizikal di mana-mana 400+ cawangan bersama borang rasmi dan MyKad. Pakej Permohonan (PDF) di bawah telah mengumpulkan semua borang, kertas kerja Part B, dan Memo Pengunderaitan CAM agar anda hanya perlu serah di kaunter tanpa kekeliruan.`
+                          : `${lenderName} micro-financing requires physical in-person submission at any branch counter nationwide (over 400 branches). Your Pre-Filled Application Pack (PDF) compiles all required bank forms, Part B proposal, and CAM underwriting memo so you can submit at the counter in one trip.`)
                       : isWhatsAppOfficer
                       ? (isBm
                           ? `Pembiayaan ${lenderName} dinilai secara terus oleh Pegawai Pembiayaan Daerah. Hubungi pegawai melalui WhatsApp dengan profil yang telah siap disusun di bawah.`
@@ -981,8 +981,8 @@ export default function AIApplicationDispatcherModal({
                       </h4>
                       <p className="text-xs text-slate-500 mt-1 leading-relaxed">
                         {isBm
-                          ? `Bawa Pakej Permohonan bercetak bersama MyKad dan penyata bank 3 bulan ke cawangan terdekat. Sebut Kod Rujukan ${generatedRefCode}.`
-                          : `Bring the printed Walk-In Pack and MyKad to the financing counter at any nearby branch. Present Ref ID ${generatedRefCode}.`}
+                          ? `Bawa Pakej Permohonan bercetak bersama MyKad dan penyata bank ke kaunter cawangan terdekat. Sebut Kod Rujukan ${generatedRefCode}.`
+                          : `Bring the printed Application Pack and MyKad to the financing counter at any nearby branch. Present Ref ID ${generatedRefCode}.`}
                       </p>
                     </div>
 
@@ -1000,10 +1000,10 @@ export default function AIApplicationDispatcherModal({
                         type="button"
                         onClick={handleLaunchBankPortal}
                         className="py-2.5 px-3 rounded-xl bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 font-semibold text-xs shadow-2xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                        title="Open Bank Website"
+                        title={isBm ? 'Prapendaftaran pilihan portal rasmi' : 'Optional online pre-check'}
                       >
                         <ExternalLink className="w-3.5 h-3.5 text-slate-600" />
-                        <span>{isBm ? 'Laman Web' : 'Portal'}</span>
+                        <span>{isBm ? 'Prapendaftaran (Pilihan)' : 'Portal (Optional)'}</span>
                       </button>
                     </div>
                   </div>
@@ -1112,43 +1112,61 @@ export default function AIApplicationDispatcherModal({
               </div>
 
               {/* Verified Application Credentials Card (Fast Copy Reference) */}
-              <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col gap-3">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                  <div className="flex items-center gap-2">
+              {/* Optional Collapsible Verified Application Credentials */}
+              <details className="rounded-2xl bg-white border border-slate-200 shadow-xs overflow-hidden group">
+                <summary className="p-4 sm:p-5 flex items-center justify-between cursor-pointer select-none hover:bg-slate-50/80 transition-colors list-none">
+                  <div className="flex items-center gap-2.5">
                     <ClipboardCheck className="w-4 h-4 text-slate-700" />
-                    <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">
-                      {isBm ? 'Data Permohonan Disahkan (Untuk Rujukan)' : 'Verified Application Credentials'}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleCopyAll}
-                    className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-semibold transition-colors flex items-center gap-1.5 cursor-pointer border border-slate-200"
-                  >
-                    {copiedAll ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-500" />}
-                    <span>{copiedAll ? (isBm ? 'Disalin!' : 'Copied!') : (isBm ? 'Salin Semua Data' : 'Copy All Data')}</span>
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
-                  {prefillFields.map(f => (
-                    <div key={f.field} className="p-2 rounded-xl bg-slate-50 border border-slate-100 flex flex-col justify-between">
-                      <span className="text-[10px] text-slate-500 font-medium block">{f.label}</span>
-                      <div className="flex items-center justify-between mt-1">
-                        <span className="font-bold text-slate-900 tabular-nums truncate">{f.value}</span>
-                        <button
-                          type="button"
-                          onClick={() => handleCopy(f.value.replace('RM ', '').replace(',', ''), f.field)}
-                          className="p-1 text-slate-400 hover:text-slate-800 transition-colors cursor-pointer"
-                          title="Copy field"
-                        >
-                          {copiedField === f.field ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
-                        </button>
-                      </div>
+                    <div>
+                      <span className="text-xs font-bold text-slate-900 uppercase tracking-wider block">
+                        {isBm ? 'Butiran Data Pra-Isi (Pilihan / Rujukan)' : 'Pre-Filled Data Summary (Optional Reference)'}
+                      </span>
+                      <span className="text-[11px] text-slate-500 block">
+                        {isBm ? 'Semua butiran telah siap dimasukkan dalam fail Pakej PDF.' : 'All verified details are already compiled inside your PDF pack.'}
+                      </span>
                     </div>
-                  ))}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 px-2.5 py-1 rounded-lg border border-slate-200">
+                    <span>{isBm ? 'Papar / Sembunyi' : 'View / Hide'}</span>
+                    <span className="text-[10px] transition-transform group-open:rotate-180">▼</span>
+                  </div>
+                </summary>
+
+                <div className="p-4 sm:p-5 pt-0 border-t border-slate-100 flex flex-col gap-3">
+                  <div className="flex items-center justify-between pt-3">
+                    <span className="text-[11px] text-slate-500 font-medium">
+                      {isBm ? 'Klik ikon salin jika perlu mengisi portal luaran:' : 'Click copy if required for external portal fields:'}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleCopyAll}
+                      className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-semibold transition-colors flex items-center gap-1.5 cursor-pointer border border-slate-200"
+                    >
+                      {copiedAll ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-slate-500" />}
+                      <span>{copiedAll ? (isBm ? 'Disalin!' : 'Copied!') : (isBm ? 'Salin Semua Data' : 'Copy All Data')}</span>
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs">
+                    {prefillFields.map(f => (
+                      <div key={f.field} className="p-2 rounded-xl bg-slate-50 border border-slate-100 flex flex-col justify-between">
+                        <span className="text-[10px] text-slate-500 font-medium block">{f.label}</span>
+                        <div className="flex items-center justify-between mt-1">
+                          <span className="font-bold text-slate-900 tabular-nums truncate text-xs">{f.value}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleCopy(f.value.replace('RM ', '').replace(',', ''), f.field)}
+                            className="p-1 text-slate-400 hover:text-slate-800 transition-colors cursor-pointer"
+                            title="Copy field"
+                          >
+                            {copiedField === f.field ? <Check className="w-3 h-3 text-emerald-600" /> : <Copy className="w-3 h-3" />}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              </details>
 
               {/* Regulatory Human-In-The-Loop Note */}
               <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 flex items-center gap-2.5">

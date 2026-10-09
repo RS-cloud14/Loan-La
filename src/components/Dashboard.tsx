@@ -350,6 +350,11 @@ export default function Dashboard() {
   const [unlockedDocHash, setUnlockedDocHash] = useState<string | null>(null);
   const [proExpiryTimestamp, setProExpiryTimestamp] = useState<number | null>(null);
   const [showPaywallModal, setShowPaywallModal] = useState<boolean>(false);
+  // User Identification per Platform Edition Blueprint: Individual/GIG vs SME (Company)
+  const [borrowerCategory, setBorrowerCategory] = useState<'individual' | 'sme'>('individual');
+  const [smeSubcategory, setSmeSubcategory] = useState<'msme' | 'sme'>('msme'); // Micro (MSME) vs Standard SME
+  const [companyName, setCompanyName] = useState<string>('');
+  const [companySsmNumber, setCompanySsmNumber] = useState<string>('');
   const [isSupportModalOpen, setIsSupportModalOpen] = useState<boolean>(false);
   const [initialSupportTicketId, setInitialSupportTicketId] = useState<string | null>(null);
   const [activeAssessmentTask, setActiveAssessmentTask] = useState<ActiveAssessmentTask | null>(null);
@@ -2448,8 +2453,176 @@ export default function Dashboard() {
                         </div>
                       </div>
 
-                      {/* 1. Purpose Selection Grid */}
+                      {/* USER IDENTIFICATION: PERSONAL/GIG vs SME/BUSINESS */}
                       <div className="flex flex-col gap-2">
+                        <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                          {language === 'bm' ? 'Kategori Pemohon (Skop Permohonan)' : 'Applicant Classification (Application Scope)'}
+                        </label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          {/* Option A: Normal Case (Individual / GIG) */}
+                          <button
+                            type="button"
+                            onClick={() => setBorrowerCategory('individual')}
+                            className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex items-start gap-3.5 ${
+                              borrowerCategory === 'individual'
+                                ? 'bg-blue-950 text-white border-blue-950 shadow-md ring-2 ring-blue-950/20'
+                                : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                            }`}
+                          >
+                            <div className={`p-2.5 rounded-xl shrink-0 ${borrowerCategory === 'individual' ? 'bg-blue-900 text-cyan-300' : 'bg-white text-slate-700 border border-slate-200'}`}>
+                              <User className="w-5 h-5" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between">
+                                <span className="font-bold text-sm block">
+                                  {language === 'bm' ? 'Individu / Pekerja GIG' : 'Personal Loan (Gig / Salaried)'}
+                                </span>
+                                {borrowerCategory === 'individual' && (
+                                  <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-cyan-400 text-blue-950">
+                                    Normal
+                                  </span>
+                                )}
+                              </div>
+                              <span className={`text-xs block mt-0.5 leading-snug ${borrowerCategory === 'individual' ? 'text-blue-200' : 'text-slate-500'}`}>
+                                {language === 'bm'
+                                  ? 'Pekerja gig, gaji bulanan, freelance. Dokumen: MyKad, slip pendapatan & penyata bank.'
+                                  : 'Salaried employees, freelancers & gig riders. Audit: IC, payslip/gig slip & bank statements.'}
+                              </span>
+                            </div>
+                          </button>
+
+                          {/* Option B: SME Case (Company / Business) */}
+                          <button
+                            type="button"
+                            onClick={() => setBorrowerCategory('sme')}
+                            className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex items-start gap-3.5 ${
+                              borrowerCategory === 'sme'
+                                ? 'bg-slate-900 text-white border-slate-900 shadow-md ring-2 ring-slate-900/20'
+                                : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                            }`}
+                          >
+                            <div className={`p-2.5 rounded-xl shrink-0 ${borrowerCategory === 'sme' ? 'bg-slate-800 text-amber-300' : 'bg-white text-slate-700 border border-slate-200'}`}>
+                              <Building2 className="w-5 h-5" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between">
+                                <span className="font-bold text-sm block">
+                                  {language === 'bm' ? 'Perniagaan / Syarikat (PKS)' : 'SME / Business Loan'}
+                                </span>
+                                {borrowerCategory === 'sme' && (
+                                  <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded-full bg-amber-400 text-slate-950">
+                                    SME Scope
+                                  </span>
+                                )}
+                              </div>
+                              <span className={`text-xs block mt-0.5 leading-snug ${borrowerCategory === 'sme' ? 'text-slate-300' : 'text-slate-500'}`}>
+                                {language === 'bm'
+                                  ? 'Pemilik perniagaan, pengarah syarikat & PKS. Dokumen: SSM, penyata bank syarikat 6 bulan.'
+                                  : 'Business owners, directors & SMEs. Audit: SSM certificate, 6-mo business statements.'}
+                              </span>
+                            </div>
+                          </button>
+                        </div>
+
+                        {/* SME SUB-TIER: MICRO (MSME) VS STANDARD SME */}
+                        {borrowerCategory === 'sme' && (
+                          <div className="mt-2 p-4 rounded-2xl bg-amber-50/70 border border-amber-200 flex flex-col gap-3 animate-fade-in">
+                            {/* Heavier Document Processing Notice */}
+                            <div className="flex items-start gap-2.5 text-xs text-amber-950">
+                              <AlertCircle className="w-4 h-4 text-amber-700 shrink-0 mt-0.5" />
+                              <div className="leading-relaxed">
+                                <strong className="font-bold block">
+                                  {language === 'bm' ? 'Pemprosesan Dokumen Berat PKS' : 'SME Heavy Document Processing'}
+                                </strong>
+                                <span>
+                                  {language === 'bm'
+                                    ? 'Analisis PKS memerlukan pemprosesan dokumen kewangan dan penyata yang lebih kompleks. Enjin AI kami akan menjalankan audit terperinci.'
+                                    : 'SME Analysis requires heavier document processing. Our AI will conduct a deep-dive audit.'}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Micro (MSME) vs Commercial SME Selector */}
+                            <div className="flex flex-col gap-1.5 pt-2 border-t border-amber-200/80">
+                              <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+                                {language === 'bm' ? 'Klasifikasi Skala Perniagaan:' : 'Business Scale Classification:'}
+                              </span>
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setSmeSubcategory('msme')}
+                                  className={`p-2.5 rounded-xl border text-left text-xs transition cursor-pointer flex items-center justify-between ${
+                                    smeSubcategory === 'msme'
+                                      ? 'bg-amber-100/90 border-amber-400 font-bold text-amber-950 shadow-2xs'
+                                      : 'bg-white border-amber-200/70 text-slate-700 hover:bg-amber-50'
+                                  }`}
+                                >
+                                  <div>
+                                    <span className="block font-bold">
+                                      {language === 'bm' ? 'Mikro (MSME)' : 'Micro Enterprise (MSME)'}
+                                    </span>
+                                    <span className="text-[10px] text-slate-500 font-normal">
+                                      {language === 'bm' ? 'Jualan tahunan < RM 300k / < 5 pekerja' : 'Annual revenue < RM 300k / < 5 staff'}
+                                    </span>
+                                  </div>
+                                  {smeSubcategory === 'msme' && <CheckCircle2 className="w-4 h-4 text-amber-700 shrink-0" />}
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => setSmeSubcategory('sme')}
+                                  className={`p-2.5 rounded-xl border text-left text-xs transition cursor-pointer flex items-center justify-between ${
+                                    smeSubcategory === 'sme'
+                                      ? 'bg-amber-100/90 border-amber-400 font-bold text-amber-950 shadow-2xs'
+                                      : 'bg-white border-amber-200/70 text-slate-700 hover:bg-amber-50'
+                                  }`}
+                                >
+                                  <div>
+                                    <span className="block font-bold">
+                                      {language === 'bm' ? 'PKS Komersial (SME)' : 'Commercial SME'}
+                                    </span>
+                                    <span className="text-[10px] text-slate-500 font-normal">
+                                      {language === 'bm' ? 'Jualan tahunan RM 300k – RM 15juta' : 'Revenue RM 300k – RM 15mil'}
+                                    </span>
+                                  </div>
+                                  {smeSubcategory === 'sme' && <CheckCircle2 className="w-4 h-4 text-amber-700 shrink-0" />}
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Business Profile Inputs */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 pt-2 border-t border-amber-200/80">
+                              <div>
+                                <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                                  {language === 'bm' ? 'Nama Syarikat / Perniagaan' : 'Registered Business Name'}
+                                </label>
+                                <input
+                                  type="text"
+                                  value={companyName}
+                                  onChange={(e) => setCompanyName(e.target.value)}
+                                  placeholder={language === 'bm' ? 'cth. Maju Enterprise / ABC Sdn Bhd' : 'e.g. Maju Enterprise / ABC Sdn Bhd'}
+                                  className="w-full px-3 py-2 bg-white border border-amber-300 rounded-xl text-xs font-semibold text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-amber-500 shadow-2xs"
+                                />
+                              </div>
+                              <div>
+                                <label className="text-[11px] font-semibold text-slate-700 block mb-1">
+                                  {language === 'bm' ? 'Nombor Pendaftaran SSM' : 'SSM Registration Number'}
+                                </label>
+                                <input
+                                  type="text"
+                                  value={companySsmNumber}
+                                  onChange={(e) => setCompanySsmNumber(e.target.value)}
+                                  placeholder="cth. 202301012345 (1234567-X)"
+                                  className="w-full px-3 py-2 bg-white border border-amber-300 rounded-xl text-xs font-semibold text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-amber-500 shadow-2xs font-mono"
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* 1. Purpose Selection Grid */}
+                      <div className="flex flex-col gap-2 pt-2 border-t border-slate-100">
                         <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
                           {language === 'bm' ? '1. Tujuan Pinjaman' : '1. Loan Purpose'}
                         </label>
@@ -2723,8 +2896,8 @@ export default function Dashboard() {
                             </strong>
                             <span className="text-[11px] text-slate-600 block mt-0.5 leading-relaxed">
                               {language === 'bm' 
-                                ? 'Jika anda memuat naik dokumen atau penyata baharu, bayaran analisis baharu (RM 9.90) diperlukan, atau naik taraf ke Pas Pro 30 Hari (RM 19.90) untuk muat naik tanpa had.'
-                                : 'Uploading new documents or statements will require a new single pass (RM 9.90), or upgrade to the 30-Day Pro Pass (RM 19.90) for unlimited re-audits.'}
+                                ? 'Setiap kitaran permohonan meliputi 1 audit rasmi. Jika terdapat ralat dokumen, pas Diagnostik & Audit Semula (Fix & Retry) tersedia pada kadar rendah.'
+                                : 'Each application cycle covers 1 official audit. If document errors occur, a low-friction Fix & Retry diagnostic re-audit pass is available.'}
                             </span>
                           </div>
                         </div>
@@ -4041,7 +4214,11 @@ export default function Dashboard() {
                           className="w-full sm:w-auto px-5 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs flex items-center justify-center gap-2 shadow-md transition-all active:scale-95 cursor-pointer shrink-0"
                         >
                           <Lock className="w-3.5 h-3.5 text-blue-200" />
-                          <span>{language === 'bm' ? 'Buka Laporan Penuh (RM 9.90 / RM 19.90 Pro)' : 'Unlock Full Report (RM 9.90 / RM 19.90 Pro)'}</span>
+                          <span>
+                            {language === 'bm' 
+                              ? (borrowerCategory === 'sme' ? 'Buka Laporan PKS (RM 49.90)' : 'Buka Laporan Penuh (RM 19.90)') 
+                              : (borrowerCategory === 'sme' ? 'Unlock SME Report (RM 49.90)' : 'Unlock Full Report (RM 19.90)')}
+                          </span>
                           <ArrowRight className="w-3.5 h-3.5" />
                         </button>
                       </div>
@@ -4188,8 +4365,8 @@ export default function Dashboard() {
                                         </strong>
                                         <p className="text-[11px] leading-relaxed mt-0.5 text-blue-900">
                                           {language === 'bm'
-                                            ? 'Aliran tunai Bulan 1 anda menunjukkan keupayaan bayaran balik yang baik. Membuka laporan penuh (RM 9.90 / RM 19.90 Pro) menyediakan dokumen penyatuan berbilang bulan yang diperlukan pihak bank untuk menawarkan kadar faedah lebih rendah dan kelulusan lebih pantas.'
-                                            : 'Your verified Month 1 inflow shows healthy cash flow. Unlocking the full report (RM 9.90 / RM 19.90 Pro) provides the multi-month consolidated dossier that digital banks require to offer lower interest rates and faster approvals.'}
+                                            ? `Aliran tunai Bulan 1 anda menunjukkan keupayaan bayaran balik yang baik. Membuka laporan analisis (${borrowerCategory === 'sme' ? 'PKS RM 49.90' : 'Asas RM 19.90'}) menyediakan dokumen penyatuan berbilang bulan yang diperlukan pihak bank untuk menawarkan kadar faedah lebih rendah dan kelulusan lebih pantas.`
+                                            : `Your verified Month 1 inflow shows healthy cash flow. Unlocking the full report (${borrowerCategory === 'sme' ? 'SME RM 49.90' : 'Basic RM 19.90'}) provides the multi-month consolidated dossier that digital banks require to offer lower interest rates and faster approvals.`}
                                         </p>
                                       </div>
                                     </div>
@@ -4211,8 +4388,8 @@ export default function Dashboard() {
                                         </strong>
                                         <p className="text-[11px] leading-relaxed mt-0.5 text-amber-900">
                                           {language === 'bm'
-                                            ? 'Pendapatan anda mencukupi, tetapi corak mingguan tidak tetap mungkin menyebabkan bank biasa meminta dokumen tambahan. Buka laporan penuh (RM 9.90 / RM 19.90 Pro) untuk melihat pemberi pinjaman alternatif yang sesuai dan langkah mudah untuk memastikan permohonan anda lulus.'
-                                            : 'Your income is sufficient, but irregular weekly patterns might cause traditional banks to ask for extra documents. Unlocking the full report (RM 9.90 / RM 19.90 Pro) reveals flexible lenders suited for gig workers and gives you specific steps to improve your approval odds.'}
+                                            ? `Pendapatan anda mencukupi, tetapi corak mingguan tidak tetap mungkin menyebabkan bank biasa meminta dokumen tambahan. Buka laporan penuh (${borrowerCategory === 'sme' ? 'PKS RM 49.90' : 'Asas RM 19.90'}) untuk melihat pemberi pinjaman alternatif yang sesuai dan langkah mudah untuk memastikan permohonan anda lulus.`
+                                            : `Your income is sufficient, but irregular weekly patterns might cause traditional banks to ask for extra documents. Unlocking the full report (${borrowerCategory === 'sme' ? 'SME RM 49.90' : 'Basic RM 19.90'}) reveals flexible lenders suited for your profile and gives you specific steps to improve your approval odds.`}
                                         </p>
                                       </div>
                                     </div>
@@ -4234,8 +4411,8 @@ export default function Dashboard() {
                                         </strong>
                                         <p className="text-[11px] leading-relaxed mt-0.5 text-red-900">
                                           {language === 'bm'
-                                            ? 'Penyata anda mengandungi beberapa faktor risiko (seperti baki minima rendah atau perbelanjaan tidak stabil) yang boleh menyebabkan penolakan bank. Kami syorkan menyemak laporan diagnostik penuh (RM 9.90 / RM 19.90 Pro) untuk mengenal pasti perkara yang perlu diperbaiki sebelum memohon.'
-                                            : 'Your statement contains risk factors (e.g. low cash buffer or high expense volatility) that will likely trigger a bank rejection. We recommend reviewing the full diagnostic report (RM 9.90 / RM 19.90 Pro) to see exactly what to fix before submitting your loan application.'}
+                                            ? `Penyata anda dikesan dengan isu dokumentasi yang boleh menyebabkan penolakan bank. Dapatkan pas Diagnostik & Audit Semula (${borrowerCategory === 'sme' ? 'PKS RM 20.00' : 'RM 10.00'}) untuk membetulkan ralat tanpa perlu membayar semula yuran penuh.`
+                                            : `Your statement contains document flags that will likely trigger a bank rejection. Use our low-friction Fix & Retry pass (${borrowerCategory === 'sme' ? 'SME RM 20.00' : 'RM 10.00'}) to resolve issues and re-audit without paying the full basic fee again.`}
                                         </p>
                                       </div>
                                     </div>
@@ -4573,8 +4750,8 @@ export default function Dashboard() {
                                     }}
                                     className="flex-1 py-2 text-xs font-bold rounded-xl bg-blue-950 hover:bg-blue-900 text-white transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
                                   >
-                                    {isApplied ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300" /> : <Sparkles className="w-3.5 h-3.5 text-cyan-300" />}
-                                    <span>{isApplied ? (language === 'bm' ? 'Permohonan Dihantar' : 'Application Dispatched') : (language === 'bm' ? 'Mohon dengan Ejen AI' : 'Apply with AI Agent')}</span>
+                                    {isApplied ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300" /> : <FileText className="w-3.5 h-3.5 text-cyan-300" />}
+                                    <span>{isApplied ? (language === 'bm' ? 'Pakej Sedia' : 'Pack Ready') : (language === 'bm' ? 'Mohon & Sedia Pakej' : 'Generate Application Pack')}</span>
                                   </button>
                                 </div>
                               </div>
@@ -4627,7 +4804,11 @@ export default function Dashboard() {
                                   {!isCurrentAssessmentUnlocked ? (
                                     <>
                                       <Lock className="w-3.5 h-3.5 text-blue-300" />
-                                      <span>{language === 'bm' ? 'Buka Padanan Utama (RM 9.90 / RM 19.90 Pro)' : 'Unlock Top Match (RM 9.90 / RM 19.90 Pro)'}</span>
+                                      <span>
+                                        {language === 'bm'
+                                          ? (borrowerCategory === 'sme' ? 'Buka Padanan PKS (RM 49.90)' : 'Buka Padanan Utama (RM 19.90)')
+                                          : (borrowerCategory === 'sme' ? 'Unlock SME Matches (RM 49.90)' : 'Unlock Top Match (RM 19.90)')}
+                                      </span>
                                     </>
                                   ) : (
                                     <>
@@ -6900,8 +7081,8 @@ export default function Dashboard() {
                         }}
                         className="flex-1 py-2.5 bg-blue-950 hover:bg-blue-900 text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer shadow-xs active:scale-98"
                       >
-                        <Cpu className="w-3.5 h-3.5 text-cyan-300 animate-pulse" />
-                        <span>{language === 'bm' ? 'Mohon dengan Ejen AI' : 'Apply with AI Agent'}</span>
+                        <FileText className="w-3.5 h-3.5 text-cyan-300" />
+                        <span>{language === 'bm' ? 'Mohon & Sedia Pakej' : 'Generate Application Pack'}</span>
                       </button>
                       <a
                         href={match.lender.applicationUrl}
@@ -8184,10 +8365,12 @@ export default function Dashboard() {
             } catch (e) {}
           }
         }}
-        applicantName={b2cResult?.inputData?.name || userSession?.name || 'Borrower'}
+        applicantName={borrowerCategory === 'sme' ? (companyName || b2cResult?.inputData?.name || userSession?.name || 'SME Business') : (b2cResult?.inputData?.name || userSession?.name || 'Borrower')}
         preliminaryScore={b2cResult?.report?.score || 710}
         preliminaryGrade={b2cResult?.report?.grade || 'A'}
         isMalay={language === 'bm'}
+        initialTier={borrowerCategory === 'sme' ? 'sme' : 'personal'}
+        initialScenario={b2cResult?.report?.status === 'Declined' || b2cResult?.report?.status === 'Fraud Alert' ? 'bad_result' : 'good_result'}
       />
 
       {/* Customer Support & Service Tickets Modal */}
