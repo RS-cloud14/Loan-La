@@ -805,7 +805,7 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
     muamalat_mikro: 'https://www.muamalat.com.my/business-banking/micro-financing/',
     aim_madani: 'https://www.aim.gov.my/',
     bsn: 'https://www.bsn.com.my/page/BSN-Micro',
-    bank_rakyat: 'https://www.bankrakyat.com.my/c/business/financing/micro-financing-i',
+    bank_rakyat: 'https://www.bankrakyat.com.my',
     tekun: 'https://www.tekun.gov.my/',
     aeon: 'https://www.aeoncredit.com.my/personal-financing/i-cash',
     gxbank: 'https://gxbank.my/',

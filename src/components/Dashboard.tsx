@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { generateCreditPassportPdf } from '@/lib/pdfGenerator';
 import { UnderwritingInput, CreditProfileReport, getDisplayStatus, getDisplayGrade } from '@/lib/scoring';
-import { matchLenders, MatchedLender } from '@/lib/lenderMatcher';
+import { matchLenders, MatchedLender, getSmartMatchedLenders, SmartMatchedCard } from '@/lib/lenderMatcher';
 import PublicCalculator from './PublicCalculator';
 import LenderDirectory from './LenderDirectory';
 import AuthModal from './AuthModal';
@@ -461,7 +461,9 @@ export default function Dashboard() {
     productName: string;
     installment?: number;
     speed?: string;
+    rate?: string;
     loanAmount?: number;
+    channelType?: any;
   }) => {
     setDispatcherTarget(target);
     setAiDispatcherOpen(true);
@@ -4381,89 +4383,42 @@ export default function Dashboard() {
                     {b2cResult.report.status !== 'Declined' && (
                       <div className="p-6 bg-white border border-slate-200 rounded-2xl shadow-sm">
                         {(() => {
-                          const lenderPurposeMap: Record<string, string[]> = {
-                            working_capital: ['TEKUN Nasional (Skim Niaga)', 'SME Bank (SPUM Scheme)', 'Maybank SME Digital Financing', 'CIMB Micro-Financing', 'MARA (SPiM)', 'Alliance Digital SME', 'Funding Societies'],
-                            vehicle: ['AEON Credit (Vehicle & Motor HP)', 'TEKUN Mobilepreneur', 'Maybank Hire Purchase', 'Bank Muamalat Auto-i', 'Agrobank AgroVehicle'],
-                            personal_cash: ['BSN MicroKredit Madani', 'Bank Rakyat Pembiayaan Mikro-i', 'AEON i-Cash Personal', 'AIM (Amanah Ikhtiar PADURI)'],
-                            equipment: ['SME Bank (SPUM Mesin & Alatan)', 'Agrobank Mesin-i', 'MARA (SPiM Alatan)', 'Affin SMEmerge', 'Maybank SME Financing'],
-                            invoice_financing: ['Funding Societies Invoice Financing', 'CapBay Supply Chain Financing', 'MARA (SPiKE)'],
-                            education: ['Bank Rakyat Pendidikan-i', 'BSN MicroKredit', 'AIM (Amanah Ikhtiar)'],
-                          };
                           const purposeLabel: Record<string, string> = {
                             personal_cash: 'Personal Cash', working_capital: 'Working Capital',
-                            equipment: 'Equipment', vehicle: 'Vehicle HP', invoice_financing: 'Invoice Financing', education: 'Education'
+                            equipment: 'Equipment & Tools', vehicle: 'Vehicle (HP)', invoice_financing: 'Invoice Financing', education: 'Education'
                           };
                           const loanTier = targetLoanAmount > 50000 ? 3 : targetLoanAmount < 5000 ? 1 : 2;
 
                           const effectiveTenure = b2cResult.inputData.tenureYears || calcTenureYears || 1;
                           const effectiveMonths = effectiveTenure * 12;
-                          const topRate = targetLoanPurpose === 'working_capital' ? 0.04 : targetLoanPurpose === 'vehicle' ? 0.04 : targetLoanPurpose === 'equipment' ? 0.04 : 0.04;
-                          const topRateLabel = targetLoanPurpose === 'working_capital' ? '4.0% flat p.a. (Subsidized)' : targetLoanPurpose === 'vehicle' ? '4.0% – 5.5% flat p.a.' : targetLoanPurpose === 'equipment' ? '4.0% – 5.0% flat p.a.' : '4.0% flat p.a. (BSN Madani)';
-                          const topInstallment = Math.round((targetLoanAmount * (1 + topRate * effectiveTenure)) / effectiveMonths);
-                          const bsnInstallment = Math.round((targetLoanAmount * (1 + 0.04 * effectiveTenure)) / effectiveMonths);
-                          const aeonInstallment = Math.round((targetLoanAmount * (1 + 0.065 * effectiveTenure)) / effectiveMonths);
 
-                           const has6MonthStatement = uploadedFiles.filter(f => f.category === 'bank_statement').length >= 3 || 
-                             (b2cResult?.inputData?.fileChecklist && b2cResult.inputData.fileChecklist.filter(f => f.documentType === 'bank_statement').length >= 3) ||
-                             uploadedFiles.some(f => /6[\s_-]?month/i.test(f.fileName)) ||
-                             uploadedFiles.length >= 3;
+                          const has6MonthStatement = uploadedFiles.filter(f => f.category === 'bank_statement').length >= 3 || 
+                            (b2cResult?.inputData?.fileChecklist && b2cResult.inputData.fileChecklist.filter(f => f.documentType === 'bank_statement').length >= 3) ||
+                            uploadedFiles.some(f => /6[\s_-]?month/i.test(f.fileName)) ||
+                            uploadedFiles.length >= 3;
 
-                           const maybankReasons = [
-                             'Top tier-1 commercial bank facility with automated digital screening',
-                             'No collateral needed for eligible SSM businesses'
-                           ];
-                           if (has6MonthStatement) {
-                             maybankReasons.push(language === 'bm' ? 'Penyata bank lengkap telah dimuat naik & disahkan' : 'Verified 6-month bank statements fulfilled');
-                           }
+                          // Dynamic Multi-Factor Smart Lender Matcher
+                          const smartMatchedCards = getSmartMatchedLenders({
+                            purpose: targetLoanPurpose,
+                            amount: targetLoanAmount,
+                            income: b2cResult.inputData.averageMonthlyNetIncome,
+                            platform: b2cResult.inputData.platform,
+                            score: b2cResult.report.score,
+                            grade: b2cResult.report.grade,
+                            dsr: b2cResult.report.dsr,
+                            tenureYears: effectiveTenure,
+                            has6MonthStatement,
+                            shariahPreference: false
+                          });
 
-                           const mockLenderCards = [
-                             {
-                               id: 'best', rankTag: 'Top Lender Match', name: lenderPurposeMap[targetLoanPurpose]?.[0] ?? 'TEKUN Nasional', score: 95,
-                               rate: topRateLabel,
-                               installment: `RM ${topInstallment.toLocaleString()}/mo`,
-                               tenure: `${effectiveTenure} ${effectiveTenure === 1 ? 'Year' : 'Years'} (${effectiveMonths} Mo)`,
-                               speed: loanTier === 3 ? (language === 'bm' ? '5–7 hari bekerja' : '5–7 business days') : loanTier === 1 ? (language === 'bm' ? '2–3 hari bekerja' : '2–3 business days') : (language === 'bm' ? '3–5 hari bekerja' : '3–5 business days'),
-                               reasons: [
-                                 targetLoanPurpose === 'working_capital' ? 'Lowest 4.0% subsidized rate under KUSKOP scheme' : 'Optimal product match for selected financing category',
-                                 `Income RM ${((b2cResult.inputData.averageMonthlyNetIncome ?? 3500)).toFixed(0)}/mo qualifies with strong margin`,
-                                 b2cResult.report.dsr <= 50 ? `Clean DSR ratio: ${b2cResult.report.dsr.toFixed(0)}%` : 'Lenient debt service assessment'
-                               ],
-                               warning: targetLoanPurpose === 'working_capital' && uploadedFiles.filter(f => f.category === 'business_proposal').length === 0
-                                 ? (language === 'bm' ? 'Sertakan kertas kerja ringkas untuk mempercepatkan kelulusan 4%' : 'Include brief business proposal to accelerate 4% subsidized approval')
-                                 : '',
-                               url: getLenderOfficialPortalUrl(lenderPurposeMap[targetLoanPurpose]?.[0] ?? 'TEKUN Nasional'),
-                               isTop: true,
-                             },
-                             {
-                               id: 'second', rankTag: '2nd Ranked Fit', name: lenderPurposeMap[targetLoanPurpose]?.[1] ?? 'SME Bank (SPUM)', score: 84,
-                               rate: targetLoanPurpose === 'working_capital' ? '4.0% – 5.0% flat p.a.' : '5.5% – 7.5% p.a.',
-                               installment: `RM ${bsnInstallment.toLocaleString()}/mo`,
-                               tenure: `${effectiveTenure} ${effectiveTenure === 1 ? 'Year' : 'Years'} (${effectiveMonths} Mo)`,
-                               speed: loanTier === 3 ? (language === 'bm' ? '5–10 hari bekerja' : '5–10 business days') : loanTier === 1 ? (language === 'bm' ? '2–3 hari bekerja' : '2–3 business days') : (language === 'bm' ? '3–5 hari bekerja' : '3–5 business days'),
-                               reasons: ['Government development institution with zero-collateral micro facility', 'Alternative gig/business cash flow accepted'],
-                               warning: targetLoanAmount > 30000 && uploadedFiles.filter(f => f.category === 'premise_photos').length === 0 ? (language === 'bm' ? 'Lawatan tapak / gambar premis diperlukan untuk jumlah melebihi RM 30,000' : 'Premise photos required for amounts above RM 30,000') : '',
-                               url: getLenderOfficialPortalUrl(lenderPurposeMap[targetLoanPurpose]?.[1] ?? 'SME Bank (SPUM)'),
-                               isTop: false,
-                             },
-                             {
-                               id: 'third', rankTag: '3rd Ranked Fit', name: lenderPurposeMap[targetLoanPurpose]?.[2] ?? 'Maybank SME Digital Financing', score: 76,
-                               rate: targetLoanPurpose === 'working_capital' ? '4.8% – 9.8% reducing' : '2.8% – 4.2% flat',
-                               installment: `RM ${aeonInstallment.toLocaleString()}/mo`,
-                               tenure: `${effectiveTenure} ${effectiveTenure === 1 ? 'Year' : 'Years'} (${effectiveMonths} Mo)`,
-                               speed: (language === 'bm' ? 'Dalam 24–48 jam (Digital)' : 'Within 24–48 hours (Digital)'),
-                               reasons: maybankReasons,
-                               warning: has6MonthStatement ? '' : (language === 'bm' ? 'Memerlukan penyata bank 6 bulan format PDF rasmi' : 'Requires official 6-month bank statement in PDF format'),
-                               url: getLenderOfficialPortalUrl(lenderPurposeMap[targetLoanPurpose]?.[2] ?? 'Maybank SME Digital Financing'),
-                               isTop: false,
-                             },
-                           ];
+                          const mockLenderCards = smartMatchedCards;
 
                           const allNames = mockLenderCards.map(l => l.name);
                           const appliedCount = allNames.filter(n => appliedLenders[n]).length;
                           const topMatch = mockLenderCards[0];
                           const otherMatches = mockLenderCards.slice(1);
 
-                          const renderLenderCard = (lender: typeof mockLenderCards[0]) => {
+                          const renderLenderCard = (lender: SmartMatchedCard) => {
                             const applicationRecord = appliedLenders[lender.name];
                             const isApplied = !!applicationRecord;
                             const isLocked = !isCurrentAssessmentUnlocked;
@@ -4506,6 +4461,11 @@ export default function Dashboard() {
                                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
                                           {lender.score}% {language === 'bm' ? 'Padanan' : 'Match'}
                                         </span>
+                                        {lender.channelLabel && (
+                                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-50 text-blue-800 border border-blue-200">
+                                            {lender.channelLabel}
+                                          </span>
+                                        )}
                                       </div>
                                       <p className="text-xs text-slate-400 mt-0.5 font-medium">
                                         {lender.rate} · {lender.tenure}
@@ -4533,6 +4493,12 @@ export default function Dashboard() {
                                     <div className="flex items-center gap-2 text-xs text-amber-700 font-medium">
                                       <AlertCircle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                                       <span>{lender.warning}</span>
+                                    </div>
+                                  )}
+                                  {lender.intakeInstruction && (
+                                    <div className="mt-1 p-2 rounded-xl bg-slate-50 border border-slate-200 text-[11px] text-slate-700 flex items-start gap-2">
+                                      <Building2 className="w-3.5 h-3.5 text-slate-500 shrink-0 mt-0.5" />
+                                      <span className="leading-relaxed font-medium">{lender.intakeInstruction}</span>
                                     </div>
                                   )}
                                 </div>
@@ -4595,12 +4561,14 @@ export default function Dashboard() {
                                         return;
                                       }
                                       handleOpenAiDispatcher({
-                                        lenderName: lender.name,
+                                        lenderName: lender.lenderName || lender.name,
                                         lenderUrl: lender.url,
-                                        productName: purposeLabel[targetLoanPurpose] + ' Financing',
-                                        installment: lender.installment ? parseInt(lender.installment.replace(/[^0-9]/g, '')) : undefined,
+                                        productName: lender.productName || (purposeLabel[targetLoanPurpose] + ' Financing'),
+                                        installment: lender.installmentNum,
                                         speed: lender.speed,
-                                        loanAmount: targetLoanAmount
+                                        rate: lender.rate,
+                                        loanAmount: targetLoanAmount,
+                                        channelType: lender.channelType as any
                                       });
                                     }}
                                     className="flex-1 py-2 text-xs font-bold rounded-xl bg-blue-950 hover:bg-blue-900 text-white transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
@@ -7208,21 +7176,30 @@ export default function Dashboard() {
           personal_cash: 'Personal Cash', working_capital: 'Working Capital',
           equipment: 'Equipment', vehicle: 'Vehicle HP', invoice_financing: 'Invoice Financing', education: 'Education'
         };
-        const lenderPurposeMap: Record<string, string[]> = {
-          working_capital: ['TEKUN Nasional (Skim Niaga)', 'SME Bank (SPUM Scheme)', 'Maybank SME Digital Financing'],
-          vehicle: ['AEON Credit (Vehicle & Motor HP)', 'TEKUN Mobilepreneur', 'Maybank Hire Purchase'],
-          personal_cash: ['BSN MicroKredit Madani', 'Bank Rakyat Pembiayaan Mikro-i', 'AEON i-Cash Personal'],
-          equipment: ['SME Bank (SPUM Mesin & Alatan)', 'Agrobank Mesin-i', 'MARA (SPiM Alatan)'],
-          invoice_financing: ['Funding Societies Invoice Financing', 'CapBay Supply Chain Financing', 'MARA (SPiKE)'],
-          education: ['Bank Rakyat Pendidikan-i', 'BSN MicroKredit', 'AIM (Amanah Ikhtiar)'],
-        };
-        const names = lenderPurposeMap[targetLoanPurpose] ?? ['TEKUN Nasional', 'SME Bank', 'Maybank'];
-        const cols = [
-          { name: names[0], rate: targetLoanPurpose === 'working_capital' ? '4.0% flat' : '4.0% – 5.5% flat', installment: Math.round(targetLoanAmount / 18 * 1.04), tenure: '12–60 mo', speed: loanTier === 3 ? '5–7 days' : loanTier === 1 ? '2–3 days' : '3–5 days', collateral: 'None', score: 95 },
-          { name: names[1], rate: '4.0% – 5.0% flat', installment: Math.round(targetLoanAmount / 24 * 1.05), tenure: '12–60 mo', speed: loanTier === 3 ? '5–10 days' : loanTier === 1 ? '2–3 days' : '3–5 days', collateral: 'None', score: 84 },
-          { name: names[2], rate: targetLoanPurpose === 'working_capital' ? '4.8% – 9.8% reducing' : '2.8% – 4.2% flat', installment: Math.round(targetLoanAmount / 12 * 1.06), tenure: '12–60 mo', speed: '24–48 hrs', collateral: 'None', score: 76 },
-        ];
-        const current = cols[compareSwipeIndex];
+        const smartCards = getSmartMatchedLenders({
+          purpose: targetLoanPurpose,
+          amount: targetLoanAmount,
+          income: b2cResult?.inputData.averageMonthlyNetIncome || 3500,
+          platform: b2cResult?.inputData.platform,
+          score: b2cResult?.report.score || 720,
+          grade: b2cResult?.report.grade || 'B',
+          dsr: b2cResult?.report.dsr || 30,
+          tenureYears: b2cResult?.inputData.tenureYears || calcTenureYears || 1,
+          has6MonthStatement: true,
+          shariahPreference: false
+        });
+
+        const cols = smartCards.map(c => ({
+          name: c.name,
+          rate: c.rate,
+          installment: c.installment,
+          tenure: c.tenure,
+          speed: c.speed,
+          collateral: 'None',
+          score: c.score,
+          channel: c.channelLabel
+        }));
+        const current = cols[compareSwipeIndex] || cols[0];
         return (
         <div className="fixed inset-0 z-[80] flex items-center justify-center bg-slate-950/60 backdrop-blur-sm p-4 sm:p-6 animate-fade-in">
           <div className="w-full max-w-5xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-200 flex flex-col max-h-[92vh]">

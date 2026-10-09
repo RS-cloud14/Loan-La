@@ -598,12 +598,12 @@ export function buildCreditPassportPdfDoc({ inputData, report, documentHash, isL
     const complianceItems = isMalay ? [
       ['Rangka Kerja BNM FTFC', 'LULUS', 'Semua kriteria skor, faktor XAI dan padanan pembiaya adalah telus sepenuhnya.'],
       ['Semakan Forensik BNM RMiT', report.status === 'Fraud Alert' ? 'GAGAL' : 'DISAHKAN', 'Pemeriksaan visual & fon forensik selesai. Integriti meterai kriptografi disahkan.'],
-      ['Imbasan Sekatan AMLA 2001', inputData.behavioralRisk.red_flags.length > 0 ? 'AMARAN' : 'LULUS', 'Tiada kata kunci transaksi mencurigakan atau aktiviti pinjaman haram dikesan.'],
+      ['Imbasan Sekatan AMLA 2001', (inputData.behavioralRisk?.red_flags?.length || 0) > 0 ? 'AMARAN' : 'LULUS', 'Tiada kata kunci transaksi mencurigakan atau aktiviti pinjaman haram dikesan.'],
       ['Jaminan Privasi PDPA 2010', 'PATUH', 'Pemprosesan setempat ketat tanpa penyimpanan data pihak ketiga mengikut Akta 709.']
     ] : [
       ['BNM FTFC Framework', 'PASSED', 'Full scoring criteria, XAI factors, and lender matching are fully transparent.'],
       ['BNM RMiT Forensic Check', report.status === 'Fraud Alert' ? 'FAILED' : 'VERIFIED', 'Visual forensic checks completed. Cryptographic hash integrity verified.'],
-      ['AMLA 2001 Sanctions Scan', inputData.behavioralRisk.red_flags.length > 0 ? 'WARNING' : 'PASSED', 'No AML/CFT suspicious keywords or illegal transaction narratives detected.'],
+      ['AMLA 2001 Sanctions Scan', (inputData.behavioralRisk?.red_flags?.length || 0) > 0 ? 'WARNING' : 'PASSED', 'No AML/CFT suspicious keywords or illegal transaction narratives detected.'],
       ['PDPA 2010 Privacy Assurance', 'COMPLIANT', 'Strict local zero-retention processing adhering to Malaysian Act 709.']
     ];
 

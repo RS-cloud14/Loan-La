@@ -273,3 +273,489 @@ export function countMatchingLenders(
 ): number {
   return matchLenders(report, input, false, assetType, loanAmount).length;
 }
+
+// ─── Multi-Factor Smart Match Engine for Purpose, Background & Financial Condition ───
+
+export interface SmartMatchInput {
+  purpose: 'personal_cash' | 'working_capital' | 'vehicle' | 'equipment' | 'invoice_financing' | 'education';
+  amount: number;
+  income: number;
+  platform?: string;
+  name?: string;
+  score?: number;
+  grade?: string;
+  dsr?: number;
+  tenureYears?: number;
+  has6MonthStatement?: boolean;
+  shariahPreference?: boolean;
+}
+
+export interface SmartMatchedCard {
+  id: string;
+  rankTag: string;
+  name: string;
+  lenderName: string;
+  productName: string;
+  schemeId?: string;
+  score: number;
+  rate: string;
+  installment: string;
+  installmentNum: number;
+  tenure: string;
+  speed: string;
+  channelType: 'branch_walk_in' | 'online_portal' | 'digital_app' | 'officer_whatsapp';
+  channelLabel: string;
+  intakeInstruction: string;
+  reasons: string[];
+  warning: string;
+  url: string;
+  isTop: boolean;
+}
+
+export function getSmartMatchedLenders(params: SmartMatchInput): SmartMatchedCard[] {
+  const {
+    purpose = 'personal_cash',
+    amount = 10000,
+    income = 3500,
+    platform = 'Foodpanda',
+    score = 720,
+    grade = 'A',
+    dsr = 30,
+    tenureYears = 2,
+    has6MonthStatement = false,
+    shariahPreference = false
+  } = params;
+
+  const platformLower = (platform || '').toLowerCase();
+  const isGigWorker =
+    platformLower.includes('grab') ||
+    platformLower.includes('foodpanda') ||
+    platformLower.includes('lalamove') ||
+    platformLower.includes('shopee') ||
+    platformLower.includes('gig') ||
+    platformLower.includes('freelance') ||
+    platformLower.includes('rider') ||
+    platformLower.includes('driver');
+
+  const isHawkerOrTrader =
+    platformLower.includes('penjaja') ||
+    platformLower.includes('pasar') ||
+    platformLower.includes('gerai') ||
+    platformLower.includes('stall') ||
+    platformLower.includes('trader') ||
+    platformLower.includes('runcit') ||
+    platformLower.includes('kedai');
+
+  const months = tenureYears * 12;
+
+  // Candidate pool with purpose-tailored products
+  interface Candidate {
+    id: string;
+    name: string;
+    lenderName: string;
+    productName: string;
+    schemeId?: string;
+    baseRate: number;
+    rateLabel: string;
+    speed: string;
+    minIncome: number;
+    maxAmount: number;
+    minAmount: number;
+    shariah: boolean;
+    compatiblePurposes: string[];
+    channelType: 'branch_walk_in' | 'online_portal' | 'digital_app' | 'officer_whatsapp';
+    channelLabel: string;
+    intakeInstruction: string;
+    url: string;
+    gigPriorityBonus: number;
+    traderPriorityBonus: number;
+    purposeBonus: number;
+    reasons: string[];
+    warningNote?: string;
+  }
+
+  const candidates: Candidate[] = [
+    // 1. BSN Micro/i MADANI Gig
+    {
+      id: 'bsn_madani_gig',
+      name: 'BSN Micro/i MADANI Gig',
+      lenderName: 'Bank Simpanan Nasional (BSN)',
+      productName: 'BSN Micro/i MADANI Gig',
+      schemeId: 'madani_gig',
+      baseRate: 0.04,
+      rateLabel: '3.50% – 4.00% p.a. Fixed',
+      speed: '3–5 business days',
+      minIncome: 800,
+      maxAmount: 20000,
+      minAmount: 2000,
+      shariah: true,
+      compatiblePurposes: ['working_capital', 'vehicle', 'equipment', 'personal_cash'],
+      channelType: 'branch_walk_in',
+      channelLabel: '🏛️ Branch Walk-In & Online Pre-Check',
+      intakeInstruction: 'Cawangan BSN memerlukan Pakej Permohonan bercetak. Cetak Walk-in Pack untuk semakan ekspres di kaunter.',
+      url: 'https://www.bsn.com.my/BusinessBanking/Products/MadaniGig?lang=en',
+      gigPriorityBonus: 35,
+      traderPriorityBonus: 10,
+      purposeBonus: purpose === 'vehicle' ? 30 : purpose === 'working_capital' ? 25 : 15,
+      reasons: [
+        'Subsidized 4.0% Madani government scheme designed specifically for gig workers & riders',
+        'Accepts platform earnings statements without requiring SSM business registration',
+        `Income RM ${income.toLocaleString()}/mo comfortably meets RM 800 minimum threshold`
+      ],
+      warningNote: 'Bawa salinan Borang Permohonan & Memo CAM ke mana-mana cawangan BSN berhampiran.'
+    },
+
+    // 2. TEKUN Mobilepreneur (Vehicle / Delivery Equip)
+    {
+      id: 'tekun_mobilepreneur',
+      name: 'TEKUN Mobilepreneur',
+      lenderName: 'TEKUN Nasional',
+      productName: 'Skim TEKUN Mobilepreneur (Motorsikal & Servis)',
+      baseRate: 0.04,
+      rateLabel: '4.0% flat p.a. (Subsidized)',
+      speed: '5–7 business days',
+      minIncome: 800,
+      maxAmount: 10000,
+      minAmount: 1000,
+      shariah: true,
+      compatiblePurposes: ['vehicle', 'equipment', 'working_capital'],
+      channelType: 'officer_whatsapp',
+      channelLabel: '🤝 Pejabat TEKUN / Pegawai WhatsApp',
+      intakeInstruction: 'Pembiayaan diproses melalui Pegawai TEKUN daerah. Pakej CAM sedia untuk dihantar ke WhatsApp atau kaunter.',
+      url: 'https://www.tekun.gov.my',
+      gigPriorityBonus: 32,
+      traderPriorityBonus: 12,
+      purposeBonus: purpose === 'vehicle' ? 35 : purpose === 'equipment' ? 20 : 10,
+      reasons: [
+        'Dedicated government scheme for food & parcel delivery riders purchasing or servicing bikes',
+        '0% collateral required with low 4% subsidized government rate',
+        'Direct acceptance of rider platform account dashboard & identity'
+      ],
+      warningNote: 'Terbuka kepada penunggang aktif Grab, Foodpanda, Lalamove & ShopeeFood.'
+    },
+
+    // 3. TEKUN Nasional (Skim Niaga)
+    {
+      id: 'tekun_niaga',
+      name: 'TEKUN Nasional (Skim Niaga)',
+      lenderName: 'TEKUN Nasional',
+      productName: 'Skim Pembiayaan TEKUN Niaga',
+      baseRate: 0.04,
+      rateLabel: '4.0% flat p.a. (Subsidized)',
+      speed: '5–7 business days',
+      minIncome: 800,
+      maxAmount: 50000,
+      minAmount: 2000,
+      shariah: true,
+      compatiblePurposes: ['working_capital', 'equipment'],
+      channelType: 'officer_whatsapp',
+      channelLabel: '🤝 Pejabat TEKUN Cawangan Daerah',
+      intakeInstruction: 'Kemukakan Pakej Permohonan CAM di pejabat TEKUN daerah terdekat untuk prapendaftaran.',
+      url: 'https://www.tekun.gov.my',
+      gigPriorityBonus: 20,
+      traderPriorityBonus: 35,
+      purposeBonus: purpose === 'working_capital' ? 25 : purpose === 'equipment' ? 20 : 5,
+      reasons: [
+        'Agency micro-fund established specifically for micro-traders and informal businesses',
+        'Lenient debt service assessment with alternative cash flow recognition',
+        `Clean FRI rating (${score}/850 Grade ${grade}) qualifies for expedited intake`
+      ]
+    },
+
+    // 4. Bank Rakyat Pembiayaan Mikro-i Usahawan
+    {
+      id: 'bank_rakyat_mikro',
+      name: 'Bank Rakyat Pembiayaan Mikro-i',
+      lenderName: 'Bank Kerjasama Rakyat Malaysia Berhad',
+      productName: 'Bank Rakyat Pembiayaan Mikro-i Usahawan',
+      baseRate: 0.055,
+      rateLabel: '5.50% – 7.20% p.a. (Tawarruq)',
+      speed: '3–5 business days',
+      minIncome: 1000,
+      maxAmount: 50000,
+      minAmount: 3000,
+      shariah: true,
+      compatiblePurposes: ['working_capital', 'personal_cash', 'equipment'],
+      channelType: 'branch_walk_in',
+      channelLabel: '🏛️ Branch Walk-In & Kaunter Koperasi',
+      intakeInstruction: 'Bawa Pakej Permohonan CAM bercetak ke kaunter cawangan Bank Rakyat. Sesuai untuk permohonan tanpa cagaran.',
+      url: 'https://www.bankrakyat.com.my',
+      gigPriorityBonus: 18,
+      traderPriorityBonus: 25,
+      purposeBonus: purpose === 'personal_cash' ? 25 : purpose === 'working_capital' ? 20 : 10,
+      reasons: [
+        '100% Shariah-compliant cooperative financing under Tawarruq structure',
+        'No collateral required for micro-facilities up to RM 50,000',
+        `Net income RM ${income.toLocaleString()}/mo comfortably meets Bank Rakyat RM 1,000 threshold`
+      ]
+    },
+
+    // 5. AEON Credit (Vehicle / Motor HP)
+    {
+      id: 'aeon_credit_vehicle',
+      name: 'AEON Credit (Vehicle & Motor HP)',
+      lenderName: 'AEON Credit Service (M) Berhad',
+      productName: 'AEON Motorcycle / Commercial Vehicle HP',
+      baseRate: 0.045,
+      rateLabel: '4.0% – 5.5% flat p.a.',
+      speed: '1–2 business days',
+      minIncome: 1200,
+      maxAmount: 40000,
+      minAmount: 2000,
+      shariah: false,
+      compatiblePurposes: ['vehicle'],
+      channelType: 'branch_walk_in',
+      channelLabel: '🏛️ Cawangan AEON Credit / Pengedar Sah',
+      intakeInstruction: 'Permohonan boleh diserahkan melalui cawangan AEON atau kedai motor pengedar sah dengan dokumen CAM.',
+      url: 'https://www.aeoncredit.com.my',
+      gigPriorityBonus: 25,
+      traderPriorityBonus: 15,
+      purposeBonus: purpose === 'vehicle' ? 30 : 0,
+      reasons: [
+        'Market leader in flexible vehicle & motorcycle financing for gig workers',
+        'Fast turnaround within 24 to 48 hours with alternative income proof',
+        `DSR ratio of ${dsr.toFixed(1)}% is well within AEON underwriting ceiling`
+      ]
+    },
+
+    // 6. AEON i-Cash Personal Financing
+    {
+      id: 'aeon_icash',
+      name: 'AEON i-Cash Personal',
+      lenderName: 'AEON Credit Service (M) Berhad',
+      productName: 'AEON i-Cash Personal Financing',
+      baseRate: 0.065,
+      rateLabel: '2.8% – 4.2% flat monthly equivalent',
+      speed: '1–3 business days',
+      minIncome: 1500,
+      maxAmount: 30000,
+      minAmount: 2000,
+      shariah: true,
+      compatiblePurposes: ['personal_cash'],
+      channelType: 'branch_walk_in',
+      channelLabel: '🏛️ Cawangan AEON / Borang Online',
+      intakeInstruction: 'Muat turun Pakej CAM atau isi borang online AEON dengan butiran pendapatan disahkan.',
+      url: 'https://www.aeoncredit.com.my',
+      gigPriorityBonus: 15,
+      traderPriorityBonus: 15,
+      purposeBonus: purpose === 'personal_cash' ? 25 : 0,
+      reasons: [
+        'Unsecured personal cash facility accessible to self-employed and platform workers',
+        'Convenient fixed installment schedule with flexible tenure',
+        `Documented monthly net earnings (RM ${income.toLocaleString()}) meet requirements`
+      ]
+    },
+
+    // 7. MARA (SPiM Mesin & Alatan)
+    {
+      id: 'mara_spim',
+      name: 'MARA (SPiM Mesin & Alatan)',
+      lenderName: 'Majlis Amanah Rakyat (MARA)',
+      productName: 'Skim Pembiayaan Mudah Jaya (SPiM Alatan & Modal)',
+      baseRate: 0.04,
+      rateLabel: '4.0% flat p.a. (Subsidized)',
+      speed: '5–10 business days',
+      minIncome: 1500,
+      maxAmount: 50000,
+      minAmount: 5000,
+      shariah: true,
+      compatiblePurposes: ['equipment', 'working_capital'],
+      channelType: 'officer_whatsapp',
+      channelLabel: '🤝 Pejabat MARA Daerah',
+      intakeInstruction: 'Serahkan Pakej Permohonan bercetak bersama kertas kerja ringkas di Pejabat MARA Daerah.',
+      url: 'https://www.mara.gov.my/en/business/entrepreneur-financing',
+      gigPriorityBonus: 12,
+      traderPriorityBonus: 30,
+      purposeBonus: purpose === 'equipment' ? 30 : purpose === 'working_capital' ? 20 : 0,
+      reasons: [
+        'Prime equipment and machinery financing for micro-entrepreneurs',
+        'Heavily subsidized 4.0% government profit rate',
+        'Includes Part B business justification addendum ready for credit appraisal'
+      ],
+      warningNote: 'Terbuka kepada usahawan Bumiputera dengan rekod perniagaan aktif.'
+    },
+
+    // 8. SME Bank (SPUM Mesin & Alatan)
+    {
+      id: 'sme_bank_spum',
+      name: 'SME Bank (SPUM Scheme)',
+      lenderName: 'SME Bank (Small Medium Enterprise Development Bank)',
+      productName: 'Skim Pembiayaan Usahawan Mikro (SPUM)',
+      baseRate: 0.045,
+      rateLabel: '4.0% – 5.0% flat p.a.',
+      speed: '5–10 business days',
+      minIncome: 2000,
+      maxAmount: 50000,
+      minAmount: 5000,
+      shariah: true,
+      compatiblePurposes: ['equipment', 'working_capital'],
+      channelType: 'branch_walk_in',
+      channelLabel: '🏛️ Pusat Perniagaan SME Bank',
+      intakeInstruction: 'Bawa Pakej Permohonan ke Pusat Perniagaan SME Bank terdekat.',
+      url: 'https://www.smebank.com.my/en/financing/spum',
+      gigPriorityBonus: 10,
+      traderPriorityBonus: 25,
+      purposeBonus: purpose === 'equipment' ? 28 : purpose === 'working_capital' ? 20 : 5,
+      reasons: [
+        'Dedicated government development financial institution for enterprise growth',
+        'Special allocation for tools, equipment, and working capital upgrade',
+        `Sound credit readiness grade (${grade}) supports approval odds`
+      ]
+    },
+
+    // 9. Maybank SME Digital Financing
+    {
+      id: 'maybank_sme',
+      name: 'Maybank SME Digital Financing',
+      lenderName: 'Malayan Banking Berhad (Maybank)',
+      productName: 'Maybank SME Digital Financing (Clean Loan)',
+      baseRate: 0.055,
+      rateLabel: '5.5% – 7.5% p.a.',
+      speed: 'Within 24–48 hours (Digital)',
+      minIncome: 2500,
+      maxAmount: 100000,
+      minAmount: 5000,
+      shariah: true,
+      compatiblePurposes: ['working_capital', 'equipment'],
+      channelType: 'online_portal',
+      channelLabel: '🌐 100% Online Web Portal (Maybank2u)',
+      intakeInstruction: 'Permohonan web digital sepenuhnya. Ejen AI memadankan data untuk pengisian borang segera.',
+      url: 'https://www.maybank2u.com.my/maybank2u/malaysia/en/personal/loans/business/sme_clean_loan.page',
+      gigPriorityBonus: 8,
+      traderPriorityBonus: 20,
+      purposeBonus: purpose === 'working_capital' ? 20 : purpose === 'equipment' ? 15 : 0,
+      reasons: [
+        'Top tier-1 commercial bank facility with automated algorithmic screening',
+        'Zero collateral required for verified applicants with 6 months statements',
+        `High credit score (${score}) meets Maybank prime tier underwriting`
+      ],
+      warningNote: has6MonthStatement ? '' : 'Memerlukan penyata bank 6 bulan format PDF rasmi.'
+    },
+
+    // 10. GXBank / Digital Bank Cash
+    {
+      id: 'gxbank_cash',
+      name: 'GXBank FlexiCredit',
+      lenderName: 'GX Bank Berhad (GXBank)',
+      productName: 'GX FlexiCredit Digital Line',
+      baseRate: 0.05,
+      rateLabel: '4.5% – 6.5% p.a. Reducing',
+      speed: 'Instant Disbursement (10 Mins)',
+      minIncome: 1500,
+      maxAmount: 25000,
+      minAmount: 1000,
+      shariah: false,
+      compatiblePurposes: ['personal_cash', 'working_capital'],
+      channelType: 'digital_app',
+      channelLabel: '📱 Aplikasi Bank Digital (e-KYC)',
+      intakeInstruction: 'Permohonan terus dalam aplikasi GXBank dengan e-KYC telefon pintar.',
+      url: 'https://www.gxbank.my',
+      gigPriorityBonus: 22,
+      traderPriorityBonus: 10,
+      purposeBonus: purpose === 'personal_cash' ? 25 : 10,
+      reasons: [
+        'Licensed digital bank with 10-minute digital appraisal and instant payout',
+        'Direct Grab ecosystem affinity and cashless integration',
+        `Clean DSR (${dsr.toFixed(1)}%) qualifies for instant pre-approved credit line`
+      ]
+    }
+  ];
+
+  // Score each candidate based on purpose, background, financial condition
+  const scored = candidates
+    .filter(c => {
+      // Must support the purpose or be a general micro-credit
+      if (!c.compatiblePurposes.includes(purpose)) return false;
+      // Must satisfy Shariah if requested
+      if (shariahPreference && !c.shariah) return false;
+      // Amount must be reasonably within range
+      if (amount > c.maxAmount * 1.5 || amount < c.minAmount * 0.5) return false;
+      return true;
+    })
+    .map(c => {
+      let finalScore = 50;
+
+      // 1. Purpose Alignment (0 - 30 pts)
+      finalScore += c.purposeBonus;
+
+      // 2. Background Alignment (0 - 35 pts)
+      if (isGigWorker) {
+        finalScore += c.gigPriorityBonus;
+      } else if (isHawkerOrTrader) {
+        finalScore += c.traderPriorityBonus;
+      } else {
+        finalScore += 15;
+      }
+
+      // 3. Financial Condition Alignment
+      // Income threshold check
+      if (income >= c.minIncome * 1.5) {
+        finalScore += 10;
+      } else if (income >= c.minIncome) {
+        finalScore += 5;
+      } else {
+        finalScore -= 20; // Severe penalty if below minimum
+      }
+
+      // FRI score check
+      if (score >= 700) {
+        finalScore += 8;
+      } else if (score >= 600) {
+        finalScore += 4;
+      } else {
+        finalScore -= 10;
+      }
+
+      // DSR check
+      if (dsr <= 35) {
+        finalScore += 6;
+      } else if (dsr <= 50) {
+        finalScore += 2;
+      } else {
+        finalScore -= 12;
+      }
+
+      // Calculate installment
+      const installmentNum = Math.round((amount * (1 + c.baseRate * tenureYears)) / months);
+      const installment = `RM ${installmentNum.toLocaleString()}/mo`;
+      const tenureStr = `${tenureYears} ${tenureYears === 1 ? 'Year' : 'Years'} (${months} Mo)`;
+
+      // Normalise score between 65 and 97
+      const normalisedScore = Math.min(97, Math.max(68, finalScore));
+
+      return {
+        id: c.id,
+        name: c.name,
+        lenderName: c.lenderName,
+        productName: c.productName,
+        schemeId: c.schemeId,
+        score: normalisedScore,
+        rate: c.rateLabel,
+        installment,
+        installmentNum,
+        tenure: tenureStr,
+        speed: c.speed,
+        channelType: c.channelType,
+        channelLabel: c.channelLabel,
+        intakeInstruction: c.intakeInstruction,
+        reasons: c.reasons,
+        warning: c.warningNote || '',
+        url: c.url,
+        isTop: false,
+        rankTag: ''
+      };
+    })
+    .sort((a, b) => b.score - a.score);
+
+  // Take top 3-4 matches and assign ranks
+  const topMatches = scored.slice(0, 3).map((item, idx) => {
+    return {
+      ...item,
+      isTop: idx === 0,
+      rankTag: idx === 0 ? 'Top Lender Match' : idx === 1 ? '2nd Ranked Fit' : '3rd Ranked Fit'
+    };
+  });
+
+  return topMatches;
+}
+

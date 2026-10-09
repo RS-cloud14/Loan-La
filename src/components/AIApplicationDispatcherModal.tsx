@@ -92,6 +92,11 @@ export default function AIApplicationDispatcherModal({
   const [isProposalModalOpen, setIsProposalModalOpen] = useState(false);
   const [proposalData, setProposalData] = useState<LoanProposalData | null>(null);
 
+  // PDF Download feedback states
+  const [downloadingCam, setDownloadingCam] = useState(false);
+  const [downloadingPack, setDownloadingPack] = useState(false);
+  const [downloadSuccessToast, setDownloadSuccessToast] = useState<string | null>(null);
+
   const logsEndRef = useRef<HTMLDivElement>(null);
   const prevIsOpenRef = useRef(false);
   const prevLenderRef = useRef<string | null>(null);
@@ -220,6 +225,23 @@ export default function AIApplicationDispatcherModal({
   const portalUrl = target.lenderUrl || getLenderOfficialPortalUrl(lenderName);
   const isBm = language === 'bm';
 
+  const isWalkIn = channelType === 'commercial_bank_assisted' || (channelType as any) === 'branch_walk_in' ||
+    lenderName.toLowerCase().includes('bsn') ||
+    lenderName.toLowerCase().includes('rakyat') ||
+    lenderName.toLowerCase().includes('agrobank') ||
+    lenderName.toLowerCase().includes('sme bank');
+
+  const isWhatsAppOfficer = channelType === 'government_micro_agency' || (channelType as any) === 'officer_whatsapp' ||
+    lenderName.toLowerCase().includes('tekun') ||
+    lenderName.toLowerCase().includes('mara') ||
+    lenderName.toLowerCase().includes('aim');
+
+  const isDigitalApp = channelType === 'digital_bank_app' || (channelType as any) === 'digital_app' ||
+    lenderName.toLowerCase().includes('gxbank') ||
+    lenderName.toLowerCase().includes('boost');
+
+  const isOnlineWeb = !isWalkIn && !isWhatsAppOfficer && !isDigitalApp;
+
   // Copy helper
   const handleCopy = (text: string, field: string) => {
     try {
@@ -286,41 +308,51 @@ export default function AIApplicationDispatcherModal({
 
   // Download CAM PDF
   const handleDownloadCamPdf = () => {
-    try {
-      generateCreditPassportPdf({
-        inputData: {
-          name: applicant.name,
-          icNumber: applicant.icNumber || '940815-14-5521',
-          phone: applicant.phone || '+60 12-345 6789',
-          email: applicant.email || 'borrower@loan-la.my',
-          platform: applicant.platform || 'Foodpanda',
-          averageMonthlyNetIncome: applicant.averageMonthlyNetIncome,
-          existingCommitments: Math.round(applicant.averageMonthlyNetIncome * (applicant.dsr / 100)),
-          targetLoanAmount: loanAmount,
-          targetLoanPurpose: 'working_capital',
-          transactions: []
-        } as any,
-        report: {
-          score: applicant.score,
-          grade: applicant.grade,
-          status: applicant.status || 'Approved',
-          dsr: applicant.dsr,
-          dsrPercentage: applicant.dsr,
-          maxRecommendedLoan: loanAmount * 1.5,
-          estimatedInstallment: monthlyInstallment,
-          monthlySurplus: Math.round(applicant.averageMonthlyNetIncome * 0.5),
-          runwayMonths: 6.5,
-          confidenceScore: 92,
-          recommendations: ['Consistent weekly earnings', 'Low financial risk margin'],
-          warningFlags: []
-        } as any,
-        documentHash: applicant.documentHash,
-        isLocked: false,
-        language
-      });
-    } catch (e) {
-      console.error('PDF download error:', e);
-    }
+    setDownloadingCam(true);
+    setTimeout(() => {
+      try {
+        generateCreditPassportPdf({
+          inputData: {
+            name: applicant.name,
+            icNumber: applicant.icNumber || '940815-14-5521',
+            phone: applicant.phone || '+60 12-345 6789',
+            email: applicant.email || 'borrower@loan-la.my',
+            platform: applicant.platform || 'Foodpanda',
+            averageMonthlyNetIncome: applicant.averageMonthlyNetIncome,
+            existingCommitments: Math.round(applicant.averageMonthlyNetIncome * (applicant.dsr / 100)),
+            targetLoanAmount: loanAmount,
+            targetLoanPurpose: 'working_capital',
+            monthlyIncomes: [applicant.averageMonthlyNetIncome, applicant.averageMonthlyNetIncome, applicant.averageMonthlyNetIncome],
+            behavioralRisk: { red_flags: [], warnings: [], score: 85 } as any,
+            transactions: []
+          } as any,
+          report: {
+            score: applicant.score,
+            grade: applicant.grade,
+            status: applicant.status || 'Approved',
+            dsr: applicant.dsr,
+            dsrPercentage: applicant.dsr,
+            maxRecommendedLoan: loanAmount * 1.5,
+            estimatedInstallment: monthlyInstallment,
+            monthlySurplus: Math.round(applicant.averageMonthlyNetIncome * 0.5),
+            runwayMonths: 6.5,
+            confidenceScore: 92,
+            recommendations: ['Consistent weekly earnings', 'Low financial risk margin'],
+            warningFlags: []
+          } as any,
+          documentHash: applicant.documentHash,
+          isLocked: false,
+          language
+        });
+        setDownloadingCam(false);
+        setDownloadSuccessToast(language === 'bm' ? '✓ Memo CAM Berjaya Dimuat Turun!' : '✓ Certified CAM PDF Downloaded!');
+        setTimeout(() => setDownloadSuccessToast(null), 3500);
+      } catch (e: any) {
+        console.error('PDF download error:', e);
+        setDownloadingCam(false);
+        alert(language === 'bm' ? `Ralat muat turun CAM PDF: ${e?.message || 'Sila cuba lagi'}` : `CAM PDF error: ${e?.message || 'Please try again'}`);
+      }
+    }, 150);
   };
 
   // Launch real bank portal
@@ -337,30 +369,38 @@ export default function AIApplicationDispatcherModal({
 
   // Download Official Pre-Filled Bank Application Pack (PDF)
   const handleDownloadApplicationPackPdf = () => {
-    try {
-      generateBankApplicationPackPdf({
-        applicant: {
-          name: applicant.name,
-          icNumber: applicant.icNumber,
-          phone: applicant.phone,
-          email: applicant.email,
-          platform: applicant.platform,
-          averageMonthlyNetIncome: applicant.averageMonthlyNetIncome,
-          score: applicant.score,
-          grade: applicant.grade,
-          dsr: applicant.dsr,
-          documentHash: applicant.documentHash
-        },
-        lenderName: selectedBsnScheme ? selectedBsnScheme.name : lenderName,
-        scheme: selectedBsnScheme,
-        loanAmount,
-        tenureYears: 2,
-        proposal: proposalData,
-        language
-      });
-    } catch (e) {
-      console.error('Failed to generate application pack:', e);
-    }
+    setDownloadingPack(true);
+    setTimeout(() => {
+      try {
+        generateBankApplicationPackPdf({
+          applicant: {
+            name: applicant.name,
+            icNumber: applicant.icNumber,
+            phone: applicant.phone,
+            email: applicant.email,
+            platform: applicant.platform,
+            averageMonthlyNetIncome: applicant.averageMonthlyNetIncome,
+            score: applicant.score,
+            grade: applicant.grade,
+            dsr: applicant.dsr,
+            documentHash: applicant.documentHash
+          },
+          lenderName: selectedBsnScheme ? selectedBsnScheme.name : lenderName,
+          scheme: selectedBsnScheme,
+          loanAmount,
+          tenureYears: 2,
+          proposal: proposalData,
+          language
+        });
+        setDownloadingPack(false);
+        setDownloadSuccessToast(language === 'bm' ? '✓ Pakej Permohonan Bank Berjaya Dimuat Turun!' : '✓ Bank Application Pack (PDF) Downloaded!');
+        setTimeout(() => setDownloadSuccessToast(null), 3500);
+      } catch (e: any) {
+        console.error('Failed to generate application pack:', e);
+        setDownloadingPack(false);
+        alert(language === 'bm' ? `Ralat muat turun Pakej Permohonan: ${e?.message || 'Sila cuba lagi'}` : `Application Pack error: ${e?.message || 'Please try again'}`);
+      }
+    }, 150);
   };
 
   // Concierge Direct Dispatch
@@ -765,77 +805,309 @@ export default function AIApplicationDispatcherModal({
                 </div>
               </div>
 
-              {/* 2 Primary Action Cards */}
+              {/* Download Feedback Toast */}
+              {downloadSuccessToast && (
+                <div className="p-3 bg-emerald-50 border border-emerald-300 rounded-xl text-xs font-bold text-emerald-900 flex items-center gap-2 animate-in fade-in">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>{downloadSuccessToast}</span>
+                </div>
+              )}
+
+              {/* Intake Channel Explainer Banner */}
+              <div className="p-3.5 bg-blue-50/70 border border-blue-200 rounded-2xl flex items-start gap-3">
+                <div className="w-8 h-8 rounded-xl bg-blue-100 border border-blue-200 text-blue-800 flex items-center justify-center shrink-0 mt-0.5">
+                  {isWalkIn ? <Building2 className="w-4 h-4" /> : isWhatsAppOfficer ? <MessageCircle className="w-4 h-4" /> : isDigitalApp ? <Smartphone className="w-4 h-4" /> : <Globe className="w-4 h-4" />}
+                </div>
+                <div className="text-xs">
+                  <span className="font-extrabold text-blue-950 block">
+                    {isWalkIn
+                      ? (isBm ? 'Saluran Institusi: Penyerahan Kaunter / Walk-In Cawangan Diperlukan' : 'Bank Intake Channel: Physical Branch Walk-In & Counter Intake Required')
+                      : isWhatsAppOfficer
+                      ? (isBm ? 'Saluran Agensi: Penyerahan Melalui Pegawai Daerah / WhatsApp' : 'Agency Intake Channel: Direct District Officer WhatsApp Submission')
+                      : isDigitalApp
+                      ? (isBm ? 'Saluran Bank Digital: 100% Aplikasi Telefon Pintar (e-KYC)' : 'Digital Bank Channel: 100% Mobile App with 10-Minute e-KYC')
+                      : (isBm ? 'Saluran Portal Web: 100% Penyerahan Digital Dalam Talian' : 'Web Portal Channel: 100% Online Digital Web Application')
+                    }
+                  </span>
+                  <p className="text-slate-600 mt-0.5 leading-relaxed">
+                    {isWalkIn
+                      ? (isBm
+                          ? `Skim mikro perbankan fizikal (${lenderName}) mewajibkan penyerahan dokumen di kaunter cawangan mengikut piawaian BNM. Pakej Permohonan (PDF) telah menyediakan semua borang, kertas kerja Part B, dan Memo CAM agar anda hanya perlu hadir sekali tanpa kekurangan dokumen.`
+                          : `Malaysian physical micro-financing (${lenderName}) requires in-person submission at any branch counter per BNM regulations. Your Pre-Filled Application Pack (PDF) compiles your application forms, Part B proposal, and CAM score memo so you can submit in a single counter visit.`)
+                      : isWhatsAppOfficer
+                      ? (isBm
+                          ? `Pembiayaan ${lenderName} dinilai secara terus oleh Pegawai Pembiayaan Daerah. Hubungi pegawai melalui WhatsApp dengan profil yang telah siap disusun di bawah.`
+                          : `${lenderName} micro-funds are reviewed directly by district financing officers. Chat directly on WhatsApp with your pre-screened CAM dossier.`)
+                      : isDigitalApp
+                      ? (isBm
+                          ? 'Buka aplikasi bank digital berlesen untuk imbasan wajah e-KYC dan kelulusan automatik dalam masa 10 minit.'
+                          : 'Open the licensed digital bank app on your phone for instant facial e-KYC and algorithmic approval in 10 minutes.')
+                      : (isBm
+                          ? 'Buka portal web rasmi dan gunakan data yang dipra-isi untuk melengkapkan permohonan digital anda.'
+                          : 'Open the official online web portal and use the verified pre-filled figures to complete your digital intake.')
+                    }
+                  </p>
+                </div>
+              </div>
+
+              {/* 2 Primary Action Cards (Adaptive by Intake Channel) */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 
-                {/* Action Card 1: Official Bank Portal Access */}
-                <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between gap-3">
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
-                        {isBm ? 'Langkah 1: Portal Rasmi' : 'Step 1: Official Portal'}
-                      </span>
-                      <ExternalLink className="w-4 h-4 text-slate-400" />
+                {/* ══ ACTION CARD 1 ══ */}
+                {isWalkIn ? (
+                  // Walk-in Bank: Card 1 is the Pre-Filled Walk-in Dossier
+                  <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between gap-3">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                          {isBm ? 'Langkah 1: Dokumen Walk-In' : 'Step 1: Walk-In Dossier'}
+                        </span>
+                        <Download className="w-4 h-4 text-slate-400" />
+                      </div>
+                      <h4 className="text-sm font-bold text-slate-900 mt-2">
+                        {isBm ? 'Pakej Permohonan Cawangan (PDF)' : 'Branch Application Pack (PDF)'}
+                      </h4>
+                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                        {isBm
+                          ? 'Muat turun pakej bercetak lengkap: Borang permohonan bank, cadangan Part B, dan Memo Pengunderaitan CAM berintegriti SHA-256.'
+                          : 'Download verified physical pack: Official bank application forms, Part B proposal, and CAM score memo ready for the branch officer.'}
+                      </p>
                     </div>
-                    <h4 className="text-sm font-bold text-slate-900 mt-2">
-                      {isBm ? `Buka Portal Rasmi ${lenderName}` : `Open Official ${lenderName} Portal`}
-                    </h4>
-                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                      {isBm
-                        ? 'Portal rasmi dibuka dalam tab baru. Semua butiran pendapatan, skor kredit, dan cadangan pembiayaan sedia untuk pengesahan akhir.'
-                        : 'Access the bank\'s official application intake page. Verified applicant credentials and loan terms are prepared.'}
-                    </p>
-                  </div>
 
-                  <button
-                    type="button"
-                    onClick={handleLaunchBankPortal}
-                    className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5 text-slate-300" />
-                    <span>{isBm ? 'Buka Portal Bank Sekarang ↗' : 'Open Bank Portal Now ↗'}</span>
-                  </button>
-                </div>
-
-                {/* Action Card 2: Pre-Filled Bank Dossier PDF */}
-                <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between gap-3">
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
-                        {isBm ? 'Langkah 2: Dokumen Rasmi' : 'Step 2: Official Dossier'}
-                      </span>
-                      <Download className="w-4 h-4 text-slate-400" />
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleDownloadApplicationPackPdf}
+                        disabled={downloadingPack}
+                        className="flex-1 py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.98] disabled:opacity-50"
+                      >
+                        {downloadingPack ? (
+                          <RefreshCw className="w-3.5 h-3.5 text-slate-300 animate-spin" />
+                        ) : (
+                          <FileText className="w-3.5 h-3.5 text-slate-300" />
+                        )}
+                        <span>{downloadingPack ? (isBm ? 'Menjana Pack...' : 'Generating Pack...') : (isBm ? 'Muat Turun Pack (PDF)' : 'Download Bank Pack')}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleDownloadCamPdf}
+                        disabled={downloadingCam}
+                        className="py-2.5 px-3 rounded-xl bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 font-semibold text-xs shadow-2xs transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                        title="Download CAM Assessment Memo"
+                      >
+                        {downloadingCam ? (
+                          <RefreshCw className="w-3.5 h-3.5 text-slate-600 animate-spin" />
+                        ) : (
+                          <Download className="w-3.5 h-3.5 text-slate-600" />
+                        )}
+                        <span>{downloadingCam ? (isBm ? 'Menjana...' : 'Generating...') : 'CAM PDF'}</span>
+                      </button>
                     </div>
-                    <h4 className="text-sm font-bold text-slate-900 mt-2">
-                      {isBm ? 'Pakej Permohonan Pra-Isi (PDF)' : 'Pre-Filled Application Pack (PDF)'}
-                    </h4>
-                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                      {isBm
-                        ? 'Muat turun pakej borang permohonan lengkap yang telah siap diisi beserta sijil pengesahan integriti CAM.'
-                        : 'Download verified application pack complete with audited financials, Part B proposal, and CAM certificate hash.'}
-                    </p>
                   </div>
+                ) : isWhatsAppOfficer ? (
+                  // WhatsApp Officer Agency: Card 1 is WhatsApp Direct Pitch
+                  <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between gap-3">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-50 text-emerald-800 border border-emerald-200">
+                          {isBm ? 'Langkah 1: Hubungi Pegawai' : 'Step 1: Contact Officer'}
+                        </span>
+                        <MessageCircle className="w-4 h-4 text-emerald-600" />
+                      </div>
+                      <h4 className="text-sm font-bold text-slate-900 mt-2">
+                        {isBm ? 'WhatsApp Pegawai Pembiayaan Daerah' : 'WhatsApp District Financing Officer'}
+                      </h4>
+                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                        {isBm
+                          ? `Hantar mesej pengenalan rasmi bersama Kod Rujukan ${generatedRefCode}, pendapatan bersih, dan skor kredit FRI terus kepada pegawai.`
+                          : `Directly chat with the district officer. Reference ID ${generatedRefCode}, net income, and FRI credit score are pre-formatted.`}
+                      </p>
+                    </div>
 
-                  <div className="flex items-center gap-2">
+                    <a
+                      href={whatsappUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5" />
+                      <span>{isBm ? 'WhatsApp Pegawai Sekarang 💬' : 'WhatsApp Financing Officer Now 💬'}</span>
+                    </a>
+                  </div>
+                ) : (
+                  // Online Web / Digital App: Card 1 is Open Official Portal / App
+                  <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between gap-3">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                          {isBm ? 'Langkah 1: Portal Rasmi' : 'Step 1: Official Portal'}
+                        </span>
+                        <ExternalLink className="w-4 h-4 text-slate-400" />
+                      </div>
+                      <h4 className="text-sm font-bold text-slate-900 mt-2">
+                        {isBm ? `Buka Portal Rasmi ${lenderName}` : `Open Official ${lenderName} Portal`}
+                      </h4>
+                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                        {isBm
+                          ? 'Portal rasmi dibuka dalam tab baru. Semua butiran pendapatan, skor kredit, dan cadangan pembiayaan sedia untuk pengesahan akhir.'
+                          : 'Access the bank\'s official application intake page. Verified applicant credentials and loan terms are prepared.'}
+                      </p>
+                    </div>
+
                     <button
                       type="button"
-                      onClick={handleDownloadApplicationPackPdf}
-                      className="flex-1 py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.98]"
+                      onClick={handleLaunchBankPortal}
+                      className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
                     >
-                      <FileText className="w-3.5 h-3.5 text-slate-300" />
-                      <span>{isBm ? 'Muat Turun Pack (PDF)' : 'Download Bank Pack'}</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleDownloadCamPdf}
-                      className="py-2.5 px-3 rounded-xl bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 font-semibold text-xs shadow-2xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
-                      title="Download CAM Assessment Memo"
-                    >
-                      <Download className="w-3.5 h-3.5 text-slate-600" />
-                      <span>CAM PDF</span>
+                      <ExternalLink className="w-3.5 h-3.5 text-slate-300" />
+                      <span>{isBm ? 'Buka Portal Bank Sekarang ↗' : 'Open Bank Portal Now ↗'}</span>
                     </button>
                   </div>
-                </div>
+                )}
+
+                {/* ══ ACTION CARD 2 ══ */}
+                {isWalkIn ? (
+                  // Walk-in Bank: Card 2 is Branch Locator & Portal Reference
+                  <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between gap-3">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                          {isBm ? 'Langkah 2: Kaunter Cawangan' : 'Step 2: Branch Counter'}
+                        </span>
+                        <Building2 className="w-4 h-4 text-slate-400" />
+                      </div>
+                      <h4 className="text-sm font-bold text-slate-900 mt-2">
+                        {isBm ? `Hadir ke Kaunter Cawangan ${lenderName}` : `Visit ${lenderName} Branch Counter`}
+                      </h4>
+                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                        {isBm
+                          ? `Bawa Pakej Permohonan bercetak bersama MyKad dan penyata bank 3 bulan ke cawangan terdekat. Sebut Kod Rujukan ${generatedRefCode}.`
+                          : `Bring the printed Walk-In Pack and MyKad to the financing counter at any nearby branch. Present Ref ID ${generatedRefCode}.`}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <a
+                        href={`https://www.google.com/maps/search/${encodeURIComponent(lenderName + ' branch cawangan')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.98]"
+                      >
+                        <Building2 className="w-3.5 h-3.5 text-slate-300" />
+                        <span>{isBm ? 'Cari Cawangan (Peta) ↗' : 'Find Nearest Branch ↗'}</span>
+                      </a>
+                      <button
+                        type="button"
+                        onClick={handleLaunchBankPortal}
+                        className="py-2.5 px-3 rounded-xl bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 font-semibold text-xs shadow-2xs transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                        title="Open Bank Website"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5 text-slate-600" />
+                        <span>{isBm ? 'Laman Web' : 'Portal'}</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : isWhatsAppOfficer ? (
+                  // WhatsApp Officer Agency: Card 2 is the Agency Dossier PDF
+                  <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between gap-3">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                          {isBm ? 'Langkah 2: Dokumen Agensi' : 'Step 2: Agency Dossier'}
+                        </span>
+                        <FileText className="w-4 h-4 text-slate-400" />
+                      </div>
+                      <h4 className="text-sm font-bold text-slate-900 mt-2">
+                        {isBm ? 'Pakej Permohonan Agensi (PDF)' : 'Agency Application Pack (PDF)'}
+                      </h4>
+                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                        {isBm
+                          ? 'Muat turun pakej penuh mengandungi cadangan Part B dan sijil kelayakan CAM untuk rujukan temu duga atau lampiran e-mel pegawai.'
+                          : 'Download full pack with Part B proposal and CAM score memo to present during the officer interview.'}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleDownloadApplicationPackPdf}
+                        disabled={downloadingPack}
+                        className="flex-1 py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.98] disabled:opacity-50"
+                      >
+                        {downloadingPack ? (
+                          <RefreshCw className="w-3.5 h-3.5 text-slate-300 animate-spin" />
+                        ) : (
+                          <FileText className="w-3.5 h-3.5 text-slate-300" />
+                        )}
+                        <span>{downloadingPack ? (isBm ? 'Menjana Pack...' : 'Generating...') : (isBm ? 'Muat Turun Pack (PDF)' : 'Download Agency Pack')}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleDownloadCamPdf}
+                        disabled={downloadingCam}
+                        className="py-2.5 px-3 rounded-xl bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 font-semibold text-xs shadow-2xs transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                        title="Download CAM Assessment Memo"
+                      >
+                        {downloadingCam ? (
+                          <RefreshCw className="w-3.5 h-3.5 text-slate-600 animate-spin" />
+                        ) : (
+                          <Download className="w-3.5 h-3.5 text-slate-600" />
+                        )}
+                        <span>{downloadingCam ? (isBm ? 'Menjana...' : 'Generating...') : 'CAM PDF'}</span>
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  // Online Web / Digital App: Card 2 is the Application Pack PDF
+                  <div className="p-4 sm:p-5 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col justify-between gap-3">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200">
+                          {isBm ? 'Langkah 2: Dokumen Rasmi' : 'Step 2: Official Dossier'}
+                        </span>
+                        <Download className="w-4 h-4 text-slate-400" />
+                      </div>
+                      <h4 className="text-sm font-bold text-slate-900 mt-2">
+                        {isBm ? 'Pakej Permohonan Pra-Isi (PDF)' : 'Pre-Filled Application Pack (PDF)'}
+                      </h4>
+                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                        {isBm
+                          ? 'Muat turun pakej borang permohonan lengkap yang telah siap diisi beserta sijil pengesahan integriti CAM untuk dimuat naik ke portal.'
+                          : 'Download verified application pack complete with audited financials, Part B proposal, and CAM certificate hash.'}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={handleDownloadApplicationPackPdf}
+                        disabled={downloadingPack}
+                        className="flex-1 py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.98] disabled:opacity-50"
+                      >
+                        {downloadingPack ? (
+                          <RefreshCw className="w-3.5 h-3.5 text-slate-300 animate-spin" />
+                        ) : (
+                          <FileText className="w-3.5 h-3.5 text-slate-300" />
+                        )}
+                        <span>{downloadingPack ? (isBm ? 'Menjana Pack...' : 'Generating...') : (isBm ? 'Muat Turun Pack (PDF)' : 'Download Bank Pack')}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleDownloadCamPdf}
+                        disabled={downloadingCam}
+                        className="py-2.5 px-3 rounded-xl bg-white hover:bg-slate-50 border border-slate-300 text-slate-800 font-semibold text-xs shadow-2xs transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                        title="Download CAM Assessment Memo"
+                      >
+                        {downloadingCam ? (
+                          <RefreshCw className="w-3.5 h-3.5 text-slate-600 animate-spin" />
+                        ) : (
+                          <Download className="w-3.5 h-3.5 text-slate-600" />
+                        )}
+                        <span>{downloadingCam ? (isBm ? 'Menjana...' : 'Generating...') : 'CAM PDF'}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
 
               </div>
 
@@ -955,30 +1227,7 @@ export default function AIApplicationDispatcherModal({
               </div>
             </div>
 
-            {/* Banker Officer View Preview */}
-            {onSwitchToB2BPortal && (
-              <div className="w-full max-w-sm p-4 bg-slate-900 text-white rounded-xl text-left flex flex-col gap-3 border border-slate-800 shadow-xs">
-                <div className="flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-slate-300" />
-                  <span className="text-xs font-bold uppercase tracking-wider text-slate-200">
-                    {isBm ? 'Paparan Pegawai Bank (Underwriting)' : 'Credit Officer Dossier View'}
-                  </span>
-                </div>
-                <p className="text-xs text-slate-300 leading-relaxed">
-                  {isBm
-                    ? 'Lihat bagaimana pegawai kredit bank menyemak skor FRI dan laporan analisis aliran tunai anda dalam portal institusi.'
-                    : 'Inspect how credit risk officers review your certified FRI score and cashflow analytics in the institutional terminal.'}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => { onClose(); onSwitchToB2BPortal(generatedRefCode); }}
-                  className="w-full py-2.5 px-4 bg-white hover:bg-slate-100 text-slate-900 font-bold text-xs rounded-lg transition-all cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <Shield className="w-3.5 h-3.5 text-slate-700" />
-                  <span>{isBm ? 'Buka Paparan Pegawai Kredit →' : 'Open Credit Officer View →'}</span>
-                </button>
-              </div>
-            )}
+
 
             <button
               type="button"

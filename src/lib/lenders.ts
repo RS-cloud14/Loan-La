@@ -941,10 +941,10 @@ export const LENDERS: Lender[] = [
     gigFriendly: true,
     acceptedPlatforms: ['all', 'grab', 'foodpanda', 'shopee', 'freelance'],
     minIncomeRM: 1000,
-    minGigHistoryMonths: 6,
+    minGigHistoryMonths: 3,
     website: 'bankrakyat.com.my',
     hotline: '1300-80-5454',
-    applicationUrl: 'https://www.bankrakyat.com.my/c/personal-banking/financing/pembiayaan-mikro-i',
+    applicationUrl: 'https://www.bankrakyat.com.my',
     minFRIScore: 470,
     highlight: '100% Shariah-compliant micro-financing for informal workers, cooperative members and small traders.',
     notes: 'Lenient credit scoring and cooperative profit distribution for registered members.',
@@ -1354,7 +1354,7 @@ export function getLenderOfficialPortalUrl(lenderName?: string, existingUrl?: st
   if (name.includes('cimb')) return 'https://www.cimb.com.my/en/business/financing/micro-financing.html';
   if (name.includes('agrobank') || name.includes('agro')) return 'https://www.agrobank.com.my/product/pembiayaan-kredit-mikro-i';
   if (name.includes('bank islam') || name.includes('islam')) return 'https://www.bankislam.com/sme-banking/social-finance/bangkit-microfinancing';
-  if (name.includes('bank rakyat') || name.includes('rakyat')) return 'https://www.bankrakyat.com.my/c/personal-banking/financing/pembiayaan-mikro-i';
+  if (name.includes('bank rakyat') || name.includes('rakyat')) return 'https://www.bankrakyat.com.my';
   if (name.includes('sme bank')) return 'https://www.smebank.com.my/en/financing/spum';
   if (name.includes('mara')) return 'https://www.mara.gov.my/en/business/entrepreneur-financing';
   if (name.includes('aim') || name.includes('ikhtiar')) return 'https://www.aim.gov.my';
