@@ -276,10 +276,10 @@ export default function CreditPassportPaywallModal({
 
           {/* Legal Software Disclaimer (Required per Blueprint) */}
           <div className="pt-4 mt-5 border-t border-white/10 text-[10px] text-slate-400 leading-relaxed">
-            <span className="font-semibold text-slate-300 block mb-0.5">Penafian Undang-undang / Platform Disclaimer:</span>
+            <span className="font-semibold text-slate-300 block mb-0.5">Penafian Platform / Platform Disclaimer:</span>
             {isMalay 
-              ? 'CreditFlow AI ialah platform pemadanan dokumen berkuasa perisian. Kami tidak menyediakan nasihat kewangan atau perundangan. Semua kelulusan tertakluk kepada polisi kredit institusi perbankan.' 
-              : 'CreditFlow AI is an AI-powered document matching platform. We do not provide financial, legal, or investment advice. All loan approvals are subject to the bank\'s final assessment.'}
+              ? 'CreditFlow AI ialah Konsultan Pinjaman Digital & Pembantu Permohonan AI. Kami membantu pemohon mengaudit kesiapsiagaan kredit, menyediakan pakej permohonan gred pengunderait, dan memandu saluran permohonan rasmi bank. Kami tidak memberi pinjaman langsung; kelulusan akhir tertakluk kepada penilaian institusi perbankan.' 
+              : 'CreditFlow AI is an Online AI Loan Consultant & Application Assistant. We assist applicants in auditing credit readiness, compiling underwriter-grade application packs, and navigating official bank application channels. We do not disburse loans directly; all final loan approvals remain subject to the bank\'s official assessment.'}
           </div>
 
         </div>
@@ -482,46 +482,24 @@ export default function CreditPassportPaywallModal({
           {paymentStep === 'select' && (
             <div className="flex flex-col gap-5">
               
-              {/* Scope Switcher: Personal vs SME */}
+              {/* Application Scope Display (Locked to Identified Profile) */}
               <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                 <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
                   {isMalay ? 'Kategori Permohonan:' : 'Application Scope:'}
                 </span>
 
-                <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-xl border border-slate-200">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTier('personal');
-                      if (selectedPackage === 'retry') setSelectedPackage('retry');
-                      else setSelectedPackage('basic');
-                    }}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                      tier === 'personal'
-                        ? 'bg-white text-slate-900 shadow-2xs'
-                        : 'text-slate-500 hover:text-slate-800'
-                    }`}
-                  >
-                    <User className="w-3.5 h-3.5 text-blue-900" />
-                    <span>{isMalay ? 'Individu / GIG' : 'Normal (GIG)'}</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTier('sme');
-                      if (selectedPackage === 'retry') setSelectedPackage('retry');
-                      else setSelectedPackage('basic');
-                    }}
-                    className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
-                      tier === 'sme'
-                        ? 'bg-white text-slate-900 shadow-2xs'
-                        : 'text-slate-500 hover:text-slate-800'
-                    }`}
-                  >
-                    <Briefcase className="w-3.5 h-3.5 text-blue-900" />
-                    <span>{isMalay ? 'PKS / Syarikat (SME)' : 'SME / Company'}</span>
-                  </button>
+                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-slate-900 font-bold text-xs shadow-2xs">
+                  {tier === 'personal' ? (
+                    <>
+                      <User className="w-3.5 h-3.5 text-blue-900" />
+                      <span>{isMalay ? 'Individu / Pekerja GIG' : 'Normal (GIG Worker)'}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Briefcase className="w-3.5 h-3.5 text-blue-900" />
+                      <span>{isMalay ? 'PKS / Syarikat (SME)' : 'SME / Company'}</span>
+                    </>
+                  )}
                 </div>
               </div>
 

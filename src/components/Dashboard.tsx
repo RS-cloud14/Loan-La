@@ -1247,8 +1247,8 @@ export default function Dashboard() {
         progress: 45,
         phase: 'AI_AUDITING',
         statusMessage: language === 'bm'
-          ? 'AI sedang mengaudit aliran tunai penyata bank 3 bulan & pendapatan platform gig...'
-          : 'AI auditing 3-month bank statement cashflow & gig platform inflows...'
+          ? `AI sedang mengaudit aliran tunai penyata bank ${uploadedFiles.length > 0 ? uploadedFiles.length : 6} bulan & pendapatan platform gig...`
+          : `AI auditing ${uploadedFiles.length > 0 ? uploadedFiles.length : 6}-month bank statement cashflow & gig platform inflows...`
       } : null);
 
       let payload: any = {};

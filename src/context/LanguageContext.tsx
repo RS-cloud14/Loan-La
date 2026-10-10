@@ -152,7 +152,7 @@ const translations: Record<Language, Translations> = {
     heroSubtitle: 'Pre-check your real loan readiness before applying. We analyze your bank statements, calculate your safe DSR limit, and match you with licensed digital banks and micro-lenders.',
     startAssessmentBtn: 'Check Loan Eligibility Report',
     viewLendersBtn: 'Browse 10+ Bank Options',
-    partnershipNotice: '💡 How Loan - La Works: Loan - La acts as your online financial agent and personalized matcher. We analyze your real cashflow and income profile to pre-screen and help you apply directly to suitable Bank Negara Malaysia licensed digital banks and regulated lenders with a certified Credit Passport.',
+    partnershipNotice: '💡 How Loan - La Works: Loan - La acts as your Online AI Loan Consultant & Application Assistant. We analyze your real cashflow and income profile to pre-screen your credit readiness and assist you in applying directly to suitable Bank Negara Malaysia licensed digital banks and lenders with bank-ready documents.',
     quickCheckTitle: 'How Loan - La Helps You',
     quickCheckSubtitle: 'Our 3 core functions to help you secure financing:',
     situation1Title: '1. Verify Alternative Income',
@@ -161,8 +161,8 @@ const translations: Record<Language, Translations> = {
     situation2Title: '2. Smart Bank Matching',
     situation2Desc: 'Compare 11+ licensed banks & digital lenders to find institutions that accept your verified cashflow profile.',
     situation2Btn: 'Explore Matched Banks →',
-    situation3Title: '3. Certified Application Kit',
-    situation3Desc: 'Download your official Credit Passport PDF and apply directly via the bank\'s official portal.',
+    situation3Title: '3. Bank-Ready Application Pack',
+    situation3Desc: 'Download your official Credit Readiness Report PDF and follow guided steps to apply directly via official bank portals or branch counters.',
     situation3Btn: 'Start Guided Pre-Check →',
 
     // Calculator
@@ -271,7 +271,7 @@ const translations: Record<Language, Translations> = {
     heroSubtitle: 'Pra-semak kelayakan pinjaman sebenar anda sebelum memohon. Kami menganalisis penyata bank, mengira had DSR selamat, dan memadankan anda dengan bank digital & pembiaya berlesen.',
     startAssessmentBtn: 'Semak Laporan Kelayakan Pinjaman',
     viewLendersBtn: 'Lihat 10+ Pilihan Bank',
-    partnershipNotice: '💡 Cara Loan - La Berfungsi: Loan - La bertindak sebagai ejen kewangan dalam talian dan pemadan peribadi anda. Kami menganalisis profil aliran tunai dan pendapatan sebenar anda untuk membuat pra-saringan serta membantu anda memohon terus kepada bank digital berlesen Bank Negara Malaysia dan institusi terkawal menggunakan Pasport Kredit yang disahkan.',
+    partnershipNotice: '💡 Cara Loan - La Berfungsi: Loan - La bertindak sebagai Konsultan Pinjaman Digital & Pembantu Permohonan AI anda. Kami menganalisis aliran tunai sebenar untuk mengaudit kesiapsiagaan kredit anda dan membantu anda memohon terus kepada bank digital serta pembiaya berlesen Bank Negara Malaysia dengan dokumen lengkap.',
     quickCheckTitle: 'Bagaimana Loan - La Membantu Anda',
     quickCheckSubtitle: '3 fungsi utama kami untuk membantu anda mendapatkan pembiayaan:',
     situation1Title: '1. Sahkan Pendapatan Alternatif',
@@ -280,8 +280,8 @@ const translations: Record<Language, Translations> = {
     situation2Title: '2. Padanan Bank Berlesen',
     situation2Desc: 'Bandingkan 11+ bank berlesen & pembiaya digital untuk melihat institusi mana yang menerima profil aliran tunai anda.',
     situation2Btn: 'Lihat Padanan Bank →',
-    situation3Title: '3. Kit Permohonan Rasmi',
-    situation3Desc: 'Muat turun laporan Pasport Kredit disahkan dan mohon terus melalui portal rasmi bank pilihan anda.',
+    situation3Title: '3. Pakej Permohonan Lengkap Bank',
+    situation3Desc: 'Muat turun laporan Kesiapsiagaan Kredit disahkan dan ikuti panduan langkah demi langkah untuk memohon terus melalui portal rasmi atau kaunter cawangan.',
     situation3Btn: 'Mula Pra-Semakan →',
 
     // Calculator
