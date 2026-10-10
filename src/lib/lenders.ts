@@ -944,26 +944,42 @@ export const LENDERS: Lender[] = [
     minGigHistoryMonths: 3,
     website: 'bankrakyat.com.my',
     hotline: '1300-80-5454',
-    applicationUrl: 'https://www.bankrakyat.com.my',
+    applicationUrl: 'https://www.bankrakyat.com.my/portal-main/article/micro-enterprise-fund',
     minFRIScore: 470,
-    highlight: '100% Shariah-compliant micro-financing for informal workers, cooperative members and small traders.',
-    notes: 'Lenient credit scoring and cooperative profit distribution for registered members.',
+    highlight: '100% Shariah-compliant micro-financing for informal workers, hawkers, peddlers, cooperative members and small traders.',
+    notes: 'Official BNM Micro Enterprise Fund (MEF) & Micro Financing-i (MUsK) schemes. Stamp duty exempted, Wakalah fee RM 28.30.',
     products: [
       {
-        id: 'bank_rakyat_mikro_i',
-        name: 'Bank Rakyat Pembiayaan Mikro-i Usahawan',
+        id: 'bank_rakyat_mef',
+        name: 'Bank Rakyat Micro Enterprise Fund (MEF)',
         productType: 'micro_credit',
-        minAmountRM: 3000,
+        minAmountRM: 1000,
         maxAmountRM: 50000,
         tenureMinMonths: 12,
         tenureMaxMonths: 60,
-        rateType: 'reducing_pa',
-        rateFromPercent: 6.5,
-        rateToPercent: 9.5,
+        rateType: 'flat_pa',
+        rateFromPercent: 8.25,
+        rateToPercent: 8.25,
         payslipRequired: false,
-        compatibleAssets: ['working_capital', 'personal_cash'],
-        requiredDocs: ['MyKad / NRIC', '6 months Bank Statement', 'SSM Registration or Local Council License'],
-        notes: 'Structured under Tawarruq arrangement. No collateral required.',
+        compatibleAssets: ['working_capital', 'equipment', 'personal_cash'],
+        requiredDocs: ['MyKad / NRIC', '3-6 months Bank Statement', 'SSM Registration or PBT Hawkers License'],
+        notes: 'BNM approval scheme. Tawarruq concept, Takaful coverage, zero collateral & zero guarantor.',
+      },
+      {
+        id: 'bank_rakyat_musk',
+        name: 'Bank Rakyat Micro Financing-i MUsK',
+        productType: 'micro_credit',
+        minAmountRM: 1000,
+        maxAmountRM: 50000,
+        tenureMinMonths: 12,
+        tenureMaxMonths: 60,
+        rateType: 'flat_pa',
+        rateFromPercent: 12.56,
+        rateToPercent: 12.56,
+        payslipRequired: false,
+        compatibleAssets: ['working_capital', 'equipment'],
+        requiredDocs: ['MyKad / NRIC', '3-6 months Bank Statement', 'Cooperative / Hawkers Society Membership'],
+        notes: 'Special scheme for hawkers & peddlers via Self Help Group (SHG 5-10 pax). 12.56% flat p.a., Tawarruq.',
       },
     ],
   },
@@ -1341,30 +1357,31 @@ export function getLenderOfficialPortalUrl(lenderName?: string, existingUrl?: st
   }
 
   const name = (lenderName || '').toLowerCase();
-  if (name.includes('gxbank') || name.includes('gx bank')) return 'https://www.gxbank.my';
-  if (name.includes('boost')) return 'https://www.myboostsme.co';
-  if (name.includes('aeon bank')) return 'https://www.aeonbank.com.my';
-  if (name.includes('tng') || name.includes('gopinjam') || name.includes('touch')) return 'https://www.touchngo.com.my/consumer/financial-services/gopinjam/';
-  if (name.includes('tekun')) return 'https://tekunonline.tekun.gov.my/login';
+  if (name.includes('musk')) return 'https://www.bankrakyat.com.my/portal-main/article/micro-financing-i-musk';
+  if (name.includes('bank rakyat') || name.includes('rakyat')) return 'https://www.bankrakyat.com.my/portal-main/article/micro-enterprise-fund';
+  if (name.includes('tekun mobilepreneur') || name.includes('mobilepreneur')) return 'https://www.tekun.gov.my/ms/skym-pembiayaan/skim-pembiayaan-tekun-mobilepreneur/';
+  if (name.includes('tekun niaga') || name.includes('tekun')) return 'https://www.tekun.gov.my/ms/skym-pembiayaan/skim-pembiayaan-tekun-niaga/';
   if (name.includes('bsn') || name.includes('simpanan')) return 'https://www.bsn.com.my/page/business-financing-products-index';
+  if (name.includes('agrobank') || name.includes('agro')) return 'https://www.agrobank.com.my/product/pembiayaan-kredit-mikro-i/';
+  if (name.includes('sme bank')) return 'https://www.smebank.com.my/en/financing/spum';
+  if (name.includes('mara')) return 'https://www.mara.gov.my/en/business/entrepreneur-financing/';
   if (name.includes('maybank')) return 'https://www.maybank2u.com.my/maybank2u/malaysia/en/personal/loans/business/sme_clean_loan.page';
+  if (name.includes('aeon') && (name.includes('cash') || name.includes('personal'))) return 'https://www.aeoncredit.com.my/personal-financing/i-cash-personal-financing';
+  if (name.includes('aeon')) return 'https://www.aeoncredit.com.my/vehicle-financing/motorcycle-financing';
   if (name.includes('alliance')) return 'https://www.alliancebank.com.my/business/loans/digital-sme.aspx';
   if (name.includes('funding societies') || name.includes('fundingsocieties')) return 'https://fundingsocieties.com.my/micro-financing';
   if (name.includes('capbay')) return 'https://capbay.com/p2p-financing';
   if (name.includes('cimb')) return 'https://www.cimb.com.my/en/business/financing/micro-financing.html';
-  if (name.includes('agrobank') || name.includes('agro')) return 'https://www.agrobank.com.my/product/pembiayaan-kredit-mikro-i';
   if (name.includes('bank islam') || name.includes('islam')) return 'https://www.bankislam.com/sme-banking/social-finance/bangkit-microfinancing';
-  if (name.includes('bank rakyat') || name.includes('rakyat')) return 'https://www.bankrakyat.com.my';
-  if (name.includes('sme bank')) return 'https://www.smebank.com.my/en/financing/spum';
-  if (name.includes('mara')) return 'https://www.mara.gov.my/en/business/entrepreneur-financing';
   if (name.includes('aim') || name.includes('ikhtiar')) return 'https://www.aim.gov.my';
-  if (name.includes('aeon')) return 'https://www.aeoncredit.com.my';
   if (name.includes('ambank')) return 'https://www.ambank.com.my/business/financing/bizclub';
   if (name.includes('public bank') || name.includes('pbb')) return 'https://www.pbebank.com/business-banking/loans-financing/micro-financing.aspx';
   if (name.includes('muamalat')) return 'https://www.muamalat.com.my/business-banking/micro-financing';
   if (name.includes('affin')) return 'https://www.affinalways.com/en/sme-banking/smemerge';
+  if (name.includes('mbsb')) return 'https://www.mbsbbank.com/personal/financing/personal-financing-i';
+  if (name.includes('rhb')) return 'https://www.rhbgroup.com/personal/loans/personal-financing/easy-pinjaman-ekspres';
 
-  return 'https://www.gxbank.my';
+  return 'https://www.bankrakyat.com.my/portal-main/article/micro-enterprise-fund';
 }
 
 /**

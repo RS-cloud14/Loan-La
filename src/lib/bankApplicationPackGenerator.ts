@@ -2,6 +2,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { BsnScheme } from './bsnSchemes';
 import { LoanProposalData } from '@/components/LoanProposalWizardModal';
+import { getLenderOfficialPortalUrl } from './lenders';
 
 export interface ApplicationPackProps {
   applicant: {
@@ -297,12 +298,13 @@ export function generateBankApplicationPackPdf({
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(6.4);
   doc.setTextColor(30, 41, 59);
+  const officialPortal = scheme ? scheme.officialUrl : getLenderOfficialPortalUrl(lenderName);
   doc.text(
     isBm
       ? `1. Untuk Serahan Cawangan (${lenderName}): Cetak pakej ini bersama salinan MyKad & penyata bank. Serahkan kepada Pegawai Pinjaman Mikro / SME di cawangan terdekat. Maklumkan kod rujukan: ${refCode}.\n` +
-        `2. Untuk Serahan Portal Dalam Talian: Buka portal rasmi (${scheme ? scheme.officialUrl : 'bsncheckin.com.my/MF/'}), salin medan Part A secara 1-klik menggunakan alat Fast-Fill Loan-La, dan muat naik PDF ini sebagai lampiran sokongan.`
+        `2. Untuk Serahan Portal Dalam Talian: Buka portal rasmi (${officialPortal}), salin medan Part A secara 1-klik menggunakan alat Fast-Fill CreditFlow, dan muat naik PDF ini sebagai lampiran sokongan.`
       : `1. For Branch Intake (${lenderName}): Print this pack with your MyKad copy & bank statements. Present it directly to the Micro/SME Loan Officer at the nearest branch. Quote Reference: ${refCode}.\n` +
-        `2. For Online Portal Intake: Access official gateway (${scheme ? scheme.officialUrl : 'bsncheckin.com.my/MF/'}), copy Part A figures using Loan-La 1-Click Fast-Fill, and upload this certified dossier as your supporting evidence.`,
+        `2. For Online Portal Intake: Access official gateway (${officialPortal}), copy Part A figures using CreditFlow 1-Click Fast-Fill, and upload this certified dossier as your supporting evidence.`,
     18,
     afterTable3Y + 10.5,
     { maxWidth: pageWidth - 36 }

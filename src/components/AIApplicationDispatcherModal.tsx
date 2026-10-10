@@ -229,12 +229,14 @@ export default function AIApplicationDispatcherModal({
   const isBm = language === 'bm';
 
   const isBsnLender = lenderName.toLowerCase().includes('bsn') || lenderName.toLowerCase().includes('simpanan');
+  const isBankRakyat = lenderName.toLowerCase().includes('bank rakyat') || lenderName.toLowerCase().includes('rakyat');
+  const isBankRakyatMusk = isBankRakyat && (lenderName.toLowerCase().includes('musk') || (target.productName || '').toLowerCase().includes('musk'));
 
   // If BSN, user can dynamically choose between Online Portal and Offline Branch Walk-In
   const isWalkIn = isBsnLender
     ? bsnChannelChoice === 'offline'
     : (channelType === 'commercial_bank_assisted' || (channelType as any) === 'branch_walk_in' ||
-       lenderName.toLowerCase().includes('rakyat') ||
+       isBankRakyat ||
        lenderName.toLowerCase().includes('agrobank') ||
        lenderName.toLowerCase().includes('sme bank'));
 
@@ -703,6 +705,62 @@ export default function AIApplicationDispatcherModal({
                         </div>
                         {bsnChannelChoice === 'offline' && <Check className="w-3.5 h-3.5 text-cyan-300 shrink-0" />}
                       </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Bank Rakyat Specific Scheme & PDS Guidance */}
+                {isBankRakyat && (
+                  <div className="pt-3 border-t border-slate-100 flex flex-col gap-2.5">
+                    <div className="p-3.5 rounded-xl bg-amber-50/80 border border-amber-200 text-xs">
+                      <div className="flex items-center justify-between font-bold text-amber-950 mb-1">
+                        <span className="flex items-center gap-1.5">
+                          <Building2 className="w-4 h-4 text-amber-800" />
+                          {isBankRakyatMusk ? 'Bank Rakyat Micro Financing-i (MUsK)' : 'Bank Rakyat Micro Enterprise Fund (MEF)'}
+                        </span>
+                        <span className="text-[10px] px-2 py-0.5 rounded bg-amber-200/80 text-amber-950 font-mono font-bold">
+                          {isBankRakyatMusk ? '12.56% Flat p.a.' : '8.25% Flat p.a.'}
+                        </span>
+                      </div>
+                      <p className="text-amber-900 text-[11px] leading-relaxed">
+                        {isBankRakyatMusk
+                          ? (isBm 
+                              ? 'Direka khas untuk penjaja, peniaga kecil & ahli koperasi. Diperlukan menyertai Kumpulan Sokongan (Self Help Group - SHG) 5 hingga 10 orang dengan rekod bayaran balik tidak tertunggak melebihi 4 minggu.'
+                              : 'Specially designed to provide financing to hawkers, peddlers & cooperative members. Requires Self Help Group (SHG) participation (5–10 pax) with good repayment records.')
+                          : (isBm
+                              ? 'Diluluskan di bawah Skim Tabung Usahawan Mikro Bank Negara Malaysia (BNM). Konsep Syariah Tawarruq tanpa cagaran dan tanpa penjamin dengan perlindungan Takaful.'
+                              : 'Approved under Bank Negara Malaysia Micro Enterprise Fund (MEF). 100% Shariah Tawarruq concept with zero collateral and zero guarantor required.')}
+                      </p>
+                      <div className="mt-2.5 pt-2 border-t border-amber-200/60 grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px] text-amber-900 font-medium">
+                        <div>• {isBm ? 'Yuran Wakalah' : 'Wakalah Fee'}: <strong>RM 28.30</strong></div>
+                        <div>• {isBm ? 'Duti Setem' : 'Stamp Duty'}: <strong>{isBm ? 'Dikecualikan' : 'Exempted'}</strong></div>
+                        <div>• {isBm ? 'Caj Lewat' : 'Late Ta\'widh'}: <strong>1% p.a.</strong></div>
+                        <div>• {isBm ? 'Pusat Hubungan' : 'Tele-Rakyat'}: <strong>1-300-80-5454</strong></div>
+                      </div>
+                      <div className="mt-2.5 flex items-center justify-between gap-3 pt-2 border-t border-amber-200/60">
+                        <a
+                          href={
+                            isBankRakyatMusk
+                              ? 'https://www.bankrakyat.com.my/assets/documents/pds/PDS%20-%20Micro%20(BI)%20DW.pdf'
+                              : 'https://www.bankrakyat.com.my/assets/documents/bank-rakyat/PDS%2BMicro%2BFinancing-i%2BMUsK-MEF%2B(English).pdf'
+                          }
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[10px] font-bold text-amber-950 hover:underline flex items-center gap-1"
+                        >
+                          <FileText className="w-3 h-3 text-amber-800" />
+                          <span>{isBm ? 'Lembaran Pendedahan Produk (PDS PDF) ↗' : 'Product Disclosure Sheet (PDS PDF) ↗'}</span>
+                        </a>
+                        <a
+                          href={effectivePortalUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[10px] font-bold text-amber-950 hover:underline flex items-center gap-1"
+                        >
+                          <ExternalLink className="w-3 h-3 text-amber-800" />
+                          <span>{isBm ? 'Portal Rasmi Skim Bank Rakyat ↗' : 'Official Scheme Portal ↗'}</span>
+                        </a>
+                      </div>
                     </div>
                   </div>
                 )}

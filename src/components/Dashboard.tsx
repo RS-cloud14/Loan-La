@@ -4611,14 +4611,18 @@ export default function Dashboard() {
                             const applicationRecord = appliedLenders[lender.name];
                             const isApplied = !!applicationRecord;
                             const isLocked = !isCurrentAssessmentUnlocked;
-                            // Application pack generation requires Apply Upgrade (RM 34.90 / +RM 15 top-up)
+                            // RM 19.90 unlocks Credit Diagnostic Report only.
+                            // The Bank Matcher and Application Packs require Apply Upgrade (RM 34.90 or +RM 15 top-up).
+                            const isLenderUnlocked = isAllLendersUnlocked;
                             const isCardUnlocked = isAllLendersUnlocked;
 
                             const maskedBankName = lender.isTop
-                              ? (language === 'bm' ? 'Bank Digital Berlesen (Padanan #1)' : 'Top-Tier Digital Bank (Match #1)')
-                              : lender.id === 'second'
-                                ? (language === 'bm' ? 'Bank Subsidi Kerajaan (Padanan #2)' : 'Government-Subsidized Bank (Match #2)')
-                                : (language === 'bm' ? 'Pembiaya Alternatif Berlesen (Padanan #3)' : 'Licensed Alternative Lender (Match #3)');
+                              ? (language === 'bm' ? 'Bank Pilihan Utama (Padanan #1 - Teratas)' : 'Primary Tier Institution (Top Match #1)')
+                              : lender.id.includes('mef') || lender.id.includes('musk') || lender.id.includes('rakyat')
+                                ? (language === 'bm' ? 'Bank Kerajaan / Koperasi (Padanan #2)' : 'Government Micro Fund / Bank (Match #2)')
+                                : lender.id.includes('agro') || lender.id.includes('tekun')
+                                  ? (language === 'bm' ? 'Agensi / Bank Pembangunan (Padanan #3)' : 'Development Bank / Agency (Match #3)')
+                                  : (language === 'bm' ? 'Institusi Kredit Berlesen (Padanan #4)' : 'Licensed Credit Institution (Match #4)');
 
                             return (
                               <div 
@@ -4632,7 +4636,7 @@ export default function Dashboard() {
                                 {/* Top Row: Logo, Name, Badges, and Installment */}
                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
                                   <div className="flex items-center gap-3">
-                                    {isLocked ? (
+                                    {!isLenderUnlocked ? (
                                       <div className="w-10 h-10 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 shadow-2xs shrink-0">
                                         <Lock className="w-4 h-4 text-slate-400" />
                                       </div>
@@ -4642,17 +4646,17 @@ export default function Dashboard() {
                                     <div>
                                       <div className="flex items-center gap-2 flex-wrap">
                                         <span className="text-base font-bold text-slate-900">
-                                          {isLocked ? maskedBankName : lender.name}
+                                          {!isLenderUnlocked ? maskedBankName : lender.name}
                                         </span>
                                         {lender.isTop && (
                                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
                                             {language === 'bm' ? 'Padanan Terbaik' : 'Top Match'}
                                           </span>
                                         )}
-                                        {!isCardUnlocked && isCurrentAssessmentUnlocked && (
+                                        {!isLenderUnlocked && isCurrentAssessmentUnlocked && (
                                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1">
                                             <Lock className="w-2.5 h-2.5 text-amber-700" />
-                                            <span>{language === 'bm' ? 'Pakej Dikunci (+RM15)' : 'Pack Locked (+RM15)'}</span>
+                                            <span>{language === 'bm' ? 'Padanan Dikunci (+RM15)' : 'Matcher Locked (+RM15)'}</span>
                                           </span>
                                         )}
                                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
@@ -4717,20 +4721,22 @@ export default function Dashboard() {
                                 </div>
 
                                 {/* Applied Status Notification */}
-                                {isApplied && (
-                                  <div className="my-2 p-2.5 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-between text-xs text-blue-950 font-medium">
-                                    <div className="flex items-center gap-2">
-                                      <CheckCircle2 className="w-4 h-4 text-blue-900 shrink-0" />
-                                      <span className="font-bold">Application Submitted ({applicationRecord.refCode})</span>
+                                <div className="my-2">
+                                  {isApplied && (
+                                    <div className="p-2.5 bg-blue-50 border border-blue-200 rounded-xl flex items-center justify-between text-xs text-blue-950 font-medium">
+                                      <div className="flex items-center gap-2">
+                                        <CheckCircle2 className="w-4 h-4 text-blue-900 shrink-0" />
+                                        <span className="font-bold">Application Submitted ({applicationRecord.refCode})</span>
+                                      </div>
+                                      <span className="text-[10px] font-bold bg-blue-900 text-white px-2 py-0.5 rounded-md">PENDING</span>
                                     </div>
-                                    <span className="text-[10px] font-bold bg-blue-900 text-white px-2 py-0.5 rounded-md">PENDING</span>
-                                  </div>
-                                )}
+                                  )}
+                                </div>
 
                                 {/* Expandable Info */}
                                 {expandedLenderInfo === lender.id && (
                                   <div className="my-2 p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-600 flex flex-col gap-1 animate-fade-in">
-                                    <span className="font-bold text-slate-800 block">About {lender.name}</span>
+                                    <span className="font-bold text-slate-800 block">About {!isLenderUnlocked ? maskedBankName : lender.name}</span>
                                     <span>Licensed by Bank Negara Malaysia / Securities Commission Malaysia. Verified alternative lender accepting gig worker income documentation.</span>
                                   </div>
                                 )}
@@ -4739,7 +4745,7 @@ export default function Dashboard() {
                                 <div className="flex gap-2 pt-3">
                                   <button
                                     onClick={() => {
-                                      if (isLocked) {
+                                      if (!isLenderUnlocked) {
                                         setShowPaywallModal(true);
                                       } else {
                                         setExpandedLenderInfo(expandedLenderInfo === lender.id ? null : lender.id);
@@ -4751,7 +4757,7 @@ export default function Dashboard() {
                                     <span>{expandedLenderInfo === lender.id ? (language === 'bm' ? 'Tutup' : 'Hide') : (language === 'bm' ? 'Butiran' : 'Details')}</span>
                                   </button>
                                   
-                                  {!isCardUnlocked ? (
+                                  {!isLenderUnlocked ? (
                                     isCurrentAssessmentUnlocked ? (
                                       <button
                                         onClick={() => {
@@ -4760,7 +4766,7 @@ export default function Dashboard() {
                                         className="flex-1 py-2 text-xs font-bold rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
                                       >
                                         <Lock className="w-3.5 h-3.5 text-amber-200" />
-                                        <span>{language === 'bm' ? 'Buka Semua Bank (+RM 15.00)' : 'Unlock All Lenders (+RM 15.00)'}</span>
+                                        <span>{language === 'bm' ? 'Buka Padanan Bank (+RM 15.00)' : 'Unlock Matched Banks (+RM 15.00)'}</span>
                                       </button>
                                     ) : (
                                       <button
@@ -4770,7 +4776,7 @@ export default function Dashboard() {
                                         className="flex-1 py-2 text-xs font-bold rounded-xl bg-blue-950 hover:bg-blue-900 text-white transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
                                       >
                                         <Lock className="w-3.5 h-3.5 text-blue-300" />
-                                        <span>{language === 'bm' ? 'Buka Kunci Dokumen (RM 19.90)' : 'Unlock Application Pack (RM 19.90)'}</span>
+                                        <span>{language === 'bm' ? 'Buka Pakej Permohonan (RM 34.90)' : 'Unlock Application Suite (RM 34.90)'}</span>
                                       </button>
                                     )
                                   ) : (
@@ -4800,6 +4806,41 @@ export default function Dashboard() {
 
                           return (
                           <div className="flex flex-col gap-4">
+                            {/* Unlock Matched Lenders Upgrade Banner if on 19.90 Report-only plan */}
+                            {!isAllLendersUnlocked && (
+                              <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-950 via-slate-900 to-blue-900 text-white border border-blue-800/60 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 rounded-xl bg-blue-900/60 border border-blue-700/60 flex items-center justify-center shrink-0">
+                                    <Lock className="w-5 h-5 text-amber-300" />
+                                  </div>
+                                  <div>
+                                    <span className="font-bold text-sm block text-white">
+                                      {language === 'bm'
+                                        ? 'Padanan Bank & Pakej Permohonan Dikunci'
+                                        : 'Bank Matcher & Official Application Packs Locked'}
+                                    </span>
+                                    <span className="text-xs text-blue-200 block mt-0.5">
+                                      {isCurrentAssessmentUnlocked
+                                        ? (language === 'bm'
+                                            ? 'Pelan RM 19.90 anda meliputi Laporan Diagnostik Kredit. Tambah RM 15.00 untuk membuka nama bank padanan & memuat turun Pakej Permohonan rasmi.'
+                                            : 'Your RM 19.90 plan covers the Credit Diagnostic Report. Upgrade for +RM 15.00 to reveal matched bank names & generate official application packs.')
+                                        : (language === 'bm'
+                                            ? 'Buka kunci laporan penuh, padanan institusi bank, dan borang permohonan bercetak.'
+                                            : 'Unlock diagnostic report, matched lenders, and verified bank application packs.')}
+                                    </span>
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={() => setShowPaywallModal(true)}
+                                  className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-black text-xs shadow-md transition cursor-pointer active:scale-98 shrink-0"
+                                >
+                                  {isCurrentAssessmentUnlocked
+                                    ? (language === 'bm' ? 'Buka Padanan Bank (+RM 15.00)' : 'Unlock Matched Banks (+RM 15.00)')
+                                    : (language === 'bm' ? 'Dapatkan Pakej Lengkap (RM 34.90)' : 'Get Full Application Suite (RM 34.90)')}
+                                </button>
+                              </div>
+                            )}
+
                             {/* Section Header */}
                             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                               <div className="flex items-center gap-2">

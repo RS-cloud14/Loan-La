@@ -392,8 +392,8 @@ export function getSmartMatchedLenders(params: SmartMatchInput): SmartMatchedCar
       compatiblePurposes: ['working_capital', 'vehicle', 'equipment', 'personal_cash'],
       channelType: 'branch_walk_in',
       channelLabel: '🏛️ Branch Walk-In & Online Pre-Check',
-      intakeInstruction: 'Cawangan BSN memerlukan Pakej Permohonan bercetak. Cetak Walk-in Pack untuk semakan ekspres di kaunter.',
-      url: 'https://www.bsn.com.my/BusinessBanking/Products/MadaniGig?lang=en',
+      intakeInstruction: 'Walk-in ke mana-mana cawangan BSN dengan Pakej Permohonan bercetak atau pra-daftar melalui portal rasmi bsncheckin.com.my/MF/.',
+      url: 'https://www.bsn.com.my/page/business-financing-products-index',
       gigPriorityBonus: 35,
       traderPriorityBonus: 10,
       purposeBonus: purpose === 'vehicle' ? 30 : purpose === 'working_capital' ? 25 : 15,
@@ -421,8 +421,8 @@ export function getSmartMatchedLenders(params: SmartMatchInput): SmartMatchedCar
       compatiblePurposes: ['vehicle', 'equipment', 'working_capital'],
       channelType: 'officer_whatsapp',
       channelLabel: '🤝 Pejabat TEKUN / Pegawai WhatsApp',
-      intakeInstruction: 'Pembiayaan diproses melalui Pegawai TEKUN daerah. Pakej CAM sedia untuk dihantar ke WhatsApp atau kaunter.',
-      url: 'https://www.tekun.gov.my',
+      intakeInstruction: 'Pembiayaan diproses melalui Pejabat TEKUN Cawangan Daerah atau permohonan atas talian di portal tekunonline.tekun.gov.my.',
+      url: 'https://www.tekun.gov.my/ms/skym-pembiayaan/skim-pembiayaan-tekun-mobilepreneur/',
       gigPriorityBonus: 32,
       traderPriorityBonus: 12,
       purposeBonus: purpose === 'vehicle' ? 35 : purpose === 'equipment' ? 20 : 10,
@@ -450,8 +450,8 @@ export function getSmartMatchedLenders(params: SmartMatchInput): SmartMatchedCar
       compatiblePurposes: ['working_capital', 'equipment'],
       channelType: 'officer_whatsapp',
       channelLabel: '🤝 Pejabat TEKUN Cawangan Daerah',
-      intakeInstruction: 'Kemukakan Pakej Permohonan CAM di pejabat TEKUN daerah terdekat untuk prapendaftaran.',
-      url: 'https://www.tekun.gov.my',
+      intakeInstruction: 'Kemukakan Pakej Permohonan CAM di pejabat TEKUN daerah terdekat untuk prapendaftaran atau mohon melalui portal tekunonline.tekun.gov.my.',
+      url: 'https://www.tekun.gov.my/ms/skym-pembiayaan/skim-pembiayaan-tekun-niaga/',
       gigPriorityBonus: 20,
       traderPriorityBonus: 35,
       purposeBonus: purpose === 'working_capital' ? 25 : purpose === 'equipment' ? 20 : 5,
@@ -462,35 +462,91 @@ export function getSmartMatchedLenders(params: SmartMatchInput): SmartMatchedCar
       ]
     },
 
-    // 4. Bank Rakyat Pembiayaan Mikro-i Usahawan
+    // 4. Bank Rakyat Micro Enterprise Fund (MEF)
     {
-      id: 'bank_rakyat_mikro',
-      name: 'Bank Rakyat Pembiayaan Mikro-i',
+      id: 'bank_rakyat_mef',
+      name: 'Bank Rakyat (Micro Enterprise Fund)',
       lenderName: 'Bank Kerjasama Rakyat Malaysia Berhad',
-      productName: 'Bank Rakyat Pembiayaan Mikro-i Usahawan',
-      baseRate: 0.055,
-      rateLabel: '5.50% – 7.20% p.a. (Tawarruq)',
+      productName: 'Bank Rakyat Micro Enterprise Fund (MEF)',
+      baseRate: 0.0825,
+      rateLabel: '8.25% flat p.a. (BNM MEF Scheme)',
       speed: '3–5 business days',
+      minIncome: 1000,
+      maxAmount: 50000,
+      minAmount: 1000,
+      shariah: true,
+      compatiblePurposes: ['working_capital', 'personal_cash', 'equipment'],
+      channelType: 'branch_walk_in',
+      channelLabel: '🏛️ Cawangan Bank Rakyat (Walk-In)',
+      intakeInstruction: 'Bawa Pakej Permohonan CAM CreditFlow bercetak ke kaunter cawangan Bank Rakyat terdekat. Diluluskan di bawah Skim MEF BNM tanpa cagaran & tanpa penjamin.',
+      url: 'https://www.bankrakyat.com.my/portal-main/article/micro-enterprise-fund',
+      gigPriorityBonus: 24,
+      traderPriorityBonus: 28,
+      purposeBonus: purpose === 'personal_cash' ? 22 : purpose === 'working_capital' ? 26 : 15,
+      reasons: [
+        'Bank Negara Malaysia (BNM) approved Micro Enterprise Fund facility',
+        '8.25% flat p.a. under Shariah Tawarruq concept with Takaful coverage protection',
+        'No collateral & no guarantor required for financing up to RM 50,000 (Wakalah fee RM28.30, Stamp duty exempt)'
+      ]
+    },
+
+    // 5. Bank Rakyat Micro Financing-i (MUsK)
+    {
+      id: 'bank_rakyat_musk',
+      name: 'Bank Rakyat (Micro Financing-i MUsK)',
+      lenderName: 'Bank Kerjasama Rakyat Malaysia Berhad',
+      productName: 'Bank Rakyat Micro Financing-i MUsK (Penjaja & Peniaga)',
+      baseRate: 0.1256,
+      rateLabel: '12.56% flat p.a. (Kumpulan SHG)',
+      speed: '5–7 business days',
+      minIncome: 800,
+      maxAmount: 50000,
+      minAmount: 1000,
+      shariah: true,
+      compatiblePurposes: ['working_capital', 'equipment'],
+      channelType: 'branch_walk_in',
+      channelLabel: '🏛️ Cawangan Bank Rakyat / Koperasi',
+      intakeInstruction: 'Khusus untuk penjaja, peniaga kecil & ahli koperasi. Sertai Self Help Group (SHG 5–10 orang) dan bawa Pakej Permohonan bercetak ke cawangan Bank Rakyat.',
+      url: 'https://www.bankrakyat.com.my/portal-main/article/micro-financing-i-musk',
+      gigPriorityBonus: 15,
+      traderPriorityBonus: 32,
+      purposeBonus: purpose === 'working_capital' ? 25 : purpose === 'equipment' ? 20 : 5,
+      reasons: [
+        'Tailored micro-facility assisting hawkers, peddlers, and cooperative society members',
+        'Self Help Group (SHG) peer structure with savings account deduction or ATM/CDM repayment',
+        'Shariah Tawarruq concept with RM28.30 Wakalah fee, full stamp duty exemption, and Ibra\' rebate'
+      ]
+    },
+
+    // 6. Agrobank Pembiayaan Kredit Mikro-i
+    {
+      id: 'agrobank_mikro',
+      name: 'Agrobank Kredit Mikro-i',
+      lenderName: 'Agrobank (Bank Pertanian Malaysia Berhad)',
+      productName: 'Agrobank Pembiayaan Kredit Mikro-i Usahawan',
+      baseRate: 0.08,
+      rateLabel: '8.00% – 10.00% p.a. (Tawarruq)',
+      speed: '5–7 business days',
       minIncome: 1000,
       maxAmount: 50000,
       minAmount: 3000,
       shariah: true,
-      compatiblePurposes: ['working_capital', 'personal_cash', 'equipment'],
+      compatiblePurposes: ['working_capital', 'equipment'],
       channelType: 'branch_walk_in',
-      channelLabel: '🏛️ Branch Walk-In & Kaunter Koperasi',
-      intakeInstruction: 'Bawa Pakej Permohonan CAM bercetak ke kaunter cawangan Bank Rakyat. Sesuai untuk permohonan tanpa cagaran.',
-      url: 'https://www.bankrakyat.com.my',
-      gigPriorityBonus: 18,
-      traderPriorityBonus: 25,
-      purposeBonus: purpose === 'personal_cash' ? 25 : purpose === 'working_capital' ? 20 : 10,
+      channelLabel: '🏛️ Cawangan Agrobank (Walk-In)',
+      intakeInstruction: 'Bawa Pakej Permohonan CAM ke kaunter cawangan Agrobank terdekat. Tiada cagaran diperlukan untuk peniaga mikro dan rantaian makanan/peruncitan.',
+      url: 'https://www.agrobank.com.my/product/pembiayaan-kredit-mikro-i/',
+      gigPriorityBonus: 12,
+      traderPriorityBonus: 30,
+      purposeBonus: purpose === 'working_capital' ? 25 : purpose === 'equipment' ? 20 : 10,
       reasons: [
-        '100% Shariah-compliant cooperative financing under Tawarruq structure',
-        'No collateral required for micro-facilities up to RM 50,000',
-        `Net income RM ${income.toLocaleString()}/mo comfortably meets Bank Rakyat RM 1,000 threshold`
+        'Specialized financing for micro-traders, food operators, and agriculture/services supply chain',
+        'Shariah-compliant Tawarruq facility with flexible cash flow alignment',
+        'No collateral required for micro-facilities up to RM 50,000'
       ]
     },
 
-    // 5. AEON Credit (Vehicle / Motor HP)
+    // 7. AEON Credit (Vehicle / Motor HP)
     {
       id: 'aeon_credit_vehicle',
       name: 'AEON Credit (Vehicle & Motor HP)',
@@ -506,8 +562,8 @@ export function getSmartMatchedLenders(params: SmartMatchInput): SmartMatchedCar
       compatiblePurposes: ['vehicle'],
       channelType: 'branch_walk_in',
       channelLabel: '🏛️ Cawangan AEON Credit / Pengedar Sah',
-      intakeInstruction: 'Permohonan boleh diserahkan melalui cawangan AEON atau kedai motor pengedar sah dengan dokumen CAM.',
-      url: 'https://www.aeoncredit.com.my',
+      intakeInstruction: 'Permohonan boleh diserahkan melalui cawangan AEON Credit atau kedai motor pengedar sah dengan dokumen CAM bercetak.',
+      url: 'https://www.aeoncredit.com.my/vehicle-financing/motorcycle-financing',
       gigPriorityBonus: 25,
       traderPriorityBonus: 15,
       purposeBonus: purpose === 'vehicle' ? 30 : 0,
@@ -518,7 +574,7 @@ export function getSmartMatchedLenders(params: SmartMatchInput): SmartMatchedCar
       ]
     },
 
-    // 6. AEON i-Cash Personal Financing
+    // 8. AEON i-Cash Personal Financing
     {
       id: 'aeon_icash',
       name: 'AEON i-Cash Personal',
@@ -534,8 +590,8 @@ export function getSmartMatchedLenders(params: SmartMatchInput): SmartMatchedCar
       compatiblePurposes: ['personal_cash'],
       channelType: 'branch_walk_in',
       channelLabel: '🏛️ Cawangan AEON / Borang Online',
-      intakeInstruction: 'Muat turun Pakej CAM atau isi borang online AEON dengan butiran pendapatan disahkan.',
-      url: 'https://www.aeoncredit.com.my',
+      intakeInstruction: 'Muat turun Pakej CAM atau isi borang online portal AEON Credit dengan butiran pendapatan disahkan.',
+      url: 'https://www.aeoncredit.com.my/personal-financing/i-cash-personal-financing',
       gigPriorityBonus: 15,
       traderPriorityBonus: 15,
       purposeBonus: purpose === 'personal_cash' ? 25 : 0,
@@ -546,7 +602,7 @@ export function getSmartMatchedLenders(params: SmartMatchInput): SmartMatchedCar
       ]
     },
 
-    // 7. MARA (SPiM Mesin & Alatan)
+    // 9. MARA (SPiM Mesin & Alatan)
     {
       id: 'mara_spim',
       name: 'MARA (SPiM Mesin & Alatan)',
@@ -560,10 +616,10 @@ export function getSmartMatchedLenders(params: SmartMatchInput): SmartMatchedCar
       minAmount: 5000,
       shariah: true,
       compatiblePurposes: ['equipment', 'working_capital'],
-      channelType: 'officer_whatsapp',
-      channelLabel: '🤝 Pejabat MARA Daerah',
-      intakeInstruction: 'Serahkan Pakej Permohonan bercetak bersama kertas kerja ringkas di Pejabat MARA Daerah.',
-      url: 'https://www.mara.gov.my/en/business/entrepreneur-financing',
+      channelType: 'branch_walk_in',
+      channelLabel: '🏛️ Pejabat MARA Daerah',
+      intakeInstruction: 'Serahkan Pakej Permohonan bercetak bersama kertas kerja ringkas (Bahagian B) di Pejabat MARA Daerah atau melalui portal aplikasi.mara.gov.my/spim.',
+      url: 'https://www.mara.gov.my/en/business/entrepreneur-financing/',
       gigPriorityBonus: 12,
       traderPriorityBonus: 30,
       purposeBonus: purpose === 'equipment' ? 30 : purpose === 'working_capital' ? 20 : 0,
@@ -575,11 +631,11 @@ export function getSmartMatchedLenders(params: SmartMatchInput): SmartMatchedCar
       warningNote: 'Terbuka kepada usahawan Bumiputera dengan rekod perniagaan aktif.'
     },
 
-    // 8. SME Bank (SPUM Mesin & Alatan)
+    // 10. SME Bank (SPUM Mesin & Alatan)
     {
       id: 'sme_bank_spum',
       name: 'SME Bank (SPUM Scheme)',
-      lenderName: 'SME Bank (Small Medium Enterprise Development Bank)',
+      lenderName: 'SME Bank Malaysia Berhad',
       productName: 'Skim Pembiayaan Usahawan Mikro (SPUM)',
       baseRate: 0.045,
       rateLabel: '4.0% – 5.0% flat p.a.',
@@ -591,7 +647,7 @@ export function getSmartMatchedLenders(params: SmartMatchInput): SmartMatchedCar
       compatiblePurposes: ['equipment', 'working_capital'],
       channelType: 'branch_walk_in',
       channelLabel: '🏛️ Pusat Perniagaan SME Bank',
-      intakeInstruction: 'Bawa Pakej Permohonan ke Pusat Perniagaan SME Bank terdekat.',
+      intakeInstruction: 'Bawa Pakej Permohonan ke Pusat Perniagaan SME Bank terdekat untuk semakan Pegawai Meja Usahawan Mikro.',
       url: 'https://www.smebank.com.my/en/financing/spum',
       gigPriorityBonus: 10,
       traderPriorityBonus: 25,
@@ -603,7 +659,7 @@ export function getSmartMatchedLenders(params: SmartMatchInput): SmartMatchedCar
       ]
     },
 
-    // 9. Maybank SME Digital Financing
+    // 11. Maybank SME Digital Financing
     {
       id: 'maybank_sme',
       name: 'Maybank SME Digital Financing',
@@ -619,7 +675,7 @@ export function getSmartMatchedLenders(params: SmartMatchInput): SmartMatchedCar
       compatiblePurposes: ['working_capital', 'equipment'],
       channelType: 'online_portal',
       channelLabel: '🌐 100% Online Web Portal (Maybank2u)',
-      intakeInstruction: 'Permohonan web digital sepenuhnya. Ejen AI memadankan data untuk pengisian borang segera.',
+      intakeInstruction: 'Permohonan web digital sepenuhnya di Maybank2u SME. Gunakan profil Part A dalam Pakej Permohonan untuk mengisi borang dengan segera.',
       url: 'https://www.maybank2u.com.my/maybank2u/malaysia/en/personal/loans/business/sme_clean_loan.page',
       gigPriorityBonus: 8,
       traderPriorityBonus: 20,
@@ -632,91 +688,7 @@ export function getSmartMatchedLenders(params: SmartMatchInput): SmartMatchedCar
       warningNote: has6MonthStatement ? '' : 'Memerlukan penyata bank 6 bulan format PDF rasmi.'
     },
 
-    // 10. GXBank / Digital Bank Cash
-    {
-      id: 'gxbank_cash',
-      name: 'GXBank FlexiCredit',
-      lenderName: 'GX Bank Berhad (GXBank)',
-      productName: 'GX FlexiCredit Digital Line',
-      baseRate: 0.05,
-      rateLabel: '4.5% – 6.5% p.a. Reducing',
-      speed: 'Instant Disbursement (10 Mins)',
-      minIncome: 1500,
-      maxAmount: 25000,
-      minAmount: 1000,
-      shariah: false,
-      compatiblePurposes: ['personal_cash', 'working_capital'],
-      channelType: 'digital_app',
-      channelLabel: '📱 Aplikasi Bank Digital (e-KYC)',
-      intakeInstruction: 'Permohonan terus dalam aplikasi GXBank dengan e-KYC telefon pintar.',
-      url: 'https://www.gxbank.my',
-      gigPriorityBonus: 22,
-      traderPriorityBonus: 10,
-      purposeBonus: purpose === 'personal_cash' ? 25 : 10,
-      reasons: [
-        'Licensed digital bank with 10-minute digital appraisal and instant payout',
-        'Direct Grab ecosystem affinity and cashless integration',
-        `Clean DSR (${dsr.toFixed(1)}%) qualifies for instant pre-approved credit line`
-      ]
-    },
-
-    // 11. Boost Bank (Digital Personal Financing)
-    {
-      id: 'boost_bank_personal',
-      name: 'Boost Bank (Digital Financing)',
-      lenderName: 'Boost Bank Berhad (RHB & Axiata)',
-      productName: 'Boost PayFlex & Micro-Capital Loan',
-      baseRate: 0.052,
-      rateLabel: '4.8% – 6.5% p.a.',
-      speed: 'Instant / Within 24 Hours',
-      minIncome: 1200,
-      maxAmount: 20000,
-      minAmount: 1000,
-      shariah: true,
-      compatiblePurposes: ['personal_cash', 'working_capital'],
-      channelType: 'digital_app',
-      channelLabel: '📱 Boost Bank Digital App',
-      intakeInstruction: 'Permohonan digital melalui aplikasi Boost Bank dengan kelulusan algoritma pantas.',
-      url: 'https://myboostbank.co',
-      gigPriorityBonus: 26,
-      traderPriorityBonus: 15,
-      purposeBonus: purpose === 'personal_cash' ? 24 : 15,
-      reasons: [
-        'Licensed Malaysian digital bank specialized in micro-credit for gig and app-based earners',
-        'Algorithmic screening recognizing multi-platform digital earnings history',
-        'Fast turnaround with 100% online in-app verification'
-      ]
-    },
-
-    // 12. AEON Bank (Islamic Digital Financing)
-    {
-      id: 'aeon_bank_personal',
-      name: 'AEON Bank (Islamic Digital)',
-      lenderName: 'AEON Bank (M) Berhad',
-      productName: 'AEON Islamic Personal Financing-i',
-      baseRate: 0.05,
-      rateLabel: '4.5% – 5.9% p.a. (Shariah)',
-      speed: 'Instant / Same-Day',
-      minIncome: 1500,
-      maxAmount: 25000,
-      minAmount: 2000,
-      shariah: true,
-      compatiblePurposes: ['personal_cash', 'vehicle'],
-      channelType: 'digital_app',
-      channelLabel: '📱 AEON Bank App (e-KYC)',
-      intakeInstruction: 'Buka akaun dan pohon pembiayaan peribadi digital patuh Syariah dalam aplikasi.',
-      url: 'https://aeonbank.com.my',
-      gigPriorityBonus: 22,
-      traderPriorityBonus: 15,
-      purposeBonus: purpose === 'personal_cash' ? 22 : 12,
-      reasons: [
-        'Malaysia’s first Islamic digital bank offering fast personal cash lines',
-        'Direct Shariah-compliant Murabahah financing facility with low fixed rates',
-        'Integrates with retail merchant ecosystems and digital wallet history'
-      ]
-    },
-
-    // 13. MBSB Bank (Pembiayaan Peribadi-i)
+    // 12. MBSB Bank (Pembiayaan Peribadi-i)
     {
       id: 'mbsb_ihsan_personal',
       name: 'MBSB Bank (Pembiayaan Peribadi-i)',
@@ -733,7 +705,7 @@ export function getSmartMatchedLenders(params: SmartMatchInput): SmartMatchedCar
       channelType: 'branch_walk_in',
       channelLabel: '🏛️ Cawangan MBSB Bank & Agensi',
       intakeInstruction: 'Bawa memo kelayakan CreditFlow ke cawangan MBSB terdekat untuk semakan pantas.',
-      url: 'https://www.mbsbbank.com',
+      url: 'https://www.mbsbbank.com/personal/financing/personal-financing-i',
       gigPriorityBonus: 12,
       traderPriorityBonus: 18,
       purposeBonus: purpose === 'personal_cash' ? 20 : 15,
@@ -744,7 +716,7 @@ export function getSmartMatchedLenders(params: SmartMatchInput): SmartMatchedCar
       ]
     },
 
-    // 14. RHB Easy-Pinjaman Ekspres
+    // 13. RHB Easy-Pinjaman Ekspres
     {
       id: 'rhb_easy_personal',
       name: 'RHB Easy-Pinjaman Ekspres',
@@ -761,7 +733,7 @@ export function getSmartMatchedLenders(params: SmartMatchInput): SmartMatchedCar
       channelType: 'branch_walk_in',
       channelLabel: '🏛️ Cawangan RHB / Kiosk Easy',
       intakeInstruction: 'Semakan MyKad dan penyata bank serta merta di mana-mana cawangan RHB Easy.',
-      url: 'https://www.rhbgroup.com',
+      url: 'https://www.rhbgroup.com/personal/loans/personal-financing/easy-pinjaman-ekspres',
       gigPriorityBonus: 14,
       traderPriorityBonus: 14,
       purposeBonus: purpose === 'personal_cash' ? 18 : 10,
