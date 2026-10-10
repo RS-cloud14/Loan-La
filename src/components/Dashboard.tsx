@@ -376,6 +376,7 @@ export default function Dashboard() {
     report: any;
     documentHash: string;
     isLocked?: boolean;
+    hideMatchedLenders?: boolean;
     matchedLenders?: any[];
   } | null>(null);
 
@@ -384,6 +385,7 @@ export default function Dashboard() {
     report: any;
     documentHash: string;
     isLocked?: boolean;
+    hideMatchedLenders?: boolean;
     matchedLenders?: any[];
   }) => {
     const activePurpose = b2cResult?.inputData?.targetLoanPurpose || targetLoanPurpose || 'personal_cash';
@@ -415,6 +417,7 @@ export default function Dashboard() {
     if (customPayload) {
       setExplainerPayload({
         ...customPayload,
+        hideMatchedLenders: customPayload.hideMatchedLenders ?? !isAllLendersUnlocked,
         matchedLenders: customPayload.matchedLenders || currentLenders
       });
       setShowReportExplainerModal(true);
@@ -426,7 +429,8 @@ export default function Dashboard() {
         inputData: b2cResult.inputData,
         report: b2cResult.report,
         documentHash: b2cResult.hash || 'b2c-live-hash',
-        isLocked: !isPassportUnlocked,
+        isLocked: !isCurrentAssessmentUnlocked,
+        hideMatchedLenders: !isAllLendersUnlocked,
         matchedLenders: currentLenders
       });
       setShowReportExplainerModal(true);
@@ -467,6 +471,7 @@ export default function Dashboard() {
       report: defaultReport as any,
       documentHash: '0x8f2a1b94c3d7e5f6',
       isLocked: !isPassportUnlocked,
+      hideMatchedLenders: !isAllLendersUnlocked,
       matchedLenders: currentLenders
     });
     setShowReportExplainerModal(true);
@@ -995,7 +1000,8 @@ export default function Dashboard() {
   }>>([
     { id: 'ahmad', name: 'Ahmad Bin Razali', platform: 'Grab & Foodpanda', score: 740, grade: 'A', dsr: 12.4, status: 'Approved', isTampered: false, hash: 'f2a7b8e19c0b2d3e4f5a6b7c8d9e0f1a' },
     { id: 'chong', name: 'Chong Wei Meng', platform: 'Shopee Merchant', score: 430, grade: 'D', dsr: 19.8, status: 'Declined', isTampered: false, hash: 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6' },
-    { id: 'siti', name: 'Siti Aminah Binti Ahmad', platform: 'Freelance Design', score: 300, grade: 'FRAUD_ALERT', dsr: 0, status: 'Fraud Alert', isTampered: true, hash: 'd3b07384d113edec49eaa6238ad5ff00' }
+    { id: 'siti', name: 'Siti Aminah Binti Ahmad', platform: 'Freelance Design', score: 300, grade: 'FRAUD_ALERT', dsr: 0, status: 'Fraud Alert', isTampered: true, hash: 'd3b07384d113edec49eaa6238ad5ff00' },
+    { id: 'tan_sme', name: 'Tan Boon Keat (Syarikat Maju Jaya)', platform: 'Micro-SME Retail & Wholesale', score: 785, grade: 'A', dsr: 18.2, status: 'Approved', isTampered: false, hash: 'e5d6c7b8a9f0123456789abcdef01234' }
   ]);
 
   // Full datasets mapped for B2B detail panel
@@ -1153,7 +1159,7 @@ export default function Dashboard() {
   // Populate B2B standard profiles on load
   useEffect(() => {
     const fetchMockData = async () => {
-      const profiles = ['ahmad', 'chong', 'siti'];
+      const profiles = ['ahmad', 'chong', 'siti', 'tan_sme'];
       const db: any = {};
       for (const id of profiles) {
         try {
@@ -2008,7 +2014,13 @@ export default function Dashboard() {
               setCurrentPage('app');
             }}
             onDownloadReportPdf={(rep) => {
-              generateCreditPassportPdf({ inputData: rep.result.inputData, report: rep.result.report, documentHash: rep.result.hash });
+              generateCreditPassportPdf({ 
+                inputData: rep.result.inputData, 
+                report: rep.result.report, 
+                documentHash: rep.result.hash,
+                isLocked: !isCurrentAssessmentUnlocked,
+                hideMatchedLenders: !isAllLendersUnlocked
+              });
             }}
             onViewCertifiedPassport={() => {
               if (reportHistory.length > 0) {
@@ -4271,7 +4283,8 @@ export default function Dashboard() {
                                 inputData: b2cResult.inputData,
                                 report: b2cResult.report,
                                 documentHash: b2cResult.hash || 'demo-hash',
-                                isLocked: !isCurrentAssessmentUnlocked
+                                isLocked: !isCurrentAssessmentUnlocked,
+                                hideMatchedLenders: !isAllLendersUnlocked
                               });
                             }}
                             className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-700 text-xs font-bold rounded-xl transition-all shadow-2xs cursor-pointer active:scale-95"
@@ -7341,7 +7354,9 @@ export default function Dashboard() {
           generateCreditPassportPdf({
             inputData: inputData as any,
             report: report as any,
-            documentHash: b2cResult?.hash || 'a1b2c3d4e5f67890'
+            documentHash: b2cResult?.hash || 'a1b2c3d4e5f67890',
+            isLocked: !isCurrentAssessmentUnlocked,
+            hideMatchedLenders: !isAllLendersUnlocked
           });
         }}
         onOpenReportExplainer={() => {
@@ -8213,6 +8228,36 @@ export default function Dashboard() {
                   FRAUD ALERT
                 </span>
               </button>
+
+              <button
+                onClick={() => {
+                  setDemoProfilesModalOpen(false);
+                  setPerspective('B2C');
+                  setCurrentPage('app');
+                  setBorrowerCategory('sme');
+                  setTargetLoanPurpose('working_capital');
+                  setTargetLoanAmount(45000);
+                  setUploadedFiles([
+                    { fileName: "Maybank_Islamic_Current_Account_6M.pdf", fileType: "application/pdf", fileSize: "3.8 MB", fileBase64: "mock_data", category: "bank_statement" },
+                    { fileName: "SSM_Maklumat_Perniagaan_2026.pdf", fileType: "application/pdf", fileSize: "1.4 MB", fileBase64: "mock_data", category: "tax_epf" },
+                    { fileName: "LHDN_Borang_B_Tax_Receipt.pdf", fileType: "application/pdf", fileSize: "1.1 MB", fileBase64: "mock_data", category: "tax_epf" },
+                    { fileName: "Premise_Storefront_Signboard_Audit.jpg", fileType: "image/jpeg", fileSize: "2.1 MB", fileBase64: "mock_data", category: "platform_dashboard" },
+                    { fileName: "MyKad_Director_TanBoonKeat.jpg", fileType: "image/jpeg", fileSize: "0.9 MB", fileBase64: "mock_data", category: "mykad_id" }
+                  ]);
+                  runUnderwritingPipeline('mock', 'tan_sme');
+                }}
+                className="flex justify-between items-center p-3.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl text-left transition-all cursor-pointer"
+              >
+                <div>
+                  <span className="text-xs font-bold text-slate-800 block">4. Tan Boon Keat (Syarikat Maju Jaya)</span>
+                  <span className="text-[10px] text-slate-400 block mt-0.5">
+                    Micro-SME (Retail / Wholesale) • 6-Month Business Current Account • SSM & LHDN Compliant
+                  </span>
+                </div>
+                <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-800 font-mono">
+                  STRONG (A) · SME
+                </span>
+              </button>
             </div>
 
             <button
@@ -8647,6 +8692,7 @@ export default function Dashboard() {
           report={explainerPayload.report}
           documentHash={explainerPayload.documentHash}
           isLocked={explainerPayload.isLocked}
+          hideMatchedLenders={explainerPayload.hideMatchedLenders}
           matchedLenders={explainerPayload.matchedLenders}
         />
       )}

@@ -10,6 +10,7 @@ interface PdfGeneratorProps {
   isLocked?: boolean;
   matchedLenders?: any[];
   language?: 'en' | 'bm';
+  hideMatchedLenders?: boolean;
 }
 
 /**
@@ -70,7 +71,15 @@ function drawFrostedBlur(
  * Designed for user clarity: simple words, indicators, suggested loan amount ranges, and matched banks.
  * Clear notice: Informational report for applicant self-awareness, NOT a bank credit passport or approval.
  */
-export function buildCreditPassportPdfDoc({ inputData, report, documentHash, isLocked = false, matchedLenders, language = 'en' }: PdfGeneratorProps): jsPDF {
+export function buildCreditPassportPdfDoc({ 
+  inputData, 
+  report, 
+  documentHash, 
+  isLocked = false, 
+  matchedLenders, 
+  language = 'en',
+  hideMatchedLenders = false
+}: PdfGeneratorProps): jsPDF {
   const isMalay = language === 'bm';
   const doc = new jsPDF({
     orientation: 'portrait',
@@ -612,51 +621,104 @@ export function buildCreditPassportPdfDoc({ inputData, report, documentHash, isL
     ['AEON i-Cash Personal\nSkim Modal i-Cash', isMalay ? 'Kriteria kelayakan fleksibel; kelulusan pantas 1-3 hari bekerja' : 'Flexible underwriting criteria; fast 1-3 day digital approval.', isMalay ? '76% (Padanan Baik)' : '76% (Good Fit)', 'RM 2,000 - RM 30,000', '2.8% - 4.2% flat', isMalay ? '3 - 5 Hari' : '3 - 5 Days']
   ]));
 
-  autoTable(doc, {
-    startY: sec4Y + 3,
-    margin: { left: 14, right: 14 },
-    head: [isMalay 
-      ? ['Cadangan Bank & Skim', 'Mengapa Bank Ini Sesuai Untuk Anda', 'Peluang Kelulusan', 'Skop Amaun', 'Kadar Faedah', 'Kelajuan']
-      : ['Suggested Bank & Facility', 'Why This Bank Fits You', 'Approval Odds', 'Suggested Scope', 'Indicative Rate', 'Speed']],
-    body: lenderMatchData,
-    theme: 'grid',
-    headStyles: {
-      fillColor: [15, 23, 42],
-      textColor: [255, 255, 255],
-      fontStyle: 'bold',
-      fontSize: 6.8,
-      cellPadding: 1.6
-    },
-    bodyStyles: {
-      fontSize: 6.2,
-      cellPadding: 1.6,
-      textColor: [30, 41, 59]
-    },
-    alternateRowStyles: {
-      fillColor: [248, 250, 252]
-    },
-    columnStyles: {
-      0: { fontStyle: 'bold', cellWidth: 38 },
-      1: { cellWidth: 54 },
-      2: { fontStyle: 'bold', cellWidth: 26 },
-      3: { cellWidth: 26 },
-      4: { cellWidth: 22 },
-      5: { cellWidth: 16 }
-    },
-    didDrawCell: (data) => {
-      if (data.column.index === 2 && data.cell.section === 'body') {
-        const text = data.cell.text[0];
-        if (text.includes('95%') || text.includes('92%') || text.includes('88%') || text.includes('84%') || text.includes('Top') || text.includes('Utama')) {
-          doc.setTextColor(6, 95, 70);
-        } else {
-          doc.setTextColor(30, 64, 175);
+  let finalTableY = 235;
+
+  if (hideMatchedLenders || isLocked) {
+    const lockBoxH = 34;
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(203, 213, 225);
+    doc.setLineWidth(0.4);
+    doc.roundedRect(14, sec4Y + 3, pageWidth - 28, lockBoxH, 2, 2, 'FD');
+
+    // Lock badge
+    const badgeW = (isLocked && !hideMatchedLenders) ? 48 : 54;
+    doc.setFillColor(30, 41, 59);
+    doc.roundedRect(18, sec4Y + 7, badgeW, 4.5, 1, 1, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(5.8);
+    doc.text(
+      isLocked && !hideMatchedLenders
+        ? (isMalay ? 'DIKUNCI · PRATONTON LAPORAN' : 'LOCKED · PREVIEW REPORT')
+        : (isMalay ? 'DIKUNCI · PELAN DIAGNOSTIK KREDIT' : 'LOCKED · DIAGNOSTIC REPORT ONLY'),
+      20,
+      sec4Y + 10.2
+    );
+
+    doc.setTextColor(15, 23, 42);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.2);
+    doc.text(
+      isLocked && !hideMatchedLenders
+        ? (isMalay ? 'Padanan Bank & Kemudahan Pembiayaan Ditutup (Pratonton Sahaja)' : 'Bank Matcher & Matching Facilities Hidden (Preview Only)')
+        : (isMalay ? 'Padanan Bank & Kemudahan Pembiayaan Ditutup Untuk Pelan RM 19.90' : 'Bank Matcher & Matching Facilities Hidden for RM 19.90 Plan'),
+      74,
+      sec4Y + 10.2
+    );
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(6.2);
+    doc.setTextColor(71, 85, 105);
+    doc.text(
+      isLocked && !hideMatchedLenders
+        ? (isMalay
+            ? 'Ini adalah sampel pratonton laporan kesiapsiagaan kredit. Senarai nama bank berlesen dan skim pembiayaan khusus dikunci.\n\nSila buka Laporan Diagnostik Kredit (RM 19.90) untuk melihat laporan penuh, atau Pakej Permohonan Lengkap (RM 34.90) untuk membuka padanan bank dan pakej permohonan rasmi.'
+            : 'This is a sample preview of the credit readiness report. The list of licensed banks and tailored financing facilities is locked.\n\nUnlock the Credit Diagnostic Report (RM 19.90) for full financial metrics, or the Full Application Suite (RM 34.90) to reveal matched lenders and official branch application packs.')
+        : (isMalay
+            ? 'Laporan ini dikeluarkan di bawah Pelan Diagnostik Kesihatan Kredit (RM 19.90). Analisis kesiapsiagaan kredit, penarafan risiko DSR, dan had siling pembiayaan anda telah disahkan di atas.\n\nUntuk membuka senarai bank yang dipadankan secara peribadi (kadar faedah, kelajuan kelulusan & surat justifikasi permohonan ke cawangan), sila naik taraf ke Pakej Permohonan Penuh (+RM 15.00).'
+            : 'This report is issued under the Basic Credit Diagnostic Plan (RM 19.90). Your financial health metrics, DSR limits, and borrowing capacity have been verified above.\n\nTo reveal your tailored matched banks (indicative rates, approval speed, and certified branch application packs), upgrade to the Full Application Suite (+RM 15.00).'),
+      18,
+      sec4Y + 16,
+      { maxWidth: pageWidth - 36 }
+    );
+
+    finalTableY = sec4Y + 3 + lockBoxH;
+  } else {
+    autoTable(doc, {
+      startY: sec4Y + 3,
+      margin: { left: 14, right: 14 },
+      head: [isMalay 
+        ? ['Cadangan Bank & Skim', 'Mengapa Bank Ini Sesuai Untuk Anda', 'Peluang Kelulusan', 'Skop Amaun', 'Kadar Faedah', 'Kelajuan']
+        : ['Suggested Bank & Facility', 'Why This Bank Fits You', 'Approval Odds', 'Suggested Scope', 'Indicative Rate', 'Speed']],
+      body: lenderMatchData,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [15, 23, 42],
+        textColor: [255, 255, 255],
+        fontStyle: 'bold',
+        fontSize: 6.8,
+        cellPadding: 1.6
+      },
+      bodyStyles: {
+        fontSize: 6.2,
+        cellPadding: 1.6,
+        textColor: [30, 41, 59]
+      },
+      alternateRowStyles: {
+        fillColor: [248, 250, 252]
+      },
+      columnStyles: {
+        0: { fontStyle: 'bold', cellWidth: 38 },
+        1: { cellWidth: 54 },
+        2: { fontStyle: 'bold', cellWidth: 26 },
+        3: { cellWidth: 26 },
+        4: { cellWidth: 22 },
+        5: { cellWidth: 16 }
+      },
+      didDrawCell: (data) => {
+        if (data.column.index === 2 && data.cell.section === 'body') {
+          const text = data.cell.text[0];
+          if (text.includes('95%') || text.includes('92%') || text.includes('88%') || text.includes('84%') || text.includes('Top') || text.includes('Utama')) {
+            doc.setTextColor(6, 95, 70);
+          } else {
+            doc.setTextColor(30, 64, 175);
+          }
         }
       }
-    }
-  });
+    });
 
-  // Page 1 Footer / Preview Watermark Banner
-  const finalTableY = (doc as any).lastAutoTable?.finalY || 235;
+    finalTableY = (doc as any).lastAutoTable?.finalY || 235;
+  }
 
   if (isLocked) {
     const isGood = report.status === 'Approved' || (report.score && report.score >= 680);

@@ -33,6 +33,7 @@ interface ReportExplainerModalProps {
   report: AssessmentReport;
   documentHash: string;
   isLocked?: boolean;
+  hideMatchedLenders?: boolean;
   matchedLenders?: any[];
 }
 
@@ -102,6 +103,7 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
   report,
   documentHash,
   isLocked = false,
+  hideMatchedLenders = false,
   matchedLenders
 }) => {
   const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
@@ -163,6 +165,7 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
         report,
         documentHash,
         isLocked,
+        hideMatchedLenders,
         matchedLenders: lendersToUse,
         language
       });
@@ -174,7 +177,7 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
     } catch (err) {
       console.warn('Failed to generate PDF blob preview:', err);
     }
-  }, [isOpen, inputData, report, documentHash, isLocked, lendersToUse, language]);
+  }, [isOpen, inputData, report, documentHash, isLocked, hideMatchedLenders, lendersToUse, language]);
 
   // Initial welcome message with complete high-density synthesis
   useEffect(() => {
@@ -522,7 +525,7 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
 
             {/* 1-Click PDF Download */}
             <button
-              onClick={() => generateCreditPassportPdf({ inputData, report, documentHash, isLocked, matchedLenders: lendersToUse, language })}
+              onClick={() => generateCreditPassportPdf({ inputData, report, documentHash, isLocked, hideMatchedLenders, matchedLenders: lendersToUse, language })}
               className="px-3 py-1.5 rounded-xl bg-blue-950 hover:bg-blue-900 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer active:scale-95"
               title={language === 'bm' ? 'Muat Turun PDF' : 'Download PDF'}
             >

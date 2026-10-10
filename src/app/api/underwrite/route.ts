@@ -285,6 +285,107 @@ const MOCK_PROFILES: Record<string, ExtendedUnderwritingInput> = {
       { date: "2026-06-25", description: "Upwork Global Freelance Inflow", amount: 2700.00, type: "INFLOW", category: "Income" },
       { date: "2026-06-20", description: "Coway Water Filter Subscription", amount: -95.00, type: "OUTFLOW", category: "Utility" }
     ]
+  },
+  tan_sme: {
+    name: "Tan Boon Keat (Syarikat Maju Jaya Enterprise)",
+    platform: "Micro-SME (Retail & Wholesale Trading)",
+    averageMonthlyNetIncome: 18500,
+    monthlyIncomes: [17800, 19200, 18500, 19400, 17500, 18600],
+    activeDaysPerMonth: 28,
+    cashFlowFrequency: "weekly",
+    endingBalance: 34250,
+    averageMonthlyExpenses: 11200,
+    forensicCheck: {
+      is_tampered: false,
+      tamper_reasons: [],
+      exif_software_detected: "None (Direct Bank PDF Export)",
+      ai_generation_detected: false,
+      ai_generation_reasons: []
+    },
+    behavioralRisk: {
+      red_flags: [],
+      green_flags: [
+        "Consistent LHDN corporate tax filings and Borang B receipts",
+        "SSM Business Registration active for >3 years (Valid till 2028)",
+        "Prompt wholesale supplier payments via Maybank Islamic Current Account",
+        "Healthy operating cash reserve (>RM 34,000 ending balance)"
+      ],
+      risk_score: 8
+    },
+    reconciliation: {
+      is_reconciled: true,
+      matched_payout_count: 6,
+      mismatched_payout_count: 0,
+      reconciliation_notes: [
+        "Reconciliation: MATCHED. POS merchant settlement and wholesale invoices correlate 100% with Maybank Current Account inflows.",
+        "SSM Entity Verification: Syarikat Maju Jaya Enterprise (202103194821 / 003291842-M) verified active."
+      ]
+    },
+    fileChecklist: [
+      { fileName: "Maybank_Islamic_Current_Account_6M.pdf", fileSize: "3.8 MB", status: "verified", documentType: "bank_statement", bankStatementData: { month: "2026-07", startBal: 27800.00, endBal: 34250.00, totalInflows: 18500.00, totalOutflows: 12050.00 } },
+      { fileName: "SSM_Maklumat_Perniagaan_2026.pdf", fileSize: "1.4 MB", status: "verified", documentType: "tax_epf" },
+      { fileName: "LHDN_Borang_B_Tax_Receipt.pdf", fileSize: "1.1 MB", status: "verified", documentType: "tax_epf" },
+      { fileName: "Premise_Storefront_Signboard_Audit.jpg", fileSize: "2.1 MB", status: "verified", documentType: "platform_dashboard" },
+      { fileName: "MyKad_Director_TanBoonKeat.jpg", fileSize: "0.9 MB", status: "verified", documentType: "mykad_id" }
+    ],
+    identityData: {
+      icNumber: "850314-01-5821",
+      fullName: "Tan Boon Keat",
+      dob: "1985-03-14",
+      gender: "Male",
+      address: "No. 45, Jalan Dagangan 2, Pusat Perdagangan Tangkak, 84900 Tangkak, Johor",
+      isVerified: true
+    },
+    ssmBusinessData: {
+      registrationNumber: "202103194821 (003291842-M)",
+      businessName: "SYARIKAT MAJU JAYA ENTERPRISE",
+      businessType: "Sole Proprietorship (Pemilikan Tunggal)",
+      registrationDate: "2021-03-19",
+      expiryDate: "2028-03-18",
+      businessAddress: "No. 45, Jalan Dagangan 2, Pusat Perdagangan Tangkak, 84900 Tangkak, Johor",
+      natureOfBusiness: "Perniagaan runcit dan borong barangan pengguna, pembekalan runcit & inventori dagangan",
+      status: "ACTIVE",
+      isVerified: true
+    },
+    businessProposalData: {
+      businessSummary: "Expansion of wholesale inventory storage and Point-Of-Sale digital procurement for Syarikat Maju Jaya Enterprise.",
+      monthlyProjectedRevenue: 28500,
+      monthlyProjectedExpenses: 16800,
+      monthlyProjectedNetProfit: 11700,
+      requestedFinancingAmount: 45000,
+      proposedTenureMonths: 36,
+      useOfFunds: "Working capital for bulk purchasing discount from FMCG suppliers and inventory buffer.",
+      estimatedRoiMonths: 14
+    },
+    premisePhotosData: {
+      hasPhotos: true,
+      signboardMatch: true,
+      signboardTextDetected: "SYARIKAT MAJU JAYA ENTERPRISE - PEMBORONG & PERUNCIT",
+      equipmentInventoryDetected: ["Commercial Shelving Units", "Barcode POS Scanner Station", "Inventory Staging Area", "Refrigerated Display"],
+      physicalLegitimacyScore: 96,
+      forensicNotes: "Storefront inspection confirms active commercial operations, valid physical signage and verified stock levels."
+    },
+    targetLoanPurpose: "working_capital",
+    targetLoanAmount: 45000,
+    tenureYears: 3,
+    transactions: [
+      // July 2026
+      { date: "2026-07-28", description: "DUITNOW QR MERCHANT SETTLEMENT - RETAIL COUNTER", amount: 6850.00, type: "INFLOW", category: "Income" },
+      { date: "2026-07-25", description: "PAYMENT TO SUPPLIER KIM HENG WHOLESALE SDN BHD", amount: -4200.00, type: "OUTFLOW", category: "Supplier" },
+      { date: "2026-07-20", description: "LHDN TAX INSTALMENT CP500 LHDN-MY-2026", amount: -850.00, type: "OUTFLOW", category: "Tax" },
+      { date: "2026-07-16", description: "DUITNOW QR MERCHANT SETTLEMENT - WHOLESALE ORDER", amount: 6200.00, type: "INFLOW", category: "Income" },
+      { date: "2026-07-10", description: "SHOP LOT COMMERCIAL RENTAL - PERMODALAN JAYA", amount: -2200.00, type: "OUTFLOW", category: "Rental" },
+      { date: "2026-07-05", description: "STAFF SALARY DISBURSEMENT (4 EMPLOYEES)", amount: -4800.00, type: "OUTFLOW", category: "Payroll" },
+      { date: "2026-07-02", description: "CREDIT INVOICE SETTLEMENT - SEGAMAT MART ENTERPRISE", amount: 5450.00, type: "INFLOW", category: "Income" },
+      
+      // June 2026
+      { date: "2026-06-28", description: "DUITNOW QR MERCHANT SETTLEMENT - RETAIL COUNTER", amount: 6400.00, type: "INFLOW", category: "Income" },
+      { date: "2026-06-22", description: "PAYMENT TO SUPPLIER KIM HENG WHOLESALE SDN BHD", amount: -3900.00, type: "OUTFLOW", category: "Supplier" },
+      { date: "2026-06-15", description: "DUITNOW QR MERCHANT SETTLEMENT - WHOLESALE ORDER", amount: 7100.00, type: "INFLOW", category: "Income" },
+      { date: "2026-06-10", description: "SHOP LOT COMMERCIAL RENTAL - PERMODALAN JAYA", amount: -2200.00, type: "OUTFLOW", category: "Rental" },
+      { date: "2026-06-05", description: "STAFF SALARY DISBURSEMENT (4 EMPLOYEES)", amount: -4800.00, type: "OUTFLOW", category: "Payroll" },
+      { date: "2026-06-02", description: "CREDIT INVOICE SETTLEMENT - MUAR FRESH MART", amount: 5700.00, type: "INFLOW", category: "Income" }
+    ]
   }
 };
 
