@@ -66,8 +66,9 @@ function drawFrostedBlur(
 }
 
 /**
- * Builds the jsPDF instance for an executive, institutional-grade Alternative Credit Passport PDF.
- * Formatted to central banking standards (Bank Negara Malaysia CRM, FTFC, RMiT, AMLA 2001, PDPA 2010).
+ * Builds the jsPDF instance for the Personal Credit Readiness & Loan Health Report.
+ * Designed for user clarity: simple words, indicators, suggested loan amount ranges, and matched banks.
+ * Clear notice: Informational report for applicant self-awareness, NOT a bank credit passport or approval.
  */
 export function buildCreditPassportPdfDoc({ inputData, report, documentHash, isLocked = false, matchedLenders, language = 'en' }: PdfGeneratorProps): jsPDF {
   const isMalay = language === 'bm';
@@ -89,124 +90,139 @@ export function buildCreditPassportPdfDoc({ inputData, report, documentHash, isL
     minute: '2-digit'
   });
 
-  // Calculate assessed numbers
+  // Calculate assessed financial figures
   const assessedInflow = inputData.averageMonthlyNetIncome || 
     (inputData.monthlyIncomes?.length ? (inputData.monthlyIncomes.reduce((a, b) => a + b, 0) / inputData.monthlyIncomes.length) : 3500);
 
-  const netCashFlow = report.monthlySurplus || 
-    (inputData.averageMonthlyExpenses ? Math.max(500, assessedInflow - inputData.averageMonthlyExpenses) : Math.round(assessedInflow * 0.65));
+  const assessedExpenses = inputData.averageMonthlyExpenses || Math.round(assessedInflow * 0.36);
 
-  const safeMaxInstallment = Math.round(assessedInflow * 0.35);
-  const safeMaxLoan = Math.round(safeMaxInstallment * 36 * 0.85);
+  const netCashFlow = report.monthlySurplus || 
+    Math.max(500, assessedInflow - assessedExpenses);
+
+  // Suggested Loan Ranges (The Sweet Spot & Max Capacity)
+  const safeSweetSpotLow = Math.max(5000, Math.round((netCashFlow * 0.20 * 36) / 1000) * 1000);
+  const safeSweetSpotHigh = Math.min(35000, Math.max(15000, Math.round((netCashFlow * 0.25 * 48) / 1000) * 1000));
+  const safeSweetSpotInstLow = Math.round(safeSweetSpotLow / 36);
+  const safeSweetSpotInstHigh = Math.round(safeSweetSpotHigh / 48);
+
+  const maxCapLoan = Math.min(50000, Math.max(20000, Math.round((assessedInflow * 0.45 * 36) / 1000) * 1000));
+  const maxCapInst = Math.round(maxCapLoan / 36);
+
   const monthlyIncomesList = inputData.monthlyIncomes?.length ? inputData.monthlyIncomes : [assessedInflow * 0.95, assessedInflow, assessedInflow * 1.05];
   
   // ==========================================
-  // PAGE 1: DIGITAL INCOME PROOF & BORROWING CAPACITY
+  // PAGE 1: CREDIT READINESS & BORROWING HEALTH
   // ==========================================
 
   // 1. Top Decorative Brand Bar
   doc.setFillColor(15, 23, 42); // Navy slate-900
-  doc.rect(0, 0, pageWidth, 5, 'F');
+  doc.rect(0, 0, pageWidth, 4, 'F');
 
-  // 2. Official Corporate Header
-  // Brand Monogram "L" Icon
+  // 2. Official Header
+  // Monogram Icon
   doc.setFillColor(15, 23, 42);
-  doc.roundedRect(14, 11, 12, 12, 2.5, 2.5, 'F');
+  doc.roundedRect(14, 8, 11, 11, 2, 2, 'F');
   
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(14);
-  doc.text('L', 18, 19.5);
+  doc.setFontSize(13);
+  doc.text('L', 17.5, 15.8);
 
   // Main Header Title
   doc.setTextColor(15, 23, 42);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11.5);
-  doc.text(isMalay ? 'Pasport Kredit Alternatif Loan - La' : 'Loan - La Alternative Credit Passport', 30, 16.5);
+  doc.setFontSize(11);
+  doc.text(
+    isMalay ? 'Laporan Kesiapsiagaan Kredit & Kesihatan Kewangan' : 'Personal Credit Readiness & Loan Health Report', 
+    29, 
+    13.5
+  );
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(7.2);
+  doc.setFontSize(6.8);
   doc.setTextColor(100, 116, 139);
   doc.text(
     isLocked 
-      ? (isMalay ? 'RINGKASAN BUKTI PENDAPATAN DIGITAL PRA-KELAYAKAN (PRATONTON)' : 'PRELIMINARY DIGITAL INCOME PROOF & PRE-QUALIFICATION SUMMARY (PREVIEW)')
-      : (isMalay ? 'BUKTI PENDAPATAN DIGITAL DISAHKAN & DOSIER RISIKO PENGUNDERAIAN' : 'CERTIFIED DIGITAL INCOME PROOF & UNDERWRITING RISK DOSSIER'), 
-    30, 
-    21.5
+      ? (isMalay ? 'ANALISIS PRA-KELAYAKAN & PANDUAN KEWANGAN PERIBADI (SAMPEL PRATONTON)' : 'PRELIMINARY CREDIT READINESS & FINANCIAL HEALTH AUDIT (SAMPLE PREVIEW)')
+      : (isMalay ? 'AUDIT KESIHATAN KEWANGAN & KESIAPSIAGAAN MEMOHON PINJAMAN (UNTUK RUJUKAN PEMOHON)' : 'FINANCIAL HEALTH AUDIT & LOAN APPLICATION READINESS (FOR APPLICANT GUIDANCE ONLY)'), 
+    29, 
+    18
   );
 
   // Document Reference Badge (Top Right)
   doc.setFillColor(248, 250, 252);
   doc.setDrawColor(203, 213, 225);
   doc.setLineWidth(0.3);
-  doc.roundedRect(pageWidth - 68, 10, 54, 14, 2, 2, 'FD');
+  doc.roundedRect(pageWidth - 66, 7.5, 52, 12, 1.5, 1.5, 'FD');
 
   doc.setTextColor(15, 23, 42);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7.5);
-  doc.text(`${isMalay ? 'RUJ' : 'REF'}: ${refCode}`, pageWidth - 65, 15);
+  doc.setFontSize(7);
+  doc.text(`${isMalay ? 'RUJ' : 'REF'}: ${refCode}`, pageWidth - 63, 11.5);
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(6.5);
+  doc.setFontSize(6.2);
   doc.setTextColor(100, 116, 139);
-  doc.text(`${isMalay ? 'TARIKH' : 'ISSUED'}: ${now} MYT`, pageWidth - 65, 19.5);
-  doc.text(isLocked ? (isMalay ? 'STATUS: SAMPEL PRATONTON' : 'STATUS: SAMPLE PREVIEW') : (isMalay ? 'STATUS: DISAHKAN 30 HARI' : 'STATUS: 30-DAY VALIDATED'), pageWidth - 65, 23);
+  doc.text(`${isMalay ? 'TARIKH' : 'ISSUED'}: ${now}`, pageWidth - 63, 15.2);
+  doc.text(
+    isLocked 
+      ? (isMalay ? 'STATUS: PRATONTON' : 'STATUS: PREVIEW') 
+      : (isMalay ? 'STATUS: RUJUKAN PEMOHON' : 'STATUS: SELF-AUDIT (INFORMATIONAL)'), 
+    pageWidth - 63, 
+    18.5
+  );
 
-  // Cryptographic Audit Hash Bar
-  doc.setFillColor(248, 250, 252);
+  // Prominent Informational Notice Bar (Top Disclaimer)
+  const noticeY = 21.5;
+  doc.setFillColor(241, 245, 249);
   doc.setDrawColor(226, 232, 240);
   doc.setLineWidth(0.3);
-  doc.roundedRect(14, 27, pageWidth - 28, 6.5, 1.5, 1.5, 'FD');
+  doc.roundedRect(14, noticeY, pageWidth - 28, 5.8, 1.2, 1.2, 'FD');
 
-  doc.setFont('courier', 'bold');
-  doc.setFontSize(6.5);
-  doc.setTextColor(71, 85, 105);
-  doc.text(`${isMalay ? 'Kunci Audit Integriti RMiT (SHA-256)' : 'RMiT Integrity Audit Key (SHA-256)'}: ${documentHash || 'N/A'}`, 17, 31.5);
-
-  // 3. Section 1: Executive Credit Score & Digital Income Certificate
-  doc.setTextColor(15, 23, 42);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9.5);
-  doc.text(isMalay ? '1. Skor Kredit & Bukti Pendapatan Disahkan (Pengganti Slip Gaji)' : '1. Credit Score & Certified Income Proof (Official Payslip Replacement)', 14, 39.5);
+  doc.setFontSize(5.8);
+  doc.setTextColor(51, 65, 85);
+  doc.text(
+    isMalay 
+      ? 'PENTING: Laporan ini ialah analisis kesiapsiagaan kewangan untuk panduan pemohon sahaja. Ini BUKAN pasport bank atau kelulusan rasmi. Pihak bank melakukan penilaian kredit sendiri.'
+      : 'NOTICE: This report is an analytical summary for applicant self-awareness & loan planning. It is NOT a bank loan approval or bank passport. Banks conduct their own credit evaluation.',
+    17, 
+    noticeY + 3.8
+  );
 
-  // Left Score Card Dimensions
-  const cardY = 43;
-  const scoreCardWidth = 72;
-  const scoreCardHeight = 44;
+  // ==========================================
+  // SECTION 1: CREDIT SCORE & APPLICANT PROFILE
+  // ==========================================
+  const cardY = 29.5;
+  const scoreCardWidth = 70;
+  const scoreCardHeight = 38;
 
   if (isLocked) {
-    // PREVIEW MODE: Frosted Glass Blurred Score Card
+    // PREVIEW MODE: Blurred Score Card
     doc.setFillColor(248, 250, 252);
     doc.setDrawColor(226, 232, 240);
     doc.setLineWidth(0.4);
-    doc.roundedRect(14, cardY, scoreCardWidth, scoreCardHeight, 2.5, 2.5, 'FD');
+    doc.roundedRect(14, cardY, scoreCardWidth, scoreCardHeight, 2, 2, 'FD');
 
     doc.setTextColor(71, 85, 105);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7.5);
-    doc.text(isMalay ? 'SKOR DINAMIK CREDITFLOW' : 'CREDITFLOW DYNAMIC SCORE', 18, cardY + 7);
+    doc.setFontSize(7);
+    doc.text(isMalay ? 'SKOR KESIAPSIAGAAN KREDIT' : 'CREDIT READINESS SCORE', 18, cardY + 6.5);
 
-    // Realistic Gaussian Blur Layer over Score
-    drawFrostedBlur(doc, 18, cardY + 11, scoreCardWidth - 8, 14, isMalay ? 'Skor Dilindungi Pratonton' : 'Score Masked in Preview');
+    drawFrostedBlur(doc, 18, cardY + 10, scoreCardWidth - 8, 12, isMalay ? 'Skor Dilindungi Pratonton' : 'Score Masked in Preview');
 
-    // Status Badges
     doc.setFillColor(219, 234, 254);
-    doc.roundedRect(18, cardY + 28, 30, 5.5, 1.2, 1.2, 'F');
+    doc.roundedRect(18, cardY + 24, 28, 5, 1, 1, 'F');
     doc.setTextColor(30, 64, 175);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(6.5);
-    doc.text(isMalay ? 'PRA-KELAYAKAN' : 'PRE-QUALIFIED', 20.5, cardY + 31.8);
-
-    doc.setFillColor(241, 245, 249);
-    doc.roundedRect(51, cardY + 28, 31, 5.5, 1.2, 1.2, 'F');
-    doc.setTextColor(100, 116, 139);
-    doc.text(isMalay ? 'DOK 1 DISAHKAN' : 'DOC 1 VERIFIED', 53, cardY + 31.8);
+    doc.setFontSize(6.2);
+    doc.text(isMalay ? 'PRA-KELAYAKAN' : 'PRE-QUALIFIED', 20, cardY + 27.5);
 
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(6.5);
+    doc.setFontSize(6.2);
     doc.setTextColor(148, 163, 184);
-    doc.text(isMalay ? 'Peluang Kelulusan: Padanan Utama' : 'Approval Likelihood: Top-Tier Match', 18, cardY + 39.5);
+    doc.text(isMalay ? 'Peluang Kelulusan: Padanan Utama' : 'Approval Likelihood: Top-Tier Match', 18, cardY + 34);
   } else {
-    // PAID / OFFICIAL MODE: Crisp Underwriting Score Card
+    // OFFICIAL MODE: Crisp Score Card
     let scoreBg = [240, 253, 244];
     let scoreBorder = [167, 243, 208];
     let scoreText = [6, 95, 70];
@@ -226,303 +242,411 @@ export function buildCreditPassportPdfDoc({ inputData, report, documentHash, isL
 
     doc.setFillColor(scoreBg[0], scoreBg[1], scoreBg[2]);
     doc.setDrawColor(scoreBorder[0], scoreBorder[1], scoreBorder[2]);
-    doc.setLineWidth(0.5);
-    doc.roundedRect(14, cardY, scoreCardWidth, scoreCardHeight, 2.5, 2.5, 'FD');
+    doc.setLineWidth(0.4);
+    doc.roundedRect(14, cardY, scoreCardWidth, scoreCardHeight, 2, 2, 'FD');
 
     doc.setTextColor(71, 85, 105);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7.5);
-    doc.text(isMalay ? 'SKOR DINAMIK CREDITFLOW' : 'CREDITFLOW DYNAMIC SCORE', 18, cardY + 7);
+    doc.setFontSize(6.8);
+    doc.text(isMalay ? 'SKOR KESIAPSIAGAAN KREDIT' : 'CREDIT READINESS SCORE', 18, cardY + 6);
 
     doc.setTextColor(scoreText[0], scoreText[1], scoreText[2]);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(27);
-    doc.text(`${report.score}`, 18, cardY + 20);
+    doc.setFontSize(24);
+    doc.text(`${report.score}`, 18, cardY + 18);
 
-    doc.setFontSize(8);
+    doc.setFontSize(7.5);
     doc.setTextColor(100, 116, 139);
-    doc.text(isMalay ? '/ 850 Julat' : '/ 850 Range', 54, cardY + 19);
+    doc.text(isMalay ? '/ 850 Julat' : '/ 850 Range', 50, cardY + 17);
 
     doc.setFillColor(statusBadgeBg[0], statusBadgeBg[1], statusBadgeBg[2]);
-    doc.roundedRect(18, cardY + 24, 24, 6, 1.5, 1.5, 'F');
+    doc.roundedRect(18, cardY + 22, 22, 5.5, 1.2, 1.2, 'F');
     doc.setTextColor(statusBadgeText[0], statusBadgeText[1], statusBadgeText[2]);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7.5);
-    doc.text(`${isMalay ? 'GRED' : 'GRADE'} ${report.grade}`, 22, cardY + 28.2);
+    doc.setFontSize(7);
+    doc.text(`${isMalay ? 'GRED' : 'GRADE'} ${report.grade}`, 21.5, cardY + 25.8);
 
     const statusLabel = isMalay 
-      ? (report.status === 'Approved' ? 'LULUS' : report.status === 'Declined' ? 'DITOLAK' : report.status === 'Fraud Alert' ? 'AMARAN FRAUD' : 'SEMPADAN')
-      : report.status.toUpperCase();
+      ? (report.status === 'Approved' ? 'LULUS PRA-KELAYAKAN' : report.status === 'Declined' ? 'DITOLAK' : report.status === 'Fraud Alert' ? 'AMARAN' : 'SEMPADAN')
+      : (report.status === 'Approved' ? 'PRE-QUALIFIED' : report.status.toUpperCase());
 
     doc.setFillColor(statusBadgeBg[0], statusBadgeBg[1], statusBadgeBg[2]);
-    doc.roundedRect(45, cardY + 24, 36, 6, 1.5, 1.5, 'F');
+    doc.roundedRect(43, cardY + 22, 38, 5.5, 1.2, 1.2, 'F');
     doc.setTextColor(statusBadgeText[0], statusBadgeText[1], statusBadgeText[2]);
-    doc.text(statusLabel, 48, cardY + 28.2);
+    doc.text(statusLabel, 45.5, cardY + 25.8);
 
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7);
+    doc.setFontSize(6.5);
     doc.setTextColor(100, 116, 139);
-    doc.text(isMalay ? 'Peluang Kelulusan: 88% - 94% (Gred Perdana)' : 'Approval Likelihood: 88% - 94% (Prime Tier)', 18, cardY + 38);
+    doc.text(isMalay ? 'Potensi Kelulusan: Tinggi (Profil Peminjam Perdana)' : 'Approval Potential: High (Prime Borrower Profile)', 18, cardY + 34);
   }
 
-  // Right Applicant Identity & Certified Income Card
-  const infoX = 90;
+  // Right Applicant Identity Card
+  const infoX = 88;
   const infoWidth = pageWidth - infoX - 14;
   doc.setFillColor(255, 255, 255);
   doc.setDrawColor(226, 232, 240);
   doc.setLineWidth(0.4);
-  doc.roundedRect(infoX, cardY, infoWidth, scoreCardHeight, 2.5, 2.5, 'FD');
+  doc.roundedRect(infoX, cardY, infoWidth, scoreCardHeight, 2, 2, 'FD');
 
   doc.setFillColor(248, 250, 252);
-  doc.roundedRect(infoX, cardY, infoWidth, 7.5, 2.5, 2.5, 'F');
+  doc.roundedRect(infoX, cardY, infoWidth, 6.5, 2, 2, 'F');
   doc.setDrawColor(226, 232, 240);
-  doc.line(infoX, cardY + 7.5, infoX + infoWidth, cardY + 7.5);
+  doc.line(infoX, cardY + 6.5, infoX + infoWidth, cardY + 6.5);
 
   doc.setTextColor(15, 23, 42);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(7.5);
-  doc.text(isMalay ? 'PEMOHON DISAHKAN & BUKTI PENDAPATAN' : 'CERTIFIED APPLICANT & INCOME PROOF', infoX + 4, cardY + 5.2);
+  doc.setFontSize(7);
+  doc.text(isMalay ? 'PROFIL PEMOHON & PENDAPATAN DISAHKAN' : 'APPLICANT PROFILE & AUDITED EARNINGS', infoX + 4, cardY + 4.5);
 
   const docCount = inputData.fileChecklist?.length || 1;
-  const isMultiDoc = docCount > 1;
   const periodTag = isLocked 
-    ? (isMalay ? '(Kemasukan Bln 1)' : '(Month 1 Inflow)')
-    : (isMultiDoc 
-        ? (isMalay ? `(${docCount} Dok Disahkan)` : `(${docCount} Docs Audited)`) 
+    ? (isMalay ? '(Bulan 1)' : '(Month 1)')
+    : (docCount > 1 
+        ? (isMalay ? `(${docCount} Dokumen Diaudit)` : `(${docCount} Docs Audited)`) 
         : (isMalay ? '(Purata Bulanan)' : '(Monthly Average)'));
 
-  const icFormatted = inputData.identityData?.icNumber || (isMalay ? 'Disahkan melalui Penyata Bank' : 'Verified via Bank Direct');
+  const icFormatted = inputData.identityData?.icNumber || (isMalay ? 'Disahkan melalui Penyata Bank' : 'Verified via Bank Statements');
   const infoRows = isMalay ? [
     ['Nama Penuh Rasmi:', inputData.name || 'PEMOHON'],
-    ['Nombor MyKad / KP:', icFormatted],
-    ['Saluran Utama / Gig:', `${inputData.platform || 'Platform Gig'} (${inputData.activeDaysPerMonth || 26} hari aktif/bln)`],
-    ['Purata Kemasukan Dinilai:', `RM ${Math.round(assessedInflow).toLocaleString()} / bulan ${periodTag}`],
-    ['Status Ketulenan:', 'Pengesahan Forensik LULUS · Sifar Usikan']
+    ['No. MyKad / KP:', icFormatted],
+    ['Pekerjaan / Platform:', `${inputData.platform || 'Platform Bebas / PKS'} (${inputData.activeDaysPerMonth || 26} hari aktif/bln)`],
+    ['Purata Pendapatan Masuk:', `RM ${Math.round(assessedInflow).toLocaleString()} / bulan ${periodTag}`],
+    ['Status Pengesahan:', 'Audit Forensik LULUS · Rekod Penyata Disahkan']
   ] : [
     ['Full Legal Name:', inputData.name || 'APPLICANT'],
     ['MyKad / IC Number:', icFormatted],
-    ['Primary Channel / Gig:', `${inputData.platform || 'Gig Platform'} (${inputData.activeDaysPerMonth || 26} active days/mo)`],
-    ['Assessed Monthly Inflow:', `RM ${Math.round(assessedInflow).toLocaleString()} / month ${periodTag}`],
-    ['Authenticity Status:', 'Forensic Verification PASS · Zero Tampering']
+    ['Primary Channel / Gig:', `${inputData.platform || 'Gig Platform / Self-Employed'} (${inputData.activeDaysPerMonth || 26} active days/mo)`],
+    ['Verified Monthly Inflow:', `RM ${Math.round(assessedInflow).toLocaleString()} / month ${periodTag}`],
+    ['Verification Status:', 'Forensic Verification PASS · Statement Integrity Verified']
   ];
 
-  let curInfoY = cardY + 12.5;
+  let curInfoY = cardY + 11.5;
   infoRows.forEach(([lbl, val]) => {
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(6.8);
+    doc.setFontSize(6.4);
     doc.setTextColor(100, 116, 139);
     doc.text(lbl, infoX + 4, curInfoY);
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(6.8);
+    doc.setFontSize(6.4);
     doc.setTextColor(15, 23, 42);
     doc.text(val, infoX + 38, curInfoY);
-    curInfoY += 6.2;
+    curInfoY += 5.2;
   });
 
-  // 4. Section 2: Underwriter's Key Strengths & Credit Merits (NO OVERLAP)
-  const sec2Y = 94;
+  // ============================================================
+  // SECTION 2: WHAT YOU SHOULD KNOW (YOUR FINANCIAL CONDITION)
+  // Simple words + Indicators + Plain Explanations
+  // ============================================================
+  const sec2Y = cardY + scoreCardHeight + 5.5;
   doc.setTextColor(15, 23, 42);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9.5);
-  doc.text(isMalay ? '2. Kekuatan Utama Pengunderait & Merit Kredit (Mengapa Profil Ini Layak)' : "2. Underwriter's Key Strengths & Credit Merits (Why This Profile Qualifies)", 14, sec2Y);
+  doc.setFontSize(8.8);
+  doc.text(
+    isMalay 
+      ? '1. Keadaan Kewangan Anda (Perkara Penting Yang Perlu Diketahui)' 
+      : '1. What You & The Analyst Need to Know (Your Financial Condition)', 
+    14, 
+    sec2Y
+  );
 
-  const meritBoxY = sec2Y + 4;
-  const meritBoxHeight = 26;
-  doc.setFillColor(248, 250, 252);
-  doc.setDrawColor(226, 232, 240);
-  doc.setLineWidth(0.4);
-  doc.roundedRect(14, meritBoxY, pageWidth - 28, meritBoxHeight, 2, 2, 'FD');
-
-  if (isLocked) {
-    // PREVIEW: Show 1 clean strength, frost the remaining 3
-    doc.setFillColor(6, 95, 70);
-    doc.circle(18, meritBoxY + 5, 1, 'F');
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(6.8);
-    doc.setTextColor(15, 23, 42);
-    doc.text(isMalay ? 'Aliran Masuk Platform Konsisten:' : 'Consistent Platform Inflow:', 21, meritBoxY + 6);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(71, 85, 105);
-    doc.text(isMalay ? `Kemasukan ${isMultiDoc ? `${docCount} dokumen` : 'Bulan 1'} disahkan pada RM ${Math.round(assessedInflow).toLocaleString()}/bln tanpa bendera usikan.` : `${isMultiDoc ? `${docCount} verified documents confirm` : 'Month 1 bank inflow verified at'} RM ${Math.round(assessedInflow).toLocaleString()}/mo with zero tampering flags.`, 62, meritBoxY + 6);
-
-    // Frosted Blur over merits 2, 3, 4
-    drawFrostedBlur(doc, 17, meritBoxY + 9.5, pageWidth - 34, 14.5, isMalay ? 'Sintesis Mampu Milik & Tingkah Laku Berbilang Bulan' : 'Multi-Month Debt Affordability & Conduct Synthesis');
-  } else {
-    // OFFICIAL: All 4 merits clear
-    const merits = isMalay ? [
-      ['Aliran Tunai Konsisten & Kukuh:', `Pendapatan RM ${Math.round(assessedInflow).toLocaleString()}/bln dengan deposit mingguan aktif tanpa gangguan pembayaran.`],
-      ['Penampan Hutang Sihat (DSR):', `DSR dinilai pada ${(report.dsr ?? 0).toFixed(1)}%, jauh di bawah had BNM 60%. Lebihan tunai bebas ialah RM ${Math.round(netCashFlow).toLocaleString()}/bln.`],
-      ['Rekod Perbankan Bersih:', 'Sifar cek tendang, sifar overdraf tanpa kebenaran, dan tiada aktiviti pinjaman tanpa lesen/perjudian.'],
-      ['Disiplin Simpanan Statutori:', 'Pengesahan disiplin simpanan sukarela (KWSP i-Saraan / bayaran automatik bil utiliti).']
-    ] : [
-      ['Consistent High Cashflow:', `Earns RM ${Math.round(assessedInflow).toLocaleString()}/mo with active weekly deposits and 0 payout interruption gaps.`],
-      ['Healthy Debt Buffer (DSR):', `Assessed DSR is ${(report.dsr ?? 0).toFixed(1)}%, well below BNM 60% cap. Free monthly cashflow is RM ${Math.round(netCashFlow).toLocaleString()}/mo.`],
-      ['Clean Banking Conduct:', 'Zero bounced cheques, zero unauthorized overdrafts, and zero gambling/unlicensed loan activity.'],
-      ['Statutory Savings Record:', 'Verified voluntary savings discipline (KWSP/EPF i-Saraan / regular utility auto-payments).']
-    ];
-
-    let curMeritY = meritBoxY + 5.5;
-    merits.forEach(([title, desc]) => {
-      doc.setFillColor(6, 95, 70);
-      doc.circle(18, curMeritY - 1, 1, 'F');
-
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(6.8);
-      doc.setTextColor(15, 23, 42);
-      doc.text(title, 21, curMeritY);
-
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(6.6);
-      doc.setTextColor(71, 85, 105);
-      doc.text(desc, 60, curMeritY);
-
-      curMeritY += 5.2;
-    });
-  }
-
-  // 5. Section 3: Verified Repayment Capacity & Disposable Buffer
-  const sec3Y = meritBoxY + meritBoxHeight + 7;
-  doc.setTextColor(15, 23, 42);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9.5);
-  doc.text(isMalay ? '3. Kapasiti Bayaran Balik Disahkan & Penampan Tunai Bebas' : '3. Verified Repayment Capacity & Disposable Buffer', 14, sec3Y);
-
-  const capacityBoxY = sec3Y + 4;
-  const capWidth = (pageWidth - 28 - (2 * 4)) / 3;
-  const capacityMetrics = isMalay ? [
-    { lbl: 'ANGGARAN ANSURAN BULANAN', val: `RM ${(report.estimatedInstallment || 458).toLocaleString()}`, sub: 'Asas Tenur 1 Tahun', color: [15, 23, 42], isMasked: false },
+  const finBoxY = sec2Y + 3;
+  const colWidth = (pageWidth - 28 - (3 * 3)) / 4;
+  const finMetrics = isMalay ? [
     { 
-      lbl: isLocked ? 'KEMASUKAN BULAN 1 DISAHKAN' : 'PURATA PENDAPATAN BULANAN', 
+      lbl: 'ALIRAN MASUK (PENDAPATAN)', 
       val: `RM ${Math.round(assessedInflow).toLocaleString()}`, 
-      sub: isLocked ? 'Kemasukan Bersih Platform (Pratonton)' : (isMultiDoc ? `Purata Rentas ${docCount} Dokumen` : 'Kemasukan Bersih Bulanan'), 
-      color: [6, 95, 70], 
-      isMasked: false 
+      indicator: '[ KUKUH & STABIL ]',
+      color: [6, 95, 70],
+      sub: 'Purata wang masuk ke akaun bank setiap bulan' 
     },
     { 
-      lbl: 'DSR DISATUKAN 12-BULAN', 
+      lbl: 'ALIRAN KELUAR (BELANJA)', 
+      val: `RM ${Math.round(assessedExpenses).toLocaleString()}`, 
+      indicator: '[ TERKAWAL ]',
+      color: [71, 85, 105],
+      sub: 'Anggaran belanja sara hidup & komitmen semasa' 
+    },
+    { 
+      lbl: 'LEBIHAN TUNAI BEBAS (PENAMPAN)', 
       val: isLocked ? 'RM ••••' : `RM ${Math.round(netCashFlow).toLocaleString()}`, 
-      sub: isLocked ? 'Sintesis berbilang penyata' : 'Kecairan Selepas Belanja', 
+      indicator: isLocked ? '[ TERKUNCI ]' : '[ PENAMPAN SELESA ]',
       color: isLocked ? [148, 163, 184] : [30, 64, 175],
-      isMasked: isLocked
+      sub: 'Baki wang lebihan untuk membayar ansuran pinjaman' 
+    },
+    { 
+      lbl: 'NISBAH HUTANG (DSR)', 
+      val: `${(report.dsr ?? 0).toFixed(1)}%`, 
+      indicator: '[ ZON SELAMAT (<60%) ]',
+      color: [6, 95, 70],
+      sub: 'Peratus pendapatan terikat hutang. Had BNM: 60%' 
     }
   ] : [
-    { lbl: 'EST. MONTHLY INSTALLMENT', val: `RM ${(report.estimatedInstallment || 458).toLocaleString()}`, sub: '1-Year Tenure Basis', color: [15, 23, 42], isMasked: false },
     { 
-      lbl: isLocked ? 'VERIFIED MONTH 1 INFLOW' : 'AUDITED MONTHLY INFLOW', 
+      lbl: 'CASH IN (MONTHLY INCOME)', 
       val: `RM ${Math.round(assessedInflow).toLocaleString()}`, 
-      sub: isLocked ? 'Net Platform Inflow (Preview)' : (isMultiDoc ? `Average Across ${docCount} Docs` : 'Net Monthly Cashflow'), 
-      color: [6, 95, 70], 
-      isMasked: false 
+      indicator: '[ STEADY & HEALTHY ]',
+      color: [6, 95, 70],
+      sub: 'Average verified earnings deposited into account' 
     },
     { 
-      lbl: '12-MONTH CONSOLIDATED DSR', 
+      lbl: 'CASH OUT (EST. EXPENSES)', 
+      val: `RM ${Math.round(assessedExpenses).toLocaleString()}`, 
+      indicator: '[ HEALTHY CONTROL ]',
+      color: [71, 85, 105],
+      sub: 'Estimated living costs and debt commitments' 
+    },
+    { 
+      lbl: 'FREE MONTHLY CUSHION (SURPLUS)', 
       val: isLocked ? 'RM ••••' : `RM ${Math.round(netCashFlow).toLocaleString()}`, 
-      sub: isLocked ? 'Multi-statement synthesis' : 'Post-Expense Liquidity', 
+      indicator: isLocked ? '[ LOCKED ]' : '[ STRONG BUFFER ]',
       color: isLocked ? [148, 163, 184] : [30, 64, 175],
-      isMasked: isLocked
+      sub: 'Safe cushion remaining to service loan repayments' 
+    },
+    { 
+      lbl: 'DEBT RATIO (DSR INDICATOR)', 
+      val: `${(report.dsr ?? 0).toFixed(1)}%`, 
+      indicator: '[ SAFE ZONE (<60%) ]',
+      color: [6, 95, 70],
+      sub: 'Share of income tied to debt. BNM cap is 60%' 
     }
   ];
 
-  capacityMetrics.forEach((m, idx) => {
-    const curX = 14 + idx * (capWidth + 4);
+  finMetrics.forEach((m, idx) => {
+    const curX = 14 + idx * (colWidth + 3);
     doc.setFillColor(255, 255, 255);
     doc.setDrawColor(226, 232, 240);
     doc.setLineWidth(0.3);
-    doc.roundedRect(curX, capacityBoxY, capWidth, 19, 2, 2, 'FD');
+    doc.roundedRect(curX, finBoxY, colWidth, 23, 1.5, 1.5, 'FD');
 
+    // Title
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(6.2);
+    doc.setFontSize(5.6);
     doc.setTextColor(100, 116, 139);
-    doc.text(m.lbl, curX + 3, capacityBoxY + 5.2);
+    doc.text(m.lbl, curX + 2.5, finBoxY + 4.5);
 
-    if (m.isMasked) {
-      drawFrostedBlur(doc, curX + 3, capacityBoxY + 7.5, capWidth - 6, 9);
-    } else {
-      doc.setFontSize(9.5);
-      doc.setTextColor(m.color[0], m.color[1], m.color[2]);
-      doc.text(m.val, curX + 3, capacityBoxY + 11.5);
+    // Indicator Badge Pill
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(5.2);
+    doc.setTextColor(m.color[0], m.color[1], m.color[2]);
+    doc.text(m.indicator, curX + 2.5, finBoxY + 8.2);
 
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(5.8);
-      doc.setTextColor(148, 163, 184);
-      doc.text(m.sub, curX + 3, capacityBoxY + 16);
-    }
+    // Main Value
+    doc.setFontSize(9.5);
+    doc.text(m.val, curX + 2.5, finBoxY + 14.5);
+
+    // Explanatory subtext
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(5.2);
+    doc.setTextColor(148, 163, 184);
+    doc.text(m.sub, curX + 2.5, finBoxY + 18.8, { maxWidth: colWidth - 5 });
   });
 
-  // 6. Section 4: Pre-Matched Licensed Lenders Table
-  const sec4Y = capacityBoxY + 25;
+  // ============================================================
+  // SECTION 3: SUGGESTED SUITABLE LOAN AMOUNT RANGE
+  // Highlighting the Sweet Spot & Max Capacity
+  // ============================================================
+  const sec3Y = finBoxY + 28;
   doc.setTextColor(15, 23, 42);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9.5);
-  doc.text(isMalay ? '4. Padanan Pembiaya Digital & Peluang Pra-Kelulusan (Berlesen BNM)' : '4. Matched Digital Lenders & Pre-Approval Odds (BNM Licensed)', 14, sec4Y);
+  doc.setFontSize(8.8);
+  doc.text(
+    isMalay 
+      ? '2. Cadangan Julat Amaun Pinjaman Yang Sesuai (Zon Paling Selamat)' 
+      : '2. Suggested Suitable Loan Amount Range (Safe Borrowing Sweet Spot)', 
+    14, 
+    sec3Y
+  );
+
+  const loanBoxY = sec3Y + 3;
+  const loanCardWidth = (pageWidth - 28 - 4) / 2;
+
+  // Box 1: Recommended Sweet Spot
+  doc.setFillColor(240, 253, 244);
+  doc.setDrawColor(167, 243, 208);
+  doc.setLineWidth(0.4);
+  doc.roundedRect(14, loanBoxY, loanCardWidth, 24, 2, 2, 'FD');
+
+  doc.setFillColor(6, 95, 70);
+  doc.roundedRect(18, loanBoxY + 3.2, 38, 4.5, 1, 1, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(5.5);
+  doc.text(isMalay ? 'CADANGAN ZON SELESA' : 'RECOMMENDED SWEET SPOT', 20.5, loanBoxY + 6.3);
+
+  doc.setTextColor(6, 95, 70);
+  doc.setFontSize(10.5);
+  doc.text(
+    isLocked 
+      ? 'RM ••••• – RM •••••' 
+      : `RM ${safeSweetSpotLow.toLocaleString()} – RM ${safeSweetSpotHigh.toLocaleString()}`, 
+    18, 
+    loanBoxY + 12.8
+  );
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(6.2);
+  doc.setTextColor(15, 23, 42);
+  doc.text(
+    isLocked 
+      ? (isMalay ? 'Ansuran: RM ••• / bulan' : 'Est. Installment: RM ••• / mo') 
+      : (isMalay 
+          ? `Ansuran: RM ${safeSweetSpotInstLow} – RM ${safeSweetSpotInstHigh} / bln (Tempoh 3–4 Tahun)`
+          : `Installment: RM ${safeSweetSpotInstLow} – RM ${safeSweetSpotInstHigh} / mo (3–4 Yr Tenure)`),
+    18, 
+    loanBoxY + 17
+  );
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(5.4);
+  doc.setTextColor(71, 85, 105);
+  doc.text(
+    isMalay 
+      ? 'Mengambil kurang daripada 20% lebihan tunai bulanan anda. Bank meluluskan julat ini dengan mudah tanpa menjejaskan belanja harian.'
+      : 'Uses under 20% of your free monthly cushion. Banks approve this easily with low stress and zero risk to daily living.',
+    18, 
+    loanBoxY + 20.8,
+    { maxWidth: loanCardWidth - 8 }
+  );
+
+  // Box 2: Maximum Borrowing Ceiling
+  doc.setFillColor(248, 250, 252);
+  doc.setDrawColor(226, 232, 240);
+  doc.setLineWidth(0.4);
+  doc.roundedRect(14 + loanCardWidth + 4, loanBoxY, loanCardWidth, 24, 2, 2, 'FD');
+
+  doc.setFillColor(71, 85, 105);
+  doc.roundedRect(14 + loanCardWidth + 8, loanBoxY + 3.2, 34, 4.5, 1, 1, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(5.5);
+  doc.text(isMalay ? 'HAD MAKSIMUM PINJAMAN' : 'MAXIMUM BORROWING CAP', 14 + loanCardWidth + 10, loanBoxY + 6.3);
+
+  doc.setTextColor(15, 23, 42);
+  doc.setFontSize(10.5);
+  doc.text(
+    isLocked 
+      ? 'Sehingga RM •••••' 
+      : (isMalay ? `Sehingga RM ${maxCapLoan.toLocaleString()}` : `Up to RM ${maxCapLoan.toLocaleString()}`), 
+    14 + loanCardWidth + 8, 
+    loanBoxY + 12.8
+  );
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(6.2);
+  doc.setTextColor(15, 23, 42);
+  doc.text(
+    isLocked 
+      ? (isMalay ? 'Ansuran: ~RM ••• / bulan' : 'Est. Installment: ~RM ••• / mo') 
+      : (isMalay 
+          ? `Ansuran: ~RM ${maxCapInst} / bln (Tempoh 3 Tahun)`
+          : `Installment: ~RM ${maxCapInst} / mo (3-Year Tenure)`),
+    14 + loanCardWidth + 8, 
+    loanBoxY + 17
+  );
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(5.4);
+  doc.setTextColor(71, 85, 105);
+  doc.text(
+    isMalay 
+      ? 'Had siling tertinggi berdasarkan formula DSR BNM. Memerlukan dokumen sokongan tambahan dan semakan lebih ketat oleh pihak bank.'
+      : 'Upper financing ceiling under BNM DSR limits. Higher amounts may trigger stricter document requests from the bank.',
+    14 + loanCardWidth + 8, 
+    loanBoxY + 20.8,
+    { maxWidth: loanCardWidth - 8 }
+  );
+
+  // ============================================================
+  // SECTION 4: SUGGESTED BANKS & BEST MATCHING FINANCING FACILITIES
+  // ============================================================
+  const sec4Y = loanBoxY + 29;
+  doc.setTextColor(15, 23, 42);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(8.8);
+  doc.text(
+    isMalay 
+      ? '3. Cadangan Bank & Produk Pembiayaan Yang Sesuai (Berlesen BNM)' 
+      : '3. Suggested Banks & Best Matching Facilities (BNM Licensed)', 
+    14, 
+    sec4Y
+  );
 
   const dynamicMatches = matchLenders(report, inputData);
   const topLenders = dynamicMatches.slice(0, 4);
 
   const lenderMatchData = isLocked ? (isMalay ? [
-    ['Bank Digital Berlesen Utama (#1)', 'Kemudahan Pembiayaan Gig Terus', 'Peluang Tinggi (Pra-Kelayakan)', 'RM 1,000 - RM 20,000', '••••••', '••••••'],
-    ['Bank Bersubsidi Kerajaan (#2)', 'Bantuan Pembiayaan Mikro Terus', 'Peluang Tinggi (Pra-Kelayakan)', 'RM 1,000 - RM 15,000', '••••••', '••••••'],
-    ['Kredit Alternatif Berlesen (#3)', 'Pinjaman Modal Alternatif', 'Gred Lulus', 'RM 2,000 - RM 30,000', '••••••', '••••••']
+    ['Bank Digital Berlesen Utama (#1)\nKemudahan Pembiayaan Gig', 'Menerima pendapatan gig & e-hailing tanpa slip gaji formal; kelulusan digital 1–2 hari', '95% (Padanan Utama)', 'RM 1,000 - RM 20,000', '••••••', '••••••'],
+    ['Bank Pembangunan Mikro (#2)\nBantuan Pembiayaan Mikro Kerajaan', 'Kadar faedah subsidi kerajaan yang rendah untuk peniaga kecil & bekerja sendiri', '84% (Padanan Baik)', 'RM 1,000 - RM 50,000', '••••••', '••••••'],
+    ['Kredit Berlesen Alternatif (#3)\nPinjaman Modal Fleksibel', 'Kriteria kelulusan fleksibel berasaskan aliran tunai penyata bank 3 bulan', '76% (Padanan Baik)', 'RM 2,000 - RM 30,000', '••••••', '••••••']
   ] : [
-    ['Top-Tier Licensed Digital Bank (Match #1)', 'Direct Gig Financing Facility', 'High Odds (Pre-Qualified)', 'RM 1,000 - RM 20,000', '••••••', '••••••'],
-    ['Government-Subsidized Bank (Match #2)', 'Micro-Financing Assistance Direct', 'High Odds (Pre-Qualified)', 'RM 1,000 - RM 15,000', '••••••', '••••••'],
-    ['Licensed Alternative Credit (Match #3)', 'Alternative Capital Care Loan', 'Approved Tier', 'RM 2,000 - RM 30,000', '••••••', '••••••']
+    ['Top Licensed Digital Bank (#1)\nDigital Gig Financing Facility', 'Accepts gig/freelance earnings without formal payslips; fast 1–2 day digital approval', '95% (Top Match)', 'RM 1,000 - RM 20,000', '••••••', '••••••'],
+    ['Development Bank (#2)\nGovernment Micro-Credit Facility', 'Subsidized low profit rates designed for micro-enterprises and self-employed workers', '84% (Good Fit)', 'RM 1,000 - RM 50,000', '••••••', '••••••'],
+    ['Alternative Licensed Credit (#3)\nFlexible Working Capital', 'Flexible underwriting criteria based on 3-month bank statement cashflow health', '76% (Good Fit)', 'RM 2,000 - RM 30,000', '••••••', '••••••']
   ]) : (matchedLenders && matchedLenders.length > 0 ? matchedLenders.slice(0, 4).map(m => [
-    `${m.name || m.lender?.name}`,
-    `${m.product?.name || m.productName || (isMalay ? 'Kemudahan Pembiayaan Mikro' : 'Micro-Financing Facility')}`,
+    `${m.name || m.lender?.name || 'BSN'}\n${m.product?.name || m.productName || (isMalay ? 'Skim Mikro' : 'Micro Facility')}`,
+    m.name?.includes('BSN') 
+      ? (isMalay ? 'Menerima pendapatan gig/bekerja sendiri tanpa slip gaji rasmi; kadar subsidi 4.0% p.a.' : 'Accepts gig/self-employed income without formal payslip; 4.0% flat subsidized rate.')
+      : m.name?.includes('Rakyat')
+      ? (isMalay ? 'Mesra peniaga mikro & gig dengan rekod simpanan bank konsisten; patuh Syariah' : 'Friendly to gig & micro businesses with consistent bank deposits; Shariah compliant.')
+      : (isMalay ? 'Kriteria pengunderaitan fleksibel berasaskan penyata bank; proses dalam talian pantas' : 'Flexible underwriting based on bank statements; fast digital turnaround.'),
     `${m.matchScore || m.score || 95}% (${m.eligibilityLabel || (isMalay ? 'Padanan Kuat' : 'Strong Match')})`,
     `RM 1,000 - RM 50,000`,
     `${m.rate || '4.0% - 6.5% p.a.'}`,
-    `${m.speed || (m.lender?.gigFriendly ? (isMalay ? '1 - 2 Jam' : '1 - 2 Hours') : (isMalay ? '3 - 5 Hari' : '3 - 5 Days'))}`
+    `${m.speed || (m.lender?.gigFriendly ? (isMalay ? '1 - 2 Hari' : '1 - 2 Days') : (isMalay ? '3 - 5 Hari' : '3 - 5 Days'))}`
   ]) : (topLenders.length > 0 ? topLenders.map(m => [
-    `${m.lender.name}`,
-    `${m.product.name}`,
+    `${m.lender.name}\n${m.product.name}`,
+    m.lender.name.includes('BSN')
+      ? (isMalay ? 'Menerima pendapatan gig tanpa slip gaji; kadar subsidi 4.0% p.a.' : 'Accepts gig income without payslip; 4.0% subsidized flat rate.')
+      : m.lender.name.includes('Rakyat')
+      ? (isMalay ? 'Mesra pekerja gig & peniaga mikro; terma pembiayaan patuh Syariah' : 'Friendly to gig workers & micro entrepreneurs; Shariah compliant.')
+      : (isMalay ? 'Kelulusan pantas berdasarkan skor kesihatan aliran tunai penyata bank' : 'Fast approval based on statement cashflow health score.'),
     `${m.matchScore}% (${m.eligibilityLabel})`,
     `RM ${m.product.minAmountRM.toLocaleString()} - RM ${m.product.maxAmountRM.toLocaleString()}`,
     `${m.product.rateFromPercent}% - ${m.product.rateToPercent}% p.a.`,
-    `${m.lender.gigFriendly ? (isMalay ? '1 - 2 Jam' : '1 - 2 Hours') : (isMalay ? '1 - 3 Hari' : '1 - 3 Days')}`
+    `${m.lender.gigFriendly ? (isMalay ? '1 - 2 Hari' : '1 - 2 Days') : (isMalay ? '3 - 5 Hari' : '3 - 5 Days')}`
   ]) : [
-    ['BSN MicroKredit Madani', 'BSN Micro-Financing Direct', isMalay ? '95% (Padanan Utama)' : '95% (Top Match)', 'RM 1,000 - RM 20,000', '4.0% flat p.a.', isMalay ? '3 - 5 Hari' : '3 - 5 Days'],
-    ['Bank Rakyat Pembiayaan Mikro-i', 'Mikro-i Facility', isMalay ? '84% (Padanan Baik)' : '84% (Good Fit)', 'RM 1,000 - RM 15,000', '5.50% - 7.20% p.a.', isMalay ? '3 - 5 Hari' : '3 - 5 Days'],
-    ['AEON i-Cash Personal', 'i-Cash Micro Capital', isMalay ? '76% (Padanan Baik)' : '76% (Good Fit)', 'RM 2,000 - RM 30,000', '2.8% - 4.2% flat', isMalay ? '3 - 5 Hari' : '3 - 5 Days']
+    ['BSN MicroKredit Madani\nBSN Skim Mikro', isMalay ? 'Menerima pendapatan gig tanpa slip gaji formal; kadar subsidi 4.0% p.a.' : 'Accepts gig income without formal payslip; 4.0% flat subsidized rate.', isMalay ? '95% (Padanan Utama)' : '95% (Top Match)', 'RM 1,000 - RM 50,000', '4.0% flat p.a.', isMalay ? '3 - 5 Hari' : '3 - 5 Days'],
+    ['Bank Rakyat Pembiayaan Mikro-i\nSkim Mikro-i', isMalay ? 'Mesra peniaga mikro & aliran tunai bebas; pembiayaan patuh Syariah' : 'Friendly to micro earners & steady cashflow; Shariah compliant.', isMalay ? '84% (Padanan Baik)' : '84% (Good Fit)', 'RM 1,000 - RM 50,000', '5.50% - 7.20% p.a.', isMalay ? '3 - 5 Hari' : '3 - 5 Days'],
+    ['AEON i-Cash Personal\nSkim Modal i-Cash', isMalay ? 'Kriteria kelayakan fleksibel; kelulusan pantas 1-3 hari bekerja' : 'Flexible underwriting criteria; fast 1-3 day digital approval.', isMalay ? '76% (Padanan Baik)' : '76% (Good Fit)', 'RM 2,000 - RM 30,000', '2.8% - 4.2% flat', isMalay ? '3 - 5 Hari' : '3 - 5 Days']
   ]));
 
   autoTable(doc, {
-    startY: sec4Y + 4,
+    startY: sec4Y + 3,
     margin: { left: 14, right: 14 },
     head: [isMalay 
-      ? ['Institusi Berlesen', 'Produk Pembiayaan Sepadan', 'Peluang Kelulusan', 'Skop Pembiayaan', 'Kadar Indikatif', 'Tempoh']
-      : ['Licensed Lender', 'Matched Financing Product', 'Approval Odds', 'Financing Scope', 'Indicative Rate', 'Speed']],
+      ? ['Cadangan Bank & Skim', 'Mengapa Bank Ini Sesuai Untuk Anda', 'Peluang Kelulusan', 'Skop Amaun', 'Kadar Faedah', 'Kelajuan']
+      : ['Suggested Bank & Facility', 'Why This Bank Fits You', 'Approval Odds', 'Suggested Scope', 'Indicative Rate', 'Speed']],
     body: lenderMatchData,
     theme: 'grid',
     headStyles: {
       fillColor: [15, 23, 42],
       textColor: [255, 255, 255],
       fontStyle: 'bold',
-      fontSize: 7.2,
-      cellPadding: 1.8
+      fontSize: 6.8,
+      cellPadding: 1.6
     },
     bodyStyles: {
-      fontSize: 6.8,
-      cellPadding: 1.8,
+      fontSize: 6.2,
+      cellPadding: 1.6,
       textColor: [30, 41, 59]
     },
     alternateRowStyles: {
       fillColor: [248, 250, 252]
     },
     columnStyles: {
-      0: { fontStyle: 'bold', cellWidth: 44 },
-      1: { cellWidth: 40 },
-      2: { fontStyle: 'bold', cellWidth: 30 },
-      3: { cellWidth: 30 },
+      0: { fontStyle: 'bold', cellWidth: 38 },
+      1: { cellWidth: 54 },
+      2: { fontStyle: 'bold', cellWidth: 26 },
+      3: { cellWidth: 26 },
       4: { cellWidth: 22 },
       5: { cellWidth: 16 }
     },
     didDrawCell: (data) => {
       if (data.column.index === 2 && data.cell.section === 'body') {
         const text = data.cell.text[0];
-        if (text.includes('92%') || text.includes('88%') || text.includes('85%') || text.includes('High Odds') || text.includes('Tinggi')) {
+        if (text.includes('95%') || text.includes('92%') || text.includes('88%') || text.includes('84%') || text.includes('Top') || text.includes('Utama')) {
           doc.setTextColor(6, 95, 70);
         } else {
           doc.setTextColor(30, 64, 175);
@@ -536,147 +660,106 @@ export function buildCreditPassportPdfDoc({ inputData, report, documentHash, isL
 
   if (isLocked) {
     const isGood = report.status === 'Approved' || (report.score && report.score >= 680);
-    const isMedium = report.status === 'Borderline' || (report.score && report.score >= 550 && report.score < 680);
-    
-    const bannerBg = isGood ? [240, 247, 255] : isMedium ? [254, 249, 235] : [254, 242, 242];
-    const bannerBorder = isGood ? [191, 219, 254] : isMedium ? [253, 230, 138] : [254, 202, 202];
-    const badgeBg = isGood ? [30, 64, 175] : isMedium ? [180, 83, 9] : [185, 28, 28];
-    
-    const headerTitle = isMalay 
-      ? (isGood 
-          ? 'Padanan Awal: Pra-Kelayakan · Buka Laporan Penuh untuk Permohonan Bank'
-          : isMedium
-          ? 'Nota Nasihat: Profil Sempadan · Semak Pembiaya Fleksibel & Skor'
-          : 'Amaran Pengunderaitan: Faktor Risiko Ditemui · Nasihat Semakan Diperlukan')
-      : (isGood 
-          ? 'Preliminary Match: Pre-Qualified · Unlock Full Report for Direct Bank Submission'
-          : isMedium
-          ? 'Advisory Note: Borderline Profile · Review Flexible Lenders & Score Boost'
-          : 'Underwriting Alert: Key Flags Found · Diagnostic Review Recommended Before Applying');
+    const bannerBg = isGood ? [240, 247, 255] : [254, 249, 235];
+    const bannerBorder = isGood ? [191, 219, 254] : [253, 230, 138];
+    const badgeBg = isGood ? [30, 64, 175] : [180, 83, 9];
 
-    const advisoryText = isMalay
-      ? (isGood
-          ? `Kemasukan Bulan 1 anda (RM ${Math.round(assessedInflow).toLocaleString()}/bln) menunjukkan kapasiti hutang yang sihat. Membuka Laporan Penuh (RM 9.90) menyediakan dosier rasmi pelbagai bulan yang diperlukan bank digital untuk menawarkan kadar faedah lebih rendah.`
-          : isMedium
-          ? `Pendapatan anda mencukupi, namun corak mingguan memerlukan dokumen sokongan. Membuka Laporan Penuh (RM 9.90) mendedahkan institusi fleksibel dan langkah meningkatkan kelulusan.`
-          : `Penyata anda mengandungi faktor risiko yang berkemungkinan ditolak bank. Kami mengesyorkan semakan laporan diagnostik penuh (RM 9.90) sebelum menghantar permohonan.`)
-      : (isGood
-          ? `Your verified Month 1 inflow (RM ${Math.round(assessedInflow).toLocaleString()}/mo) shows healthy debt-service capacity. Unlocking your Full Report (RM 9.90) provides the multi-month consolidated dossier that digital banks require to offer lower interest rates and faster 1-day approvals.`
-          : isMedium
-          ? `Your income is sufficient, but irregular weekly patterns might cause traditional banks to ask for extra documents. Unlocking your Full Report (RM 9.90) reveals flexible lenders suited for gig workers and provides specific steps to improve your approval odds.`
-          : `Your statement contains risk factors (such as low cash buffers or expense volatility) that will likely trigger a bank rejection. We recommend reviewing the full diagnostic report (RM 9.90) to see exactly what to fix before submitting your loan application.`);
-
-    const previewNoticeY = Math.min(finalTableY + 5, pageHeight - 40);
+    const previewNoticeY = Math.min(finalTableY + 4, pageHeight - 34);
     doc.setFillColor(bannerBg[0], bannerBg[1], bannerBg[2]);
     doc.setDrawColor(bannerBorder[0], bannerBorder[1], bannerBorder[2]);
     doc.setLineWidth(0.4);
-    doc.roundedRect(14, previewNoticeY, pageWidth - 28, 24, 2, 2, 'FD');
+    doc.roundedRect(14, previewNoticeY, pageWidth - 28, 20, 2, 2, 'FD');
 
     doc.setFillColor(badgeBg[0], badgeBg[1], badgeBg[2]);
-    doc.roundedRect(18, previewNoticeY + 3.5, 36, 4.8, 1, 1, 'F');
+    doc.roundedRect(18, previewNoticeY + 3, 34, 4.2, 1, 1, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(6);
-    doc.text(isMalay ? 'NASIHAT PENGUNDERAI' : 'UNDERWRITER ADVISORY', 20, previewNoticeY + 7);
+    doc.setFontSize(5.8);
+    doc.text(isMalay ? 'NOTA KELAYAKAN AWAL' : 'PRE-QUALIFICATION NOTE', 19.5, previewNoticeY + 6);
 
     doc.setTextColor(15, 23, 42);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(6.8);
-    doc.text(headerTitle, 58, previewNoticeY + 7);
+    doc.setFontSize(6.5);
+    doc.text(
+      isMalay ? 'Profil Anda Menepati Syarat Asas Pinjaman · Buka Laporan Penuh Untuk Panduan Lengkap' : 'Your Profile Shows Strong Health · Unlock Full Report for Detailed Step-by-Step Guidance', 
+      56, 
+      previewNoticeY + 6
+    );
 
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(6.2);
+    doc.setFontSize(5.8);
     doc.setTextColor(51, 65, 85);
-    doc.text(advisoryText, 18, previewNoticeY + 12, { maxWidth: pageWidth - 36 });
-  } else {
-    // Section 5: Regulatory Compliance Declarations
-    doc.setTextColor(15, 23, 42);
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9.5);
-    doc.text(isMalay ? '5. Pengisytiharan Pematuhan Kawal Selia Bank Negara Malaysia (BNM)' : '5. Central Bank (BNM) Regulatory Compliance Declarations', 14, finalTableY + 6);
-
-    const complianceItems = isMalay ? [
-      ['Rangka Kerja BNM FTFC', 'LULUS', 'Semua kriteria skor, faktor XAI dan padanan pembiaya adalah telus sepenuhnya.'],
-      ['Semakan Forensik BNM RMiT', report.status === 'Fraud Alert' ? 'GAGAL' : 'DISAHKAN', 'Pemeriksaan visual & fon forensik selesai. Integriti meterai kriptografi disahkan.'],
-      ['Imbasan Sekatan AMLA 2001', (inputData.behavioralRisk?.red_flags?.length || 0) > 0 ? 'AMARAN' : 'LULUS', 'Tiada kata kunci transaksi mencurigakan atau aktiviti pinjaman haram dikesan.'],
-      ['Jaminan Privasi PDPA 2010', 'PATUH', 'Pemprosesan setempat ketat tanpa penyimpanan data pihak ketiga mengikut Akta 709.']
-    ] : [
-      ['BNM FTFC Framework', 'PASSED', 'Full scoring criteria, XAI factors, and lender matching are fully transparent.'],
-      ['BNM RMiT Forensic Check', report.status === 'Fraud Alert' ? 'FAILED' : 'VERIFIED', 'Visual forensic checks completed. Cryptographic hash integrity verified.'],
-      ['AMLA 2001 Sanctions Scan', (inputData.behavioralRisk?.red_flags?.length || 0) > 0 ? 'WARNING' : 'PASSED', 'No AML/CFT suspicious keywords or illegal transaction narratives detected.'],
-      ['PDPA 2010 Privacy Assurance', 'COMPLIANT', 'Strict local zero-retention processing adhering to Malaysian Act 709.']
-    ];
-
-    autoTable(doc, {
-      startY: finalTableY + 9,
-      margin: { left: 14, right: 14 },
-      head: [isMalay ? ['Mandat Kawal Selia', 'Status Audit', 'Jejak Pengesahan Pematuhan'] : ['Regulatory Mandate', 'Audit Status', 'Compliance Verification Trail']],
-      body: complianceItems,
-      theme: 'grid',
-      headStyles: {
-        fillColor: [30, 41, 59],
-        textColor: [255, 255, 255],
-        fontStyle: 'bold',
-        fontSize: 7.2,
-        cellPadding: 1.6
-      },
-      bodyStyles: {
-        fontSize: 6.6,
-        cellPadding: 1.6,
-        textColor: [30, 41, 59]
-      },
-      alternateRowStyles: {
-        fillColor: [248, 250, 252]
-      },
-      columnStyles: {
-        0: { fontStyle: 'bold', cellWidth: 44 },
-        1: { fontStyle: 'bold', cellWidth: 24 },
-        2: { cellWidth: 114 }
-      }
-    });
+    doc.text(
+      isMalay
+        ? `Aliran masuk bulanan anda (RM ${Math.round(assessedInflow).toLocaleString()}/bln) berada dalam zon selamat. Membuka Laporan Penuh (RM 19.90 / RM 49.90) menyediakan analisis aliran tunai 3 bulan, pecahan ansuran selamat, dan langkah permohonan ke bank pilihan anda.`
+        : `Your verified monthly inflow (RM ${Math.round(assessedInflow).toLocaleString()}/mo) shows healthy borrowing capacity. Unlocking the Full Report reveals your 3-month stability trend, precise safe installment breakdown, and guided application assistance to your matched bank.`,
+      18, 
+      previewNoticeY + 11, 
+      { maxWidth: pageWidth - 36 }
+    );
   }
 
   // Page 1 Standard Footer
   doc.setDrawColor(226, 232, 240);
   doc.setLineWidth(0.4);
-  doc.line(14, pageHeight - 10, pageWidth - 14, pageHeight - 10);
+  doc.line(14, pageHeight - 8, pageWidth - 14, pageHeight - 8);
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(6.2);
+  doc.setFontSize(5.8);
   doc.setTextColor(148, 163, 184);
-  doc.text(isMalay ? 'Loan - La Financial Technologies · Dosier Kredit Alternatif Kawal Selia' : 'Loan - La Financial Technologies · Regulated Alternative Credit Dossier', 14, pageHeight - 5.5);
-  doc.text(isLocked ? (isMalay ? 'Muka 1 drpd 1 (Sampel Pratonton)' : 'Page 1 of 1 (Sample Preview)') : (isMalay ? 'Muka 1 drpd 2' : 'Page 1 of 2'), pageWidth - (isLocked ? 48 : 26), pageHeight - 5.5);
+  doc.text(
+    isMalay ? 'Loan - La · Laporan Kesiapsiagaan Kredit & Kesihatan Kewangan (Maklumat Rujukan Sahaja)' : 'Loan - La · Personal Credit Readiness & Loan Health Report (For Personal Guidance Only)', 
+    14, 
+    pageHeight - 4.2
+  );
+  doc.text(
+    isLocked ? (isMalay ? 'Muka 1 drpd 1 (Pratonton)' : 'Page 1 of 1 (Preview)') : (isMalay ? 'Muka 1 drpd 2' : 'Page 1 of 2'), 
+    pageWidth - (isLocked ? 36 : 24), 
+    pageHeight - 4.2
+  );
 
-  // ==========================================
-  // PAGE 2: ONLY FOR PAID / OFFICIAL PASSPORT
-  // ==========================================
+  // ============================================================
+  // PAGE 2: CASHFLOW BREAKDOWN, ACTION STEPS & UNDERWRITER REVIEW
+  // ============================================================
   if (!isLocked) {
     doc.addPage();
 
     // Top Decorative Bar
     doc.setFillColor(15, 23, 42);
-    doc.rect(0, 0, pageWidth, 5, 'F');
+    doc.rect(0, 0, pageWidth, 4, 'F');
 
     // Page 2 Header Running Banner
     doc.setTextColor(15, 23, 42);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.text(isMalay ? 'Laporan Kredit Alternatif & Pengunderaitan Loan - La' : 'Loan - La Alternative Credit & Underwriting Report', 14, 13);
+    doc.setFontSize(9.5);
+    doc.text(
+      isMalay ? 'Laporan Kesiapsiagaan Kredit & Kesihatan Kewangan' : 'Personal Credit Readiness & Loan Health Report', 
+      14, 
+      11.5
+    );
 
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7.5);
+    doc.setFontSize(6.8);
     doc.setTextColor(100, 116, 139);
-    doc.text(isMalay ? `Jejak Audit Lampiran & Kestabilan Berbilang Bulan · Ruj: ${refCode}` : `Annex Audit Trail & Multi-Month Stability Breakdown · Ref: ${refCode}`, pageWidth - 115, 13);
+    doc.text(
+      isMalay ? `Lampiran Analisis Aliran Tunai & Pelan Tindakan · Ruj: ${refCode}` : `Cashflow Stability Annex & Action Plan · Ref: ${refCode}`, 
+      pageWidth - 95, 
+      11.5
+    );
 
     doc.setDrawColor(226, 232, 240);
     doc.setLineWidth(0.4);
-    doc.line(14, 16, pageWidth - 14, 16);
+    doc.line(14, 14.5, pageWidth - 14, 14.5);
 
-    // Section 6: 3-Month Audited Cashflow Trend
+    // Section 5: 3-Month Audited Cashflow Trend (Simple Words)
     doc.setTextColor(15, 23, 42);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9.5);
-    doc.text(isMalay ? '6. Aliran Tunai Diaudit 3-Bulan (Bukti Kestabilan Pendapatan 3 Bulan)' : '6. 3-Month Audited Cashflow Trend (3-Month Income Stability Proof)', 14, 23);
+    doc.setFontSize(8.8);
+    doc.text(
+      isMalay ? '4. Aliran Tunai 3-Bulan Diaudit (Bukti Kestabilan Pendapatan)' : '4. 3-Month Audited Cashflow Trend (Income Stability Proof)', 
+      14, 
+      21
+    );
 
     const m1Inflow = monthlyIncomesList[0] || (assessedInflow * 0.94);
     const m2Inflow = monthlyIncomesList[1] || assessedInflow;
@@ -687,35 +770,35 @@ export function buildCreditPassportPdfDoc({ inputData, report, documentHash, isL
     const m3Exp = Math.round(m3Inflow * 0.35);
 
     const multiMonthData = isMalay ? [
-      ['Bulan 1', `RM ${Math.round(m1Inflow).toLocaleString()}`, `RM ${m1Exp.toLocaleString()}`, `RM ${Math.round(m1Inflow - m1Exp).toLocaleString()}`, '26 Hari', 'CEMERLANG · LEBIHAN STABIL'],
-      ['Bulan 2', `RM ${Math.round(m2Inflow).toLocaleString()}`, `RM ${m2Exp.toLocaleString()}`, `RM ${Math.round(m2Inflow - m2Exp).toLocaleString()}`, '28 Hari', 'CEMERLANG · KEMASUKAN TINGGI'],
-      ['Bulan 3', `RM ${Math.round(m3Inflow).toLocaleString()}`, `RM ${m3Exp.toLocaleString()}`, `RM ${Math.round(m3Inflow - m3Exp).toLocaleString()}`, '27 Hari', 'CEMERLANG · KONSISTEN'],
-      ['Purata 3-Bln', `RM ${Math.round(assessedInflow).toLocaleString()} / bln`, `RM ${Math.round((m1Exp + m2Exp + m3Exp) / 3).toLocaleString()} / bln`, `RM ${Math.round(netCashFlow).toLocaleString()} / bln`, '27 Hari/bln', 'GRED PEMINJAM GIG PERDANA']
+      ['Bulan 1', `RM ${Math.round(m1Inflow).toLocaleString()}`, `RM ${m1Exp.toLocaleString()}`, `RM ${Math.round(m1Inflow - m1Exp).toLocaleString()}`, '26 Hari', 'SANGAT STABIL · LEBIHAN KUKUH'],
+      ['Bulan 2', `RM ${Math.round(m2Inflow).toLocaleString()}`, `RM ${m2Exp.toLocaleString()}`, `RM ${Math.round(m2Inflow - m2Exp).toLocaleString()}`, '28 Hari', 'SANGAT STABIL · KEMASUKAN TINGGI'],
+      ['Bulan 3', `RM ${Math.round(m3Inflow).toLocaleString()}`, `RM ${m3Exp.toLocaleString()}`, `RM ${Math.round(m3Inflow - m3Exp).toLocaleString()}`, '27 Hari', 'SANGAT STABIL · KONSISTEN'],
+      ['Purata 3-Bln', `RM ${Math.round(assessedInflow).toLocaleString()} / bln`, `RM ${Math.round((m1Exp + m2Exp + m3Exp) / 3).toLocaleString()} / bln`, `RM ${Math.round(netCashFlow).toLocaleString()} / bln`, '27 Hari/bln', 'PROFIL KESIHATAN PERDANA']
     ] : [
-      ['Month 1', `RM ${Math.round(m1Inflow).toLocaleString()}`, `RM ${m1Exp.toLocaleString()}`, `RM ${Math.round(m1Inflow - m1Exp).toLocaleString()}`, '26 Days', 'EXCELLENT · STABLE SURPLUS'],
-      ['Month 2', `RM ${Math.round(m2Inflow).toLocaleString()}`, `RM ${m2Exp.toLocaleString()}`, `RM ${Math.round(m2Inflow - m2Exp).toLocaleString()}`, '28 Days', 'EXCELLENT · HIGH INFLOW'],
-      ['Month 3', `RM ${Math.round(m3Inflow).toLocaleString()}`, `RM ${m3Exp.toLocaleString()}`, `RM ${Math.round(m3Inflow - m3Exp).toLocaleString()}`, '27 Days', 'EXCELLENT · CONSISTENT'],
-      ['3-Mo Avg', `RM ${Math.round(assessedInflow).toLocaleString()} / mo`, `RM ${Math.round((m1Exp + m2Exp + m3Exp) / 3).toLocaleString()} / mo`, `RM ${Math.round(netCashFlow).toLocaleString()} / mo`, '27 Days/mo', 'PRIME GIG BORROWER TIER']
+      ['Month 1', `RM ${Math.round(m1Inflow).toLocaleString()}`, `RM ${m1Exp.toLocaleString()}`, `RM ${Math.round(m1Inflow - m1Exp).toLocaleString()}`, '26 Days', 'VERY STABLE · HEALTHY SURPLUS'],
+      ['Month 2', `RM ${Math.round(m2Inflow).toLocaleString()}`, `RM ${m2Exp.toLocaleString()}`, `RM ${Math.round(m2Inflow - m2Exp).toLocaleString()}`, '28 Days', 'VERY STABLE · HIGH INFLOW'],
+      ['Month 3', `RM ${Math.round(m3Inflow).toLocaleString()}`, `RM ${m3Exp.toLocaleString()}`, `RM ${Math.round(m3Inflow - m3Exp).toLocaleString()}`, '27 Days', 'VERY STABLE · CONSISTENT'],
+      ['3-Mo Avg', `RM ${Math.round(assessedInflow).toLocaleString()} / mo`, `RM ${Math.round((m1Exp + m2Exp + m3Exp) / 3).toLocaleString()} / mo`, `RM ${Math.round(netCashFlow).toLocaleString()} / mo`, '27 Days/mo', 'PRIME BORROWER HEALTH']
     ];
 
     autoTable(doc, {
-      startY: 27,
+      startY: 24,
       margin: { left: 14, right: 14 },
       head: [isMalay 
-        ? ['Tempoh', 'Kemasukan Kasar Platform', 'Perbelanjaan Asas', 'Lebihan Tunai Bersih', 'Hari Aktif', 'Keputusan Pengunderaitan']
-        : ['Period', 'Platform Gross Inflow', 'Living Outflow', 'Net Free Surplus', 'Active Days', 'Underwriting Verdict']],
+        ? ['Tempoh', 'Wang Masuk (Pendapatan)', 'Wang Keluar (Belanja)', 'Lebihan Bersih (Penampan)', 'Hari Aktif', 'Petunjuk Kesihatan Aliran Tunai']
+        : ['Period', 'Cash In (Earnings)', 'Living Outflow (Expenses)', 'Net Cushion (Surplus)', 'Active Days', 'Cashflow Health Indicator']],
       body: multiMonthData,
       theme: 'grid',
       headStyles: {
         fillColor: [15, 23, 42],
         textColor: [255, 255, 255],
         fontStyle: 'bold',
-        fontSize: 7.2,
-        cellPadding: 1.8
+        fontSize: 6.8,
+        cellPadding: 1.6
       },
       bodyStyles: {
-        fontSize: 6.8,
-        cellPadding: 1.8,
+        fontSize: 6.4,
+        cellPadding: 1.6,
         textColor: [30, 41, 59]
       },
       alternateRowStyles: {
@@ -725,9 +808,9 @@ export function buildCreditPassportPdfDoc({ inputData, report, documentHash, isL
         0: { fontStyle: 'bold', cellWidth: 26 },
         1: { cellWidth: 32, fontStyle: 'bold' },
         2: { cellWidth: 30 },
-        3: { fontStyle: 'bold', cellWidth: 30 },
+        3: { fontStyle: 'bold', cellWidth: 32 },
         4: { cellWidth: 20 },
-        5: { fontStyle: 'bold', cellWidth: 44 }
+        5: { fontStyle: 'bold', cellWidth: 42 }
       },
       didDrawCell: (data) => {
         if (data.column.index === 5 && data.cell.section === 'body') {
@@ -736,39 +819,43 @@ export function buildCreditPassportPdfDoc({ inputData, report, documentHash, isL
       }
     });
 
-    // Section 7: Score Boost Roadmap
-    const finalY2 = (doc as any).lastAutoTable?.finalY || 70;
+    // Section 6: Actionable Steps to Boost Your Approval Odds
+    const finalY2 = (doc as any).lastAutoTable?.finalY || 65;
     doc.setTextColor(15, 23, 42);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9.5);
-    doc.text(isMalay ? '7. Pelan Tindakan Peningkatan Skor (Buka Kunci Kadar Faedah Rendah)' : '7. Personalized Score Boost Roadmap (Unlock Lower Interest Rates)', 14, finalY2 + 6);
+    doc.setFontSize(8.8);
+    doc.text(
+      isMalay ? '5. Langkah Praktikal Meningkatkan Peluang Kelulusan Sebelum Memohon' : '5. Practical Steps to Boost Your Approval Odds Before Applying', 
+      14, 
+      finalY2 + 5.5
+    );
 
     const roadmapData = isMalay ? [
-      ['Tindakan 1: Caruman Sukarela KWSP (i-Saraan)', '+35 Mata (Gred A+)', 'Carum RM 150/bulan ke KWSP i-Saraan. Menunjukkan disiplin simpanan statutori.'],
-      ['Tindakan 2: Kestabilan Penampan Tunai', '+25 Mata (Gred Perdana)', 'Kekalkan baki akaun bank minimum RM 1,000 selama 30 hari berturut-turut.'],
-      ['Tindakan 3: Penyelarasan Pengeluaran', '+20 Mata (Pelbagai)', 'Kekalkan penyelesaian mingguan aktif tanpa jurang melebihi 10 hari.']
+      ['Tindakan 1: Caruman Sukarela KWSP (i-Saraan)', '+35 Mata', 'Carum RM 150/bulan ke KWSP i-Saraan. Pegawai kredit bank melihat caruman KWSP sebagai bukti disiplin simpanan.'],
+      ['Tindakan 2: Kestabilan Penampan Baki Bank', '+25 Mata', 'Kekalkan baki minimum RM 1,000 dalam akaun bank selama 30 hari berturut-turut untuk membuktikan anda tidak hidup habis gaji.'],
+      ['Tindakan 3: Konsistensi Pembayaran Mingguan', '+20 Mata', 'Kekalkan pengeluaran platform secara mingguan tanpa jurang melebihi 10 hari sebelum menghantar permohonan.']
     ] : [
-      ['Action 1: Voluntary EPF (i-Saraan)', '+35 Points (Grade A+)', 'Contribute RM 150/month into KWSP i-Saraan. Signals statutory savings discipline.'],
-      ['Action 2: Cashflow Buffer Stability', '+25 Points (Prime Tier)', 'Maintain a minimum rolling balance of RM 1,000 for 30 consecutive days.'],
-      ['Action 3: Single Channel Smoothing', '+20 Points (Diversified)', 'Maintain active weekly payout settlements without gaps > 10 days.']
+      ['Action 1: Voluntary EPF (KWSP i-Saraan)', '+35 Points', 'Contribute RM 150/month into KWSP i-Saraan. Bank credit officers view EPF contributions as proof of financial discipline.'],
+      ['Action 2: Maintain a Rolling Cash Buffer', '+25 Points', 'Keep at least RM 1,000 balance in your bank account for 30 consecutive days to prove you do not live paycheck-to-paycheck.'],
+      ['Action 3: Smooth Weekly Payout Regularity', '+20 Points', 'Maintain regular weekly platform payouts without gaps longer than 10 days before submitting your application.']
     ];
 
     autoTable(doc, {
-      startY: finalY2 + 9,
+      startY: finalY2 + 8,
       margin: { left: 14, right: 14 },
-      head: [isMalay ? ['Tindakan Disyorkan', 'Peningkatan Skor', 'Faedah Pengunderaitan Dijangka'] : ['Recommended Action', 'Score Boost', 'Expected Underwriting Benefit']],
+      head: [isMalay ? ['Langkah Disyorkan', 'Peningkatan Skor', 'Mengapa Langkah Ini Membantu Kelulusan Bank'] : ['Recommended Action', 'Score Boost', 'Why This Helps Your Bank Approval']],
       body: roadmapData,
       theme: 'grid',
       headStyles: {
         fillColor: [6, 95, 70],
         textColor: [255, 255, 255],
         fontStyle: 'bold',
-        fontSize: 7.2,
-        cellPadding: 1.8
+        fontSize: 6.8,
+        cellPadding: 1.6
       },
       bodyStyles: {
-        fontSize: 6.8,
-        cellPadding: 1.8,
+        fontSize: 6.2,
+        cellPadding: 1.6,
         textColor: [30, 41, 59]
       },
       alternateRowStyles: {
@@ -776,152 +863,164 @@ export function buildCreditPassportPdfDoc({ inputData, report, documentHash, isL
       },
       columnStyles: {
         0: { fontStyle: 'bold', cellWidth: 48 },
-        1: { fontStyle: 'bold', cellWidth: 32 },
-        2: { cellWidth: 102 }
+        1: { fontStyle: 'bold', cellWidth: 26 },
+        2: { cellWidth: 108 }
       }
     });
 
-    const page2TableY = (doc as any).lastAutoTable?.finalY || 70;
+    const page2TableY = (doc as any).lastAutoTable?.finalY || 110;
 
-    // Section 8: Underwriter Key Findings
+    // Section 7: What The Credit Analyst Looks For (Underwriter Review Summary)
     doc.setTextColor(15, 23, 42);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(8.5);
-    doc.text(isMalay ? '8. SINTESIS PENGUNDERAIAN EKSEKUTIF & MATRIKS RISIKO' : '8. EXECUTIVE UNDERWRITING SYNTHESIS & RISK MATRIX', 14, page2TableY + 8);
+    doc.setFontSize(8.8);
+    doc.text(
+      isMalay ? '6. Perkara Yang Dilihat Oleh Penganalisis Kredit Bank (Ulasan Ringkas)' : '6. What The Credit Analyst Looks For (Underwriter Review Summary)', 
+      14, 
+      page2TableY + 6
+    );
 
     const findings = isMalay ? [
       {
-        title: 'Mampu Milik Nisbah Khidmat Hutang (DSR)',
-        desc: `Pada anggaran ansuran RM ${report.estimatedInstallment.toLocaleString()}/bln berbanding lebihan tunai disahkan RM ${report.monthlySurplus.toFixed(0)}/bln, DSR pemohon dinilai pada ${(report.dsr ?? 9.5).toFixed(1)}%, jauh di bawah had siling BNM 60%.`
+        title: 'Kemampuan Membayar Ansuran (DSR & Lebihan Tunai)',
+        desc: `Pada anggaran ansuran RM ${report.estimatedInstallment.toLocaleString()}/bln berbanding lebihan tunai bulanan anda sebanyak RM ${Math.round(netCashFlow).toLocaleString()}/bln, anda mempunyai ruang tunai yang sangat selesa. Nisbah DSR anda adalah ${(report.dsr ?? 0).toFixed(1)}%, jauh lebih baik daripada had siling bank 60%.`
       },
       {
-        title: 'Kestabilan Pendapatan & Kemusiman',
-        desc: 'Analisis aliran tunai sepanjang tempoh 3 bulan yang diaudit menunjukkan indeks ketidaktentuan pendapatan < 8.2%, menandakan pendapatan asas yang kukuh daripada platform gig.'
+        title: 'Kestabilan & Ketekunan Pendapatan Mingguan',
+        desc: 'Corak deposit bank anda menunjukkan keaktifan 26–28 hari sebulan dengan indeks turun-naik yang rendah (< 8.2%). Ini memberi keyakinan kepada pegawai bank bahawa pendapatan anda berterusan dan tidak terhenti tiba-tiba.'
       },
       {
-        title: 'Integriti Forensik Dokumen',
-        desc: `Pengesahan digital mengesahkan sifar bukti manipulasi, pemalsuan metadata, atau perubahan lapisan PDF. Kunci kriptografi (${documentHash.slice(0, 16)}...) didaftarkan pada lejar selamat.`
+        title: 'Integriti Dokumen & Sejarah Bersih',
+        desc: 'Penyata bank anda disahkan tulen tanpa sebarang tanda usikan atau penyelewengan. Tiada rekod cek tendang atau aktiviti berisiko tinggi dikesan, memudahkan proses pra-kelayakan oleh pihak pembiaya.'
       }
     ] : [
       {
-        title: 'Debt Service Ratio (DSR) Affordability',
-        desc: `At an estimated installment of RM ${report.estimatedInstallment.toLocaleString()}/mo against a verified cash surplus of RM ${report.monthlySurplus.toFixed(0)}/mo, the applicant's DSR is assessed at ${(report.dsr ?? 9.5).toFixed(1)}%, well below the BNM 60% macroprudential limit.`
+        title: 'Repayment Affordability (DSR & Surplus Buffer)',
+        desc: `At an estimated installment of RM ${report.estimatedInstallment.toLocaleString()}/mo against your verified free surplus of RM ${Math.round(netCashFlow).toLocaleString()}/mo, you have a very healthy financial cushion. Your DSR is ${(report.dsr ?? 0).toFixed(1)}%, well inside the bank's safe green zone (cap is 60%).`
       },
       {
-        title: 'Income Stability & Seasonality',
-        desc: 'Cashflow analysis over the 3-month audited period exhibits an income volatility index of < 8.2%, indicating robust baseline earnings from gig platform operations.'
+        title: 'Income Reliability & Weekly Deposit Consistency',
+        desc: 'Your bank cashflow exhibits active earnings across 26–28 days/month with low volatility (< 8.2%). This signals to credit officers that your income stream is predictable, consistent, and dependable.'
       },
       {
-        title: 'Document Forensic Integrity',
-        desc: `Digital verification confirms no evidence of tampering, metadata manipulation, or PDF layer alterations. Cryptographic hash (${documentHash.slice(0, 16)}...) registered on private ledger.`
+        title: 'Document Authenticity & Clean Financial Track Record',
+        desc: 'Your statements have passed digital forensic verification with zero signs of alteration. No bounced cheques, unauthorized overdrafts, or high-risk flags were detected, ensuring smooth preliminary screening.'
       }
     ];
 
-    let currentFindY = page2TableY + 14;
+    let currentFindY = page2TableY + 10;
     findings.forEach((f, idx) => {
       doc.setFillColor(248, 250, 252);
       doc.setDrawColor(226, 232, 240);
-      doc.roundedRect(14, currentFindY, pageWidth - 28, 16, 1.5, 1.5, 'FD');
+      doc.roundedRect(14, currentFindY, pageWidth - 28, 14, 1.5, 1.5, 'FD');
 
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(7.2);
+      doc.setFontSize(6.8);
       doc.setTextColor(15, 23, 42);
-      doc.text(`${idx + 1}. ${f.title}`, 18, currentFindY + 4.8);
+      doc.text(`${idx + 1}. ${f.title}`, 18, currentFindY + 4.5);
 
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(6.2);
+      doc.setFontSize(5.8);
       doc.setTextColor(71, 85, 105);
-      doc.text(f.desc, 18, currentFindY + 9.5, { maxWidth: pageWidth - 36 });
+      doc.text(f.desc, 18, currentFindY + 8.8, { maxWidth: pageWidth - 36 });
 
-      currentFindY += 19;
+      currentFindY += 16.5;
     });
 
-    // Section 9: Cryptographic Certification Seal
-    const sealY = currentFindY + 3;
-    const sealBoxWidth = 52;
-    const textAvailableWidth = pageWidth - 28 - sealBoxWidth - 8;
+    // Section 8: Borrower Guidance & Formal Disclaimer Box
+    const sealY = currentFindY + 2.5;
+    const sealBoxWidth = 50;
+    const textAvailableWidth = pageWidth - 28 - sealBoxWidth - 6;
 
     doc.setFillColor(248, 250, 252);
     doc.setDrawColor(203, 213, 225);
     doc.setLineWidth(0.4);
-    doc.roundedRect(14, sealY, pageWidth - 28, 30, 2, 2, 'FD');
+    doc.roundedRect(14, sealY, pageWidth - 28, 26, 2, 2, 'FD');
 
     doc.setTextColor(15, 23, 42);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(7.5);
-    doc.text(isMalay ? 'PERAKUAN PENGUNDERAIAN INSTITUSI & PENZAHIRAN' : 'INSTITUTIONAL UNDERWRITING CERTIFICATION & DISCLOSURE', 18, sealY + 5.5);
+    doc.setFontSize(7.2);
+    doc.text(
+      isMalay ? 'PANDUAN PEMOHON & PENAFIAN RASMI' : 'BORROWER GUIDANCE & REGULATORY DISCLOSURE', 
+      18, 
+      sealY + 5.2
+    );
 
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(6.2);
+    doc.setFontSize(5.8);
     doc.setTextColor(100, 116, 139);
     
     const disclaimers = isMalay ? [
-      '• Laporan Kredit & Pengunderaitan Alternatif ini disahkan secara kriptografi di bawah garis panduan Bank Negara Malaysia FTFC dan RMiT.',
-      '• Metrik yang diaudit mencerminkan aliran tunai penyata bank 3 bulan yang disahkan, pendapatan platform, dan kemampuan khidmat hutang.',
-      '• Kelulusan pembiayaan akhir, kadar faedah, dan pengeluaran pinjaman tertakluk kepada dasar penilaian kredit institusi perbankan rakan kongsi.'
+      '• Laporan Kesiapsiagaan Kredit & Kesihatan Kewangan ini disediakan oleh CreditFlow AI sebagai alat panduan peribadi dan persediaan dokumen pemohon.',
+      '• Laporan ini BUKAN pasport kredit bank atau jaminan kelulusan pinjaman. Pihak bank dan institusi pembiaya membuat penilaian kredit mereka sendiri.',
+      '• Kelulusan akhir kemudahan pembiayaan, kadar keuntungan, dan amaun pinjaman adalah tertakluk sepenuhnya kepada dasar dan syarat institusi perbankan berlesen masing-masing.'
     ] : [
-      '• This Alternative Credit & Underwriting Report is cryptographically certified under Bank Negara Malaysia FTFC and RMiT guidelines.',
-      '• Audited metrics reflect verified 3-month bank statement cashflow, platform earnings, and digital debt service affordability.',
-      '• Final credit facilities, interest rates, and loan disbursements remain subject to partner bank credit evaluation policies.'
+      '• This Credit Readiness & Loan Health Report is prepared by CreditFlow AI as a personal educational tool for applicant self-awareness and loan preparation.',
+      '• This report is NOT an official bank credit approval or banking passport. Banks conduct their own independent underwriting evaluations.',
+      '• Final credit facilities, interest rates, and loan disbursements remain subject exclusively to partner bank evaluation policies and terms.'
     ];
 
-    let currentDiscY = sealY + 10;
+    let currentDiscY = sealY + 9.5;
     disclaimers.forEach(line => {
       doc.text(line, 18, currentDiscY, { maxWidth: textAvailableWidth });
-      currentDiscY += 5.2;
+      currentDiscY += 4.5;
     });
 
-    // Security Seal Signature Box
+    // Verification Seal Box
     const sealCardX = pageWidth - 14 - sealBoxWidth - 2;
     doc.setFillColor(255, 255, 255);
     doc.setDrawColor(203, 213, 225);
-    doc.roundedRect(sealCardX, sealY + 3.5, sealBoxWidth, 23, 1.5, 1.5, 'FD');
+    doc.roundedRect(sealCardX, sealY + 3, sealBoxWidth, 20, 1.5, 1.5, 'FD');
 
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(6.5);
+    doc.setFontSize(6.2);
     doc.setTextColor(15, 23, 42);
-    doc.text('LOAN-LA AUDIT SEAL', sealCardX + 4, sealY + 8);
+    doc.text('CREDITFLOW AUDIT SEAL', sealCardX + 3.5, sealY + 7.2);
 
     doc.setFont('courier', 'bold');
-    doc.setFontSize(6.5);
+    doc.setFontSize(6.2);
     doc.setTextColor(6, 95, 70);
-    doc.text(isMalay ? 'STATUS: LULUS / SELAMAT' : 'STATUS: PASSED / SECURE', sealCardX + 4, sealY + 13.5);
+    doc.text(isMalay ? 'STATUS: AUDIT SELESAI' : 'STATUS: AUDIT COMPLETED', sealCardX + 3.5, sealY + 12);
 
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(5.5);
+    doc.setFontSize(5.2);
     doc.setTextColor(100, 116, 139);
-    doc.text(`Hash: ${documentHash.slice(0, 14)}...`, sealCardX + 4, sealY + 18.5);
+    doc.text(`Hash: ${documentHash.slice(0, 14)}...`, sealCardX + 3.5, sealY + 16.5);
 
-    // Page 2 Footer
+    // Page 2 Standard Footer
     doc.setDrawColor(226, 232, 240);
     doc.setLineWidth(0.4);
-    doc.line(14, pageHeight - 10, pageWidth - 14, pageHeight - 10);
+    doc.line(14, pageHeight - 8, pageWidth - 14, pageHeight - 8);
 
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(6.2);
+    doc.setFontSize(5.8);
     doc.setTextColor(148, 163, 184);
-    doc.text(isMalay ? 'Loan - La Financial Technologies · Dosier Kredit Alternatif Kawal Selia' : 'Loan - La Financial Technologies · Regulated Alternative Credit Dossier', 14, pageHeight - 5.5);
-    doc.text(isMalay ? 'Muka 2 drpd 2' : 'Page 2 of 2', pageWidth - 26, pageHeight - 5.5);
+    doc.text(
+      isMalay ? 'Loan - La · Laporan Kesiapsiagaan Kredit & Kesihatan Kewangan (Maklumat Rujukan Sahaja)' : 'Loan - La · Personal Credit Readiness & Loan Health Report (For Personal Guidance Only)', 
+      14, 
+      pageHeight - 4.2
+    );
+    doc.text(isMalay ? 'Muka 2 drpd 2' : 'Page 2 of 2', pageWidth - 24, pageHeight - 4.2);
   }
 
   return doc;
 }
 
 /**
- * Generates and downloads the executive Alternative Credit Passport PDF.
+ * Generates and downloads the Personal Credit Readiness & Loan Health Report PDF.
  */
 export function generateCreditPassportPdf(props: PdfGeneratorProps) {
   const doc = buildCreditPassportPdfDoc(props);
   const safeName = (props.inputData.name || 'Borrower').replace(/\s+/g, '_');
   const isMalay = props.language === 'bm';
   const filename = props.isLocked 
-    ? (isMalay ? `Loan_La_Laporan_Kredit_${safeName}_Pratonton.pdf` : `Loan_La_Credit_Report_${safeName}_Preview.pdf`)
-    : (isMalay ? `Loan_La_Laporan_Kredit_${safeName}_Rasmi.pdf` : `Loan_La_Credit_Report_${safeName}_Official.pdf`);
+    ? (isMalay ? `Loan_La_Laporan_Kredit_${safeName}_Pratonton.pdf` : `Loan_La_Credit_Readiness_Report_${safeName}_Preview.pdf`)
+    : (isMalay ? `Loan_La_Laporan_Kredit_${safeName}_Rasmi.pdf` : `Loan_La_Credit_Readiness_Report_${safeName}.pdf`);
   doc.save(filename);
 }
 
 /**
- * Generates an in-memory blob URL for the Credit Passport PDF for previewing in iframe / modal.
+ * Generates an in-memory blob URL for the Credit Report PDF for previewing in iframe / modal.
  */
 export function getCreditPassportPdfBlobUrl(props: PdfGeneratorProps): string {
   const doc = buildCreditPassportPdfDoc(props);

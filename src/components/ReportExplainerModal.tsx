@@ -424,8 +424,8 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
           : `🏦 **Matched Lenders from Directory:**\n• **${topMatch1}**\n• **${topMatch2}**\n• **${topMatch3}**`;
       } else {
         fallback = language === 'bm'
-          ? `📊 **Status Pasport Kredit:**\nSkor FRI anda ialah **${friScore}/850 (${riskGrade})**. Profil anda mematuhi piawaian pengunderaitan Bank Negara Malaysia (FTFC & RMiT) dengan meterai keselamatan SHA-256.`
-          : `📊 **Credit Passport Status:**\nYour FRI score is **${friScore}/850 (${riskGrade})**. Your profile meets BNM FTFC & RMiT alternative underwriting standards with verified SHA-256 tamper-proof certification.`;
+          ? `📊 **Status Kesiapsiagaan Kredit & Kesihatan Kewangan:**\nSkor anda ialah **${friScore}/850 (${riskGrade})**. Keadaan kewangan anda menunjukkan aliran tunai yang stabil dan nisbah hutang yang sihat. Laporan ini memberi cadangan julat pinjaman selamat dan padanan bank untuk rujukan anda.`
+          : `📊 **Credit Readiness & Financial Health Status:**\nYour score is **${friScore}/850 (${riskGrade})**. Your financial condition demonstrates healthy cashflow stability and a low debt ratio. This report outlines your suggested safe loan range and top matched banks for your reference.`;
       }
       setChatMessages(prev => [...prev, { sender: 'assistant', text: fallback }]);
       if (isLiveCallRef.current) {
@@ -441,10 +441,10 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
   };
 
   const quickActionChips = language === 'bm' ? [
-    { label: 'Ringkasan Laporan', prompt: 'Ringkaskan laporan kredit saya secara padat.' },
+    { label: 'Ringkasan Laporan', prompt: 'Ringkaskan laporan kesiapsiagaan kredit dan cadangan pinjaman saya.' },
     { label: 'Apa Itu Lebihan Bebas?', prompt: 'Apakah maksud lebihan tunai bebas (free monthly surplus) dan kiraan saya?' }
   ] : [
-    { label: 'Summarize Report', prompt: 'Summarize my credit passport and underwriter findings.' },
+    { label: 'Summarize Report', prompt: 'Summarize my credit readiness report, safe loan range, and matched banks.' },
     { label: 'What is Free Surplus?', prompt: 'What is free monthly cash surplus and what is my calculation?' }
   ];
 
@@ -462,7 +462,7 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
             </div>
             <div className="min-w-0 flex items-center gap-2 flex-wrap">
               <h2 className="text-xs sm:text-sm font-bold text-slate-950 tracking-tight truncate">
-                {language === 'bm' ? 'Pasport Kredit Alternatif' : 'Alternative Credit Passport'}
+                {language === 'bm' ? 'Laporan Kesiapsiagaan Kredit & Kesihatan Kewangan' : 'Credit Readiness & Loan Health Report'}
               </h2>
               <span className="text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200 shrink-0">
                 FRI {friScore} · {riskGrade}
@@ -573,7 +573,7 @@ export const ReportExplainerModal: React.FC<ReportExplainerModalProps> = ({
                 <iframe
                   src={`${pdfBlobUrl}#toolbar=0&navpanes=0&scrollbar=1&view=FitH&zoom=115`}
                   className="w-full h-full border-0 block"
-                  title="Credit Passport PDF"
+                  title="Credit Readiness Report PDF"
                 />
               </div>
             ) : (
