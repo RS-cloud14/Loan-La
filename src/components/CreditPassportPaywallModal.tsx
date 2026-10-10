@@ -117,25 +117,25 @@ export default function CreditPassportPaywallModal({
           return {
             price: '15.00',
             numericPrice: 15.00,
-            packageName: isMalay ? 'Naik Taraf Penuh (+RM 15.00)' : 'Apply Upgrade Add-on (+RM 15.00)',
-            badge: isMalay ? 'BUKA SEMUA BANK' : 'UNLOCK ALL LENDERS',
-            description: isMalay ? 'Buka SEMUA Padanan Bank Berlesen (Baki Naik Taraf +RM 15.00)' : 'Unlock ALL matched licensed lenders (Top-up +RM 15.00)'
+            packageName: isMalay ? 'Pakej Permohonan Bank (+RM 15.00)' : 'Bank Application Pack Add-on (+RM 15.00)',
+            badge: isMalay ? 'PAKEJ PERMOHONAN' : 'APPLICATION PACKS',
+            description: isMalay ? 'Buka Pakej Permohonan Bank, Memo CAM & Surat Iringan untuk SEMUA bank sepadan (Baki +RM 15.00)' : 'Unlock Official Bank Application Packs, CAM Memos & Cover Letters for ALL Matched Banks (Top-up +RM 15.00)'
           };
         }
         return {
           price: '34.90',
           numericPrice: 34.90,
-          packageName: isMalay ? 'Naik Taraf Penuh (Buka Semua Bank & Mohon)' : 'Apply Upgrade (Unlock All Lenders)',
-          badge: isMalay ? 'PILIHAN TERBAIK' : 'TOP RECOMMENDED',
-          description: isMalay ? 'Buka SEMUA Padanan Bank Berlesen + Akses Permohonan Terus' : 'Unlock ALL matched licensed lenders + Direct Platform Application'
+          packageName: isMalay ? 'Pakej Lengkap: Laporan + Pakej Permohonan Bank' : 'Complete Pack: Report + Application Packs',
+          badge: isMalay ? 'PILIHAN LENGKAP' : 'ALL-IN-ONE (COMPLETE)',
+          description: isMalay ? 'Laporan Kesihatan Penuh + Pakej Permohonan Bank & Memo CAM untuk SEMUA Bank Sepadan' : 'Full Health Report + Ready-to-Submit Application Packs & CAM Memos for ALL Matched Banks'
         };
       }
       return {
         price: '19.90',
         numericPrice: 19.90,
-        packageName: isMalay ? 'Pakej Asas (Laporan & Audit)' : 'Basic Assessment Pack',
-        badge: isMalay ? 'PENGESAHAN AWAL' : 'INITIAL ENTRY',
-        description: isMalay ? '1 Laporan Skor Kredit Penuh, 1 Padanan Bank Utama, 1 Audit Dokumen' : '1 Full Credit Report, 1 Top Bank Match, 1 Document Audit'
+        packageName: isMalay ? 'Laporan Kesihatan & Kelayakan Kredit (Sahaja)' : 'Credit Health & Readiness Report (Report Only)',
+        badge: isMalay ? 'LAPORAN SAHAJA' : 'REPORT ONLY',
+        description: isMalay ? '1 Laporan Skor Kredit Penuh, Nisbah DSR, Julat Pinjaman & Padanan Bank (Laporan sahaja — Pakej Permohonan tidak disertakan)' : '1 Full Credit Score Report, DSR Capacity, Safe Loan Range & Matched Bank List (Report Only — Application Pack not included)'
       };
     } else {
       // SME Case
@@ -153,25 +153,25 @@ export default function CreditPassportPaywallModal({
           return {
             price: '15.00',
             numericPrice: 15.00,
-            packageName: isMalay ? 'Naik Taraf PKS Komersial (+RM 15.00)' : 'SME Apply Upgrade Add-on (+RM 15.00)',
-            badge: isMalay ? 'BUKA SEMUA BANK SME' : 'UNLOCK ALL COMMERCIAL',
-            description: isMalay ? 'Buka SEMUA Pembiaya Komersial SME & Agensi (Baki +RM 15.00)' : 'Unlock ALL Commercial SME Lenders (Top-up +RM 15.00)'
+            packageName: isMalay ? 'Pakej Permohonan SME Komersial (+RM 15.00)' : 'SME Application Pack Add-on (+RM 15.00)',
+            badge: isMalay ? 'PAKEJ PERMOHONAN SME' : 'SME APPLICATION PACKS',
+            description: isMalay ? 'Buka Pakej Permohonan Komersial & Dokumen CAM untuk SEMUA Pembiaya SME (Baki +RM 15.00)' : 'Unlock Commercial Application Packs & CAM Memos for ALL SME Lenders (Top-up +RM 15.00)'
           };
         }
         return {
           price: '64.90',
           numericPrice: 64.90,
-          packageName: isMalay ? 'SME Apply Upgrade (Buka Semua Bank Perniagaan)' : 'SME Apply Upgrade (All Commercial Lenders)',
-          badge: isMalay ? 'PERMOHONAN KOMERSIAL' : 'COMMERCIAL ACCESS',
-          description: isMalay ? 'Buka SEMUA Pembiaya Komersial SME & Agensi Kerajaan + Mohon Platform' : 'Unlock ALL Commercial SME Lenders & Government Funds + Direct Intake'
+          packageName: isMalay ? 'Pakej Penuh SME: Audit + Pakej Permohonan Bank' : 'Complete SME Pack: Audit + Application Packs',
+          badge: isMalay ? 'PAKEJ LENGKAP PKS' : 'COMPLETE SME PACK',
+          description: isMalay ? 'Laporan Audit Penuh + Buka Pakej Permohonan SEMUA Pembiaya Komersial SME & Agensi Kerajaan' : 'Full Audit Report + Unlock Application Packs for ALL Commercial SME Lenders & Government Funds'
         };
       }
       return {
         price: '49.90',
         numericPrice: 49.90,
-        packageName: isMalay ? 'Analisis Asas SME (Audit Mendalam Penyata Syarikat)' : 'SME Basic Deep-Dive Analysis',
-        badge: isMalay ? 'AUDIT MENDALAM SME' : 'DEEP-DIVE AUDIT',
-        description: isMalay ? '1 Laporan Komprehensif SME, Padanan Bank #1, Audit SSM & Penyata 6-Bulan' : '1 Comprehensive SME Report, Top 1 Bank Match, Heavy Document Audit'
+        packageName: isMalay ? 'Audit Penyata & Laporan Kelayakan SME (Sahaja)' : 'SME Readiness & Financial Audit Report (Report Only)',
+        badge: isMalay ? 'LAPORAN SAHAJA' : 'REPORT ONLY',
+        description: isMalay ? '1 Laporan Komprehensif SME, Analisis Penyata & Senarai Bank Komersial (Laporan sahaja — Pakej Permohonan tidak disertakan)' : '1 Comprehensive SME Report, Statement Audit & Matched Bank List (Report Only — Application Pack not included)'
       };
     }
   };
@@ -269,11 +269,13 @@ export default function CreditPassportPaywallModal({
                 <div className="leading-tight">
                   <strong className="text-white block font-semibold">
                     {selectedPackage === 'upgrade'
-                      ? (isMalay ? 'Buka Semua Institusi Kewangan & Mohon' : 'Unlock ALL Lenders & Direct Intake')
-                      : (isMalay ? 'Padanan Bank #1 Berserta Saluran Rasmi' : 'Top 1 Matched Bank & Official Channel')}
+                      ? (isMalay ? 'Pakej Permohonan Bank & Memo CAM (Semua Bank)' : 'Official Bank Application Packs & CAM Memos (All Banks)')
+                      : (isMalay ? 'Padanan Bank & Syor Kelayakan (Laporan Sahaja)' : 'Matched Bank Ranking & Advice (Report Only)')}
                   </strong>
                   <span className="text-[11px] text-slate-300">
-                    {isMalay ? 'Ketahui kadar faedah terendah dan dokumen yang perlu dibawa.' : 'Direct intake pathway, required documents checklist & rates.'}
+                    {selectedPackage === 'upgrade'
+                      ? (isMalay ? 'Pakej bercetak & digital lengkap sedia untuk dihantar ke BSN, Bank Rakyat, GXBank, dll.' : 'Ready-to-submit bank application dossiers, CAM memos & platform verification covers for all banks.')
+                      : (isMalay ? 'Senarai padanan bank terbaik untuk rujukan anda. Pakej permohonan tidak disertakan.' : 'Direct ranking of best-matched lenders. Bank application packs not included.')}
                   </span>
                 </div>
               </div>
@@ -622,7 +624,7 @@ export default function CreditPassportPaywallModal({
 
                       <div className="flex justify-between items-center mb-1">
                         <span className="text-xs sm:text-sm font-bold text-slate-900">
-                          {tier === 'personal' ? (isMalay ? 'Pakej Asas' : 'Basic Pack') : (isMalay ? 'SME Analisis Asas' : 'SME Basic Analysis')}
+                          {tier === 'personal' ? (isMalay ? 'Laporan Kesihatan Sahaja' : 'Report Only (Basic)') : (isMalay ? 'Audit Laporan Sahaja' : 'Audit Report Only')}
                         </span>
                         <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
                           isAlreadyBasic
@@ -644,8 +646,8 @@ export default function CreditPassportPaywallModal({
 
                       <span className="text-[11px] text-slate-600 block leading-tight">
                         {tier === 'personal'
-                          ? (isMalay ? '1 Laporan, 1 Padanan Bank Utama, 1 Audit Dokumen' : '1 Report, 1 Top Lender Match, 1 Audit')
-                          : (isMalay ? '1 Laporan SME, 1 Bank Utama, 1 Audit Mendalam' : '1 Comprehensive SME Report, 1 Top Bank Match')}
+                          ? (isMalay ? '1 Laporan Penuh, DSR & Padanan Bank (Pakej Permohonan Tidak Termasuk)' : '1 Full Report, DSR & Matched Bank List (No Application Pack)')
+                          : (isMalay ? '1 Laporan Audit SME & Senarai Bank (Pakej Permohonan Tidak Termasuk)' : '1 Full SME Report & Bank List (No Application Pack)')}
                       </span>
                     </div>
 
@@ -661,15 +663,15 @@ export default function CreditPassportPaywallModal({
                       {/* RECOMMENDED BADGE */}
                       <div className="absolute -top-2.5 right-3">
                         <span className="text-[8.5px] font-black uppercase tracking-wider bg-emerald-700 text-white px-2 py-0.5 rounded-full shadow-xs">
-                          {isAlreadyBasic ? (isMalay ? 'NAIK TARAF BAKI' : 'TOP-UP') : (isMalay ? 'NAIK TARAF DISYORKAN' : 'RECOMMENDED')}
+                          {isAlreadyBasic ? (isMalay ? 'NAIK TARAF BAKI' : 'TOP-UP') : (isMalay ? 'PAKEJ LENGKAP' : 'COMPLETE')}
                         </span>
                       </div>
 
                       <div className="flex justify-between items-center mb-1">
                         <span className="text-xs sm:text-sm font-bold text-slate-900">
                           {isAlreadyBasic
-                            ? (isMalay ? 'Naik Taraf Baki (+RM15)' : 'Top-Up Upgrade (+RM15)')
-                            : tier === 'personal' ? (isMalay ? 'Apply Upgrade (+RM15)' : 'Apply Upgrade (+RM15)') : (isMalay ? 'SME Apply Upgrade' : 'SME Apply Upgrade')}
+                            ? (isMalay ? 'Pakej Permohonan Bank (+RM15)' : 'Application Packs Add-on (+RM15)')
+                            : tier === 'personal' ? (isMalay ? 'Laporan + Pakej Bank (+RM15)' : 'Report + Bank Packs (+RM15)') : (isMalay ? 'Audit + Pakej Bank' : 'Audit + Bank Packs')}
                         </span>
                         <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
                           selectedPackage === 'upgrade' ? 'border-[#091E42] bg-[#091E42]' : 'border-slate-300'
@@ -689,8 +691,8 @@ export default function CreditPassportPaywallModal({
 
                       <span className="text-[11px] text-slate-600 block leading-tight">
                         {isMalay
-                          ? 'Buka SEMUA Institusi Kewangan & Pakej Permohonan Platform'
-                          : 'Unlock ALL Lenders & Generate Full Platform Application Pack'}
+                          ? 'Buka Pakej Permohonan & Memo CAM Rasmi untuk SEMUA Bank Sepadan'
+                          : 'Unlocks Official Application Packs & CAM Memos for ALL Matched Banks'}
                       </span>
                     </div>
 

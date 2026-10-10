@@ -4611,7 +4611,8 @@ export default function Dashboard() {
                             const applicationRecord = appliedLenders[lender.name];
                             const isApplied = !!applicationRecord;
                             const isLocked = !isCurrentAssessmentUnlocked;
-                            const isCardUnlocked = lender.isTop ? isCurrentAssessmentUnlocked : (isCurrentAssessmentUnlocked && isAllLendersUnlocked);
+                            // Application pack generation requires Apply Upgrade (RM 34.90 / +RM 15 top-up)
+                            const isCardUnlocked = isAllLendersUnlocked;
 
                             const maskedBankName = lender.isTop
                               ? (language === 'bm' ? 'Bank Digital Berlesen (Padanan #1)' : 'Top-Tier Digital Bank (Match #1)')
@@ -4648,10 +4649,10 @@ export default function Dashboard() {
                                             {language === 'bm' ? 'Padanan Terbaik' : 'Top Match'}
                                           </span>
                                         )}
-                                        {!lender.isTop && isCurrentAssessmentUnlocked && !isAllLendersUnlocked && (
+                                        {!isCardUnlocked && isCurrentAssessmentUnlocked && (
                                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1">
                                             <Lock className="w-2.5 h-2.5 text-amber-700" />
-                                            <span>{language === 'bm' ? 'Perlu Naik Taraf (+RM15)' : 'Needs Upgrade (+RM15)'}</span>
+                                            <span>{language === 'bm' ? 'Pakej Dikunci (+RM15)' : 'Pack Locked (+RM15)'}</span>
                                           </span>
                                         )}
                                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
@@ -4824,7 +4825,7 @@ export default function Dashboard() {
                                 </button>
                                 <button
                                   onClick={() => {
-                                    if (!isCurrentAssessmentUnlocked) {
+                                    if (!isAllLendersUnlocked) {
                                       setShowPaywallModal(true);
                                       return;
                                     }
@@ -4838,17 +4839,28 @@ export default function Dashboard() {
                                     setApplySubmitted(false);
                                     setApplyModalOpen(true);
                                   }}
-                                  className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2 bg-blue-950 hover:bg-blue-900 text-white text-xs font-extrabold rounded-xl transition-all shadow-sm cursor-pointer"
+                                  className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 px-3.5 py-2 text-white text-xs font-extrabold rounded-xl transition-all shadow-sm cursor-pointer ${
+                                    !isAllLendersUnlocked && isCurrentAssessmentUnlocked
+                                      ? 'bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800'
+                                      : 'bg-blue-950 hover:bg-blue-900'
+                                  }`}
                                 >
-                                  {!isCurrentAssessmentUnlocked ? (
-                                    <>
-                                      <Lock className="w-3.5 h-3.5 text-blue-300" />
-                                      <span>
-                                        {language === 'bm'
-                                          ? (borrowerCategory === 'sme' ? 'Buka Padanan PKS (RM 49.90)' : 'Buka Padanan Utama (RM 19.90)')
-                                          : (borrowerCategory === 'sme' ? 'Unlock SME Matches (RM 49.90)' : 'Unlock Top Match (RM 19.90)')}
-                                      </span>
-                                    </>
+                                  {!isAllLendersUnlocked ? (
+                                    isCurrentAssessmentUnlocked ? (
+                                      <>
+                                        <Lock className="w-3.5 h-3.5 text-amber-200" />
+                                        <span>{language === 'bm' ? 'Buka Pakej Permohonan (+RM 15.00)' : 'Unlock Application Pack (+RM 15.00)'}</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Lock className="w-3.5 h-3.5 text-blue-300" />
+                                        <span>
+                                          {language === 'bm'
+                                            ? (borrowerCategory === 'sme' ? 'Buka Pakej PKS (RM 49.90)' : 'Buka Laporan Kelayakan (RM 19.90)')
+                                            : (borrowerCategory === 'sme' ? 'Unlock SME Report (RM 49.90)' : 'Unlock Health Report (RM 19.90)')}
+                                        </span>
+                                      </>
+                                    )
                                   ) : (
                                     <>
                                       <Zap className="w-3.5 h-3.5 text-blue-300" />
@@ -4907,12 +4919,18 @@ export default function Dashboard() {
                                       </div>
                                       <div>
                                         <strong className="block font-bold">
-                                          {language === 'bm' ? 'Padanan Tambahan Dikunci (Pelan Asas)' : 'Alternative Lenders Locked (Basic Plan Active)'}
+                                          {language === 'bm'
+                                            ? (isCurrentAssessmentUnlocked ? 'Pakej Permohonan Bank Belum Dibuka (+RM 15.00)' : 'Pakej Permohonan Bank Dikunci')
+                                            : (isCurrentAssessmentUnlocked ? 'Official Application Packs Locked (+RM 15.00 Top-Up)' : 'Official Bank Application Packs Locked')}
                                         </strong>
                                         <span className="text-[11px] text-amber-800 leading-tight">
                                           {language === 'bm'
-                                            ? `Pelan Asas (RM 19.90) hanya membuka Padanan Utama (${topMatch?.name.split(' ')[0] || 'BSN'}). Naik taraf ke Apply Upgrade (+RM 15.00) untuk membuka kesemua ${otherMatches.length} bank dan menjana pakej permohonan bersasar.`
-                                            : `Basic Plan (RM 19.90) unlocks Top Match (${topMatch?.name.split(' ')[0] || 'BSN'}). Upgrade (+RM 15.00) to unlock all ${otherMatches.length} alternative lenders and generate custom packs for higher approval odds.`}
+                                            ? (isCurrentAssessmentUnlocked
+                                                ? `Pelan Asas anda merangkumi Laporan & Skor sahaja. Tambah +RM 15.00 untuk menjana Pakej Permohonan & Memo CAM rasmi bagi kesemua ${mockLenderCards.length} bank sepadan.`
+                                                : `Pelan Asas (RM 19.90) menyediakan Laporan Kesihatan & Padanan Bank sahaja. Naik taraf ke Pakej Lengkap (RM 34.90) untuk menjana fail permohonan bersasar untuk semua bank.`)
+                                            : (isCurrentAssessmentUnlocked
+                                                ? `Your Basic Plan covers the Health Report & bank matching only. Top up +RM 15.00 to generate official Bank Application Packs & CAM Underwriting Memos for all ${mockLenderCards.length} matched banks.`
+                                                : `Basic Plan (RM 19.90) provides the Credit Health Report only. Upgrade to Complete Pack (RM 34.90) to generate ready-to-submit bank application packs for all matched lenders.`)}
                                         </span>
                                       </div>
                                     </div>
@@ -4921,7 +4939,11 @@ export default function Dashboard() {
                                       className="px-3.5 py-2 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-bold rounded-xl shadow-xs transition-all shrink-0 cursor-pointer text-xs flex items-center gap-1.5"
                                     >
                                       <Zap className="w-3.5 h-3.5 text-amber-200" />
-                                      <span>{language === 'bm' ? 'Buka Semua (+RM 15)' : 'Unlock All (+RM 15)'}</span>
+                                      <span>
+                                        {isCurrentAssessmentUnlocked
+                                          ? (language === 'bm' ? 'Buka Pakej Permohonan (+RM 15)' : 'Unlock Application Packs (+RM 15)')
+                                          : (language === 'bm' ? 'Buka Pakej Permohonan' : 'Unlock Application Packs')}
+                                      </span>
                                     </button>
                                   </div>
                                 )}
