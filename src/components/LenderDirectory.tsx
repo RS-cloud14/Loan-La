@@ -806,7 +806,7 @@ export default function LenderDirectory({ onApplyLender }: LenderDirectoryProps)
     aim_madani: 'https://www.aim.gov.my/',
     bsn: 'https://www.bsn.com.my/page/BSN-Micro',
     bank_rakyat: 'https://www.bankrakyat.com.my',
-    tekun: 'https://www.tekun.gov.my/',
+    tekun: 'https://www.tekun.gov.my/skim-pembiayaan-tekun-niaga/',
     aeon: 'https://www.aeoncredit.com.my/personal-financing/i-cash',
     gxbank: 'https://gxbank.my/',
     boost_bank: 'https://myboostbank.co/',

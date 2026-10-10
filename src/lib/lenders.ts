@@ -567,7 +567,7 @@ export const LENDERS: Lender[] = [
     website: 'tekun.gov.my',
     hotline: '+603-9059 8888',
     whatsappOfficer: '+6019-223 8888',
-    applicationUrl: 'https://tekunonline.tekun.gov.my/login',
+    applicationUrl: 'https://www.tekun.gov.my/skim-pembiayaan-tekun-niaga/',
     minFRIScore: 400,
     highlight: 'Ultra-low 4.0% subsidized annual profit rate. Open to micro-traders, blacklisted applicants & gig riders.',
     notes: 'Agency under KUSKOP. Highest approval rate in Malaysia for self-employed and informal earners. Supports online e-Permohonan and WhatsApp loan officer dispatch.',
@@ -608,8 +608,8 @@ export const LENDERS: Lender[] = [
         productType: 'micro_credit',
         minAmountRM: 1000,
         maxAmountRM: 100000,
-        tenureMinMonths: 12,
-        tenureMaxMonths: 60,
+        tenureMinMonths: 6,
+        tenureMaxMonths: 120,
         rateType: 'flat_pa',
         rateFromPercent: 4.0,
         rateToPercent: 4.0,
@@ -1353,14 +1353,18 @@ export function getLenderOfficialPortalUrl(lenderName?: string, existingUrl?: st
     if (existingUrl.includes('bsn.com.my') && (existingUrl.includes('BSN-Micro') || existingUrl.includes('semarak'))) {
       return 'https://www.bsn.com.my/page/business-financing-products-index';
     }
+    if (existingUrl.includes('tekun.gov.my') && (existingUrl.includes('skym-pembiayaan') || existingUrl.includes('tekunonline'))) {
+      if (existingUrl.includes('mobilepreneur')) return 'https://www.tekun.gov.my/skim-pembiayaan-tekun-mobilepreneur-4-0/';
+      return 'https://www.tekun.gov.my/skim-pembiayaan-tekun-niaga/';
+    }
     return existingUrl;
   }
 
   const name = (lenderName || '').toLowerCase();
   if (name.includes('musk')) return 'https://www.bankrakyat.com.my/portal-main/article/micro-financing-i-musk';
   if (name.includes('bank rakyat') || name.includes('rakyat')) return 'https://www.bankrakyat.com.my/portal-main/article/micro-enterprise-fund';
-  if (name.includes('tekun mobilepreneur') || name.includes('mobilepreneur')) return 'https://www.tekun.gov.my/ms/skym-pembiayaan/skim-pembiayaan-tekun-mobilepreneur/';
-  if (name.includes('tekun niaga') || name.includes('tekun')) return 'https://www.tekun.gov.my/ms/skym-pembiayaan/skim-pembiayaan-tekun-niaga/';
+  if (name.includes('tekun mobilepreneur') || name.includes('mobilepreneur')) return 'https://www.tekun.gov.my/skim-pembiayaan-tekun-mobilepreneur-4-0/';
+  if (name.includes('tekun niaga') || name.includes('tekun')) return 'https://www.tekun.gov.my/skim-pembiayaan-tekun-niaga/';
   if (name.includes('bsn') || name.includes('simpanan')) return 'https://www.bsn.com.my/page/business-financing-products-index';
   if (name.includes('agrobank') || name.includes('agro')) return 'https://www.agrobank.com.my/product/pembiayaan-kredit-mikro-i/';
   if (name.includes('sme bank')) return 'https://www.smebank.com.my/en/financing/spum';
