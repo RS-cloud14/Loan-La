@@ -7,7 +7,7 @@ import {
   Building2, ExternalLink, Check, AlertTriangle,
   Copy, ClipboardCheck, Info, Smartphone, QrCode,
   Download, Send, MessageCircle, HelpCircle, ChevronRight,
-  Bot, Play, Terminal, Zap, RefreshCw, Cpu, Layers, CheckCircle, UserCheck
+  Bot, Play, Terminal, Zap, RefreshCw, Cpu, Layers, CheckCircle, UserCheck, BookOpen
 } from 'lucide-react';
 import BankLogo from '@/components/BankLogo';
 import {
@@ -89,6 +89,8 @@ export default function AIApplicationDispatcherModal({
   // BSN Scheme Intelligence & Borrower Proposal States
   const [selectedBsnScheme, setSelectedBsnScheme] = useState<BsnScheme | null>(null);
   const [showAllBsnSchemes, setShowAllBsnSchemes] = useState(false);
+  // BSN Dual Submission Mode: Online Apply (bsncheckin portal) vs Offline Apply (Branch Walk-In)
+  const [bsnChannelChoice, setBsnChannelChoice] = useState<'online' | 'offline'>('online');
   const [isProposalModalOpen, setIsProposalModalOpen] = useState(false);
   const [proposalData, setProposalData] = useState<LoanProposalData | null>(null);
 
@@ -119,6 +121,7 @@ export default function AIApplicationDispatcherModal({
       setConciergeDispatched(false);
       setActiveTab('SIMULATION');
       setShowAllBsnSchemes(false);
+      setBsnChannelChoice('online');
 
       // Check if lender is BSN and match top scheme from 17 BSN micro products
       const isBsn = (target.lenderName || '').toLowerCase().includes('bsn') || (target.lenderName || '').toLowerCase().includes('simpanan');
@@ -225,11 +228,15 @@ export default function AIApplicationDispatcherModal({
   const portalUrl = target.lenderUrl || getLenderOfficialPortalUrl(lenderName);
   const isBm = language === 'bm';
 
-  const isWalkIn = channelType === 'commercial_bank_assisted' || (channelType as any) === 'branch_walk_in' ||
-    lenderName.toLowerCase().includes('bsn') ||
-    lenderName.toLowerCase().includes('rakyat') ||
-    lenderName.toLowerCase().includes('agrobank') ||
-    lenderName.toLowerCase().includes('sme bank');
+  const isBsnLender = lenderName.toLowerCase().includes('bsn') || lenderName.toLowerCase().includes('simpanan');
+
+  // If BSN, user can dynamically choose between Online Portal and Offline Branch Walk-In
+  const isWalkIn = isBsnLender
+    ? bsnChannelChoice === 'offline'
+    : (channelType === 'commercial_bank_assisted' || (channelType as any) === 'branch_walk_in' ||
+       lenderName.toLowerCase().includes('rakyat') ||
+       lenderName.toLowerCase().includes('agrobank') ||
+       lenderName.toLowerCase().includes('sme bank'));
 
   const isWhatsAppOfficer = channelType === 'government_micro_agency' || (channelType as any) === 'officer_whatsapp' ||
     lenderName.toLowerCase().includes('tekun') ||
@@ -651,6 +658,54 @@ export default function AIApplicationDispatcherModal({
                     ))}
                   </div>
                 )}
+
+                {/* BSN Dual Intake Choice (Stage 1) */}
+                {isBsn && (
+                  <div className="pt-3 border-t border-slate-100 flex flex-col gap-2">
+                    <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider block">
+                      {isBm ? 'Pilih Kaedah Permohonan BSN Yang Diingini:' : 'Select Preferred BSN Application Method:'}
+                    </span>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setBsnChannelChoice('online')}
+                        className={`p-2.5 rounded-xl border text-left text-xs transition cursor-pointer flex items-center justify-between ${
+                          bsnChannelChoice === 'online'
+                            ? 'bg-blue-950 text-white border-blue-950 shadow-2xs font-bold'
+                            : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Globe className="w-3.5 h-3.5 text-cyan-300" />
+                          <div>
+                            <span className="block font-bold leading-tight">{isBm ? '1. Online (Portal Web)' : '1. Online (Web Portal)'}</span>
+                            <span className={`text-[10px] ${bsnChannelChoice === 'online' ? 'text-blue-200' : 'text-slate-500'}`}>bsncheckin e-Form</span>
+                          </div>
+                        </div>
+                        {bsnChannelChoice === 'online' && <Check className="w-3.5 h-3.5 text-cyan-300 shrink-0" />}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setBsnChannelChoice('offline')}
+                        className={`p-2.5 rounded-xl border text-left text-xs transition cursor-pointer flex items-center justify-between ${
+                          bsnChannelChoice === 'offline'
+                            ? 'bg-blue-950 text-white border-blue-950 shadow-2xs font-bold'
+                            : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Building2 className="w-3.5 h-3.5 text-cyan-300" />
+                          <div>
+                            <span className="block font-bold leading-tight">{isBm ? '2. Walk-In (Cawangan)' : '2. Branch Walk-In'}</span>
+                            <span className={`text-[10px] ${bsnChannelChoice === 'offline' ? 'text-blue-200' : 'text-slate-500'}`}>400+ Cawangan</span>
+                          </div>
+                        </div>
+                        {bsnChannelChoice === 'offline' && <Check className="w-3.5 h-3.5 text-cyan-300 shrink-0" />}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* CARD 2: VERIFIED BORROWER DOSSIER & PROPOSAL (Important Info #2) */}
@@ -813,6 +868,77 @@ export default function AIApplicationDispatcherModal({
                 </div>
               )}
 
+              {/* BSN Dual Intake Choice Switcher (Stage 2) */}
+              {isBsn && (
+                <div className="p-4 bg-white rounded-2xl border-2 border-blue-900/20 shadow-sm flex flex-col gap-2.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2.5 h-2.5 rounded-full bg-blue-900 animate-pulse" />
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-900">
+                        {isBm ? 'Pilih Kaedah Permohonan BSN (Online vs Cawangan):' : 'Choose BSN Application Method (Online vs Branch):'}
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-md bg-blue-50 text-blue-900 border border-blue-200">
+                      {bsnChannelChoice === 'online' ? (isBm ? 'Dalam Talian (Portal Web)' : 'Online Portal') : (isBm ? 'Hadir Cawangan (Walk-In)' : 'Branch Walk-In')}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {/* Option 1: Online Application */}
+                    <button
+                      type="button"
+                      onClick={() => setBsnChannelChoice('online')}
+                      className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
+                        bsnChannelChoice === 'online'
+                          ? 'bg-blue-950 text-white border-blue-950 shadow-md ring-2 ring-blue-950/20'
+                          : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <div className={`p-2 rounded-lg ${bsnChannelChoice === 'online' ? 'bg-blue-900 text-cyan-300' : 'bg-white text-slate-700 border border-slate-200'}`}>
+                          <Globe className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <span className="text-xs font-bold block">
+                            {isBm ? '1. Mohon Online (Portal Rasmi)' : '1. Apply Online (Web Portal)'}
+                          </span>
+                          <span className={`text-[10px] block ${bsnChannelChoice === 'online' ? 'text-blue-200' : 'text-slate-500'}`}>
+                            {isBm ? 'Portal bsncheckin.com.my (e-Borang)' : 'bsncheckin.com.my e-Form'}
+                          </span>
+                        </div>
+                      </div>
+                      {bsnChannelChoice === 'online' && <CheckCircle2 className="w-4 h-4 text-cyan-300 shrink-0" />}
+                    </button>
+
+                    {/* Option 2: Offline Branch Walk-In */}
+                    <button
+                      type="button"
+                      onClick={() => setBsnChannelChoice('offline')}
+                      className={`p-3 rounded-xl border text-left transition-all cursor-pointer flex items-center justify-between ${
+                        bsnChannelChoice === 'offline'
+                          ? 'bg-blue-950 text-white border-blue-950 shadow-md ring-2 ring-blue-950/20'
+                          : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <div className={`p-2 rounded-lg ${bsnChannelChoice === 'offline' ? 'bg-blue-900 text-cyan-300' : 'bg-white text-slate-700 border border-slate-200'}`}>
+                          <Building2 className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <span className="text-xs font-bold block">
+                            {isBm ? '2. Mohon di Cawangan (Walk-in)' : '2. Apply at Branch (Walk-In)'}
+                          </span>
+                          <span className={`text-[10px] block ${bsnChannelChoice === 'offline' ? 'text-blue-200' : 'text-slate-500'}`}>
+                            {isBm ? '400+ cawangan fizikal dengan PDF bercetak' : '400+ physical branches nationwide'}
+                          </span>
+                        </div>
+                      </div>
+                      {bsnChannelChoice === 'offline' && <CheckCircle2 className="w-4 h-4 text-cyan-300 shrink-0" />}
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {/* Intake Channel Explainer Banner */}
               <div className="p-3.5 bg-blue-50/70 border border-blue-200 rounded-2xl flex items-start gap-3">
                 <div className="w-8 h-8 rounded-xl bg-blue-100 border border-blue-200 text-blue-800 flex items-center justify-center shrink-0 mt-0.5">
@@ -820,8 +946,12 @@ export default function AIApplicationDispatcherModal({
                 </div>
                 <div className="text-xs">
                   <span className="font-extrabold text-blue-950 block">
-                    {isWalkIn
-                      ? (isBm ? `Saluran Rasmi ${lenderName}: Penyerahan Kaunter Cawangan (Walk-In Diwajibkan)` : `Official ${lenderName} Channel: Physical Branch Walk-In Required`)
+                    {isBsn
+                      ? (bsnChannelChoice === 'online'
+                          ? (isBm ? 'Saluran Terpilih: Portal Permohonan Dalam Talian BSN (bsncheckin)' : 'Selected Channel: Official BSN Online Application Portal')
+                          : (isBm ? 'Saluran Terpilih: Penyerahan Kaunter Fizikal Cawangan BSN' : 'Selected Channel: BSN Physical Branch Walk-In Intake'))
+                      : isWalkIn
+                      ? (isBm ? `Saluran Rasmi ${lenderName}: Penyerahan Kaunter Cawangan Fizikal` : `Official ${lenderName} Channel: Physical Branch Walk-In Required`)
                       : isWhatsAppOfficer
                       ? (isBm ? 'Saluran Agensi: Penyerahan Melalui Pegawai Daerah / WhatsApp' : 'Agency Intake Channel: Direct District Officer WhatsApp Submission')
                       : isDigitalApp
@@ -830,10 +960,18 @@ export default function AIApplicationDispatcherModal({
                     }
                   </span>
                   <p className="text-slate-600 mt-0.5 leading-relaxed">
-                    {isWalkIn
+                    {isBsn
+                      ? (bsnChannelChoice === 'online'
+                          ? (isBm
+                              ? 'Portal Rasmi BSN (bsncheckin.com.my/MF/): Anda boleh memohon pembiayaan mikro secara dalam talian tanpa perlu ke kaunter bank. Gunakan data pra-isi yang disahkan di bawah untuk mengisi borang 5 bahagian dan muat naik dokumen (SSM, IC, Penyata Bank & Bil Utiliti). Selepas hantar, anda akan menerima Laporan Penghantaran (Transmittal Report).'
+                              : 'Official BSN Portal (bsncheckin.com.my/MF/): You can apply for micro financing 100% online without visiting a branch. Use our verified pre-filled credentials to complete the 5-part intake e-form and upload required documents (SSM, IC, statements, utility bill). Download your official BSN Transmittal Report upon submission.')
+                          : (isBm
+                              ? 'Kaunter Cawangan BSN: Pemohon yang memilih serahan bersemuka boleh memuat turun Pakej Permohonan Bercetak lengkap dan hadir ke mana-mana 400+ cawangan BSN seluruh negara bersama MyKad.'
+                              : 'BSN Branch Counter: Applicants preferring in-person intake can download the certified physical bank pack and present it at any of BSN\'s 400+ branch counters nationwide.'))
+                      : isWalkIn
                       ? (isBm
-                          ? `Pihak ${lenderName} memerlukan pemohon hadir secara fizikal di mana-mana 400+ cawangan bersama borang rasmi dan MyKad. Pakej Permohonan (PDF) di bawah telah mengumpulkan semua borang, kertas kerja Part B, dan Memo Pengunderaitan CAM agar anda hanya perlu serah di kaunter tanpa kekeliruan.`
-                          : `${lenderName} micro-financing requires physical in-person submission at any branch counter nationwide (over 400 branches). Your Pre-Filled Application Pack (PDF) compiles all required bank forms, Part B proposal, and CAM underwriting memo so you can submit at the counter in one trip.`)
+                          ? `Pihak ${lenderName} memerlukan pemohon hadir secara fizikal di mana-mana cawangan bersama borang rasmi dan MyKad. Pakej Permohonan (PDF) di bawah telah mengumpulkan semua borang, kertas kerja Part B, dan Memo Pengunderaitan CAM agar anda hanya perlu serah di kaunter tanpa kekeliruan.`
+                          : `${lenderName} micro-financing requires physical in-person submission at any branch counter nationwide. Your Pre-Filled Application Pack (PDF) compiles all required bank forms, Part B proposal, and CAM underwriting memo so you can submit at the counter in one trip.`)
                       : isWhatsAppOfficer
                       ? (isBm
                           ? `Pembiayaan ${lenderName} dinilai secara terus oleh Pegawai Pembiayaan Daerah. Hubungi pegawai melalui WhatsApp dengan profil yang telah siap disusun di bawah.`
@@ -945,12 +1083,18 @@ export default function AIApplicationDispatcherModal({
                         <ExternalLink className="w-4 h-4 text-slate-400" />
                       </div>
                       <h4 className="text-sm font-bold text-slate-900 mt-2">
-                        {isBm ? `Buka Portal Rasmi ${lenderName}` : `Open Official ${lenderName} Portal`}
+                        {isBsn
+                          ? (isBm ? 'Portal Rasmi BSN (bsncheckin.com.my)' : 'Official BSN Portal (bsncheckin.com.my)')
+                          : (isBm ? `Buka Portal Rasmi ${lenderName}` : `Open Official ${lenderName} Portal`)}
                       </h4>
                       <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                        {isBm
-                          ? 'Portal rasmi dibuka dalam tab baru. Semua butiran pendapatan, skor kredit, dan cadangan pembiayaan sedia untuk pengesahan akhir.'
-                          : 'Access the bank\'s official application intake page. Verified applicant credentials and loan terms are prepared.'}
+                        {isBsn
+                          ? (isBm
+                              ? 'Portal e-Permohonan Pembiayaan Mikro BSN dibuka dalam tab baru. Ikuti panduan rasmi 5 bahagian di bawah untuk melengkapkan borang dalam talian.'
+                              : 'BSN Micro Financing online portal opens in a new tab. Follow the official 5-part userguide below to complete your intake.')
+                          : (isBm
+                              ? 'Portal rasmi dibuka dalam tab baru. Semua butiran pendapatan, skor kredit, dan cadangan pembiayaan sedia untuk pengesahan akhir.'
+                              : 'Access the bank\'s official application intake page. Verified applicant credentials and loan terms are prepared.')}
                       </p>
                     </div>
 
@@ -959,8 +1103,8 @@ export default function AIApplicationDispatcherModal({
                       onClick={handleLaunchBankPortal}
                       className="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-black text-white font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
                     >
-                      <ExternalLink className="w-3.5 h-3.5 text-slate-300" />
-                      <span>{isBm ? 'Buka Portal Bank Sekarang ↗' : 'Open Bank Portal Now ↗'}</span>
+                      <ExternalLink className="w-3.5 h-3.5 text-cyan-300" />
+                      <span>{isBsn ? (isBm ? 'Buka Portal BSN (bsncheckin) ↗' : 'Open BSN Portal (bsncheckin) ↗') : (isBm ? 'Buka Portal Bank Sekarang ↗' : 'Open Bank Portal Now ↗')}</span>
                     </button>
                   </div>
                 )}
@@ -1110,6 +1254,132 @@ export default function AIApplicationDispatcherModal({
                 )}
 
               </div>
+
+              {/* BSN Official Online Application Guide (Extracted from BSN Userguide PDF) */}
+              {isBsn && bsnChannelChoice === 'online' && (
+                <div className="p-4 sm:p-5 rounded-2xl bg-white border border-blue-200/90 shadow-xs space-y-3.5">
+                  <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+                    <div className="flex items-center gap-2.5">
+                      <div className="p-2 rounded-xl bg-blue-50 text-blue-900 border border-blue-200">
+                        <BookOpen className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-slate-900">
+                          {isBm ? 'Panduan Rasmi Pengisian Portal BSN (Berdasarkan Panduan Pengguna)' : 'Official BSN Online Intake Guide (Step-by-Step Walkthrough)'}
+                        </h4>
+                        <p className="text-[11px] text-slate-500">
+                          {isBm ? 'Tatacara mengisi e-borang permohonan pembiayaan di bsncheckin.com.my/MF/' : 'Field-by-field instructions based on official BSN Micro Financing userguide.'}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                      5 Bahagian (Part A - E)
+                    </span>
+                  </div>
+
+                  <div className="space-y-2.5 text-xs">
+                    {/* Step 1: Pre-Screening */}
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-slate-900 flex items-center gap-1.5">
+                          <span className="w-5 h-5 rounded-full bg-blue-900 text-white text-[10px] flex items-center justify-center font-bold">1</span>
+                          {isBm ? 'Pra-Penyaringan (Pre-Screening)' : 'Pre-Screening & Branch Routing'}
+                        </span>
+                        <span className="text-[10px] text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
+                          {isBm ? 'Muka Surat 1–2' : 'Pages 1–2'}
+                        </span>
+                      </div>
+                      <div className="text-slate-600 space-y-0.5 text-[11px] pl-6">
+                        <p>• <strong>{isBm ? 'Negeri & Cawangan Pemprosesan' : 'State & Processing Branch'}:</strong> {isBm ? 'Pilih lokasi cawangan Mikro berdasarkan alamat premis perniagaan.' : 'Select based on business location/address.'}</p>
+                        <p>• <strong>{isBm ? 'No. Pendaftaran' : 'Registration No'}:</strong> {isBm ? 'No pendaftaran SSM / Lesen / Badan Profesional.' : 'Key-in CCM / License / Professional Body registration.'}</p>
+                        <p>• <strong>{isBm ? 'Amaun & Tarikh Penubuhan' : 'Loan Amount & Inc Date'}:</strong> {isBm ? 'Amaun pembiayaan dipohon & tarikh pendaftaran syarikat.' : 'Intended loan amount & company registration date.'}</p>
+                        <p>• <strong>{isBm ? 'Perolehan Jualan & Pekerja' : 'Sales Turnover & Employees'}:</strong> {isBm ? 'Jualan tahunan (RM), bilangan pekerja tetap & tarikh penzahiran.' : 'Annual turnover (RM), fulltime employee count & date.'}</p>
+                      </div>
+                    </div>
+
+                    {/* Step 2: Financing Details */}
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-slate-900 flex items-center gap-1.5">
+                          <span className="w-5 h-5 rounded-full bg-blue-900 text-white text-[10px] flex items-center justify-center font-bold">2</span>
+                          {isBm ? 'Butiran Pembiayaan (Financing Details)' : 'Financing Terms & Product Selection'}
+                        </span>
+                        <span className="text-[10px] text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
+                          {isBm ? 'Muka Surat 2' : 'Page 2'}
+                        </span>
+                      </div>
+                      <div className="text-slate-600 space-y-0.5 text-[11px] pl-6">
+                        <p>• <strong>{isBm ? 'Jenis Produk' : 'Product Type'}:</strong> Islamic / Conventional.</p>
+                        <p>• <strong>{isBm ? 'Tempoh (Tenure)' : 'Tenure'}:</strong> 12, 24, 36, 48, {isBm ? 'atau' : 'or'} 60 {isBm ? 'Bulan' : 'Months'}.</p>
+                        <p>• <strong>{isBm ? 'Tujuan Pembiayaan' : 'Financing Purpose'}:</strong> WORKING CAPITAL ({isBm ? 'Modal Pusingan' : 'Working Capital'}).</p>
+                        <p>• <strong>{isBm ? 'Akaun BSN GIRO/i' : 'BSN GIRO/i Account'}:</strong> {isBm ? 'Masukkan jika ada, atau biarkan kosong bagi pelanggan baru.' : 'Key-in Giro/i corporate account if available.'}</p>
+                      </div>
+                    </div>
+
+                    {/* Step 3: Part A - Particulars of Company */}
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-slate-900 flex items-center gap-1.5">
+                          <span className="w-5 h-5 rounded-full bg-blue-900 text-white text-[10px] flex items-center justify-center font-bold">3</span>
+                          {isBm ? 'Bahagian A: Butiran Syarikat / Perniagaan' : 'Part A: Particulars of Company / Business'}
+                        </span>
+                        <span className="text-[10px] text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
+                          {isBm ? 'Muka Surat 3–4' : 'Pages 3–4'}
+                        </span>
+                      </div>
+                      <div className="text-slate-600 space-y-0.5 text-[11px] pl-6">
+                        <p>• <strong>{isBm ? 'Alamat Perniagaan' : 'Business Address'}:</strong> {isBm ? '2 baris pertama alamat adalah WAJIB diisi.' : 'First 2 rows are strictly mandatory.'}</p>
+                        <p>• <strong>{isBm ? 'Premis & Pemilikan' : 'Premise & Ownership'}:</strong> {isBm ? 'Pilih jenis premis & pilih YES untuk Malaysian Owned/Controlled.' : 'Select premise type & choose YES for Malaysian Owned.'}</p>
+                        <p>• <strong>{isBm ? 'Konstitusi & Bidang' : 'Constitution & Sector'}:</strong> Sole Proprietorship / Partnership / Sdn Bhd & {isBm ? 'bidang perniagaan' : 'nature of business'}.</p>
+                        <p>• <strong>{isBm ? 'Orang Dihubungi' : 'Contact Person'}:</strong> {isBm ? 'Nama, jawatan, telefon pejabat, nombor telefon bimbit & e-mel.' : 'Key-in contact person name, mobile & email.'}</p>
+                      </div>
+                    </div>
+
+                    {/* Step 4: Part B - Particulars of Applicant & Partners */}
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-slate-900 flex items-center gap-1.5">
+                          <span className="w-5 h-5 rounded-full bg-blue-900 text-white text-[10px] flex items-center justify-center font-bold">4</span>
+                          {isBm ? 'Bahagian B: Butiran Pemohon, Rakan Kongsi & Penjamin' : 'Part B: Applicant & Partner Particulars'}
+                        </span>
+                        <span className="text-[10px] text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
+                          {isBm ? 'Muka Surat 5–7' : 'Pages 5–7'}
+                        </span>
+                      </div>
+                      <div className="text-slate-600 space-y-0.5 text-[11px] pl-6">
+                        <p>• <strong>{isBm ? 'Maklumat Asas' : 'Personal Details'}:</strong> {isBm ? 'Nama seperti MyKad, No. IC, % Pegangan Saham, Status, Bangsa & Kelayakan.' : 'Name as per NRIC, IC No., Shareholding %, Race & Academic Qualification.'}</p>
+                        <p>• <strong>{isBm ? 'Pendapatan & Alamat' : 'Income & Address'}:</strong> {isBm ? 'Pendapatan kasar bulanan, alamat tetap kediaman & jenis kediaman (sendiri/sewa).' : 'Monthly gross income, permanent address & residential type.'}</p>
+                        <p>• <strong>{isBm ? 'Rakan Kongsi Tambahan' : 'Additional Partners'}:</strong> {isBm ? 'Sekiranya ada rakan kongsi lain, tekan butang' : 'For partnerships, click'} <span className="font-bold text-blue-900">“Add Business Partner”</span> {isBm ? 'untuk menyimpan setiap individu.' : 'to save every partner/director.'}</p>
+                      </div>
+                    </div>
+
+                    {/* Step 5: Part C, D & E - Declarations, Upload & Transmittal */}
+                    <div className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-slate-900 flex items-center gap-1.5">
+                          <span className="w-5 h-5 rounded-full bg-blue-900 text-white text-[10px] flex items-center justify-center font-bold">5</span>
+                          {isBm ? 'Bahagian C, D & E: Deklarasi, Dokumen & Laporan Penghantaran' : 'Part C, D & E: Declarations, Upload & Transmittal'}
+                        </span>
+                        <span className="text-[10px] text-slate-500 bg-white px-2 py-0.5 rounded border border-slate-200">
+                          {isBm ? 'Muka Surat 8–10' : 'Pages 8–10'}
+                        </span>
+                      </div>
+                      <div className="text-slate-600 space-y-0.5 text-[11px] pl-6">
+                        <p>• <strong>Part C ({isBm ? 'Deklarasi' : 'Declarations'}):</strong> {isBm ? 'Tandakan akuan hubungkait kakitangan BSN dan persetujuan PDPA.' : 'Connected party declaration & personal data consent.'}</p>
+                        <p>• <strong>Part D ({isBm ? 'Muat Naik Dokumen - Maks 10MB setiap satu, tekan Validate' : 'Upload Documents - Max 10MB each, click Validate'}):</strong></p>
+                        <div className="pl-3 space-y-0.5 text-[10px] text-slate-500">
+                          <p>1. {isBm ? 'Sijil SSM / Pendaftaran Perniagaan (Borang 9/24/49/M&A)' : 'SSM / Business Registration'}</p>
+                          <p>2. {isBm ? 'Salinan MyKad pemilik / semua rakan kongsi / pengarah' : 'NRIC copy for all owners/directors'}</p>
+                          <p>3. {isBm ? 'Penyata bank 3–6 bulan terkini' : 'Latest 3-6 months bank statement'}</p>
+                          <p>4. {isBm ? 'Bil utiliti premis perniagaan (1 bulan terkini)' : '1 month premise utility bill'}</p>
+                          <p>5. {isBm ? 'Akaun pengurusan / cukai 2 tahun terkini (jika ada)' : '2 years tax/management accounts'}</p>
+                        </div>
+                        <p>• <strong>Part E ({isBm ? 'Laporan Penghantaran' : 'Transmittal Report'}):</strong> {isBm ? 'Tekan' : 'Click'} <span className="font-bold text-emerald-700">SUBMIT APPLICATION</span>. {isBm ? 'Salin Kod Rujukan (Reference Number) & muat turun' : 'Copy Reference Number & download'} <em>Transmittal Report</em>, <em>Application Form (PDF)</em> & <em>Declaration Form (PDF)</em>.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Verified Application Credentials Card (Fast Copy Reference) */}
               {/* Optional Collapsible Verified Application Credentials */}
