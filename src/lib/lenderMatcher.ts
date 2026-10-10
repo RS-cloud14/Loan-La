@@ -658,6 +658,118 @@ export function getSmartMatchedLenders(params: SmartMatchInput): SmartMatchedCar
         'Direct Grab ecosystem affinity and cashless integration',
         `Clean DSR (${dsr.toFixed(1)}%) qualifies for instant pre-approved credit line`
       ]
+    },
+
+    // 11. Boost Bank (Digital Personal Financing)
+    {
+      id: 'boost_bank_personal',
+      name: 'Boost Bank (Digital Financing)',
+      lenderName: 'Boost Bank Berhad (RHB & Axiata)',
+      productName: 'Boost PayFlex & Micro-Capital Loan',
+      baseRate: 0.052,
+      rateLabel: '4.8% – 6.5% p.a.',
+      speed: 'Instant / Within 24 Hours',
+      minIncome: 1200,
+      maxAmount: 20000,
+      minAmount: 1000,
+      shariah: true,
+      compatiblePurposes: ['personal_cash', 'working_capital'],
+      channelType: 'digital_app',
+      channelLabel: '📱 Boost Bank Digital App',
+      intakeInstruction: 'Permohonan digital melalui aplikasi Boost Bank dengan kelulusan algoritma pantas.',
+      url: 'https://myboostbank.co',
+      gigPriorityBonus: 26,
+      traderPriorityBonus: 15,
+      purposeBonus: purpose === 'personal_cash' ? 24 : 15,
+      reasons: [
+        'Licensed Malaysian digital bank specialized in micro-credit for gig and app-based earners',
+        'Algorithmic screening recognizing multi-platform digital earnings history',
+        'Fast turnaround with 100% online in-app verification'
+      ]
+    },
+
+    // 12. AEON Bank (Islamic Digital Financing)
+    {
+      id: 'aeon_bank_personal',
+      name: 'AEON Bank (Islamic Digital)',
+      lenderName: 'AEON Bank (M) Berhad',
+      productName: 'AEON Islamic Personal Financing-i',
+      baseRate: 0.05,
+      rateLabel: '4.5% – 5.9% p.a. (Shariah)',
+      speed: 'Instant / Same-Day',
+      minIncome: 1500,
+      maxAmount: 25000,
+      minAmount: 2000,
+      shariah: true,
+      compatiblePurposes: ['personal_cash', 'vehicle'],
+      channelType: 'digital_app',
+      channelLabel: '📱 AEON Bank App (e-KYC)',
+      intakeInstruction: 'Buka akaun dan pohon pembiayaan peribadi digital patuh Syariah dalam aplikasi.',
+      url: 'https://aeonbank.com.my',
+      gigPriorityBonus: 22,
+      traderPriorityBonus: 15,
+      purposeBonus: purpose === 'personal_cash' ? 22 : 12,
+      reasons: [
+        'Malaysia’s first Islamic digital bank offering fast personal cash lines',
+        'Direct Shariah-compliant Murabahah financing facility with low fixed rates',
+        'Integrates with retail merchant ecosystems and digital wallet history'
+      ]
+    },
+
+    // 13. MBSB Bank (Pembiayaan Peribadi-i)
+    {
+      id: 'mbsb_ihsan_personal',
+      name: 'MBSB Bank (Pembiayaan Peribadi-i)',
+      lenderName: 'MBSB Bank Berhad',
+      productName: 'MBSB Cash Rich Personal Financing-i',
+      baseRate: 0.058,
+      rateLabel: '5.20% – 6.80% p.a.',
+      speed: '3–5 business days',
+      minIncome: 2000,
+      maxAmount: 50000,
+      minAmount: 3000,
+      shariah: true,
+      compatiblePurposes: ['personal_cash', 'working_capital'],
+      channelType: 'branch_walk_in',
+      channelLabel: '🏛️ Cawangan MBSB Bank & Agensi',
+      intakeInstruction: 'Bawa memo kelayakan CreditFlow ke cawangan MBSB terdekat untuk semakan pantas.',
+      url: 'https://www.mbsbbank.com',
+      gigPriorityBonus: 12,
+      traderPriorityBonus: 18,
+      purposeBonus: purpose === 'personal_cash' ? 20 : 15,
+      reasons: [
+        'Established full-fledged Islamic bank with flexible repayment tenure',
+        'High financing limit with Shariah-compliant financing structure',
+        `Net income of RM ${income.toLocaleString()}/mo safely qualifies for facility`
+      ]
+    },
+
+    // 14. RHB Easy-Pinjaman Ekspres
+    {
+      id: 'rhb_easy_personal',
+      name: 'RHB Easy-Pinjaman Ekspres',
+      lenderName: 'RHB Bank Berhad',
+      productName: 'RHB Easy Personal Financing',
+      baseRate: 0.068,
+      rateLabel: '6.5% – 8.5% p.a.',
+      speed: 'Instant at Kiosk / 24 Hours',
+      minIncome: 1500,
+      maxAmount: 30000,
+      minAmount: 2000,
+      shariah: false,
+      compatiblePurposes: ['personal_cash', 'education'],
+      channelType: 'branch_walk_in',
+      channelLabel: '🏛️ Cawangan RHB / Kiosk Easy',
+      intakeInstruction: 'Semakan MyKad dan penyata bank serta merta di mana-mana cawangan RHB Easy.',
+      url: 'https://www.rhbgroup.com',
+      gigPriorityBonus: 14,
+      traderPriorityBonus: 14,
+      purposeBonus: purpose === 'personal_cash' ? 18 : 10,
+      reasons: [
+        'Fast 10-minute approval decision at designated Easy-RHB branches',
+        'Accepts multi-month bank statement proof with simplified application steps',
+        'Tier-1 Malaysian commercial bank facility'
+      ]
     }
   ];
 
@@ -747,15 +859,21 @@ export function getSmartMatchedLenders(params: SmartMatchInput): SmartMatchedCar
     })
     .sort((a, b) => b.score - a.score);
 
-  // Take top 3-4 matches and assign ranks
-  const topMatches = scored.slice(0, 3).map((item, idx) => {
+  // Assign ranks to all qualified matches
+  const rankedMatches = scored.map((item, idx) => {
     return {
       ...item,
       isTop: idx === 0,
-      rankTag: idx === 0 ? 'Top Lender Match' : idx === 1 ? '2nd Ranked Fit' : '3rd Ranked Fit'
+      rankTag: idx === 0 
+        ? 'Top Lender Match' 
+        : idx === 1 
+        ? '2nd Ranked Fit' 
+        : idx === 2 
+        ? '3rd Ranked Fit' 
+        : `${idx + 1}th Ranked Fit`
     };
   });
 
-  return topMatches;
+  return rankedMatches;
 }
 

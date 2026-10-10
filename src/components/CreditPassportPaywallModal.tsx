@@ -36,6 +36,7 @@ interface CreditPassportPaywallModalProps {
   isMalay?: boolean;
   initialTier?: BorrowerPricingTier;
   initialScenario?: PaywallScenario;
+  isAlreadyBasic?: boolean;
 }
 
 export default function CreditPassportPaywallModal({
@@ -45,7 +46,8 @@ export default function CreditPassportPaywallModal({
   applicantName = 'Borrower',
   isMalay = false,
   initialTier = 'personal',
-  initialScenario = 'good_result'
+  initialScenario = 'good_result',
+  isAlreadyBasic = false
 }: CreditPassportPaywallModalProps) {
   // Case Type: Normal (GIG / Personal) vs SME (Business / Company)
   const [tier, setTier] = useState<BorrowerPricingTier>(initialTier);
@@ -67,12 +69,12 @@ export default function CreditPassportPaywallModal({
     if (isOpen) {
       setTier(initialTier);
       setScenario(initialScenario);
-      setSelectedPackage(initialScenario === 'bad_result' ? 'retry' : 'basic');
+      setSelectedPackage(initialScenario === 'bad_result' ? 'retry' : (isAlreadyBasic ? 'upgrade' : 'basic'));
       setPaymentStep('select');
       setIsProcessing(false);
       setCountdownSeconds(298);
     }
-  }, [isOpen, initialTier, initialScenario]);
+  }, [isOpen, initialTier, initialScenario, isAlreadyBasic]);
 
   // Timer countdown simulation for DuitNow QR
   useEffect(() => {
@@ -111,6 +113,15 @@ export default function CreditPassportPaywallModal({
         };
       }
       if (selectedPackage === 'upgrade') {
+        if (isAlreadyBasic) {
+          return {
+            price: '15.00',
+            numericPrice: 15.00,
+            packageName: isMalay ? 'Naik Taraf Penuh (+RM 15.00)' : 'Apply Upgrade Add-on (+RM 15.00)',
+            badge: isMalay ? 'BUKA SEMUA BANK' : 'UNLOCK ALL LENDERS',
+            description: isMalay ? 'Buka SEMUA Padanan Bank Berlesen (Baki Naik Taraf +RM 15.00)' : 'Unlock ALL matched licensed lenders (Top-up +RM 15.00)'
+          };
+        }
         return {
           price: '34.90',
           numericPrice: 34.90,
@@ -138,6 +149,15 @@ export default function CreditPassportPaywallModal({
         };
       }
       if (selectedPackage === 'upgrade') {
+        if (isAlreadyBasic) {
+          return {
+            price: '15.00',
+            numericPrice: 15.00,
+            packageName: isMalay ? 'Naik Taraf PKS Komersial (+RM 15.00)' : 'SME Apply Upgrade Add-on (+RM 15.00)',
+            badge: isMalay ? 'BUKA SEMUA BANK SME' : 'UNLOCK ALL COMMERCIAL',
+            description: isMalay ? 'Buka SEMUA Pembiaya Komersial SME & Agensi (Baki +RM 15.00)' : 'Unlock ALL Commercial SME Lenders (Top-up +RM 15.00)'
+          };
+        }
         return {
           price: '64.90',
           numericPrice: 64.90,
@@ -555,29 +575,61 @@ export default function CreditPassportPaywallModal({
               ) : (
                 /* GOOD RESULT: BASIC VS APPLY UPGRADE */
                 <div>
+                  {isAlreadyBasic && (
+                    <div className="mb-3 p-3 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-start gap-2.5">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+                      <div className="text-xs text-emerald-950">
+                        <strong className="block font-bold">
+                          {isMalay ? 'Pakej Asas Sedang Aktif' : 'Basic Pack Already Unlocked'}
+                        </strong>
+                        <span className="text-[11px] leading-tight text-emerald-800">
+                          {isMalay
+                            ? 'Anda hanya perlu membayar baki +RM 15.00 untuk membuka semua padanan bank dan pakej permohonan.'
+                            : 'You only pay the remaining +RM 15.00 top-up to unlock all matched alternative lenders & application packs.'}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
                   <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block mb-2">
-                    {isMalay ? 'PILIH PAKEJ KELULUSAN ANDA:' : 'SELECT YOUR PACKAGE:'}
+                    {isAlreadyBasic
+                      ? (isMalay ? 'NAIK TARAF PADANAN ANDA:' : 'TOP-UP UPGRADE:')
+                      : (isMalay ? 'PILIH PAKEJ KELULUSAN ANDA:' : 'SELECT YOUR PACKAGE:')}
                   </span>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     
                     {/* OPTION 1: BASIC */}
                     <div
-                      onClick={() => setSelectedPackage('basic')}
-                      className={`p-4 rounded-2xl border text-left transition-all cursor-pointer relative ${
-                        selectedPackage === 'basic'
-                          ? 'border-[#091E42] bg-slate-50/90 ring-2 ring-[#091E42] shadow-xs'
-                          : 'border-slate-200 bg-white hover:border-slate-300'
+                      onClick={() => {
+                        if (!isAlreadyBasic) setSelectedPackage('basic');
+                      }}
+                      className={`p-4 rounded-2xl border text-left transition-all relative ${
+                        isAlreadyBasic 
+                          ? 'border-emerald-200 bg-emerald-50/40 opacity-80 cursor-default'
+                          : selectedPackage === 'basic'
+                          ? 'border-[#091E42] bg-slate-50/90 ring-2 ring-[#091E42] shadow-xs cursor-pointer'
+                          : 'border-slate-200 bg-white hover:border-slate-300 cursor-pointer'
                       }`}
                     >
+                      {isAlreadyBasic && (
+                        <div className="absolute -top-2.5 right-3">
+                          <span className="text-[8.5px] font-black uppercase tracking-wider bg-emerald-600 text-white px-2 py-0.5 rounded-full shadow-xs">
+                            {isMalay ? 'AKTIF' : 'ACTIVE'}
+                          </span>
+                        </div>
+                      )}
+
                       <div className="flex justify-between items-center mb-1">
                         <span className="text-xs sm:text-sm font-bold text-slate-900">
                           {tier === 'personal' ? (isMalay ? 'Pakej Asas' : 'Basic Pack') : (isMalay ? 'SME Analisis Asas' : 'SME Basic Analysis')}
                         </span>
                         <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                          selectedPackage === 'basic' ? 'border-[#091E42] bg-[#091E42]' : 'border-slate-300'
+                          isAlreadyBasic
+                            ? 'border-emerald-600 bg-emerald-600'
+                            : selectedPackage === 'basic' ? 'border-[#091E42] bg-[#091E42]' : 'border-slate-300'
                         }`}>
-                          {selectedPackage === 'basic' && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                          {(isAlreadyBasic || selectedPackage === 'basic') && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
                         </div>
                       </div>
 
@@ -585,12 +637,14 @@ export default function CreditPassportPaywallModal({
                         <span className="text-2xl font-black text-slate-900">
                           RM {tier === 'personal' ? '19.90' : '49.90'}
                         </span>
-                        <span className="text-xs text-slate-500 font-medium">{isMalay ? 'sekali' : 'one-time'}</span>
+                        <span className="text-xs text-slate-500 font-medium">
+                          {isAlreadyBasic ? (isMalay ? '(Sudah Dibayar)' : '(Paid)') : (isMalay ? 'sekali' : 'one-time')}
+                        </span>
                       </div>
 
                       <span className="text-[11px] text-slate-600 block leading-tight">
                         {tier === 'personal'
-                          ? (isMalay ? '1 Laporan, 1 Padanan Bank, 1 Audit Dokumen' : '1 Report, 1 Top Lender Match, 1 Audit')
+                          ? (isMalay ? '1 Laporan, 1 Padanan Bank Utama, 1 Audit Dokumen' : '1 Report, 1 Top Lender Match, 1 Audit')
                           : (isMalay ? '1 Laporan SME, 1 Bank Utama, 1 Audit Mendalam' : '1 Comprehensive SME Report, 1 Top Bank Match')}
                       </span>
                     </div>
@@ -607,13 +661,15 @@ export default function CreditPassportPaywallModal({
                       {/* RECOMMENDED BADGE */}
                       <div className="absolute -top-2.5 right-3">
                         <span className="text-[8.5px] font-black uppercase tracking-wider bg-emerald-700 text-white px-2 py-0.5 rounded-full shadow-xs">
-                          {isMalay ? 'NAIK TARAF DISYORKAN' : 'RECOMMENDED'}
+                          {isAlreadyBasic ? (isMalay ? 'NAIK TARAF BAKI' : 'TOP-UP') : (isMalay ? 'NAIK TARAF DISYORKAN' : 'RECOMMENDED')}
                         </span>
                       </div>
 
                       <div className="flex justify-between items-center mb-1">
                         <span className="text-xs sm:text-sm font-bold text-slate-900">
-                          {tier === 'personal' ? (isMalay ? 'Apply Upgrade (+RM15)' : 'Apply Upgrade (+RM15)') : (isMalay ? 'SME Apply Upgrade' : 'SME Apply Upgrade')}
+                          {isAlreadyBasic
+                            ? (isMalay ? 'Naik Taraf Baki (+RM15)' : 'Top-Up Upgrade (+RM15)')
+                            : tier === 'personal' ? (isMalay ? 'Apply Upgrade (+RM15)' : 'Apply Upgrade (+RM15)') : (isMalay ? 'SME Apply Upgrade' : 'SME Apply Upgrade')}
                         </span>
                         <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
                           selectedPackage === 'upgrade' ? 'border-[#091E42] bg-[#091E42]' : 'border-slate-300'
@@ -624,10 +680,10 @@ export default function CreditPassportPaywallModal({
 
                       <div className="flex items-baseline gap-1 my-1">
                         <span className="text-2xl font-black text-slate-900">
-                          RM {tier === 'personal' ? '34.90' : '64.90'}
+                          RM {isAlreadyBasic ? '15.00' : (tier === 'personal' ? '34.90' : '64.90')}
                         </span>
                         <span className="text-xs text-slate-500 font-medium">
-                          {tier === 'personal' ? '(19.90 + 15.00)' : '(49.90 + 15.00)'}
+                          {isAlreadyBasic ? (isMalay ? '(Baki Tambahan)' : '(Top-Up Difference)') : (tier === 'personal' ? '(19.90 + 15.00)' : '(49.90 + 15.00)')}
                         </span>
                       </div>
 

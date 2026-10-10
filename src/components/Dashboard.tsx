@@ -256,9 +256,10 @@ export default function Dashboard() {
           
           // Load account-specific plan
           const uKey = sessionObj.profileId || sessionObj.phone || sessionObj.email || 'default';
-          const savedPlan = (localStorage.getItem(`creditflow_plan_${uKey}`) || localStorage.getItem('creditflow_unlocked_plan')) as 'single' | 'pro' | null;
+          const savedPlan = (localStorage.getItem(`creditflow_plan_${uKey}`) || localStorage.getItem('creditflow_unlocked_plan')) as 'single' | 'basic' | 'upgrade' | 'pro' | null;
           const savedDocHash = localStorage.getItem(`creditflow_doc_${uKey}`) || localStorage.getItem('creditflow_unlocked_doc_hash');
           const savedProExpiry = localStorage.getItem(`creditflow_expiry_${uKey}`) || localStorage.getItem('creditflow_pro_expiry');
+          const savedAllLenders = localStorage.getItem(`creditflow_all_lenders_${uKey}`) === 'true' || localStorage.getItem('creditflow_all_lenders') === 'true';
 
           if (savedPlan === 'pro' && savedProExpiry) {
             const expTime = parseInt(savedProExpiry, 10);
@@ -266,23 +267,33 @@ export default function Dashboard() {
               setUnlockedPlan('pro');
               setProExpiryTimestamp(expTime);
               setIsPassportUnlocked(true);
+              setIsAllLendersUnlocked(true);
             } else {
               setUnlockedPlan(null);
               setIsPassportUnlocked(false);
+              setIsAllLendersUnlocked(false);
             }
-          } else if (savedPlan === 'single' && savedDocHash) {
-            setUnlockedPlan('single');
+          } else if (savedPlan === 'upgrade' && savedDocHash) {
+            setUnlockedPlan('upgrade');
             setUnlockedDocHash(savedDocHash);
             setIsPassportUnlocked(true);
+            setIsAllLendersUnlocked(true);
+          } else if ((savedPlan === 'basic' || savedPlan === 'single') && savedDocHash) {
+            setUnlockedPlan('basic');
+            setUnlockedDocHash(savedDocHash);
+            setIsPassportUnlocked(true);
+            setIsAllLendersUnlocked(savedAllLenders);
           } else {
             setUnlockedPlan(null);
             setUnlockedDocHash(null);
             setIsPassportUnlocked(false);
+            setIsAllLendersUnlocked(false);
           }
         } else {
           setUnlockedPlan(null);
           setUnlockedDocHash(null);
           setIsPassportUnlocked(false);
+          setIsAllLendersUnlocked(false);
         }
       }
     } catch (e) {}
@@ -346,7 +357,8 @@ export default function Dashboard() {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
   const [categorySuitabilityModal, setCategorySuitabilityModal] = useState<any | null>(null);
   const [isPassportUnlocked, setIsPassportUnlocked] = useState<boolean>(false);
-  const [unlockedPlan, setUnlockedPlan] = useState<'single' | 'pro' | null>(null);
+  const [unlockedPlan, setUnlockedPlan] = useState<'single' | 'basic' | 'upgrade' | 'pro' | null>(null);
+  const [isAllLendersUnlocked, setIsAllLendersUnlocked] = useState<boolean>(false);
   const [unlockedDocHash, setUnlockedDocHash] = useState<string | null>(null);
   const [proExpiryTimestamp, setProExpiryTimestamp] = useState<number | null>(null);
   const [showPaywallModal, setShowPaywallModal] = useState<boolean>(false);
@@ -596,8 +608,8 @@ export default function Dashboard() {
       return false; // Pro pass expired
     }
 
-    // 2. Single Plan (RM 9.90): Only the specific document / report paid for is unlocked
-    if (unlockedPlan === 'single') {
+    // 2. Single, Basic (RM 19.90) or Upgrade (RM 34.90) Plan: Only the specific document / report paid for is unlocked
+    if (unlockedPlan === 'single' || unlockedPlan === 'basic' || unlockedPlan === 'upgrade') {
       const currentFingerprint = computeFilesFingerprint(uploadedFiles);
       const resultHash = b2cResult?.hash;
       if (unlockedDocHash && (unlockedDocHash === resultHash || (currentFingerprint && unlockedDocHash === currentFingerprint))) {
@@ -4599,6 +4611,7 @@ export default function Dashboard() {
                             const applicationRecord = appliedLenders[lender.name];
                             const isApplied = !!applicationRecord;
                             const isLocked = !isCurrentAssessmentUnlocked;
+                            const isCardUnlocked = lender.isTop ? isCurrentAssessmentUnlocked : (isCurrentAssessmentUnlocked && isAllLendersUnlocked);
 
                             const maskedBankName = lender.isTop
                               ? (language === 'bm' ? 'Bank Digital Berlesen (Padanan #1)' : 'Top-Tier Digital Bank (Match #1)')
@@ -4633,6 +4646,12 @@ export default function Dashboard() {
                                         {lender.isTop && (
                                           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
                                             {language === 'bm' ? 'Padanan Terbaik' : 'Top Match'}
+                                          </span>
+                                        )}
+                                        {!lender.isTop && isCurrentAssessmentUnlocked && !isAllLendersUnlocked && (
+                                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 flex items-center gap-1">
+                                            <Lock className="w-2.5 h-2.5 text-amber-700" />
+                                            <span>{language === 'bm' ? 'Perlu Naik Taraf (+RM15)' : 'Needs Upgrade (+RM15)'}</span>
                                           </span>
                                         )}
                                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700">
@@ -4731,28 +4750,48 @@ export default function Dashboard() {
                                     <span>{expandedLenderInfo === lender.id ? (language === 'bm' ? 'Tutup' : 'Hide') : (language === 'bm' ? 'Butiran' : 'Details')}</span>
                                   </button>
                                   
-                                  <button
-                                    onClick={() => {
-                                      if (!isCurrentAssessmentUnlocked) {
-                                        setShowPaywallModal(true);
-                                        return;
-                                      }
-                                      handleOpenAiDispatcher({
-                                        lenderName: lender.lenderName || lender.name,
-                                        lenderUrl: lender.url,
-                                        productName: lender.productName || (purposeLabel[targetLoanPurpose] + ' Financing'),
-                                        installment: lender.installmentNum,
-                                        speed: lender.speed,
-                                        rate: lender.rate,
-                                        loanAmount: targetLoanAmount,
-                                        channelType: lender.channelType as any
-                                      });
-                                    }}
-                                    className="flex-1 py-2 text-xs font-bold rounded-xl bg-blue-950 hover:bg-blue-900 text-white transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
-                                  >
-                                    {isApplied ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300" /> : <FileText className="w-3.5 h-3.5 text-cyan-300" />}
-                                    <span>{isApplied ? (language === 'bm' ? 'Pakej Sedia' : 'Pack Ready') : (language === 'bm' ? 'Mohon & Sedia Pakej' : 'Generate Application Pack')}</span>
-                                  </button>
+                                  {!isCardUnlocked ? (
+                                    isCurrentAssessmentUnlocked ? (
+                                      <button
+                                        onClick={() => {
+                                          setShowPaywallModal(true);
+                                        }}
+                                        className="flex-1 py-2 text-xs font-bold rounded-xl bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
+                                      >
+                                        <Lock className="w-3.5 h-3.5 text-amber-200" />
+                                        <span>{language === 'bm' ? 'Buka Semua Bank (+RM 15.00)' : 'Unlock All Lenders (+RM 15.00)'}</span>
+                                      </button>
+                                    ) : (
+                                      <button
+                                        onClick={() => {
+                                          setShowPaywallModal(true);
+                                        }}
+                                        className="flex-1 py-2 text-xs font-bold rounded-xl bg-blue-950 hover:bg-blue-900 text-white transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
+                                      >
+                                        <Lock className="w-3.5 h-3.5 text-blue-300" />
+                                        <span>{language === 'bm' ? 'Buka Kunci Dokumen (RM 19.90)' : 'Unlock Application Pack (RM 19.90)'}</span>
+                                      </button>
+                                    )
+                                  ) : (
+                                    <button
+                                      onClick={() => {
+                                        handleOpenAiDispatcher({
+                                          lenderName: lender.lenderName || lender.name,
+                                          lenderUrl: lender.url,
+                                          productName: lender.productName || (purposeLabel[targetLoanPurpose] + ' Financing'),
+                                          installment: lender.installmentNum,
+                                          speed: lender.speed,
+                                          rate: lender.rate,
+                                          loanAmount: targetLoanAmount,
+                                          channelType: lender.channelType as any
+                                        });
+                                      }}
+                                      className="flex-1 py-2 text-xs font-bold rounded-xl bg-blue-950 hover:bg-blue-900 text-white transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
+                                    >
+                                      {isApplied ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300" /> : <FileText className="w-3.5 h-3.5 text-cyan-300" />}
+                                      <span>{isApplied ? (language === 'bm' ? 'Pakej Sedia' : 'Pack Ready') : (language === 'bm' ? 'Mohon & Sedia Pakej' : 'Generate Application Pack')}</span>
+                                    </button>
+                                  )}
                                 </div>
                               </div>
                             );
@@ -4858,6 +4897,50 @@ export default function Dashboard() {
                                     </button>
                                   </div>
                                 </div>
+
+                                {/* Gating Status Banner */}
+                                {!isAllLendersUnlocked && (
+                                  <div className="p-3 bg-amber-50/90 border border-amber-200 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs animate-fade-in">
+                                    <div className="flex items-center gap-2.5 text-amber-900">
+                                      <div className="w-8 h-8 rounded-xl bg-amber-100 border border-amber-300 flex items-center justify-center shrink-0">
+                                        <Lock className="w-4 h-4 text-amber-700" />
+                                      </div>
+                                      <div>
+                                        <strong className="block font-bold">
+                                          {language === 'bm' ? 'Padanan Tambahan Dikunci (Pelan Asas)' : 'Alternative Lenders Locked (Basic Plan Active)'}
+                                        </strong>
+                                        <span className="text-[11px] text-amber-800 leading-tight">
+                                          {language === 'bm'
+                                            ? `Pelan Asas (RM 19.90) hanya membuka Padanan Utama (${topMatch?.name.split(' ')[0] || 'BSN'}). Naik taraf ke Apply Upgrade (+RM 15.00) untuk membuka kesemua ${otherMatches.length} bank dan menjana pakej permohonan bersasar.`
+                                            : `Basic Plan (RM 19.90) unlocks Top Match (${topMatch?.name.split(' ')[0] || 'BSN'}). Upgrade (+RM 15.00) to unlock all ${otherMatches.length} alternative lenders and generate custom packs for higher approval odds.`}
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <button
+                                      onClick={() => setShowPaywallModal(true)}
+                                      className="px-3.5 py-2 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-bold rounded-xl shadow-xs transition-all shrink-0 cursor-pointer text-xs flex items-center gap-1.5"
+                                    >
+                                      <Zap className="w-3.5 h-3.5 text-amber-200" />
+                                      <span>{language === 'bm' ? 'Buka Semua (+RM 15)' : 'Unlock All (+RM 15)'}</span>
+                                    </button>
+                                  </div>
+                                )}
+
+                                {isAllLendersUnlocked && (
+                                  <div className="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-between text-xs text-emerald-900 animate-fade-in">
+                                    <div className="flex items-center gap-2">
+                                      <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />
+                                      <span className="font-semibold text-[11px]">
+                                        {language === 'bm'
+                                          ? '✨ Akses Penuh Aktif: Semua institusi kewangan dibuka dan boleh menjana pakej permohonan.'
+                                          : '✨ Apply Upgrade Active: Full platform access unlocked across all alternative lenders.'}
+                                      </span>
+                                    </div>
+                                    <span className="text-[10px] font-bold uppercase bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md border border-emerald-300">
+                                      UNLOCKED
+                                    </span>
+                                  </div>
+                                )}
 
                                 {/* Expanded other cards */}
                                 {showOtherLenders && (
@@ -8344,23 +8427,44 @@ export default function Dashboard() {
             setUnlockedPlan('pro');
             setProExpiryTimestamp(expiry);
             setIsPassportUnlocked(true);
+            setIsAllLendersUnlocked(true);
             try {
               localStorage.setItem(`creditflow_plan_${uKey}`, 'pro');
               localStorage.setItem(`creditflow_expiry_${uKey}`, expiry.toString());
+              localStorage.setItem(`creditflow_all_lenders_${uKey}`, 'true');
               localStorage.setItem('creditflow_unlocked_plan', 'pro');
               localStorage.setItem('creditflow_pro_expiry', expiry.toString());
+              localStorage.setItem('creditflow_all_lenders', 'true');
+              localStorage.removeItem('creditflow_passport_unlocked');
+            } catch (e) {}
+          } else if (plan === 'upgrade') {
+            // Apply Upgrade (RM 34.90 or RM 15 top-up): report + ALL lenders unlocked
+            setUnlockedPlan('upgrade');
+            setUnlockedDocHash(currentHash);
+            setIsPassportUnlocked(true);
+            setIsAllLendersUnlocked(true);
+            try {
+              localStorage.setItem(`creditflow_plan_${uKey}`, 'upgrade');
+              localStorage.setItem(`creditflow_doc_${uKey}`, currentHash);
+              localStorage.setItem(`creditflow_all_lenders_${uKey}`, 'true');
+              localStorage.setItem('creditflow_unlocked_plan', 'upgrade');
+              localStorage.setItem('creditflow_unlocked_doc_hash', currentHash);
+              localStorage.setItem('creditflow_all_lenders', 'true');
               localStorage.removeItem('creditflow_passport_unlocked');
             } catch (e) {}
           } else {
-            // Single Plan (RM 9.90): Unlocks only this current document batch
-            setUnlockedPlan('single');
+            // Basic Plan (RM 19.90): Unlocks report + Top Match (#1) ONLY
+            setUnlockedPlan('basic');
             setUnlockedDocHash(currentHash);
             setIsPassportUnlocked(true);
+            setIsAllLendersUnlocked(false);
             try {
-              localStorage.setItem(`creditflow_plan_${uKey}`, 'single');
+              localStorage.setItem(`creditflow_plan_${uKey}`, 'basic');
               localStorage.setItem(`creditflow_doc_${uKey}`, currentHash);
-              localStorage.setItem('creditflow_unlocked_plan', 'single');
+              localStorage.setItem(`creditflow_all_lenders_${uKey}`, 'false');
+              localStorage.setItem('creditflow_unlocked_plan', 'basic');
               localStorage.setItem('creditflow_unlocked_doc_hash', currentHash);
+              localStorage.setItem('creditflow_all_lenders', 'false');
               localStorage.removeItem('creditflow_passport_unlocked');
             } catch (e) {}
           }
@@ -8371,6 +8475,7 @@ export default function Dashboard() {
         isMalay={language === 'bm'}
         initialTier={borrowerCategory === 'sme' ? 'sme' : 'personal'}
         initialScenario={b2cResult?.report?.status === 'Declined' || b2cResult?.report?.status === 'Fraud Alert' ? 'bad_result' : 'good_result'}
+        isAlreadyBasic={isCurrentAssessmentUnlocked && !isAllLendersUnlocked}
       />
 
       {/* Customer Support & Service Tickets Modal */}
