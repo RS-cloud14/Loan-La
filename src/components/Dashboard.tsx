@@ -1511,6 +1511,20 @@ export default function Dashboard() {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
+    const filesArr = Array.from(files);
+    const duplicateCrossCategory = filesArr.find(file =>
+      uploadedFiles.some(f => f.fileName.trim().toLowerCase() === file.name.trim().toLowerCase() && f.category !== category)
+    );
+    if (duplicateCrossCategory) {
+      setUploadValidationError(
+        language === 'bm'
+          ? `Ralat Dokumen: Fail "${duplicateCrossCategory.name}" telah pun dimuat naik dalam kategori lain. Sila muat naik dokumen berbeza yang sah untuk setiap keperluan.`
+          : `Document Error: File "${duplicateCrossCategory.name}" was already uploaded under another category. Please upload distinct, valid documents for each requirement.`
+      );
+      e.target.value = '';
+      return;
+    }
+
     Array.from(files).forEach(file => {
       if (file.type.startsWith('image/')) {
         // Compress high-res mobile screenshots so batch 10-20 images stay lightweight
@@ -2720,24 +2734,6 @@ export default function Dashboard() {
                           />
                         </div>
 
-                        {/* Quick Preset Amount Chips */}
-                        <div className="flex items-center gap-2 flex-wrap">
-                          {[3000, 5000, 10000, 20000, 50000].map((amt) => (
-                            <button
-                              key={amt}
-                              type="button"
-                              onClick={() => setTargetLoanAmount(amt)}
-                              className={`px-3 py-1.5 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
-                                targetLoanAmount === amt
-                                  ? 'bg-blue-950 text-white border-blue-950 shadow-xs'
-                                  : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
-                              }`}
-                            >
-                              RM {(amt / 1000)}k
-                            </button>
-                          ))}
-                        </div>
-
                         {/* Proactive AI Underwriter Advisory Card (Unrealistic Amount Tip) */}
                         {targetLoanAmount >= 20000 && (
                           <div className="p-4 rounded-2xl bg-amber-50/95 border border-amber-300 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 animate-fade-in mt-1">
@@ -2789,37 +2785,38 @@ export default function Dashboard() {
                           {language === 'bm' ? '3. Tempoh Bayaran Balik' : '3. Repayment Tenure'}
                         </label>
 
-                        {/* Quick Preset Tenure Chips */}
-                        <div className="grid grid-cols-4 gap-2">
-                          {[
-                            { years: 1, label: language === 'bm' ? '1 Tahun' : '1 Year' },
-                            { years: 2, label: language === 'bm' ? '2 Tahun' : '2 Years' },
-                            { years: 3, label: language === 'bm' ? '3 Tahun' : '3 Years' },
-                            { years: 5, label: language === 'bm' ? '5 Tahun' : '5 Years' },
-                          ].map((t) => {
-                            const isSelected = calcTenureYears === t.years;
-                            return (
-                              <button
-                                key={t.years}
-                                type="button"
-                                onClick={() => setCalcTenureYears(t.years)}
-                                className={`py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
-                                  isSelected
-                                    ? 'bg-blue-950 text-white border-blue-950 shadow-xs'
-                                    : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
-                                }`}
-                              >
-                                {t.label}
-                              </button>
-                            );
-                          })}
+                        {/* Type-in Repayment Tenure Input */}
+                        <div className="relative">
+                          <input
+                            type="number"
+                            min={1}
+                            max={10}
+                            step={1}
+                            value={calcTenureYears || ''}
+                            onChange={(e) => {
+                              const val = e.target.value === '' ? 0 : Number(e.target.value);
+                              setCalcTenureYears(val);
+                            }}
+                            onBlur={() => {
+                              if (!calcTenureYears || calcTenureYears < 1) setCalcTenureYears(1);
+                              if (calcTenureYears > 10) setCalcTenureYears(10);
+                            }}
+                            className="w-full pl-4 pr-24 py-3 bg-slate-50 hover:bg-slate-100/80 focus:bg-white border border-slate-200 focus:border-blue-900 rounded-2xl text-lg font-black text-blue-950 outline-hidden transition-all text-left shadow-2xs"
+                            placeholder="1"
+                          />
+                          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-500 pointer-events-none">
+                            {calcTenureYears > 1 
+                              ? (language === 'bm' ? 'Tahun' : 'Years') 
+                              : (language === 'bm' ? 'Tahun' : 'Year')}
+                          </div>
                         </div>
 
                         {/* Live Repayment Estimate Preview */}
                         {(() => {
-                          const months = calcTenureYears * 12;
+                          const safeYears = Math.max(0.5, calcTenureYears || 1);
+                          const months = Math.round(safeYears * 12);
                           const estRate = targetLoanPurpose === 'vehicle' ? 0.055 : 0.065;
-                          const totalRepay = targetLoanAmount * (1 + estRate * calcTenureYears);
+                          const totalRepay = targetLoanAmount * (1 + estRate * safeYears);
                           const monthlyEst = Math.round(totalRepay / months);
                           return (
                             <div className="p-3.5 bg-blue-50/70 border border-blue-100 rounded-2xl flex items-center justify-between gap-2">
@@ -2943,115 +2940,95 @@ export default function Dashboard() {
                         </div>
                       )}
 
-                      {/* STEP 2.1: CHOOSE EMPLOYMENT TYPE (CLEAR CARDS) */}
-                      <div className="flex flex-col gap-2.5">
-                        <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                          <span className="w-5 h-5 rounded-full bg-blue-950 text-white flex items-center justify-center text-[10px] font-black">1</span>
-                          <span>{language === 'bm' ? 'Pilih Jenis Pekerjaan Utama Anda:' : 'Select Your Main Employment Type:'}</span>
-                        </label>
-                        
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          {/* Option 1: Gig Worker / Freelancer */}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIncomeWorkType('gig');
-                              setUploadValidationError(null);
-                            }}
-                            className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex items-start justify-between gap-3 ${
-                              incomeWorkType === 'gig'
-                                ? 'bg-blue-50/50 border-blue-950 ring-2 ring-blue-950/10 shadow-xs'
-                                : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/50'
-                            }`}
-                          >
-                            <div className="flex items-start gap-3">
-                              <div className="text-2xl mt-0.5">🛵</div>
-                              <div>
-                                <span className="text-xs font-bold text-slate-900 block">
-                                  {language === 'bm' ? 'Pekerja Gig / Rider / Freelance' : 'Gig Worker / Freelancer'}
-                                </span>
-                                <span className="text-[11px] text-slate-500 block mt-0.5">
-                                  Grab, Foodpanda, Shopee, Lalamove, Invois
-                                </span>
+                      {/* STEP 2.1: CHOOSE EMPLOYMENT TYPE (INDIVIDUAL BORROWERS ONLY) */}
+                      {borrowerCategory === 'individual' && (
+                        <div className="flex flex-col gap-2.5">
+                          <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                            <span className="w-5 h-5 rounded-full bg-blue-950 text-white flex items-center justify-center text-[10px] font-black">1</span>
+                            <span>{language === 'bm' ? 'Pilih Jenis Pekerjaan Utama Anda:' : 'Select Your Main Employment Type:'}</span>
+                          </label>
+                          
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {/* Option 1: Gig Worker / Freelancer */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIncomeWorkType('gig');
+                                setUploadValidationError(null);
+                              }}
+                              className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex items-start justify-between gap-3 ${
+                                incomeWorkType === 'gig'
+                                  ? 'bg-blue-50/50 border-blue-950 ring-2 ring-blue-950/10 shadow-xs'
+                                  : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/50'
+                              }`}
+                            >
+                              <div className="flex items-start gap-3">
+                                <div className="text-2xl mt-0.5">🛵</div>
+                                <div>
+                                  <span className="text-xs font-bold text-slate-900 block">
+                                    {language === 'bm' ? 'Pekerja Gig / Rider / Freelance' : 'Gig Worker / Freelancer'}
+                                  </span>
+                                  <span className="text-[11px] text-slate-500 block mt-0.5">
+                                    Grab, Foodpanda, Shopee, Lalamove, Invois
+                                  </span>
+                                </div>
                               </div>
-                            </div>
-                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
-                              incomeWorkType === 'gig' ? 'border-blue-950 bg-blue-950 text-white text-xs font-black' : 'border-slate-300'
-                            }`}>
-                              {incomeWorkType === 'gig' && '✓'}
-                            </div>
-                          </button>
-
-                          {/* Option 2: Salaried Employee */}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setIncomeWorkType('salaried');
-                              setUploadValidationError(null);
-                            }}
-                            className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex items-start justify-between gap-3 ${
-                              incomeWorkType === 'salaried'
-                                ? 'bg-blue-50/50 border-blue-950 ring-2 ring-blue-950/10 shadow-xs'
-                                : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/50'
-                            }`}
-                          >
-                            <div className="flex items-start gap-3">
-                              <div className="text-2xl mt-0.5">💼</div>
-                              <div>
-                                <span className="text-xs font-bold text-slate-900 block">
-                                  {language === 'bm' ? 'Pekerja Bergaji Tetap (Swasta / Kerajaan)' : 'Salaried Employee'}
-                                </span>
-                                <span className="text-[11px] text-slate-500 block mt-0.5">
-                                  Gaji tetap bulanan syarikat dengan slip gaji
-                                </span>
+                              <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
+                                incomeWorkType === 'gig' ? 'border-blue-950 bg-blue-950 text-white text-xs font-black' : 'border-slate-300'
+                              }`}>
+                                {incomeWorkType === 'gig' && '✓'}
                               </div>
-                            </div>
-                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
-                              incomeWorkType === 'salaried' ? 'border-blue-950 bg-blue-950 text-white text-xs font-black' : 'border-slate-300'
-                            }`}>
-                              {incomeWorkType === 'salaried' && '✓'}
-                            </div>
-                          </button>
-                        </div>
+                            </button>
 
-                        {/* Mixed income link toggle */}
-                        <div className="text-right">
-                          <button
-                            type="button"
-                            onClick={() => setIncomeWorkType(incomeWorkType === 'both' ? 'gig' : 'both')}
-                            className="text-[11px] text-slate-500 hover:text-blue-950 font-medium underline cursor-pointer"
-                          >
-                            {incomeWorkType === 'both'
-                              ? (language === 'bm' ? '← Tukar kembali ke pilihan tunggal' : '← Switch back to single profile')
-                              : (language === 'bm' ? 'Mempunyai kedua-dua punca pendapatan (Gig + Gaji)? Klik di sini' : 'Have both Gig & Salaried income? Click here to upload both')}
-                          </button>
+                            {/* Option 2: Salaried Employee */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setIncomeWorkType('salaried');
+                                setUploadValidationError(null);
+                              }}
+                              className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex items-start justify-between gap-3 ${
+                                incomeWorkType === 'salaried'
+                                  ? 'bg-blue-50/50 border-blue-950 ring-2 ring-blue-950/10 shadow-xs'
+                                  : 'bg-white border-slate-200 hover:border-slate-300 hover:bg-slate-50/50'
+                              }`}
+                            >
+                              <div className="flex items-start gap-3">
+                                <div className="text-2xl mt-0.5">💼</div>
+                                <div>
+                                  <span className="text-xs font-bold text-slate-900 block">
+                                    {language === 'bm' ? 'Pekerja Bergaji Tetap (Swasta / Kerajaan)' : 'Salaried Employee'}
+                                  </span>
+                                  <span className="text-[11px] text-slate-500 block mt-0.5">
+                                    Gaji tetap bulanan syarikat dengan slip gaji
+                                  </span>
+                                </div>
+                              </div>
+                              <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
+                                incomeWorkType === 'salaried' ? 'border-blue-950 bg-blue-950 text-white text-xs font-black' : 'border-slate-300'
+                              }`}>
+                                {incomeWorkType === 'salaried' && '✓'}
+                              </div>
+                            </button>
+                          </div>
+
+                          {/* Mixed income link toggle */}
+                          <div className="text-right">
+                            <button
+                              type="button"
+                              onClick={() => setIncomeWorkType(incomeWorkType === 'both' ? 'gig' : 'both')}
+                              className="text-[11px] text-slate-500 hover:text-blue-950 font-medium underline cursor-pointer"
+                            >
+                              {incomeWorkType === 'both'
+                                ? (language === 'bm' ? '← Tukar kembali ke pilihan tunggal' : '← Switch back to single profile')
+                                : (language === 'bm' ? 'Mempunyai kedua-dua punca pendapatan (Gig + Gaji)? Klik di sini' : 'Have both Gig & Salaried income? Click here to upload both')}
+                            </button>
+                          </div>
                         </div>
-                      </div>
+                      )}
 
                       {/* STEP 2.2: DOCUMENT UPLOAD CHECKLIST */}
                       <div className="flex flex-col gap-3.5 pt-2 border-t border-slate-100">
-                        
-                        {/* AES-256 ENCRYPTION & DATA PRIVACY BANNER */}
-                        <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 border border-blue-800/80 text-white flex items-start gap-3 shadow-md">
-                          <div className="p-2 rounded-xl bg-blue-800/60 text-cyan-300 shrink-0 mt-0.5 border border-cyan-400/20">
-                            <Lock className="w-4.5 h-4.5 text-cyan-300" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-[11px] sm:text-xs font-black text-cyan-300 uppercase tracking-wider">
-                                {language === 'bm' ? 'Penyulitan Data AES-256 & Privasi Tanpa-Pengetahuan (Zero-Knowledge)' : 'AES-256-GCM Encryption & Zero-Knowledge Privacy'}
-                              </span>
-                              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                                PDPA 2010 & BNM RMiT Compliant
-                              </span>
-                            </div>
-                            <p className="text-[11px] text-slate-300 mt-1 leading-relaxed">
-                              {language === 'bm'
-                                ? 'Semua dokumen disulitkan secara kriptografi (In-Transit & Ephemeral). Enjin AI kami hanya memproses vektor nombor aliran tunai yang telah di-anonymize tanpa mendedahkan nama atau butiran peribadi anda.'
-                                : 'All uploads are cryptographically encrypted with AES-256-GCM. Our AI engine only evaluates anonymized mathematical cashflow vectors without exposing personal identity or raw credentials.'}
-                            </p>
-                          </div>
-                        </div>
 
                         {/* SME MANDATORY DOCUMENT LIST SUMMARY FOR B2B SCOPE */}
                         {borrowerCategory === 'sme' && (
@@ -3073,7 +3050,9 @@ export default function Dashboard() {
 
                         <div className="flex items-center justify-between">
                           <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                            <span className="w-5 h-5 rounded-full bg-blue-950 text-white flex items-center justify-center text-[10px] font-black">2</span>
+                            <span className="w-5 h-5 rounded-full bg-blue-950 text-white flex items-center justify-center text-[10px] font-black">
+                              {borrowerCategory === 'sme' ? '1' : '2'}
+                            </span>
                             <span>{language === 'bm' ? 'Senarai Dokumen Diperlukan:' : 'Required Document Checklist:'}</span>
                           </label>
                         </div>
@@ -3096,7 +3075,9 @@ export default function Dashboard() {
                               <div>
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <h3 className="text-xs font-bold text-slate-900">
-                                    {language === 'bm' ? '1. Penyata Bank Rasmi (3–6 Bulan)' : '1. Official Bank Statements (3–6 Months)'}
+                                    {borrowerCategory === 'sme'
+                                      ? (language === 'bm' ? '1. Penyata Bank Syarikat Rasmi (3–6 Bulan)' : '1. Official Company Bank Statement (3–6 Months)')
+                                      : (language === 'bm' ? '1. Penyata Bank Rasmi (3–6 Bulan)' : '1. Official Bank Statements (3–6 Months)')}
                                   </h3>
                                   <span className="text-[9px] font-black text-white bg-blue-950 px-2 py-0.5 rounded">
                                     {language === 'bm' ? 'WAJIB' : 'MANDATORY'}
@@ -3167,8 +3148,9 @@ export default function Dashboard() {
                           )}
                         </div>
 
-                        {/* CARD 2: INCOME PROOF */}
-                        <div id="box-income-proof" className="flex flex-col gap-3">
+                        {/* CARD 2: INCOME PROOF (INDIVIDUAL BORROWERS ONLY) */}
+                        {borrowerCategory === 'individual' && (
+                          <div id="box-income-proof" className="flex flex-col gap-3">
                           
                           {/* 2A: GIG PLATFORM SLIPS */}
                           {(incomeWorkType === 'gig' || incomeWorkType === 'both') && (
@@ -3269,11 +3251,11 @@ export default function Dashboard() {
 
                                 <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
                                   <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg ${
-                                    uploadedFiles.filter(f => f.category === 'pay_slip').length >= 3
+                                    uploadedFiles.filter(f => f.category === 'pay_slip').length >= 6
                                       ? 'bg-emerald-100 text-emerald-800 font-bold'
                                       : 'bg-slate-100 text-slate-600'
                                   }`}>
-                                    {uploadedFiles.filter(f => f.category === 'pay_slip').length}/3 {language === 'bm' ? 'bulan' : 'months'}
+                                    {uploadedFiles.filter(f => f.category === 'pay_slip').length}/6 {language === 'bm' ? 'bulan' : 'months'}
                                   </span>
                                   <label className="py-1.5 px-3 bg-blue-950 hover:bg-blue-900 text-white font-semibold text-xs rounded-xl cursor-pointer transition-all flex items-center gap-1.5 active:scale-95 shadow-xs">
                                     <UploadCloud className="w-3.5 h-3.5" />
@@ -3310,6 +3292,7 @@ export default function Dashboard() {
                           )}
 
                         </div>
+                      )}
 
                         {/* CARD 3: MYKAD / NATIONAL IC (MANDATORY) */}
                         <div 
@@ -3328,14 +3311,18 @@ export default function Dashboard() {
                               <div>
                                 <div className="flex items-center gap-2 flex-wrap">
                                   <h3 className="text-xs font-bold text-slate-900">
-                                    {language === 'bm' ? '3. MyKad / Kad Pengenalan (e-KYC)' : '3. MyKad / National IC (e-KYC)'}
+                                    {borrowerCategory === 'sme'
+                                      ? (language === 'bm' ? '2. MyKad Pengarah Syarikat (e-KYC)' : '2. MyKad / National IC (e-KYC) of Company Director')
+                                      : (language === 'bm' ? '3. MyKad / Kad Pengenalan (e-KYC)' : '3. MyKad / National IC (e-KYC)')}
                                   </h3>
                                   <span className="text-[9px] font-black text-white bg-blue-950 px-2 py-0.5 rounded">
                                     {language === 'bm' ? 'WAJIB' : 'MANDATORY'}
                                   </span>
                                 </div>
                                 <p className="text-[11px] text-slate-500 mt-0.5">
-                                  {language === 'bm' ? 'Salinan gambar jelas atau PDF MyKad bahagian depan & belakang' : 'Clear photo or PDF copy of MyKad front & back'}
+                                  {borrowerCategory === 'sme'
+                                    ? (language === 'bm' ? 'Salinan MyKad pengarah atau pemilik perniagaan yang sah (depan & belakang)' : 'Clear photo or PDF copy of Company Director / Business Owner MyKad (front & back)')
+                                    : (language === 'bm' ? 'Salinan gambar jelas atau PDF MyKad bahagian depan & belakang' : 'Clear photo or PDF copy of MyKad front & back')}
                                 </p>
                               </div>
                             </div>
@@ -3969,38 +3956,40 @@ export default function Dashboard() {
                                 return;
                               }
 
-                              // 2. Income Proof: Min 12 weekly gig slips OR Min 3 monthly pay slips based on selected type
-                              const gigSlips = uploadedFiles.filter(f => f.category === 'platform_dashboard');
-                              const paySlips = uploadedFiles.filter(f => f.category === 'pay_slip');
+                              // 2. Income Proof: Min 12 weekly gig slips OR Min 6 monthly pay slips (Individual applicants only)
+                              if (borrowerCategory === 'individual') {
+                                const gigSlips = uploadedFiles.filter(f => f.category === 'platform_dashboard');
+                                const paySlips = uploadedFiles.filter(f => f.category === 'pay_slip');
 
-                              if (incomeWorkType === 'gig' && gigSlips.length < 12) {
-                                setUploadValidationError(
-                                  language === 'bm'
-                                    ? `Sila muat naik sekurang-kurangnya 12 minggu slip pendapatan gig (semasa: ${gigSlips.length}/12 slip).`
-                                    : `Please upload at least 12 weekly gig platform slips (current: ${gigSlips.length}/12 slips).`
-                                );
-                                scrollToBox('box-income-proof');
-                                return;
-                              }
+                                if (incomeWorkType === 'gig' && gigSlips.length < 12) {
+                                  setUploadValidationError(
+                                    language === 'bm'
+                                      ? `Sila muat naik sekurang-kurangnya 12 minggu slip pendapatan gig (semasa: ${gigSlips.length}/12 slip).`
+                                      : `Please upload at least 12 weekly gig platform slips (current: ${gigSlips.length}/12 slips).`
+                                  );
+                                  scrollToBox('box-income-proof');
+                                  return;
+                                }
 
-                              if (incomeWorkType === 'salaried' && paySlips.length < 3) {
-                                setUploadValidationError(
-                                  language === 'bm'
-                                    ? `Sila muat naik sekurang-kurangnya 3 bulan slip gaji tetap (semasa: ${paySlips.length}/3 bulan).`
-                                    : `Please upload at least 3 months of salaried pay slips (current: ${paySlips.length}/3 months).`
-                                );
-                                scrollToBox('box-income-proof');
-                                return;
-                              }
+                                if (incomeWorkType === 'salaried' && paySlips.length < 6) {
+                                  setUploadValidationError(
+                                    language === 'bm'
+                                      ? `Sila muat naik sekurang-kurangnya 6 bulan slip gaji tetap (semasa: ${paySlips.length}/6 bulan).`
+                                      : `Please upload at least 6 months of salaried pay slips (current: ${paySlips.length}/6 months).`
+                                  );
+                                  scrollToBox('box-income-proof');
+                                  return;
+                                }
 
-                              if (incomeWorkType === 'both' && gigSlips.length < 12 && paySlips.length < 3) {
-                                setUploadValidationError(
-                                  language === 'bm'
-                                    ? `Sila lengkapkan sekurang-kurangnya SATU bukti pendapatan: 12 minggu slip gig (semasa: ${gigSlips.length}/12) ATAU 3 bulan slip gaji (semasa: ${paySlips.length}/3).`
-                                    : `Please complete at least ONE proof of income: 12 weekly gig slips (current: ${gigSlips.length}/12) OR 3 monthly pay slips (current: ${paySlips.length}/3).`
-                                );
-                                scrollToBox('box-income-proof');
-                                return;
+                                if (incomeWorkType === 'both' && gigSlips.length < 12 && paySlips.length < 6) {
+                                  setUploadValidationError(
+                                    language === 'bm'
+                                      ? `Sila lengkapkan sekurang-kurangnya SATU bukti pendapatan: 12 minggu slip gig (semasa: ${gigSlips.length}/12) ATAU 6 bulan slip gaji (semasa: ${paySlips.length}/6).`
+                                      : `Please complete at least ONE proof of income: 12 weekly gig slips (current: ${gigSlips.length}/12) OR 6 monthly pay slips (current: ${paySlips.length}/6).`
+                                  );
+                                  scrollToBox('box-income-proof');
+                                  return;
+                                }
                               }
 
                               // 3. MyKad (e-KYC)
