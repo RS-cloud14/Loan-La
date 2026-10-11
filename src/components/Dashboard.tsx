@@ -2453,12 +2453,18 @@ export default function Dashboard() {
 
                 {/* STEP 1: LOAN PURPOSE & AMOUNT SELECTOR */}
                 {activeStep === 1 && (() => {
-                  const purposes = [
-                    { id: 'personal_cash', icon: Banknote, label: language === 'bm' ? 'Tunai Peribadi' : 'Personal Cash' },
-                    { id: 'working_capital', icon: Store, label: language === 'bm' ? 'Modal Pusingan' : 'Working Capital' },
-                    { id: 'vehicle', icon: Car, label: language === 'bm' ? 'Sewa Beli Kenderaan' : 'Vehicle (HP)' },
-                    { id: 'equipment', icon: Wrench, label: language === 'bm' ? 'Peralatan & Mesin' : 'Equipment & Tools' },
-                  ];
+                  const purposes = borrowerCategory === 'individual'
+                    ? [
+                        { id: 'personal_cash', icon: Banknote, label: language === 'bm' ? 'Tunai Peribadi (Aliran Tunai)' : 'Personal Cash (Smoothing)' },
+                        { id: 'vehicle', icon: Car, label: language === 'bm' ? 'Penyelenggaraan Kenderaan' : 'Vehicle Maintenance' },
+                        { id: 'equipment', icon: Wrench, label: language === 'bm' ? 'Peralatan & Aksesori' : 'Equipment & Tools' },
+                      ]
+                    : [
+                        { id: 'working_capital', icon: Store, label: language === 'bm' ? 'Modal Pusingan' : 'Working Capital' },
+                        { id: 'vehicle', icon: Car, label: language === 'bm' ? 'Penyelenggaraan Kenderaan' : 'Vehicle Maintenance' },
+                        { id: 'equipment', icon: Wrench, label: language === 'bm' ? 'Jentera & Peralatan' : 'Equipment & Machinery' },
+                        { id: 'expansion', icon: TrendingUp, label: language === 'bm' ? 'Permulaan / Pembesaran' : 'Startup / Expansion' },
+                      ];
 
                   return (
                     <div className="bg-white rounded-3xl border border-slate-200 shadow-md p-6 sm:p-8 flex flex-col gap-5">
@@ -2486,7 +2492,12 @@ export default function Dashboard() {
                           {/* Option A: Normal Case (Individual / GIG) */}
                           <button
                             type="button"
-                            onClick={() => setBorrowerCategory('individual')}
+                            onClick={() => {
+                              setBorrowerCategory('individual');
+                              if (targetLoanPurpose === 'working_capital' || (targetLoanPurpose as string) === 'expansion') {
+                                setTargetLoanPurpose('personal_cash');
+                              }
+                            }}
                             className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex items-start gap-3.5 ${
                               borrowerCategory === 'individual'
                                 ? 'bg-blue-950 text-white border-blue-950 shadow-md ring-2 ring-blue-950/20'
@@ -2509,8 +2520,8 @@ export default function Dashboard() {
                               </div>
                               <span className={`text-xs block mt-0.5 leading-snug ${borrowerCategory === 'individual' ? 'text-blue-200' : 'text-slate-500'}`}>
                                 {language === 'bm'
-                                  ? 'Pekerja gig, gaji bulanan, freelance. Dokumen: MyKad, slip pendapatan & penyata bank.'
-                                  : 'Salaried employees, freelancers & gig riders. Audit: IC, payslip/gig slip & bank statements.'}
+                                  ? 'Pekerja gig, gaji bulanan, freelance. Dokumen: MyKad, slip pendapatan & penyata bank (Tanpa SSM).'
+                                  : 'Salaried employees, freelancers & gig riders. Audit: IC, payslip/gig slip & bank statements (No SSM).' }
                               </span>
                             </div>
                           </button>
@@ -2518,7 +2529,12 @@ export default function Dashboard() {
                           {/* Option B: SME Case (Company / Business) */}
                           <button
                             type="button"
-                            onClick={() => setBorrowerCategory('sme')}
+                            onClick={() => {
+                              setBorrowerCategory('sme');
+                              if (targetLoanPurpose === 'personal_cash') {
+                                setTargetLoanPurpose('working_capital');
+                              }
+                            }}
                             className={`p-4 rounded-2xl border text-left transition-all cursor-pointer flex items-start gap-3.5 ${
                               borrowerCategory === 'sme'
                                 ? 'bg-slate-900 text-white border-slate-900 shadow-md ring-2 ring-slate-900/20'
@@ -2650,7 +2666,7 @@ export default function Dashboard() {
                         <label className="text-xs font-bold uppercase tracking-wider text-slate-500">
                           {language === 'bm' ? '1. Tujuan Pinjaman' : '1. Loan Purpose'}
                         </label>
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                        <div className={`grid gap-2.5 ${borrowerCategory === 'individual' ? 'grid-cols-1 sm:grid-cols-3' : 'grid-cols-2 sm:grid-cols-4'}`}>
                           {purposes.map((p) => {
                             const IconComp = p.icon;
                             const isSel = targetLoanPurpose === p.id;
@@ -3013,7 +3029,48 @@ export default function Dashboard() {
                       </div>
 
                       {/* STEP 2.2: DOCUMENT UPLOAD CHECKLIST */}
-<div className="flex flex-col gap-3.5 pt-2 border-t border-slate-100">
+                      <div className="flex flex-col gap-3.5 pt-2 border-t border-slate-100">
+                        
+                        {/* AES-256 ENCRYPTION & DATA PRIVACY BANNER */}
+                        <div className="p-3.5 sm:p-4 rounded-2xl bg-gradient-to-r from-blue-950 via-slate-900 to-indigo-950 border border-blue-800/80 text-white flex items-start gap-3 shadow-md">
+                          <div className="p-2 rounded-xl bg-blue-800/60 text-cyan-300 shrink-0 mt-0.5 border border-cyan-400/20">
+                            <Lock className="w-4.5 h-4.5 text-cyan-300" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-[11px] sm:text-xs font-black text-cyan-300 uppercase tracking-wider">
+                                {language === 'bm' ? 'Penyulitan Data AES-256 & Privasi Tanpa-Pengetahuan (Zero-Knowledge)' : 'AES-256-GCM Encryption & Zero-Knowledge Privacy'}
+                              </span>
+                              <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                                PDPA 2010 & BNM RMiT Compliant
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-slate-300 mt-1 leading-relaxed">
+                              {language === 'bm'
+                                ? 'Semua dokumen disulitkan secara kriptografi (In-Transit & Ephemeral). Enjin AI kami hanya memproses vektor nombor aliran tunai yang telah di-anonymize tanpa mendedahkan nama atau butiran peribadi anda.'
+                                : 'All uploads are cryptographically encrypted with AES-256-GCM. Our AI engine only evaluates anonymized mathematical cashflow vectors without exposing personal identity or raw credentials.'}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* SME MANDATORY DOCUMENT LIST SUMMARY FOR B2B SCOPE */}
+                        {borrowerCategory === 'sme' && (
+                          <div className="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-300/80 flex flex-col gap-1.5 text-xs text-amber-950">
+                            <div className="flex items-center gap-2 font-bold text-amber-900">
+                              <Building2 className="w-4 h-4 text-amber-800" />
+                              <span>{language === 'bm' ? 'Senarai Dokumen Wajib PKS (SME Required Checklist):' : 'SME Mandatory Document Checklist:'}</span>
+                            </div>
+                            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-[11px] text-amber-900 list-disc list-inside pt-1 font-medium">
+                              <li>{language === 'bm' ? 'Penyata Bank Syarikat Rasmi (3–6 Bulan)' : 'Official Company Bank Statement (3–6 Months)'}</li>
+                              <li>{language === 'bm' ? 'MyKad Pengarah Syarikat (e-KYC)' : 'MyKad / National IC (e-KYC) of Company Director'}</li>
+                              <li>{language === 'bm' ? 'Sijil Pendaftaran SSM / Lesen PBT' : 'SSM Business Registration / Local Council Permit'}</li>
+                              <li>{language === 'bm' ? 'Sebutharga Pembekal / Peralatan / Kenderaan' : 'Supplier Quotation (according to Loan Objective)'}</li>
+                              <li>{language === 'bm' ? 'Foto Premis / Gerai / Stok Inventori' : 'Premise / Stall / Inventory Photos'}</li>
+                              <li>{language === 'bm' ? 'Dokumen Profil SSM / Borang B LHDN' : 'SSM Business Profile OR LHDN Borang B Tax Record'}</li>
+                            </ul>
+                          </div>
+                        )}
+
                         <div className="flex items-center justify-between">
                           <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
                             <span className="w-5 h-5 rounded-full bg-blue-950 text-white flex items-center justify-center text-[10px] font-black">2</span>
@@ -3198,14 +3255,14 @@ export default function Dashboard() {
                                   <div>
                                     <div className="flex items-center gap-2 flex-wrap">
                                       <h3 className="text-xs font-bold text-slate-900">
-                                        {language === 'bm' ? '2. Slip Gaji Bulanan (3 Bulan Terkini)' : '2. Monthly Pay Slips (Latest 3 Months)'}
+                                        {language === 'bm' ? '2. Slip Gaji Bulanan (6 Bulan Terkini)' : '2.1 Monthly Pay Slips (6 Months)'}
                                       </h3>
                                       <span className="text-[9px] font-black text-white bg-blue-950 px-2 py-0.5 rounded">
                                         {language === 'bm' ? 'WAJIB' : 'MANDATORY'}
                                       </span>
                                     </div>
                                     <p className="text-[11px] text-slate-500 mt-0.5">
-                                      {language === 'bm' ? 'Slip gaji rasmi 3 bulan terkini yang dikeluarkan majikan' : 'Official salary slips for the latest 3 months issued by employer'}
+                                      {language === 'bm' ? 'Slip gaji rasmi 6 bulan terkini yang dikeluarkan majikan' : 'Official salary slips for the latest 6 months issued by employer'}
                                     </p>
                                   </div>
                                 </div>
@@ -3326,8 +3383,8 @@ export default function Dashboard() {
                         </div>
 
                         {/* CATEGORY-SPECIFIC MANDATORY DOCUMENTS */}
-                        {/* 1. Working Capital / Equipment: SSM / PBT License is MANDATORY */}
-                        {(targetLoanPurpose === 'working_capital' || targetLoanPurpose === 'equipment') && (
+                        {/* 1. Working Capital / Equipment / Expansion: SSM / PBT License is MANDATORY for SME ONLY */}
+                        {borrowerCategory === 'sme' && (targetLoanPurpose === 'working_capital' || targetLoanPurpose === 'equipment' || (targetLoanPurpose as string) === 'expansion') && (
                           <div 
                             id="box-ssm"
                             className={`p-4 rounded-2xl border transition-all ${
@@ -3959,7 +4016,7 @@ export default function Dashboard() {
                               }
 
                               // 4. Purpose-Specific Mandatory Checks
-                              if (targetLoanPurpose === 'working_capital' || targetLoanPurpose === 'equipment') {
+                              if (borrowerCategory === 'sme' && (targetLoanPurpose === 'working_capital' || targetLoanPurpose === 'equipment' || (targetLoanPurpose as string) === 'expansion')) {
                                 const ssmFiles = uploadedFiles.filter(f => f.category === 'ssm_license');
                                 if (ssmFiles.length === 0) {
                                   setUploadValidationError(

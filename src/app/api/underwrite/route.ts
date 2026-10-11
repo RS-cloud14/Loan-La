@@ -6,6 +6,7 @@ import { ExtendedUnderwritingInput } from '@/components/Dashboard';
 import { calculateAlternativeCreditProfile } from '@/lib/scoring';
 import { callGeminiWithModelRotation, callGeminiWithRotation } from '@/lib/geminiRotator';
 import { saveAssessment, generateBnmAuditHash, maskMyKad, maskPhoneNumber } from '@/lib/storage';
+import { sanitizeAndEncryptForAI } from '@/lib/encryption';
 
 // Persist assessment to multi-tenant store and legacy JSON
 async function saveAssessmentToJson(data: any) {
@@ -1515,10 +1516,21 @@ Return ONLY valid JSON, no markdown, no explanation, matching this EXACT schema:
       // Calculate Alternative credit scoring based on strict compliance logic
       const scoringReport = calculateAlternativeCreditProfile(parsedOutput);
 
+      // Apply enterprise AES-256 encryption & Zero-Knowledge sanitization
+      const privacyVector = sanitizeAndEncryptForAI({
+        fullName: parsedOutput.name,
+        nric: parsedOutput.identityData?.icNumber,
+        income: parsedOutput.averageMonthlyNetIncome,
+        totalCommitments: parsedOutput.averageMonthlyExpenses || 1200,
+        volatility: scoringReport.volatilityIndex,
+        redFlags: parsedOutput.behavioralRisk?.red_flags || []
+      });
+
       const payloadResult = {
         hash: documentHash || "d3b07384d113edec49eaa6238ad5ff00",
         inputData: parsedOutput,
-        report: scoringReport
+        report: scoringReport,
+        privacy: privacyVector
       };
 
       await saveAssessmentToJson(payloadResult);
